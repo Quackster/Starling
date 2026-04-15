@@ -1,0 +1,23 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editors / IDEs
+.idea/
+.vscode/
+*.iml
+
+# Gradle / Java build output
+.gradle/
+build/
+out/
+*.class
+*.jar
+*.war
+*.ear
+
+# Generated artifacts
+dist/
+logs/
+*.log
+/r26_20080915_0408_7984_61ccb5f8b8797a3aba62c1fa2ca80169
