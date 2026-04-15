@@ -135,7 +135,7 @@ public final class DatabaseBootstrap {
                     CREATE TABLE IF NOT EXISTS room_favorites (
                         id INT NOT NULL AUTO_INCREMENT,
                         user_id INT NOT NULL,
-                        room_type INT NOT NULL,
+                        room_type INT NOT NULL DEFAULT 0,
                         room_id INT NOT NULL,
                         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                         PRIMARY KEY (id),
@@ -143,6 +143,7 @@ public final class DatabaseBootstrap {
                         KEY idx_room_favorites_user (user_id)
                     ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
                     """);
+            statement.executeUpdate("ALTER TABLE room_favorites MODIFY COLUMN room_type INT NOT NULL DEFAULT 0");
             statement.executeUpdate("""
                     CREATE TABLE IF NOT EXISTS room_rights (
                         id INT NOT NULL AUTO_INCREMENT,

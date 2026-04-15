@@ -1,0 +1,250 @@
+package org.starling.storage;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.starling.config.ServerConfig;
+import org.starling.storage.dao.NavigatorDao;
+import org.starling.storage.dao.PublicRoomDao;
+import org.starling.storage.dao.RoomDao;
+import org.starling.storage.dao.RoomFavoriteDao;
+import org.starling.storage.dao.RoomModelDao;
+import org.starling.storage.dao.RoomRightDao;
+import org.starling.storage.dao.UserDao;
+import org.starling.storage.entity.NavigatorCategoryEntity;
+import org.starling.storage.entity.PublicRoomEntity;
+import org.starling.storage.entity.RoomEntity;
+import org.starling.storage.entity.RoomFavoriteEntity;
+import org.starling.storage.entity.RoomModelEntity;
+import org.starling.storage.entity.UserEntity;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class DatabaseIntegrationTest {
+
+    private static final String DB_HOST = "127.0.0.1";
+    private static final int DB_PORT = 3306;
+    private static final String DB_USERNAME = "root";
+    private static final String DB_PASSWORD = "verysecret";
+    private static final String DB_PARAMS = "useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8";
+
+    private ServerConfig config;
+
+    @BeforeAll
+    void setUpDatabase() throws Exception {
+        String databaseName = "starling_it_" + Long.toUnsignedString(Instant.now().toEpochMilli(), 36);
+        this.config = new ServerConfig(0, DB_HOST, DB_PORT, databaseName, DB_USERNAME, DB_PASSWORD, DB_PARAMS);
+
+        DatabaseBootstrap.ensureDatabase(config);
+        EntityContext.init(config);
+        DatabaseBootstrap.ensureSchema(config);
+        DatabaseBootstrap.seedDefaults();
+    }
+
+    @AfterAll
+    void tearDownDatabase() throws Exception {
+        try {
+            EntityContext.shutdown();
+        } finally {
+            try (Connection connection = DriverManager.getConnection(config.adminJdbcUrl(), config.dbUsername(), config.dbPassword());
+                 Statement statement = connection.createStatement()) {
+                statement.executeUpdate("DROP DATABASE IF EXISTS `" + config.dbName().replace("`", "``") + "`");
+            }
+        }
+    }
+
+    @Test
+    void bootstrapCreatesSchemaAndSeedData() throws Exception {
+        assertTrue(tableExists("users"));
+        assertTrue(tableExists("rooms_categories"));
+        assertTrue(tableExists("rooms"));
+        assertTrue(tableExists("room_models"));
+        assertTrue(tableExists("public_rooms"));
+        assertTrue(tableExists("room_favorites"));
+        assertTrue(tableExists("room_rights"));
+
+        UserEntity admin = UserDao.findByUsername("admin");
+        assertNotNull(admin);
+        assertEquals("admin", admin.getUsername());
+        assertNotNull(UserDao.findBySsoTicket("starling-sso-ticket"));
+
+        List<NavigatorCategoryEntity> categories = NavigatorDao.findAll();
+        assertEquals(7, categories.size());
+        assertEquals(List.of(3, 4), NavigatorDao.findByParentId(1).stream().map(NavigatorCategoryEntity::getId).toList());
+
+        List<PublicRoomEntity> publicRooms = PublicRoomDao.findVisibleByCategoryId(3);
+        assertEquals(2, publicRooms.size());
+        assertEquals(101, PublicRoomDao.findByPort(101).getId());
+        assertEquals(List.of(101, 102), PublicRoomDao.findByIds(List.of(101, 102)).stream().map(PublicRoomEntity::getId).toList());
+
+        RoomModelEntity privateModel = RoomModelDao.findByModelName("MODEL_A", false);
+        assertNotNull(privateModel);
+        assertEquals("model_a", privateModel.getModelName());
+        assertTrue(RoomModelDao.findByModelName("lobby_a", true).isPublicModel());
+    }
+
+    @Test
+    void bootstrapIsIdempotent() throws Exception {
+        DatabaseBootstrap.ensureSchema(config);
+        DatabaseBootstrap.seedDefaults();
+
+        assertEquals(1, countRows("users", "username = 'admin'"));
+        assertEquals(7, countRows("rooms_categories", null));
+        assertEquals(7, countRows("room_models", null));
+        assertEquals(4, countRows("rooms", null));
+        assertEquals(3, countRows("public_rooms", null));
+    }
+
+    @Test
+    void roomDaoSupportsInsertQueryUpdateAndDelete() {
+        String token = "db-room-" + UUID.randomUUID().toString().substring(0, 8);
+        RoomEntity room = new RoomEntity();
+        room.setCategoryId(5);
+        room.setOwnerId(UserDao.findByUsername("admin").getId());
+        room.setOwnerName("DBTestOwner");
+        room.setName(token);
+        room.setDescription("integration-" + token);
+        room.setModelName("model_a");
+        room.setHeightmap("xxxx\rxxxx");
+        room.setWallpaper("201");
+        room.setFloorPattern("101");
+        room.setLandscape("0.1");
+        room.setDoorMode(0);
+        room.setDoorPassword("");
+        room.setCurrentUsers(6);
+        room.setMaxUsers(22);
+        room.setAbsoluteMaxUsers(44);
+        room.setShowOwnerName(1);
+        room.setAllowTrading(1);
+        room.setAllowOthersMoveFurniture(0);
+        room.setAlertState(0);
+        room.setNavigatorFilter("party");
+        room.setPort(0);
+
+        RoomEntity persisted = RoomDao.save(room);
+        assertTrue(persisted.getId() > 0);
+
+        RoomEntity fetched = RoomDao.findById(persisted.getId());
+        assertNotNull(fetched);
+        assertEquals(token, fetched.getName());
+        assertTrue(RoomDao.findByOwner("dbtestowner").stream().anyMatch(candidate -> candidate.getId() == persisted.getId()));
+        assertTrue(RoomDao.findByCategoryId(5).stream().anyMatch(candidate -> candidate.getId() == persisted.getId()));
+        assertTrue(RoomDao.findByIds(List.of(persisted.getId())).stream().anyMatch(candidate -> candidate.getId() == persisted.getId()));
+        assertTrue(RoomDao.search(token.toUpperCase()).stream().anyMatch(candidate -> candidate.getId() == persisted.getId()));
+        assertTrue(RoomDao.findRecommended(10).stream().anyMatch(candidate -> candidate.getId() == persisted.getId()));
+
+        fetched.setName(token + "-updated");
+        fetched.setCurrentUsers(9);
+        RoomDao.save(fetched);
+
+        RoomEntity updated = RoomDao.findById(persisted.getId());
+        assertEquals(token + "-updated", updated.getName());
+        assertEquals(9, updated.getCurrentUsers());
+
+        RoomDao.delete(persisted.getId());
+        assertNull(RoomDao.findById(persisted.getId()));
+    }
+
+    @Test
+    void favoritesRightsAndUserRoomReferencesWork() throws Exception {
+        UserEntity admin = UserDao.findByUsername("admin");
+        assertNotNull(admin);
+
+        RoomEntity room = new RoomEntity();
+        room.setCategoryId(5);
+        room.setOwnerId(admin.getId());
+        room.setOwnerName(admin.getUsername());
+        room.setName("fav-room-" + UUID.randomUUID().toString().substring(0, 8));
+        room.setDescription("favorite room");
+        room.setModelName("model_b");
+        room.setHeightmap("xxxx");
+        room.setWallpaper("200");
+        room.setFloorPattern("100");
+        room.setLandscape("0.2");
+        room.setDoorMode(0);
+        room.setDoorPassword("");
+        room.setCurrentUsers(0);
+        room.setMaxUsers(25);
+        room.setAbsoluteMaxUsers(50);
+        room.setShowOwnerName(1);
+        room.setAllowTrading(1);
+        room.setAllowOthersMoveFurniture(0);
+        room.setAlertState(0);
+        room.setNavigatorFilter("");
+        room.setPort(0);
+        room = RoomDao.save(room);
+
+        admin.setSelectedRoomId(room.getId());
+        admin.setHomeRoom(room.getId());
+        UserDao.save(admin);
+        UserDao.clearRoomReferences(room.getId());
+
+        UserEntity refreshedAdmin = UserDao.findByUsername("admin");
+        assertEquals(0, refreshedAdmin.getSelectedRoomId());
+        assertEquals(0, refreshedAdmin.getHomeRoom());
+
+        RoomFavoriteDao.addFavorite(admin.getId(), 0, room.getId());
+        RoomFavoriteDao.addFavorite(admin.getId(), 1, 101);
+        assertEquals(2, RoomFavoriteDao.countByUserId(admin.getId()));
+        assertTrue(RoomFavoriteDao.exists(admin.getId(), 0, room.getId()));
+        assertTrue(RoomFavoriteDao.exists(admin.getId(), 1, 101));
+
+        List<RoomFavoriteEntity> favorites = RoomFavoriteDao.findByUserId(admin.getId());
+        assertEquals(2, favorites.size());
+
+        RoomFavoriteDao.removeFavorite(admin.getId(), 0, room.getId());
+        assertFalse(RoomFavoriteDao.exists(admin.getId(), 0, room.getId()));
+        RoomFavoriteDao.deleteByPublicRoomId(101);
+        assertFalse(RoomFavoriteDao.exists(admin.getId(), 1, 101));
+
+        insertRoomRight(room.getId(), admin.getId());
+        assertEquals(1, countRows("room_rights", "room_id = " + room.getId()));
+        RoomRightDao.deleteByRoomId(room.getId());
+        assertEquals(0, countRows("room_rights", "room_id = " + room.getId()));
+
+        RoomDao.delete(room.getId());
+    }
+
+    private boolean tableExists(String tableName) throws Exception {
+        try (Connection connection = DriverManager.getConnection(config.jdbcUrl(), config.dbUsername(), config.dbPassword())) {
+            ResultSet tables = connection.getMetaData().getTables(config.dbName(), null, tableName, null);
+            return tables.next();
+        }
+    }
+
+    private int countRows(String tableName, String whereClause) throws Exception {
+        String sql = "SELECT COUNT(*) FROM " + tableName + (whereClause == null || whereClause.isBlank() ? "" : " WHERE " + whereClause);
+        try (Connection connection = DriverManager.getConnection(config.jdbcUrl(), config.dbUsername(), config.dbPassword());
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(sql)) {
+            resultSet.next();
+            return resultSet.getInt(1);
+        }
+    }
+
+    private void insertRoomRight(int roomId, int userId) throws Exception {
+        try (Connection connection = DriverManager.getConnection(config.jdbcUrl(), config.dbUsername(), config.dbPassword());
+             PreparedStatement statement = connection.prepareStatement(
+                     "INSERT INTO room_rights (room_id, user_id) VALUES (?, ?)"
+             )) {
+            statement.setInt(1, roomId);
+            statement.setInt(2, userId);
+            statement.executeUpdate();
+        }
+    }
+}
