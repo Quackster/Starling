@@ -179,7 +179,6 @@ public class Session {
 
     public enum CryptoMode {
         NONE,
-        LEGACY,
         INIT
     }
 }

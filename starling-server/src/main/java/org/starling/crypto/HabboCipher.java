@@ -3,15 +3,14 @@ package org.starling.crypto;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Director-era stream cipher wrapper for both login variants.
+ * Director-era stream cipher wrapper for hh_entry_init.
  *
- * Incoming client traffic after DH uses:
- * - legacy hh_entry: RC4-style PRGA with the shared secret
- * - hh_entry_init: init-socket PRGA with XOR-keyed shared secret
+ * Incoming client traffic after DH uses the init-socket PRGA with an XOR-keyed
+ * shared secret.
  *
- * Optional server->client encryption uses the Director SECRETKEY flow where the
- * client sends an obfuscated integer seed, then initializes a second cipher for
- * deciphering inbound hotel packets.
+ * Optional server->client encryption still uses the Director SECRETKEY flow
+ * where the client sends an obfuscated integer seed, then initializes a second
+ * cipher for deciphering inbound hotel packets.
  */
 public class HabboCipher {
 
@@ -31,16 +30,10 @@ public class HabboCipher {
             "eb11nmhdwbn733c2xjv1qln3ukpe0hvce0ylr02s12sv96rus2ohexr9cp8rufbmb1mdb732j1l3kehc0l0s2v6u2hx9prfmu"
                     .getBytes(StandardCharsets.US_ASCII);
     private final int[] sbox = new int[256];
-    private Algorithm algorithm = Algorithm.LEGACY;
+    private Algorithm algorithm = Algorithm.STANDARD;
     private boolean discardPostFrameBytes;
     private int q;
     private int j;
-
-    public void initLegacy(byte[] sharedKey) {
-        this.algorithm = Algorithm.LEGACY;
-        this.discardPostFrameBytes = false;
-        initSboxFromBytes(sharedKey);
-    }
 
     public void initInitSocket(byte[] sharedKey) {
         this.algorithm = Algorithm.INIT_SOCKET;
@@ -55,8 +48,8 @@ public class HabboCipher {
         premix(INIT_PREMIX_STRING, 52);
     }
 
-    public void initLegacyServerToClient(int secretKey) {
-        this.algorithm = Algorithm.LEGACY;
+    public void initServerToClientSecretKey(int secretKey) {
+        this.algorithm = Algorithm.STANDARD;
         this.discardPostFrameBytes = false;
         initSboxFromArtificialKey(secretKey);
         premix(SERVER_TO_CLIENT_PREMIX, 17);
@@ -146,7 +139,7 @@ public class HabboCipher {
     }
 
     private byte[] applyKeystream(byte[] input) {
-        return algorithm == Algorithm.INIT_SOCKET ? runInitSocketPrga(input) : runLegacyPrga(input);
+        return algorithm == Algorithm.INIT_SOCKET ? runInitSocketPrga(input) : runStandardPrga(input);
     }
 
     private void advancePostFrameState() {
@@ -155,7 +148,7 @@ public class HabboCipher {
         }
     }
 
-    private byte[] runLegacyPrga(byte[] input) {
+    private byte[] runStandardPrga(byte[] input) {
         byte[] output = new byte[input.length];
 
         for (int index = 0; index < input.length; index++) {
@@ -250,7 +243,7 @@ public class HabboCipher {
     }
 
     private enum Algorithm {
-        LEGACY,
+        STANDARD,
         INIT_SOCKET
     }
 }

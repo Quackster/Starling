@@ -6,18 +6,13 @@ public final class IncomingPackets {
 
     // Handshake
     public static final int INIT_CRYPTO = 206;
-    public static final int GENERATEKEY_LEGACY = 202;
     public static final int GENERATEKEY = 2002;
     public static final int SECRETKEY = 207;
-    public static final int VERSIONCHECK_LEGACY = 5;
     public static final int VERSIONCHECK = 1170;
-    public static final int UNIQUEID_LEGACY = 6;
     public static final int UNIQUEID = 813;
-    public static final int GET_SESSION_PARAMETERS_LEGACY = 181;
     public static final int GET_SESSION_PARAMETERS = 1817;
 
     // Login
-    public static final int TRY_LOGIN_LEGACY = 4;
     public static final int TRY_LOGIN = 756;
     public static final int SSO = 204;
     public static final int GET_INFO = 7;

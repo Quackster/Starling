@@ -35,18 +35,13 @@ public class MessageRouter {
     public void registerAll() {
         // Handshake
         register(IncomingPackets.INIT_CRYPTO, HandshakeHandlers::handleInitCrypto);
-        register(IncomingPackets.GENERATEKEY_LEGACY, HandshakeHandlers::handleGenerateKey);
         register(IncomingPackets.GENERATEKEY, HandshakeHandlers::handleGenerateKey);
         register(IncomingPackets.SECRETKEY, HandshakeHandlers::handleSecretKey);
-        register(IncomingPackets.VERSIONCHECK_LEGACY, HandshakeHandlers::handleVersionCheck);
         register(IncomingPackets.VERSIONCHECK, HandshakeHandlers::handleVersionCheck);
-        register(IncomingPackets.UNIQUEID_LEGACY, HandshakeHandlers::handleUniqueId);
         register(IncomingPackets.UNIQUEID, HandshakeHandlers::handleUniqueId);
-        register(IncomingPackets.GET_SESSION_PARAMETERS_LEGACY, HandshakeHandlers::handleGetSessionParameters);
         register(IncomingPackets.GET_SESSION_PARAMETERS, HandshakeHandlers::handleGetSessionParameters);
 
         // Login
-        register(IncomingPackets.TRY_LOGIN_LEGACY, LoginHandlers::handleTryLogin);
         register(IncomingPackets.TRY_LOGIN, LoginHandlers::handleTryLogin);
         register(IncomingPackets.SSO, LoginHandlers::handleSSO);
         register(IncomingPackets.GET_INFO, LoginHandlers::handleGetInfo);

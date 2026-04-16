@@ -22,16 +22,11 @@ import java.util.Arrays;
 
 public final class StarlingClient implements AutoCloseable {
 
-    private static final BigInteger LEGACY_PRIME = new BigInteger(
-            "455de99a7bcd4cf7a2d2ed03ad35ee047750cea4b446cd7e297102ebec1daaad", 16);
-    private static final BigInteger LEGACY_GENERATOR = new BigInteger(
-            "3ef9fba7796ba6145b4dac13739bb5604ee70e2dff95f9c5a846633a4e6e1a5b", 16);
     private static final BigInteger INIT_PRIME = new BigInteger(
             "A8EA077D4943CC98E53C21F5F7C7A0DB8BCE7506F8361A7C1690392F2B090C96" +
             "EE8BC67BAA0DCB7183F16401F5CB838E3B6EE86B9EF2E5D0F3C49D4DC4EDC2B9", 16);
     private static final BigInteger INIT_GENERATOR = BigInteger.valueOf(5L);
 
-    private static final String LEGACY_PRIVATE_CHARS = "012345679ABCDEF";
     private static final String INIT_PRIVATE_CHARS = "012345679abcdef";
     private static final String SECRET_KEY_CHARS = "abcdefghijklmnopqrstuvwxyz1234567890";
 
@@ -82,22 +77,14 @@ public final class StarlingClient implements AutoCloseable {
         int serverToClient = readSingleInt(cryptoParameters.body());
         log("serverToClient=" + serverToClient);
 
-        DhKeyPair dh = config.mode == Mode.LEGACY
-                ? DhKeyPair.legacy(random)
-                : DhKeyPair.init(random);
-
-        int generateKeyOpcode = config.mode == Mode.LEGACY
-                ? IncomingPackets.GENERATEKEY_LEGACY
-                : IncomingPackets.GENERATEKEY;
-        sendPlainString(generateKeyOpcode, dh.publicKeyHex);
+        DhKeyPair dh = DhKeyPair.init(random);
+        sendPlainString(IncomingPackets.GENERATEKEY, dh.publicKeyHex);
 
         ServerPacket serverSecretKey = readPacket();
         expectOpcode(serverSecretKey, OutgoingPackets.SERVER_SECRET_KEY, "SERVER_SECRET_KEY");
 
         byte[] sharedKey = dh.computeSharedKey(serverSecretKey.bodyString());
-        outgoingCipher = config.mode == Mode.LEGACY
-                ? ClientCipher.legacy(sharedKey)
-                : ClientCipher.init(sharedKey);
+        outgoingCipher = ClientCipher.init(sharedKey);
 
         if (serverToClient != 0) {
             String encodedSecretKey = createEncodedSecretKey();
@@ -127,7 +114,7 @@ public final class StarlingClient implements AutoCloseable {
         input = socket.getInputStream();
         output = socket.getOutputStream();
         serverReader = new ServerFrameReader(input);
-        log("connected " + config.host + ":" + config.port + " mode=" + config.mode.id);
+        log("connected " + config.host + ":" + config.port + " mode=init");
     }
 
     private void sendPlain(int opcode) throws IOException {
@@ -255,31 +242,10 @@ public final class StarlingClient implements AutoCloseable {
         }
     }
 
-    private enum Mode {
-        LEGACY("legacy"),
-        INIT("init");
-
-        private final String id;
-
-        Mode(String id) {
-            this.id = id;
-        }
-
-        static Mode parse(String value) {
-            for (Mode mode : values()) {
-                if (mode.id.equalsIgnoreCase(value)) {
-                    return mode;
-                }
-            }
-            throw new IllegalArgumentException("Unsupported mode: " + value);
-        }
-    }
-
     private record Config(
             String host,
             int port,
             int timeoutMs,
-            Mode mode,
             int version,
             String clientUrl,
             String extVarsUrl,
@@ -290,7 +256,6 @@ public final class StarlingClient implements AutoCloseable {
             String host = "127.0.0.1";
             int port = 30000;
             int timeoutMs = 5000;
-            Mode mode = Mode.INIT;
             int version = 26;
             String clientUrl = "";
             String extVarsUrl = "";
@@ -303,7 +268,12 @@ public final class StarlingClient implements AutoCloseable {
                     case "--host" -> host = args[++i];
                     case "--port" -> port = Integer.parseInt(args[++i]);
                     case "--timeout-ms" -> timeoutMs = Integer.parseInt(args[++i]);
-                    case "--mode" -> mode = Mode.parse(args[++i]);
+                    case "--mode" -> {
+                        String value = args[++i];
+                        if (!"init".equalsIgnoreCase(value)) {
+                            throw new IllegalArgumentException("Only hh_entry_init mode is supported: " + value);
+                        }
+                    }
                     case "--version" -> version = Integer.parseInt(args[++i]);
                     case "--client-url" -> clientUrl = args[++i];
                     case "--ext-vars-url" -> extVarsUrl = args[++i];
@@ -313,7 +283,7 @@ public final class StarlingClient implements AutoCloseable {
                 }
             }
 
-            return new Config(host, port, timeoutMs, mode, version, clientUrl, extVarsUrl, machineId, handshakeOnly);
+            return new Config(host, port, timeoutMs, version, clientUrl, extVarsUrl, machineId, handshakeOnly);
         }
     }
 
@@ -393,10 +363,6 @@ public final class StarlingClient implements AutoCloseable {
     }
 
     private record DhKeyPair(BigInteger prime, BigInteger generator, BigInteger privateKey, String publicKeyHex) {
-        private static DhKeyPair legacy(SecureRandom random) {
-            return generate(random, LEGACY_PRIME, LEGACY_GENERATOR, 30, LEGACY_PRIVATE_CHARS, 0);
-        }
-
         private static DhKeyPair init(SecureRandom random) {
             return generate(random, INIT_PRIME, INIT_GENERATOR, 40, INIT_PRIVATE_CHARS, 72);
         }
@@ -415,7 +381,7 @@ public final class StarlingClient implements AutoCloseable {
             for (int attempt = 0; attempt < 5; attempt++) {
                 String privateHex = randomHex(random, privateHexBytes * 2, alphabet);
                 privateKey = new BigInteger(privateHex, 16);
-                publicKeyHex = generator.modPow(privateKey, prime).toString(16);
+                publicKeyHex = generator.modPow(privateKey, prime).toString(16).toUpperCase();
                 if (publicKeyHex.length() >= minimumPublicLength) {
                     break;
                 }
@@ -450,10 +416,6 @@ public final class StarlingClient implements AutoCloseable {
 
     private interface ClientCipher {
         byte[] encryptFrame(byte[] plaintext);
-
-        static ClientCipher legacy(byte[] sharedKey) {
-            return new OldSocketCipher(sharedKey, false);
-        }
 
         static ClientCipher init(byte[] sharedKey) {
             return new InitSocketCipher(sharedKey);
@@ -518,58 +480,6 @@ public final class StarlingClient implements AutoCloseable {
                     swap(tertiaryIndex, tertiarySwapIndex);
                 }
 
-                int keyByte = sbox[(sbox[q] + sbox[j]) & 0xFF];
-                output[index] = (byte) ((input[index] & 0xFF) ^ keyByte);
-            }
-            return output;
-        }
-
-        private void swap(int left, int right) {
-            int temp = sbox[left];
-            sbox[left] = sbox[right];
-            sbox[right] = temp;
-        }
-    }
-
-    private static final class OldSocketCipher implements ClientCipher {
-        private final int[] sbox = new int[256];
-        private int q;
-        private int j;
-
-        private OldSocketCipher(byte[] keyBytes, boolean artificial) {
-            if (artificial) {
-                throw new IllegalArgumentException("Artificial old-socket keys use ServerCipher");
-            }
-            initSbox(keyBytes);
-        }
-
-        @Override
-        public byte[] encryptFrame(byte[] plaintext) {
-            return encodeHex(apply(plaintext));
-        }
-
-        private void initSbox(byte[] keyBytes) {
-            int[] key = new int[256];
-            for (int i = 0; i < 256; i++) {
-                key[i] = keyBytes[i % keyBytes.length] & 0xFF;
-                sbox[i] = i;
-            }
-
-            int swapIndex = 0;
-            for (int i = 0; i < 256; i++) {
-                swapIndex = (swapIndex + sbox[i] + key[i]) & 0xFF;
-                swap(i, swapIndex);
-            }
-            q = 0;
-            j = 0;
-        }
-
-        private byte[] apply(byte[] input) {
-            byte[] output = new byte[input.length];
-            for (int index = 0; index < input.length; index++) {
-                q = (q + 1) & 0xFF;
-                j = (j + sbox[q]) & 0xFF;
-                swap(q, j);
                 int keyByte = sbox[(sbox[q] + sbox[j]) & 0xFF];
                 output[index] = (byte) ((input[index] & 0xFF) ^ keyByte);
             }

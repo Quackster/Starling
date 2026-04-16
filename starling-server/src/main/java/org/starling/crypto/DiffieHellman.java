@@ -3,41 +3,32 @@ package org.starling.crypto;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 
-/**
- * Diffie-Hellman key exchange helper for the legacy and init-socket login flows.
- */
+/** Diffie-Hellman key exchange helper for the hh_entry_init login flow. */
 public final class DiffieHellman {
 
-    private static final BigInteger LEGACY_PRIME = new BigInteger(
-            "455de99a7bcd4cf7a2d2ed03ad35ee047750cea4b446cd7e297102ebec1daaad", 16);
-    private static final BigInteger LEGACY_GENERATOR = new BigInteger(
-            "3ef9fba7796ba6145b4dac13739bb5604ee70e2dff95f9c5a846633a4e6e1a5b", 16);
     private static final BigInteger INIT_PRIME = new BigInteger(
             "A8EA077D4943CC98E53C21F5F7C7A0DB8BCE7506F8361A7C1690392F2B090C96" +
             "EE8BC67BAA0DCB7183F16401F5CB838E3B6EE86B9EF2E5D0F3C49D4DC4EDC2B9", 16);
     private static final BigInteger INIT_GENERATOR = BigInteger.valueOf(5L);
+    private static final String INIT_PRIVATE_CHARS = "012345679abcdef";
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final BigInteger prime;
     private final BigInteger privateKey;
     private final BigInteger publicKey;
 
-    private DiffieHellman(BigInteger prime, BigInteger generator) {
+    private DiffieHellman(BigInteger prime, BigInteger privateKey, BigInteger publicKey) {
         this.prime = prime;
-        this.privateKey = new BigInteger(prime.bitLength() - 2, RANDOM);
-        this.publicKey = generator.modPow(privateKey, prime);
-    }
-
-    public static DiffieHellman legacy() {
-        return new DiffieHellman(LEGACY_PRIME, LEGACY_GENERATOR);
+        this.privateKey = privateKey;
+        this.publicKey = publicKey;
     }
 
     public static DiffieHellman init() {
-        return new DiffieHellman(INIT_PRIME, INIT_GENERATOR);
+        return generate(INIT_PRIME, INIT_GENERATOR, 40, INIT_PRIVATE_CHARS, 72, 4);
     }
 
     public String getPublicKeyHex() {
-        return publicKey.toString(16);
+        return publicKey.toString(16).toUpperCase();
     }
 
     public byte[] computeSharedSecret(String clientPublicKeyHex) {
@@ -54,5 +45,38 @@ public final class DiffieHellman {
             result[i] = (byte) Integer.parseInt(sharedHex.substring(i * 2, i * 2 + 2), 16);
         }
         return result;
+    }
+
+    private static DiffieHellman generate(
+            BigInteger prime,
+            BigInteger generator,
+            int privateHexBytes,
+            String alphabet,
+            int minimumPublicLength,
+            int maxAttempts
+    ) {
+        BigInteger privateKey = BigInteger.ONE;
+        BigInteger publicKey = BigInteger.ONE;
+        String publicKeyHex = "1";
+
+        for (int attempt = 0; attempt < maxAttempts; attempt++) {
+            String privateHex = randomHex(privateHexBytes * 2, alphabet);
+            privateKey = new BigInteger(privateHex, 16);
+            publicKey = generator.modPow(privateKey, prime);
+            publicKeyHex = publicKey.toString(16);
+            if (publicKeyHex.length() >= minimumPublicLength) {
+                break;
+            }
+        }
+
+        return new DiffieHellman(prime, privateKey, publicKey);
+    }
+
+    private static String randomHex(int length, String alphabet) {
+        StringBuilder value = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            value.append(alphabet.charAt(RANDOM.nextInt(alphabet.length())));
+        }
+        return value.toString();
     }
 }

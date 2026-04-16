@@ -10,7 +10,7 @@ import org.starling.net.session.Session;
  * Encodes server->client messages.
  * Plaintext wire format is [2-byte B64 header][params][0x01 terminator].
  * When server->client crypto is enabled, the full frame is encrypted and
- * hex-encoded to match the legacy Director client transport.
+ * hex-encoded to match the Director SECRETKEY transport.
  */
 public class GameEncoder extends MessageToByteEncoder<ServerMessage> {
 

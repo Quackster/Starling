@@ -79,6 +79,11 @@ public class GameDecoder extends ByteToMessageDecoder {
 
         while (true) {
             if (in.readableBytes() < 6) {
+                if (in.readableBytes() > 0 && log.isDebugEnabled()) {
+                    log.debug("Encrypted session {} buffered {} hex chars, waiting for frame prefix",
+                            session.getRemoteAddress(),
+                            in.readableBytes());
+                }
                 if (in.readableBytes() >= 3 && !looksLikeHex(in, in.readableBytes())) {
                     log.warn("Session {} stayed in plaintext after crypto setup, disabling encrypted decoding",
                             session.getRemoteAddress());
@@ -121,6 +126,17 @@ public class GameDecoder extends ByteToMessageDecoder {
 
             int bodyHexLength = bodyLength * 2;
             if (in.readableBytes() < bodyHexLength) {
+                if (log.isDebugEnabled()) {
+                    log.debug(
+                            "Encrypted session {} awaiting full frame: bodyLen={} needHex={} availableHex={} prefixHex={} prefixPlain={}",
+                            session.getRemoteAddress(),
+                            bodyLength,
+                            bodyHexLength,
+                            in.readableBytes(),
+                            formatWire(lengthHex),
+                            formatWire(decryptedLength)
+                    );
+                }
                 in.resetReaderIndex();
                 return;
             }

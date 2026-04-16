@@ -14,13 +14,14 @@ import org.starling.net.session.Session;
 public final class HandshakeHandlers {
 
     private static final Logger log = LogManager.getLogger(HandshakeHandlers.class);
-    private static final boolean SERVER_TO_CLIENT_ENCRYPTION = true;
+    private static final boolean SERVER_TO_CLIENT_ENCRYPTION = false;
 
     private HandshakeHandlers() {}
 
     /**
      * INIT_CRYPTO (206) - Client requests crypto setup.
-     * Respond with CryptoParameters (277) containing VL64(0) for serverToClient=false,
+     * Respond with CryptoParameters (277) containing VL64(0) when the client
+     * should not negotiate server->client encryption,
      * then generate a DH keypair for this session.
      */
     public static void handleInitCrypto(Session session, ClientMessage msg) {
@@ -33,27 +34,22 @@ public final class HandshakeHandlers {
     }
 
     /**
-     * GENERATEKEY (202/2002) - Client sends its DH public key.
-     * Compute the shared secret, initialize the client->server cipher for the
-     * selected login branch, then send our public key back.
+     * GENERATEKEY (2002) - Client sends its DH public key.
+     * Compute the shared secret, initialize the hh_entry_init client->server
+     * cipher, then send our public key back.
      */
     public static void handleGenerateKey(Session session, ClientMessage msg) {
         String clientPublicKeyHex = msg.readString();
-        boolean legacyHandshake = msg.getOpcode() == IncomingPackets.GENERATEKEY_LEGACY;
-        DiffieHellman dh = legacyHandshake ? DiffieHellman.legacy() : DiffieHellman.init();
+        DiffieHellman dh = DiffieHellman.init();
         session.setDiffieHellman(dh);
-        session.setCryptoMode(legacyHandshake ? Session.CryptoMode.LEGACY : Session.CryptoMode.INIT);
+        session.setCryptoMode(Session.CryptoMode.INIT);
 
         // Compute shared secret
         byte[] sharedSecret = dh.computeSharedSecret(clientPublicKeyHex);
         log.debug("DH shared secret computed ({} bytes)", sharedSecret.length);
 
         HabboCipher cipher = new HabboCipher();
-        if (legacyHandshake) {
-            cipher.initLegacy(sharedSecret);
-        } else {
-            cipher.initInitSocket(sharedSecret);
-        }
+        cipher.initInitSocket(sharedSecret);
         session.setInboundCipher(cipher);
 
         // Send our public key to the client (ServerSecretKey, opcode 1)
@@ -66,8 +62,7 @@ public final class HandshakeHandlers {
         // Mark session as encrypted - all subsequent incoming messages will be decrypted
         session.setInboundEncrypted(true);
 
-        log.info("DH key exchange complete using {} crypto for {}",
-                legacyHandshake ? "legacy" : "init socket",
+        log.info("DH key exchange complete using init socket crypto for {}",
                 session.getRemoteAddress());
     }
 
@@ -87,15 +82,15 @@ public final class HandshakeHandlers {
             return;
         }
 
-        // Both normal hotel-socket branches use the legacy/artificial-key
-        // SECRETKEY decoder for server->client traffic.
+        // hh_entry_init still uses the Director SECRETKEY server->client cipher
+        // after the init-socket DH exchange.
         HabboCipher cipher = new HabboCipher();
-        cipher.initLegacyServerToClient(secretKey);
+        cipher.initServerToClientSecretKey(secretKey);
         session.setOutboundCipher(cipher);
         session.setOutboundEncrypted(true);
         session.send(new ServerMessage(OutgoingPackets.END_OF_CRYPTO_PARAMS));
 
-        log.info("Enabled server->client legacy SECRETKEY crypto for {} ({})",
+        log.info("Enabled server->client SECRETKEY crypto for {} ({})",
                 session.getRemoteAddress(),
                 cryptoMode.name().toLowerCase());
     }
@@ -131,8 +126,8 @@ public final class HandshakeHandlers {
     public static void handleGetSessionParameters(Session session, ClientMessage msg) {
         ServerMessage response = new ServerMessage(OutgoingPackets.SESSION_PARAMETERS);
 
-        // Match the field IDs used by the r26 client and Kepler so both hh_entry
-        // branches see a complete, stable configuration block.
+        // Match the field IDs used by the r26 hh_entry_init client so it sees a
+        // complete, stable configuration block.
         response.writeInt(10);
         response.writeInt(0).writeInt(0);               // conf_coppa
         response.writeInt(1).writeInt(0);               // conf_voucher
