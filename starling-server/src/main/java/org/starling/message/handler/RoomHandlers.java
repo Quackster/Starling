@@ -11,19 +11,21 @@ import org.starling.net.codec.ServerMessage;
 import org.starling.net.session.Session;
 import org.starling.storage.dao.PublicRoomDao;
 import org.starling.storage.dao.RoomDao;
+import org.starling.storage.dao.RoomRightDao;
 import org.starling.storage.entity.PublicRoomEntity;
 import org.starling.storage.entity.RoomEntity;
 
 public final class RoomHandlers {
 
     private static final Logger log = LogManager.getLogger(RoomHandlers.class);
+    private static final String HOLOGRAPH_ROOM_URL = "http://wwww.vista4life.com/bf.php?p=emu";
 
     private RoomHandlers() {}
 
     public static void handleGetInterstitial(Session session, ClientMessage msg) {
         String slot = msg.readRawBody().trim();
         log.debug("Room interstitial requested: '{}'", slot);
-        session.send(new ServerMessage(OutgoingPackets.INTERSTITIAL_DATA).writeInt(0));
+        session.send(buildSingleZeroMessage(OutgoingPackets.INTERSTITIAL_DATA));
     }
 
     public static void handleRoomDirectory(Session session, ClientMessage msg) {
@@ -41,6 +43,7 @@ public final class RoomHandlers {
             }
 
             session.send(new ServerMessage(OutgoingPackets.OPC_OK));
+            sendRoomUrl(session);
             return;
         }
 
@@ -110,12 +113,9 @@ public final class RoomHandlers {
 
         RoomLayoutRegistry.RoomVisuals visuals = RoomLayoutRegistry.forPrivateRoom(room);
         session.setRoomState(new Session.RoomState(true, false, room.getId(), visuals.marker(), 0));
-        sendRoomUrl(session);
         session.send(buildRoomReadyMessage(visuals.marker(), room.getId()));
-        if (isOwner(player, room)) {
-            session.send(new ServerMessage(OutgoingPackets.ROOM_RIGHTS_OWNER));
-        }
         sendPrivateRoomProperties(session, visuals);
+        sendRoomRights(session, player, room);
     }
 
     public static void handleGetHeightmap(Session session, ClientMessage msg) {
@@ -173,7 +173,7 @@ public final class RoomHandlers {
     }
 
     public static void handleGetRoomAd(Session session, ClientMessage msg) {
-        session.send(new ServerMessage(OutgoingPackets.ROOM_AD).writeInt(0));
+        session.send(buildSingleZeroMessage(OutgoingPackets.ROOM_AD));
     }
 
     public static void handleGetSpectatorAmount(Session session, ClientMessage msg) {
@@ -213,6 +213,7 @@ public final class RoomHandlers {
 
         RoomLayoutRegistry.RoomVisuals visuals = RoomLayoutRegistry.forPublicRoom(room);
         session.setRoomState(new Session.RoomState(true, true, room.getId(), visuals.marker(), doorId));
+        session.send(new ServerMessage(OutgoingPackets.OPC_OK));
         sendRoomUrl(session);
         session.send(buildRoomReadyMessage(visuals.marker(), room.getId()));
     }
@@ -222,16 +223,17 @@ public final class RoomHandlers {
     }
 
     private static void sendRoomUrl(Session session) {
-        session.send(new ServerMessage(OutgoingPackets.ROOM_URL).writeString("/client/"));
+        session.send(new ServerMessage(OutgoingPackets.ROOM_URL).writeRaw(HOLOGRAPH_ROOM_URL));
     }
 
     private static ServerMessage buildRoomReadyMessage(String marker, int roomId) {
         String safeMarker = marker == null ? "" : marker.trim();
         log.debug("Sending ROOM_READY payload marker='{}' roomId={}", safeMarker, roomId);
-        return new ServerMessage(OutgoingPackets.ROOM_READY)
-                .writeString(safeMarker)
-                .writeString(" ")
-                .writeInt(roomId);
+        return new ServerMessage(OutgoingPackets.ROOM_READY).writeRaw(safeMarker + " " + roomId);
+    }
+
+    private static ServerMessage buildSingleZeroMessage(int header) {
+        return new ServerMessage(header).writeRaw("0");
     }
 
     private static String formatHeight(double value) {
@@ -242,9 +244,9 @@ public final class RoomHandlers {
     }
 
     private static void sendPrivateRoomProperties(Session session, RoomLayoutRegistry.RoomVisuals visuals) {
+        sendFlatProperty(session, "landscape", visuals.landscape());
         sendFlatProperty(session, "wallpaper", visuals.wallpaper());
         sendFlatProperty(session, "floor", visuals.floorPattern());
-        sendFlatProperty(session, "landscape", visuals.landscape());
     }
 
     private static void sendFlatProperty(Session session, String key, String value) {
@@ -253,6 +255,21 @@ public final class RoomHandlers {
         }
         log.debug("Sending flat property {}={}", key, value);
         session.send(new ServerMessage(OutgoingPackets.FLAT_PROPERTY).writeRaw(key + "/" + value));
+    }
+
+    private static void sendRoomRights(Session session, Player player, RoomEntity room) {
+        if (player == null || room == null) {
+            return;
+        }
+
+        boolean owner = isOwner(player, room);
+        boolean controller = owner || RoomRightDao.exists(room.getId(), player.getId());
+        if (owner) {
+            session.send(new ServerMessage(OutgoingPackets.ROOM_RIGHTS_OWNER));
+        }
+        if (controller) {
+            session.send(new ServerMessage(OutgoingPackets.ROOM_RIGHTS_CONTROLLER));
+        }
     }
 
     private static RoomLayoutRegistry.RoomVisuals resolveRoomVisuals(Session.RoomState roomState) {

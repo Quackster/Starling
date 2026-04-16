@@ -20,19 +20,16 @@ class RoomEntryPacketStructureTest {
     @Test
     void roomUrlUsesSingleTerminatedString() {
         assertSerialized(
-                new ServerMessage(OutgoingPackets.ROOM_URL).writeString("/client/"),
-                "Bf/client/[2][1]"
+                new ServerMessage(OutgoingPackets.ROOM_URL).writeRaw("http://wwww.vista4life.com/bf.php?p=emu"),
+                "Bfhttp://wwww.vista4life.com/bf.php?p=emu[1]"
         );
     }
 
     @Test
-    void roomReadyMatchesLisbonStructure() {
+    void roomReadyMatchesHolographStructure() {
         assertSerialized(
-                new ServerMessage(OutgoingPackets.ROOM_READY)
-                        .writeString("model_a")
-                        .writeString(" ")
-                        .writeInt(1),
-                "AEmodel_a[2] [2]I[1]"
+                new ServerMessage(OutgoingPackets.ROOM_READY).writeRaw("model_a 1"),
+                "AEmodel_a 1[1]"
         );
     }
 
@@ -46,12 +43,12 @@ class RoomEntryPacketStructureTest {
 
     @Test
     void roomAdWritesSingleZeroInteger() {
-        assertSerialized(new ServerMessage(OutgoingPackets.ROOM_AD).writeInt(0), "CPH[1]");
+        assertSerialized(new ServerMessage(OutgoingPackets.ROOM_AD).writeRaw("0"), "CP0[1]");
     }
 
     @Test
     void interstitialWritesSingleZeroInteger() {
-        assertSerialized(new ServerMessage(OutgoingPackets.INTERSTITIAL_DATA).writeInt(0), "DBH[1]");
+        assertSerialized(new ServerMessage(OutgoingPackets.INTERSTITIAL_DATA).writeRaw("0"), "DB0[1]");
     }
 
     @Test

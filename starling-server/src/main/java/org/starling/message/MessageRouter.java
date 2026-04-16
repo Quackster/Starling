@@ -37,6 +37,7 @@ public class MessageRouter {
         register(IncomingPackets.INIT_CRYPTO, HandshakeHandlers::handleInitCrypto);
         register(IncomingPackets.GENERATEKEY_LEGACY, HandshakeHandlers::handleGenerateKey);
         register(IncomingPackets.GENERATEKEY, HandshakeHandlers::handleGenerateKey);
+        register(IncomingPackets.SECRETKEY, HandshakeHandlers::handleSecretKey);
         register(IncomingPackets.VERSIONCHECK_LEGACY, HandshakeHandlers::handleVersionCheck);
         register(IncomingPackets.VERSIONCHECK, HandshakeHandlers::handleVersionCheck);
         register(IncomingPackets.UNIQUEID_LEGACY, HandshakeHandlers::handleUniqueId);

@@ -33,6 +33,7 @@ public final class OutgoingPackets {
     public static final int ROOM_ACTIVE_OBJECTS = 32;
     public static final int STATUS = 34;
     public static final int FLAT_LETIN = 41;
+    public static final int ROOM_RIGHTS_CONTROLLER = 42;
     public static final int FLAT_PROPERTY = 46;
     public static final int ROOM_RIGHTS_OWNER = 47;
     public static final int ROOM_ITEMS = 45;

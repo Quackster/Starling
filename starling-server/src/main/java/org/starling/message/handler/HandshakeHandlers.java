@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.starling.crypto.DiffieHellman;
 import org.starling.crypto.HabboCipher;
+import org.starling.crypto.SecretKeyCodec;
 import org.starling.message.IncomingPackets;
 import org.starling.message.OutgoingPackets;
 import org.starling.net.codec.ClientMessage;
@@ -13,6 +14,7 @@ import org.starling.net.session.Session;
 public final class HandshakeHandlers {
 
     private static final Logger log = LogManager.getLogger(HandshakeHandlers.class);
+    private static final boolean SERVER_TO_CLIENT_ENCRYPTION = true;
 
     private HandshakeHandlers() {}
 
@@ -22,26 +24,25 @@ public final class HandshakeHandlers {
      * then generate a DH keypair for this session.
      */
     public static void handleInitCrypto(Session session, ClientMessage msg) {
-        session.setDiffieHellman(null);
-        session.setCipher(null);
-        session.setEncrypted(false);
+        session.resetCrypto();
 
-        // Send CryptoParameters: VL64(0) means no server-to-client encryption
-        session.send(new ServerMessage(OutgoingPackets.CRYPTO_PARAMETERS).writeInt(0));
+        session.send(new ServerMessage(OutgoingPackets.CRYPTO_PARAMETERS)
+                .writeInt(SERVER_TO_CLIENT_ENCRYPTION ? 1 : 0));
 
-        log.debug("Sent CryptoParameters (serverToClient=false)");
+        log.debug("Sent CryptoParameters (serverToClient={})", SERVER_TO_CLIENT_ENCRYPTION);
     }
 
     /**
-     * GENERATEKEY (2002) - Client sends its DH public key.
-     * Compute shared secret, init RC4 cipher, send our public key back.
-     * After this, all subsequent client messages will be encrypted.
+     * GENERATEKEY (202/2002) - Client sends its DH public key.
+     * Compute the shared secret, initialize the client->server cipher for the
+     * selected login branch, then send our public key back.
      */
     public static void handleGenerateKey(Session session, ClientMessage msg) {
         String clientPublicKeyHex = msg.readString();
         boolean legacyHandshake = msg.getOpcode() == IncomingPackets.GENERATEKEY_LEGACY;
-        DiffieHellman dh = legacyHandshake ? DiffieHellman.legacy() : DiffieHellman.mus();
+        DiffieHellman dh = legacyHandshake ? DiffieHellman.legacy() : DiffieHellman.init();
         session.setDiffieHellman(dh);
+        session.setCryptoMode(legacyHandshake ? Session.CryptoMode.LEGACY : Session.CryptoMode.INIT);
 
         // Compute shared secret
         byte[] sharedSecret = dh.computeSharedSecret(clientPublicKeyHex);
@@ -51,9 +52,9 @@ public final class HandshakeHandlers {
         if (legacyHandshake) {
             cipher.initLegacy(sharedSecret);
         } else {
-            cipher.initMus(sharedSecret);
+            cipher.initInitSocket(sharedSecret);
         }
-        session.setCipher(cipher);
+        session.setInboundCipher(cipher);
 
         // Send our public key to the client (ServerSecretKey, opcode 1)
         // The client will also compute the same shared secret and init its cipher
@@ -63,11 +64,40 @@ public final class HandshakeHandlers {
         session.send(response);
 
         // Mark session as encrypted - all subsequent incoming messages will be decrypted
-        session.setEncrypted(true);
+        session.setInboundEncrypted(true);
 
         log.info("DH key exchange complete using {} crypto for {}",
-                legacyHandshake ? "legacy" : "MUS",
+                legacyHandshake ? "legacy" : "init socket",
                 session.getRemoteAddress());
+    }
+
+    /**
+     * SECRETKEY (207) - Client opts into server->client encryption.
+     * The client sends an encoded secret string; we decode it, initialize the
+     * outbound cipher to match the client decoder, then complete the crypto
+     * handshake with END_OF_CRYPTO_PARAMS (278).
+     */
+    public static void handleSecretKey(Session session, ClientMessage msg) {
+        String encodedSecretKey = msg.readString();
+        int secretKey = SecretKeyCodec.secretDecode(encodedSecretKey);
+        Session.CryptoMode cryptoMode = session.getCryptoMode();
+
+        if (cryptoMode == Session.CryptoMode.NONE) {
+            log.warn("Ignoring SECRETKEY before DH setup for {}", session.getRemoteAddress());
+            return;
+        }
+
+        // Both normal hotel-socket branches use the legacy/artificial-key
+        // SECRETKEY decoder for server->client traffic.
+        HabboCipher cipher = new HabboCipher();
+        cipher.initLegacyServerToClient(secretKey);
+        session.setOutboundCipher(cipher);
+        session.setOutboundEncrypted(true);
+        session.send(new ServerMessage(OutgoingPackets.END_OF_CRYPTO_PARAMS));
+
+        log.info("Enabled server->client legacy SECRETKEY crypto for {} ({})",
+                session.getRemoteAddress(),
+                cryptoMode.name().toLowerCase());
     }
 
     /**

@@ -21,8 +21,11 @@ public class Session {
 
     private final Channel channel;
     private DiffieHellman diffieHellman;
-    private HabboCipher cipher;
-    private volatile boolean encrypted;
+    private HabboCipher inboundCipher;
+    private HabboCipher outboundCipher;
+    private volatile boolean inboundEncrypted;
+    private volatile boolean outboundEncrypted;
+    private CryptoMode cryptoMode = CryptoMode.NONE;
     private Player player;
     private RoomState roomState = RoomState.empty();
 
@@ -73,20 +76,73 @@ public class Session {
         this.diffieHellman = dh;
     }
 
+    public HabboCipher getInboundCipher() {
+        return inboundCipher;
+    }
+
+    public void setInboundCipher(HabboCipher inboundCipher) {
+        this.inboundCipher = inboundCipher;
+    }
+
+    public HabboCipher getOutboundCipher() {
+        return outboundCipher;
+    }
+
+    public void setOutboundCipher(HabboCipher outboundCipher) {
+        this.outboundCipher = outboundCipher;
+    }
+
+    public boolean isInboundEncrypted() {
+        return inboundEncrypted;
+    }
+
+    public void setInboundEncrypted(boolean inboundEncrypted) {
+        this.inboundEncrypted = inboundEncrypted;
+    }
+
+    public boolean isOutboundEncrypted() {
+        return outboundEncrypted;
+    }
+
+    public void setOutboundEncrypted(boolean outboundEncrypted) {
+        this.outboundEncrypted = outboundEncrypted;
+    }
+
+    public CryptoMode getCryptoMode() {
+        return cryptoMode;
+    }
+
+    public void setCryptoMode(CryptoMode cryptoMode) {
+        this.cryptoMode = cryptoMode == null ? CryptoMode.NONE : cryptoMode;
+    }
+
+    public void resetCrypto() {
+        this.diffieHellman = null;
+        this.inboundCipher = null;
+        this.outboundCipher = null;
+        this.inboundEncrypted = false;
+        this.outboundEncrypted = false;
+        this.cryptoMode = CryptoMode.NONE;
+    }
+
+    /**
+     * Backward-compatible alias for the inbound cipher while the rest of the
+     * server migrates to explicit inbound/outbound naming.
+     */
     public HabboCipher getCipher() {
-        return cipher;
+        return getInboundCipher();
     }
 
     public void setCipher(HabboCipher cipher) {
-        this.cipher = cipher;
+        setInboundCipher(cipher);
     }
 
     public boolean isEncrypted() {
-        return encrypted;
+        return isInboundEncrypted();
     }
 
     public void setEncrypted(boolean encrypted) {
-        this.encrypted = encrypted;
+        setInboundEncrypted(encrypted);
     }
 
     // --- Player ---
@@ -119,5 +175,11 @@ public class Session {
         public static RoomState empty() {
             return new RoomState(false, false, 0, "", 0);
         }
+    }
+
+    public enum CryptoMode {
+        NONE,
+        LEGACY,
+        INIT
     }
 }

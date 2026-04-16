@@ -56,3 +56,10 @@ tasks.register('packageDist', Sync) {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+tasks.register('starlingClient', JavaExec) {
+    group = 'application'
+    description = 'Runs the r26 normal-socket handshake probe against a Starling server.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.starling.client.StarlingClient'
+}
