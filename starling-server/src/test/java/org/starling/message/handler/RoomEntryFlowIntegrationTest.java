@@ -359,6 +359,80 @@ class RoomEntryFlowIntegrationTest {
         finish(session);
     }
 
+    @Test
+    void reroutingMidStepKeepsPendingTileAndAvoidsSnapBack() {
+        Session session = authenticatedSession("admin");
+        Player player = player("admin");
+
+        invoke(rawMessage(IncomingPackets.TRYFLAT, "1"), message -> RoomHandlers.handleTryFlat(session, message));
+        drainPackets(session.getChannel());
+        invoke(rawMessage(IncomingPackets.GOTOFLAT, "1"), message -> RoomHandlers.handleGotoFlat(session, message));
+        drainPackets(session.getChannel());
+
+        invoke(walkMessage(5, 5), message -> RoomHandlers.handleWalk(session, message));
+        RoomTaskManager.getInstance().tickNow();
+        List<String> firstTick = drainPackets(session.getChannel());
+        assertEquals(1, firstTick.size());
+        assertTrue(firstTick.get(0).contains(player.getId() + " 3,5,0,2,2/mv 4,5,0/"));
+
+        invoke(walkMessage(4, 4), message -> RoomHandlers.handleWalk(session, message));
+        assertTrue(drainPackets(session.getChannel()).isEmpty());
+
+        RoomTaskManager.getInstance().tickNow();
+        List<String> secondTick = drainPackets(session.getChannel());
+        assertEquals(1, secondTick.size());
+        assertTrue(secondTick.get(0).contains(player.getId() + " 4,5,0,0,0/mv 4,4,0/"));
+
+        RoomTaskManager.getInstance().tickNow();
+        List<String> thirdTick = drainPackets(session.getChannel());
+        assertEquals(1, thirdTick.size());
+        assertTrue(thirdTick.get(0).contains(player.getId() + " 4,4,0,0,0/"));
+        assertFalse(thirdTick.get(0).contains("/mv "));
+
+        invoke(rawMessage(IncomingPackets.G_USRS, ""), message -> RoomHandlers.handleGetUsers(session, message));
+        List<String> users = drainPackets(session.getChannel());
+        assertEquals(1, users.size());
+        assertTrue(users.get(0).contains("l:4 4 0"));
+
+        finish(session);
+    }
+
+    @Test
+    void walkingToPendingTileFinishesCurrentStepWithoutRepeatingIt() {
+        Session session = authenticatedSession("admin");
+        Player player = player("admin");
+
+        invoke(rawMessage(IncomingPackets.TRYFLAT, "1"), message -> RoomHandlers.handleTryFlat(session, message));
+        drainPackets(session.getChannel());
+        invoke(rawMessage(IncomingPackets.GOTOFLAT, "1"), message -> RoomHandlers.handleGotoFlat(session, message));
+        drainPackets(session.getChannel());
+
+        invoke(walkMessage(5, 5), message -> RoomHandlers.handleWalk(session, message));
+        RoomTaskManager.getInstance().tickNow();
+        List<String> firstTick = drainPackets(session.getChannel());
+        assertEquals(1, firstTick.size());
+        assertTrue(firstTick.get(0).contains(player.getId() + " 3,5,0,2,2/mv 4,5,0/"));
+
+        invoke(walkMessage(4, 5), message -> RoomHandlers.handleWalk(session, message));
+        assertTrue(drainPackets(session.getChannel()).isEmpty());
+
+        RoomTaskManager.getInstance().tickNow();
+        List<String> secondTick = drainPackets(session.getChannel());
+        assertEquals(1, secondTick.size());
+        assertTrue(secondTick.get(0).contains(player.getId() + " 4,5,0,2,2/"));
+        assertFalse(secondTick.get(0).contains("/mv "));
+
+        RoomTaskManager.getInstance().tickNow();
+        assertTrue(drainPackets(session.getChannel()).isEmpty());
+
+        invoke(rawMessage(IncomingPackets.G_USRS, ""), message -> RoomHandlers.handleGetUsers(session, message));
+        List<String> users = drainPackets(session.getChannel());
+        assertEquals(1, users.size());
+        assertTrue(users.get(0).contains("l:4 5 0"));
+
+        finish(session);
+    }
+
     private Session authenticatedSession(String username) {
         EmbeddedChannel channel = new EmbeddedChannel();
         Session session = new Session(channel);

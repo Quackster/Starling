@@ -45,6 +45,10 @@ public final class RoomOccupant {
         this.position = position;
     }
 
+    public RoomPosition getPathingPosition() {
+        return nextPosition != null ? nextPosition : position;
+    }
+
     public RoomPosition getNextPosition() {
         return nextPosition;
     }
@@ -61,7 +65,6 @@ public final class RoomOccupant {
         path.clear();
         path.addAll(steps);
         this.goal = goal;
-        this.nextPosition = null;
     }
 
     public RoomPosition peekNextStep() {
@@ -83,6 +86,17 @@ public final class RoomOccupant {
     public boolean stopWalking() {
         boolean changed = nextPosition != null || !path.isEmpty() || goal != null;
         nextPosition = null;
+        path.clear();
+        goal = null;
+        return changed;
+    }
+
+    public boolean finishPendingStep() {
+        if (nextPosition == null) {
+            return stopWalking();
+        }
+
+        boolean changed = !path.isEmpty() || goal != null;
         path.clear();
         goal = null;
         return changed;

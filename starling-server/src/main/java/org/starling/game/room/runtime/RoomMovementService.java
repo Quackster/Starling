@@ -2,7 +2,7 @@ package org.starling.game.room.runtime;
 
 import org.starling.game.room.collision.RoomCollisionPipeline;
 import org.starling.game.room.collision.RoomCollisionRegistry;
-import org.starling.game.room.collision.RoomStepEvaluation;
+import org.starling.game.room.collision.RoomCollisionDetector;
 import org.starling.game.room.geometry.RoomCoordinate;
 import org.starling.game.room.geometry.RoomPosition;
 import org.starling.game.room.path.RoomDirection;
@@ -54,13 +54,18 @@ public final class RoomMovementService {
         boolean broadcastStatus = false;
         synchronized (room) {
             RoomOccupant occupant = room.getOccupant(session);
-            if (occupant == null || occupant.getPosition() == null) {
+            RoomPosition pathingPosition = occupant == null ? null : occupant.getPathingPosition();
+            if (occupant == null || occupant.getPosition() == null || pathingPosition == null) {
                 return false;
             }
 
             RoomCoordinate goal = new RoomCoordinate(x, y);
-            if (goal.equals(occupant.getPosition().coordinate())) {
-                broadcastStatus = occupant.stopWalking();
+            if (goal.equals(pathingPosition.coordinate())) {
+                if (occupant.getNextPosition() == null) {
+                    broadcastStatus = occupant.stopWalking();
+                } else {
+                    occupant.finishPendingStep();
+                }
             } else {
                 List<RoomPosition> path = pathfinder.findPath(room, occupant, goal);
                 if (path.isEmpty()) {
@@ -120,7 +125,7 @@ public final class RoomMovementService {
 
         RoomPosition pending = occupant.getNextPosition();
         if (pending != null) {
-            RoomStepEvaluation evaluation = collisionPipeline.evaluateStep(
+            RoomCollisionDetector.Evaluation evaluation = collisionPipeline.evaluateStep(
                     room,
                     occupant,
                     current,
@@ -147,7 +152,7 @@ public final class RoomMovementService {
         }
 
         boolean finalStep = occupant.queuedStepCount() == 1;
-        RoomStepEvaluation evaluation = collisionPipeline.evaluateStep(
+        RoomCollisionDetector.Evaluation evaluation = collisionPipeline.evaluateStep(
                 room,
                 occupant,
                 current,

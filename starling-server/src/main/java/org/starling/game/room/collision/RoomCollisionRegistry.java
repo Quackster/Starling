@@ -10,12 +10,7 @@ public final class RoomCollisionRegistry {
 
     private static final RoomCollisionRegistry INSTANCE = new RoomCollisionRegistry();
 
-    private final List<RoomCollisionDetector> defaultDetectors = List.of(
-            new RoomBoundsCollisionDetector(),
-            new RoomItemCollisionDetector(),
-            new RoomEntityCollisionDetector(),
-            new RoomHeightCollisionDetector()
-    );
+    private final List<RoomCollisionDetector> defaultDetectors = RoomCollisionPipeline.createDefaultDetectors();
     private final CopyOnWriteArrayList<RoomCollisionDetector> prependedDetectors = new CopyOnWriteArrayList<>();
     private final CopyOnWriteArrayList<RoomCollisionDetector> appendedDetectors = new CopyOnWriteArrayList<>();
 

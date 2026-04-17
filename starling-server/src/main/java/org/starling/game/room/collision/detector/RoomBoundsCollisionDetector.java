@@ -1,5 +1,6 @@
-package org.starling.game.room.collision;
+package org.starling.game.room.collision.detector;
 
+import org.starling.game.room.collision.RoomCollisionDetector;
 import org.starling.game.room.geometry.RoomTile;
 
 /**
@@ -8,7 +9,7 @@ import org.starling.game.room.geometry.RoomTile;
 public final class RoomBoundsCollisionDetector implements RoomCollisionDetector {
 
     @Override
-    public void evaluate(RoomCollisionContext context, RoomCollisionState state) {
+    public void evaluate(Context context, State state) {
         RoomTile tile = context.room().getGeometry().tileAt(context.target());
         if (!tile.open()) {
             state.block();

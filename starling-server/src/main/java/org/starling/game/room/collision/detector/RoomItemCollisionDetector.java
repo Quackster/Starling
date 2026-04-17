@@ -1,5 +1,6 @@
-package org.starling.game.room.collision;
+package org.starling.game.room.collision.detector;
 
+import org.starling.game.room.collision.RoomCollisionDetector;
 import org.starling.game.room.geometry.RoomStaticItem;
 
 import java.util.Comparator;
@@ -14,7 +15,7 @@ public final class RoomItemCollisionDetector implements RoomCollisionDetector {
             Comparator.comparingDouble(RoomStaticItem::walkingHeight);
 
     @Override
-    public void evaluate(RoomCollisionContext context, RoomCollisionState state) {
+    public void evaluate(Context context, State state) {
         List<RoomStaticItem> items = context.room().getGeometry().itemsAt(context.target());
         if (items.isEmpty()) {
             return;

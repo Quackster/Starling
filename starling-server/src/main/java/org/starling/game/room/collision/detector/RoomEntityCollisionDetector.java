@@ -1,5 +1,6 @@
-package org.starling.game.room.collision;
+package org.starling.game.room.collision.detector;
 
+import org.starling.game.room.collision.RoomCollisionDetector;
 import org.starling.game.room.geometry.RoomCoordinate;
 import org.starling.game.room.runtime.RoomOccupantSnapshot;
 
@@ -9,7 +10,7 @@ import org.starling.game.room.runtime.RoomOccupantSnapshot;
 public final class RoomEntityCollisionDetector implements RoomCollisionDetector {
 
     @Override
-    public void evaluate(RoomCollisionContext context, RoomCollisionState state) {
+    public void evaluate(Context context, State state) {
         for (RoomOccupantSnapshot snapshot : context.room().getOccupantSnapshots()) {
             if (isMover(context, snapshot)) {
                 continue;
@@ -23,7 +24,7 @@ public final class RoomEntityCollisionDetector implements RoomCollisionDetector 
         }
     }
 
-    private boolean isMover(RoomCollisionContext context, RoomOccupantSnapshot snapshot) {
+    private boolean isMover(Context context, RoomOccupantSnapshot snapshot) {
         if (context.mover().getSession() != null && context.mover().getSession() == snapshot.session()) {
             return true;
         }

@@ -1,5 +1,9 @@
 package org.starling.game.room.collision;
 
+import org.starling.game.room.collision.detector.RoomBoundsCollisionDetector;
+import org.starling.game.room.collision.detector.RoomEntityCollisionDetector;
+import org.starling.game.room.collision.detector.RoomHeightCollisionDetector;
+import org.starling.game.room.collision.detector.RoomItemCollisionDetector;
 import org.starling.game.room.geometry.RoomCoordinate;
 import org.starling.game.room.geometry.RoomPosition;
 import org.starling.game.room.runtime.RoomOccupant;
@@ -28,15 +32,19 @@ public final class RoomCollisionPipeline {
     }
 
     public static Builder defaultsBuilder() {
-        return builder().addDetectors(List.of(
+        return builder().addDetectors(createDefaultDetectors());
+    }
+
+    static List<RoomCollisionDetector> createDefaultDetectors() {
+        return List.of(
                 new RoomBoundsCollisionDetector(),
                 new RoomItemCollisionDetector(),
                 new RoomEntityCollisionDetector(),
                 new RoomHeightCollisionDetector()
-        ));
+        );
     }
 
-    public RoomStepEvaluation evaluateStep(
+    public RoomCollisionDetector.Evaluation evaluateStep(
             WalkableRoom room,
             RoomOccupant mover,
             RoomPosition from,
@@ -47,7 +55,7 @@ public final class RoomCollisionPipeline {
         return evaluateStep(room, mover, from, target, goal, finalStep, true);
     }
 
-    private RoomStepEvaluation evaluateStep(
+    private RoomCollisionDetector.Evaluation evaluateStep(
             WalkableRoom room,
             RoomOccupant mover,
             RoomPosition from,
@@ -56,20 +64,22 @@ public final class RoomCollisionPipeline {
             boolean finalStep,
             boolean diagonalCheck
     ) {
-        RoomCollisionContext context = new RoomCollisionContext(room, mover, from, target, goal, finalStep);
-        RoomCollisionState state = new RoomCollisionState();
+        RoomCollisionDetector.Context context = new RoomCollisionDetector.Context(
+                room, mover, from, target, goal, finalStep);
+        RoomCollisionDetector.State state = new RoomCollisionDetector.State();
         for (RoomCollisionDetector detector : detectors) {
             detector.evaluate(context, state);
             if (state.blocked()) {
-                return RoomStepEvaluation.blocked();
+                return RoomCollisionDetector.Evaluation.blocked();
             }
         }
 
         if (diagonalCheck && context.diagonalMove() && blocksDiagonalCorner(room, mover, from, target, goal)) {
-            return RoomStepEvaluation.blocked();
+            return RoomCollisionDetector.Evaluation.blocked();
         }
 
-        return RoomStepEvaluation.allowed(new RoomPosition(target.x(), target.y(), state.walkHeight()));
+        return RoomCollisionDetector.Evaluation.allowed(
+                new RoomPosition(target.x(), target.y(), state.walkHeight()));
     }
 
     private boolean blocksDiagonalCorner(

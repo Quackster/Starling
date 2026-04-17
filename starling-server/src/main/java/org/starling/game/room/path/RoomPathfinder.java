@@ -1,7 +1,7 @@
 package org.starling.game.room.path;
 
+import org.starling.game.room.collision.RoomCollisionDetector;
 import org.starling.game.room.collision.RoomCollisionPipeline;
-import org.starling.game.room.collision.RoomStepEvaluation;
 import org.starling.game.room.geometry.RoomCoordinate;
 import org.starling.game.room.geometry.RoomPosition;
 import org.starling.game.room.runtime.RoomOccupant;
@@ -37,11 +37,12 @@ public final class RoomPathfinder {
     }
 
     public List<RoomPosition> findPath(WalkableRoom room, RoomOccupant mover, RoomCoordinate goal) {
-        if (room == null || mover == null || goal == null || mover.getPosition() == null) {
+        RoomPosition startPosition = mover == null ? null : mover.getPathingPosition();
+        if (room == null || mover == null || goal == null || startPosition == null) {
             return List.of();
         }
 
-        RoomCoordinate start = mover.getPosition().coordinate();
+        RoomCoordinate start = startPosition.coordinate();
         if (start.equals(goal)) {
             return List.of();
         }
@@ -53,7 +54,7 @@ public final class RoomPathfinder {
         RoomPathNode bestAlternative = null;
         RoomPathNode startNode = new RoomPathNode(
                 start,
-                mover.getPosition(),
+                startPosition,
                 0,
                 heuristic(start, goal),
                 null
@@ -73,7 +74,7 @@ public final class RoomPathfinder {
             for (int[] move : MOVES) {
                 RoomCoordinate target = current.coordinate().translate(move[0], move[1]);
                 boolean finalStep = target.equals(goal);
-                RoomStepEvaluation evaluation = collisionPipeline.evaluateStep(
+                RoomCollisionDetector.Evaluation evaluation = collisionPipeline.evaluateStep(
                         room,
                         mover,
                         current.position(),
