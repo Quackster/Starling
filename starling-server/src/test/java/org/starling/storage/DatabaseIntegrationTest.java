@@ -87,14 +87,28 @@ class DatabaseIntegrationTest {
 
         List<NavigatorCategoryEntity> categories = NavigatorDao.findAll();
         assertEquals(35, categories.size());
-        assertTrue(categories.stream().anyMatch(category -> category.getId() == 3 && category.getParentId() == 1));
-        assertTrue(categories.stream().anyMatch(category -> category.getId() == 4 && category.getParentId() == 2));
+        assertTrue(categories.stream().anyMatch(category -> category.getId() == 1
+                && category.getParentId() == 0
+                && "Public Spaces".equals(category.getName())));
+        assertTrue(categories.stream().anyMatch(category -> category.getId() == 2
+                && category.getParentId() == 0
+                && "Rooms".equals(category.getName())));
+        assertTrue(categories.stream().anyMatch(category -> category.getId() == 3
+                && category.getParentId() == 1
+                && "Official Rooms".equals(category.getName())));
+        assertTrue(categories.stream().anyMatch(category -> category.getId() == 6
+                && "Trading Rooms".equals(category.getName())));
         assertTrue(categories.stream().anyMatch(category -> category.getId() == 35 && "No category".equals(category.getName())));
 
         List<PublicRoomEntity> publicRooms = PublicRoomDao.findVisibleByCategoryId(3);
         assertEquals(List.of(101), publicRooms.stream().map(PublicRoomEntity::getId).toList());
         assertEquals(101, PublicRoomDao.findByPort(101).getId());
+        assertEquals("Welcome Lounge", PublicRoomDao.findByPort(101).getName());
+        assertEquals("New? Lost? Get a warm welcome here.", PublicRoomDao.findByPort(101).getDescription());
         assertEquals("newbie_lobby", PublicRoomDao.findByPort(101).getUnitStrId());
+        assertEquals("Habbo Lido", PublicRoomDao.findById(102).getName());
+        assertEquals("Dive right in!", PublicRoomDao.findById(102).getDescription());
+        assertEquals("Theatredrome Habboween", PublicRoomDao.findById(103).getName());
         assertEquals(List.of(101, 102), PublicRoomDao.findByIds(List.of(101, 102)).stream().map(PublicRoomEntity::getId).toList());
 
         RoomModelEntity privateModel = RoomModelDao.findByModelName("MODEL_A", false);

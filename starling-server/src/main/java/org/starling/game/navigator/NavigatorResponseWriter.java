@@ -5,6 +5,7 @@ import org.starling.game.room.access.RoomAccess;
 import org.starling.message.OutgoingPackets;
 import org.starling.net.codec.ServerMessage;
 import org.starling.net.session.Session;
+import org.starling.storage.bootstrap.HolographPublicSpaceCatalog;
 import org.starling.storage.dao.PublicRoomDao;
 import org.starling.storage.dao.RoomDao;
 import org.starling.storage.entity.NavigatorCategoryEntity;
@@ -159,7 +160,9 @@ public final class NavigatorResponseWriter {
     private void writeSyntheticRoot(ServerMessage response, int categoryId) {
         response.writeInt(categoryId);
         response.writeInt(0);
-        response.writeString(categoryId == 1 ? "Public Rooms" : "Guest Rooms");
+        response.writeString(categoryId == 1
+                ? HolographPublicSpaceCatalog.ROOT_PUBLIC_CATEGORY_NAME
+                : HolographPublicSpaceCatalog.ROOT_PRIVATE_CATEGORY_NAME);
         response.writeInt(0);
         response.writeInt(100);
         response.writeInt(0);

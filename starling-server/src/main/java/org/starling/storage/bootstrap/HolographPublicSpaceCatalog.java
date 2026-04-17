@@ -20,6 +20,68 @@ public final class HolographPublicSpaceCatalog {
     private static final Pattern INSERT_PATTERN_TEMPLATE = Pattern.compile(
             "INSERT INTO `%s` .*? VALUES\\s*(.*?);",
             Pattern.DOTALL);
+    public static final String ROOT_PUBLIC_CATEGORY_NAME = "Public Spaces";
+    public static final String ROOT_PRIVATE_CATEGORY_NAME = "Rooms";
+    private static final Map<Integer, String> CATEGORY_NAME_OVERRIDES = Map.ofEntries(
+            Map.entry(3, "Official Rooms"),
+            Map.entry(4, "All Rooms"),
+            Map.entry(5, "Outdoor Spaces"),
+            Map.entry(6, "Trading Rooms"),
+            Map.entry(8, "Park and Infobus"),
+            Map.entry(9, "Clubs and Cafes"),
+            Map.entry(10, "Staff Rooms"),
+            Map.entry(11, "Battle Ball & SnowStorm"),
+            Map.entry(12, "Battle Ball Beginners"),
+            Map.entry(13, "Battle Ball Amateurs"),
+            Map.entry(14, "Battle Ball Intermediates"),
+            Map.entry(15, "Battle Ball Experts"),
+            Map.entry(16, "Battle Ball Elites"),
+            Map.entry(17, "SnowStorm Beginners"),
+            Map.entry(18, "SnowStorm Amateurs"),
+            Map.entry(19, "SnowStorm Intermediates"),
+            Map.entry(20, "SnowStorm Experts"),
+            Map.entry(21, "SnowStorm Elites"),
+            Map.entry(22, "Battle Ball"),
+            Map.entry(23, "SnowStorm"),
+            Map.entry(24, "Moderator Rooms"),
+            Map.entry(26, "Help Desk"),
+            Map.entry(27, "Donations"),
+            Map.entry(28, "Chill Rooms"),
+            Map.entry(29, "Theme Rooms"),
+            Map.entry(30, "Hobba Rooms"),
+            Map.entry(31, "Guide Rooms"),
+            Map.entry(32, "Relaxing Rooms"),
+            Map.entry(33, "Game Rooms"),
+            Map.entry(34, "Casino")
+    );
+    private static final Map<Integer, PublicRoomText> PUBLIC_ROOM_TEXT_OVERRIDES = Map.ofEntries(
+            Map.entry(101, new PublicRoomText("Welcome Lounge", "New? Lost? Get a warm welcome here.")),
+            Map.entry(102, new PublicRoomText("Habbo Lido", "Dive right in!")),
+            Map.entry(103, new PublicRoomText("Theatredrome Habboween", "Warm welcome to Bullet For My Valentine!")),
+            Map.entry(104, new PublicRoomText("Habbo Library", "Time to catch up on some studying")),
+            Map.entry(105, new PublicRoomText("Sunset Cafe", "Let yourself be lulled by the gentle pixel waves...")),
+            Map.entry(106, new PublicRoomText("The Dirty Duck Pub", "The perfect place to chill!")),
+            Map.entry(107, new PublicRoomText("Habbo Lido II", "Dive right in!")),
+            Map.entry(108, new PublicRoomText("Floating Garden", "Peace, tranquility and still waters")),
+            Map.entry(109, new PublicRoomText("Rooftop Rumble", "Are you ready?")),
+            Map.entry(110, new PublicRoomText("Picnic Garden", "Don't forget to grab a carrot or two!")),
+            Map.entry(111, new PublicRoomText("Habbo Gardens", "Go for a stroll outdoors")),
+            Map.entry(112, new PublicRoomText("FRANK Infobus", "Welcome to the FRANK Infobus!")),
+            Map.entry(113, new PublicRoomText("Battle Ball Beginners", "Beginner battle ball")),
+            Map.entry(114, new PublicRoomText("Battle Ball Amateurs", "Amateur battle ball!")),
+            Map.entry(115, new PublicRoomText("Battle Ball Intermediates", "Intermediate battle ball!")),
+            Map.entry(116, new PublicRoomText("Battle Ball Experts", "Expert battle ball!")),
+            Map.entry(117, new PublicRoomText("Battle Ball Elites", "Expert battle ball!")),
+            Map.entry(118, new PublicRoomText("SnowStorm Beginners",
+                    "Yes, take a load of snowballs and hit the enemy Teams. Easy, isn't it?")),
+            Map.entry(119, new PublicRoomText("SnowStorm Amateurs",
+                    "Practice improves a Snow Stormer's aim... Ops, missed!")),
+            Map.entry(120, new PublicRoomText("SnowStorm Intermediates", "For the accomplished Snow Stormers.")),
+            Map.entry(121, new PublicRoomText("SnowStorm Experts",
+                    "For the William Tells and Robin Hoods of Snow Storming.")),
+            Map.entry(122, new PublicRoomText("SnowStorm Elites",
+                    "For the William Tells and Robin Hoods of Snow Storming."))
+    );
     private static final HolographPublicSpaceCatalog INSTANCE = loadCatalog();
 
     private final List<NavigatorCategorySeed> navigatorCategories;
@@ -165,8 +227,8 @@ public final class HolographPublicSpaceCatalog {
         }
 
         List<NavigatorCategorySeed> categories = new ArrayList<>(sourceCategories.size() + 2);
-        categories.add(new NavigatorCategorySeed(1, 1, 0, 1, "Public Rooms", 1, 0, 1, 1, 0, 1));
-        categories.add(new NavigatorCategorySeed(2, 2, 0, 1, "Guest Rooms", 0, 1, 1, 1, 0, 1));
+        categories.add(new NavigatorCategorySeed(1, 1, 0, 1, ROOT_PUBLIC_CATEGORY_NAME, 1, 0, 1, 1, 0, 1));
+        categories.add(new NavigatorCategorySeed(2, 2, 0, 1, ROOT_PRIVATE_CATEGORY_NAME, 0, 1, 1, 1, 0, 1));
 
         int orderId = 3;
         for (SourceCategory category : sourceCategories) {
@@ -182,7 +244,7 @@ public final class HolographPublicSpaceCatalog {
                     orderId++,
                     mappedParentId,
                     sourceNodes.contains(category.id()) ? 1 : 0,
-                    category.name(),
+                    resolveCategoryName(category.id(), category.name()),
                     category.type() == 0 ? 1 : 0,
                     category.allowTrading(),
                     Math.max(category.minRoleAccess(), 0),
@@ -206,11 +268,12 @@ public final class HolographPublicSpaceCatalog {
             if (mappedCategoryId == null) {
                 throw new IllegalStateException("Missing category mapping for public room " + room.id());
             }
+            PublicRoomText roomText = resolvePublicRoomText(room);
 
             publicRooms.add(new PublicRoomSeed(
                     room.id(),
                     mappedCategoryId,
-                    room.name(),
+                    roomText.name(),
                     modelName,
                     "",
                     room.id(),
@@ -221,11 +284,28 @@ public final class HolographPublicSpaceCatalog {
                     0,
                     room.showName() != 0 ? 1 : 0,
                     "",
-                    room.description()
+                    roomText.description()
             ));
         }
 
         return publicRooms;
+    }
+
+    private static String resolveCategoryName(int sourceCategoryId, String fallbackName) {
+        return CATEGORY_NAME_OVERRIDES.getOrDefault(sourceCategoryId, fallbackName);
+    }
+
+    private static PublicRoomText resolvePublicRoomText(SourcePublicRoom room) {
+        PublicRoomText override = PUBLIC_ROOM_TEXT_OVERRIDES.get(room.id());
+        if (override != null) {
+            return override;
+        }
+
+        String description = room.description();
+        if (description == null || description.isBlank() || looksLikeTextKey(description)) {
+            description = "";
+        }
+        return new PublicRoomText(room.name(), description);
     }
 
     private static String resolvePublicRoomModel(String rawModelName, String description, String casts) {
@@ -400,6 +480,10 @@ public final class HolographPublicSpaceCatalog {
         return value == null ? "" : value;
     }
 
+    private static boolean looksLikeTextKey(String value) {
+        return value.indexOf(' ') < 0 && value.contains("_");
+    }
+
     private static String normalize(String value) {
         if (value == null) {
             return "";
@@ -486,5 +570,10 @@ public final class HolographPublicSpaceCatalog {
             int doorDir,
             String heightmap,
             String publicRoomItems
+    ) {}
+
+    private record PublicRoomText(
+            String name,
+            String description
     ) {}
 }
