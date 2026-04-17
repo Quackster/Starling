@@ -13,6 +13,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Resolves a player's saved favourites into ordered private and public room lists.
+ */
 public final class FavoriteRoomResolver {
 
     private static final int ROOM_TYPE_PRIVATE = 0;
@@ -59,5 +62,8 @@ public final class FavoriteRoomResolver {
         return new FavoriteRooms(privateFavorites, publicFavorites);
     }
 
+    /**
+     * Ordered favourite rooms grouped by private and public room type.
+     */
     public record FavoriteRooms(List<RoomEntity> privateRooms, List<PublicRoomEntity> publicRooms) {}
 }

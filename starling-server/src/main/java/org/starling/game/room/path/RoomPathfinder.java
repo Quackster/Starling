@@ -14,6 +14,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 
+/**
+ * Finds room walking paths while respecting the active collision pipeline.
+ */
 public final class RoomPathfinder {
 
     private static final int[][] MOVES = {

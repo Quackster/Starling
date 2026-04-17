@@ -7,6 +7,9 @@ import org.starling.storage.entity.PublicRoomItemEntity;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Serializes structured public-room items into world, active, and wall-item packets.
+ */
 final class PublicRoomItemSerializer {
 
     ServerMessage buildObjectsMessage(List<PublicRoomItemEntity> items) {

@@ -11,6 +11,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+/**
+ * Builds occupant and status payload bodies for room packets.
+ */
 public final class RoomOccupantPayloadWriter {
 
     public String buildUserObjectsPayload(List<RoomOccupantSnapshot> occupants) {

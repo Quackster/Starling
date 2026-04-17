@@ -1,5 +1,8 @@
 package org.starling.game.room.collision;
 
+/**
+ * Mutable collision-evaluation result shared across detectors for one step.
+ */
 public final class RoomCollisionState {
 
     private boolean blocked;

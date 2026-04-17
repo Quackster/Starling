@@ -14,6 +14,9 @@ import org.starling.storage.entity.RoomEntity;
 
 import java.util.List;
 
+/**
+ * Serializes navigator responses and room listings for the classic client.
+ */
 public final class NavigatorResponseWriter {
 
     public void sendFriendListInit(Session session) {

@@ -11,6 +11,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * Tracks authenticated player sessions by id and username.
+ */
 public final class PlayerManager {
 
     private static final PlayerManager INSTANCE = new PlayerManager();

@@ -7,6 +7,9 @@ import org.starling.net.codec.ServerMessage;
 import org.starling.net.session.Session;
 import org.starling.storage.entity.UserEntity;
 
+/**
+ * Sends login and initial account bootstrap packets.
+ */
 public final class LoginResponseWriter {
 
     public void sendLoginFailure(Session session) {

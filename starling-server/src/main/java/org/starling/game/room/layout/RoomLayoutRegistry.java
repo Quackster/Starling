@@ -8,6 +8,9 @@ import org.starling.storage.entity.RoomModelEntity;
 import java.util.Locale;
 import java.util.Map;
 
+/**
+ * Resolves room-model visuals, door data, and fallback heightmaps for rooms.
+ */
 public final class RoomLayoutRegistry {
 
     private static final String DEFAULT_PRIVATE_MODEL = "model_a";
@@ -220,6 +223,9 @@ public final class RoomLayoutRegistry {
         );
     }
 
+    /**
+     * Visual and structural model data needed to present a room to the client.
+     */
     public record RoomVisuals(
             String marker,
             String heightmap,

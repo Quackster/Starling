@@ -9,6 +9,9 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 
+/**
+ * Mutable live movement state for one player inside a loaded room.
+ */
 public final class RoomOccupant {
 
     private final Session session;

@@ -3,6 +3,9 @@ package org.starling.game.room.collision;
 import org.starling.game.room.geometry.RoomCoordinate;
 import org.starling.game.room.runtime.RoomOccupantSnapshot;
 
+/**
+ * Blocks movement onto tiles currently occupied or reserved by another room occupant.
+ */
 public final class RoomEntityCollisionDetector implements RoomCollisionDetector {
 
     @Override

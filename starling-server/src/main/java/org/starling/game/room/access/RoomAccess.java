@@ -5,6 +5,9 @@ import org.starling.storage.dao.PublicRoomDao;
 import org.starling.storage.entity.PublicRoomEntity;
 import org.starling.storage.entity.RoomEntity;
 
+/**
+ * Centralizes room ownership and room-lookup helpers shared across the game layer.
+ */
 public final class RoomAccess {
 
     private RoomAccess() {}

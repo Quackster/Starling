@@ -15,6 +15,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * Live room instance containing static geometry and active occupant state.
+ */
 public final class LoadedRoom<T> implements WalkableRoom {
 
     private final Session.RoomType roomType;
@@ -127,5 +130,8 @@ public final class LoadedRoom<T> implements WalkableRoom {
         return occupantsByPlayerId.get(player.getId());
     }
 
+    /**
+     * Result of adding or removing an occupant from a live room.
+     */
     public record OccupantChange(boolean changed, int occupantCount) {}
 }

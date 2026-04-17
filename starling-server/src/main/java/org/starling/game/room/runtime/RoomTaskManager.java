@@ -6,6 +6,9 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * Runs the periodic room task loop that advances walking occupants.
+ */
 public final class RoomTaskManager {
 
     private static final RoomTaskManager INSTANCE = new RoomTaskManager(RoomMovementService.getInstance());
@@ -43,6 +46,9 @@ public final class RoomTaskManager {
         roomMovementService.tickLoadedRooms();
     }
 
+    /**
+     * Creates the dedicated daemon thread that runs the room tick loop.
+     */
     private static final class RoomTaskThreadFactory implements ThreadFactory {
 
         @Override

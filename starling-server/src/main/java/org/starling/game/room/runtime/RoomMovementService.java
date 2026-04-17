@@ -14,6 +14,9 @@ import org.starling.net.session.Session;
 
 import java.util.List;
 
+/**
+ * Coordinates room walking requests and the advancement of live room occupants.
+ */
 public final class RoomMovementService {
 
     private static final RoomMovementService INSTANCE = new RoomMovementService(

@@ -7,6 +7,9 @@ import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Set;
 
+/**
+ * Static public-room furniture item used for collision and rendering decisions.
+ */
 public final class RoomStaticItem {
 
     private final int id;

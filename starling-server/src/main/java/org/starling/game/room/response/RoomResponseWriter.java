@@ -19,6 +19,9 @@ import org.starling.storage.dao.RoomRightDao;
 import org.starling.storage.entity.PublicRoomEntity;
 import org.starling.storage.entity.RoomEntity;
 
+/**
+ * Sends room bootstrap, occupant, and room-state packets.
+ */
 public final class RoomResponseWriter {
 
     private static final Logger log = LogManager.getLogger(RoomResponseWriter.class);

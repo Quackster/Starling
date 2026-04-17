@@ -3,6 +3,9 @@ package org.starling.game.room.collision;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+/**
+ * Holds default and extension collision detectors for live room movement.
+ */
 public final class RoomCollisionRegistry {
 
     private static final RoomCollisionRegistry INSTANCE = new RoomCollisionRegistry();

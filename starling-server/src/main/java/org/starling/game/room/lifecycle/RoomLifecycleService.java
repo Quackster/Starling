@@ -14,6 +14,9 @@ import org.starling.storage.dao.RoomDao;
 import org.starling.storage.entity.PublicRoomEntity;
 import org.starling.storage.entity.RoomEntity;
 
+/**
+ * Owns room entry, leave, occupancy persistence, and disconnect cleanup flows.
+ */
 public final class RoomLifecycleService {
 
     private static final Logger log = LogManager.getLogger(RoomLifecycleService.class);

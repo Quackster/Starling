@@ -4,6 +4,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Immutable static geometry for a loaded room, including tiles, items, and door data.
+ */
 public final class RoomGeometry {
 
     private static final Comparator<RoomStaticItem> ITEM_HEIGHT_DESC =

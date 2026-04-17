@@ -11,6 +11,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * Tracks currently loaded live room instances for both private and public rooms.
+ */
 public final class RoomRegistry {
 
     private static final RoomRegistry INSTANCE = new RoomRegistry();

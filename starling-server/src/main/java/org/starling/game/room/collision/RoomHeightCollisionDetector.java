@@ -1,5 +1,8 @@
 package org.starling.game.room.collision;
 
+/**
+ * Enforces maximum upward and downward step deltas between room tiles.
+ */
 public final class RoomHeightCollisionDetector implements RoomCollisionDetector {
 
     static final double MAX_STEP_UP = 1.5;

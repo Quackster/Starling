@@ -3,6 +3,9 @@ package org.starling.game.room.path;
 import org.starling.game.room.geometry.RoomCoordinate;
 import org.starling.game.room.geometry.RoomPosition;
 
+/**
+ * Search node used by the room pathfinder while exploring candidate paths.
+ */
 final class RoomPathNode {
 
     private final RoomCoordinate coordinate;

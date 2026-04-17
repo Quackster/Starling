@@ -2,6 +2,9 @@ package org.starling.game.room.path;
 
 import org.starling.game.room.geometry.RoomCoordinate;
 
+/**
+ * Converts room movement deltas into classic Habbo body and head direction values.
+ */
 public final class RoomDirection {
 
     private RoomDirection() {}

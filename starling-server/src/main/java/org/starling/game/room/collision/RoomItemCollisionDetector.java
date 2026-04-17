@@ -5,6 +5,9 @@ import org.starling.game.room.geometry.RoomStaticItem;
 import java.util.Comparator;
 import java.util.List;
 
+/**
+ * Applies public-room item walkability and top-height rules to movement steps.
+ */
 public final class RoomItemCollisionDetector implements RoomCollisionDetector {
 
     private static final Comparator<RoomStaticItem> ITEM_HEIGHT =

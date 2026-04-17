@@ -1,5 +1,8 @@
 package org.starling.game.room.geometry;
 
+/**
+ * Two-dimensional tile coordinate within a room grid.
+ */
 public record RoomCoordinate(int x, int y) {
 
     public RoomCoordinate translate(int deltaX, int deltaY) {

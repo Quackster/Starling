@@ -1,5 +1,8 @@
 package org.starling.game.room.geometry;
 
+/**
+ * Immutable base floor tile definition from a room heightmap.
+ */
 public record RoomTile(boolean open, double height) {
 
     public static RoomTile closed() {

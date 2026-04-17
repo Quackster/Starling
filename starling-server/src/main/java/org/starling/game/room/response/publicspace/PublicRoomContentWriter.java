@@ -12,6 +12,9 @@ import org.starling.storage.entity.RoomModelEntity;
 
 import java.util.List;
 
+/**
+ * Writes public-room furniture and wall-item packets from stored public-space data.
+ */
 public final class PublicRoomContentWriter {
 
     private final PublicRoomFurnitureSerializer legacyFurnitureSerializer = new PublicRoomFurnitureSerializer();

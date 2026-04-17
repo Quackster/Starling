@@ -5,6 +5,9 @@ import org.starling.game.room.geometry.RoomPosition;
 import org.starling.game.room.runtime.RoomOccupant;
 import org.starling.game.room.runtime.WalkableRoom;
 
+/**
+ * Immutable context describing a single movement step under collision evaluation.
+ */
 public record RoomCollisionContext(
         WalkableRoom room,
         RoomOccupant mover,

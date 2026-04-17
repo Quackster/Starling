@@ -8,6 +8,9 @@ import org.starling.game.room.runtime.WalkableRoom;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Applies an ordered list of collision detectors to candidate room movement steps.
+ */
 public final class RoomCollisionPipeline {
 
     private final List<RoomCollisionDetector> detectors;
@@ -82,6 +85,9 @@ public final class RoomCollisionPipeline {
                 && !evaluateStep(room, mover, from, sideB, goal, false, false).allowed();
     }
 
+    /**
+     * Fluent builder for composing collision pipelines.
+     */
     public static final class Builder {
 
         private final List<RoomCollisionDetector> detectors = new ArrayList<>();

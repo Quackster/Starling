@@ -7,6 +7,9 @@ import org.starling.net.session.Session;
 import org.starling.storage.dao.UserDao;
 import org.starling.storage.entity.UserEntity;
 
+/**
+ * Authenticates login requests and binds the resulting player to the session.
+ */
 public final class LoginService {
 
     private static final Logger log = LogManager.getLogger(LoginService.class);

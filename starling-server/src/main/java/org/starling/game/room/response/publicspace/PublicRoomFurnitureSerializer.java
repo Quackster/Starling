@@ -6,6 +6,9 @@ import org.starling.net.codec.ServerMessage;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Serializes legacy raw public-room furniture layouts into room object packets.
+ */
 final class PublicRoomFurnitureSerializer {
 
     ServerMessage buildObjectsMessage(String rawFurniture) {
@@ -55,6 +58,9 @@ final class PublicRoomFurnitureSerializer {
         return new FurnitureItem(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], extras);
     }
 
+    /**
+     * Parsed legacy furniture row ready to be written back to the client wire format.
+     */
     private record FurnitureItem(
             String instanceId,
             String sprite,

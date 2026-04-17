@@ -4,6 +4,9 @@ import org.starling.game.player.Player;
 import org.starling.game.room.layout.RoomLayoutRegistry;
 import org.starling.storage.entity.RoomEntity;
 
+/**
+ * Builds new private-room entities from navigator room-creation defaults.
+ */
 public final class PrivateRoomFactory {
 
     public RoomEntity create(Player player, int categoryId, String roomName, String layoutToken, String doorModeToken, int showOwnerName) {
