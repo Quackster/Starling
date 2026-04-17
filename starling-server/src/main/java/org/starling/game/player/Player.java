@@ -1,4 +1,4 @@
-package org.starling.game;
+package org.starling.game.player;
 
 import org.starling.storage.entity.UserEntity;
 

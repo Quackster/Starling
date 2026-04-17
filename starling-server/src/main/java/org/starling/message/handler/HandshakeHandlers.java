@@ -16,7 +16,6 @@ public final class HandshakeHandlers {
     private static final Logger log = LogManager.getLogger(HandshakeHandlers.class);
     private static final boolean SERVER_TO_CLIENT_ENCRYPTION = false;
     private static final byte[] INIT_COMPAT_SHARED_SECRET = new byte[]{0x01};
-    private static final String INIT_COMPAT_SERVER_PUBLIC_KEY = "1";
 
     private HandshakeHandlers() {}
 
@@ -44,28 +43,24 @@ public final class HandshakeHandlers {
         String clientPublicKeyHex = msg.readString();
         session.setCryptoMode(Session.CryptoMode.INIT);
 
-        // Director r26 computes the shared key through a hidden bigint bridge.
-        // Replying with public key "1" collapses that path to a deterministic
-        // shared secret of 0x01 without needing the missing client-side math.
-        byte[] sharedSecret = INIT_COMPAT_SHARED_SECRET.clone();
+        byte[] sharedSecret = INIT_COMPAT_SHARED_SECRET;
         String sharedSecretHex = bytesToHex(sharedSecret);
-        log.debug("Init-compat shared secret selected ({} bytes)", sharedSecret.length);
+        log.debug("Init shared secret selected from zero-padded compatibility public key ({} bytes)", sharedSecret.length);
 
         HabboCipher cipher = new HabboCipher();
         cipher.initInitSocket(sharedSecret);
         session.setInboundCipher(cipher);
         session.setInboundSharedSecret(sharedSecret);
 
-        // Send our compatibility public key to the client (ServerSecretKey, opcode 1).
-        String serverPublicKeyHex = INIT_COMPAT_SERVER_PUBLIC_KEY;
-        String serverPublicKeyWire = INIT_COMPAT_SERVER_PUBLIC_KEY;
+        String serverPublicKeyHex = DiffieHellman.initCompatibilityPublicKeyHex();
+        String serverPublicKeyWire = serverPublicKeyHex;
         ServerMessage response = new ServerMessage(OutgoingPackets.SERVER_SECRET_KEY)
                 .writeRaw(serverPublicKeyWire);
         session.send(response);
 
         session.setDebugDhMaterial(
                 clientPublicKeyHex,
-                null,
+                "n/a",
                 serverPublicKeyHex,
                 sharedSecretHex
         );

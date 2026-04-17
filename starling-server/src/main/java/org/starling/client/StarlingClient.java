@@ -2,6 +2,7 @@ package org.starling.client;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import org.starling.crypto.DiffieHellman;
 import org.starling.crypto.SecretKeyCodec;
 import org.starling.message.IncomingPackets;
 import org.starling.message.OutgoingPackets;
@@ -391,7 +392,7 @@ public final class StarlingClient implements AutoCloseable {
         }
 
         private byte[] computeSharedKey(String otherPublicKeyHex) {
-            BigInteger otherPublicKey = new BigInteger(otherPublicKeyHex, 16);
+            BigInteger otherPublicKey = DiffieHellman.parsePublicKeyHex(otherPublicKeyHex);
             BigInteger sharedSecret = otherPublicKey.modPow(privateKey, prime);
             String sharedHex = sharedSecret.toString(16);
             if ((sharedHex.length() & 1) != 0) {

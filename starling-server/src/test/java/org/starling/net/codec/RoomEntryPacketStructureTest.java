@@ -2,6 +2,7 @@ package org.starling.net.codec;
 
 import org.junit.jupiter.api.Test;
 import org.starling.message.OutgoingPackets;
+import org.starling.support.PacketDebugStrings;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -13,8 +14,18 @@ class RoomEntryPacketStructureTest {
     }
 
     @Test
+    void hotelViewIsBodyless() {
+        assertSerialized(new ServerMessage(OutgoingPackets.HOTEL_VIEW), "@R[1]");
+    }
+
+    @Test
     void flatLetInIsBodyless() {
         assertSerialized(new ServerMessage(OutgoingPackets.FLAT_LETIN), "@i[1]");
+    }
+
+    @Test
+    void logoutWritesSingleInstanceId() {
+        assertSerialized(new ServerMessage(OutgoingPackets.LOGOUT).writeInt(1), "@]I[1]");
     }
 
     @Test
@@ -62,19 +73,6 @@ class RoomEntryPacketStructureTest {
     }
 
     private static void assertSerialized(ServerMessage message, String expected) {
-        assertEquals(expected, describe(message.toBytes()));
-    }
-
-    private static String describe(byte[] bytes) {
-        StringBuilder builder = new StringBuilder(bytes.length * 3);
-        for (byte value : bytes) {
-            int unsigned = value & 0xFF;
-            if (unsigned >= 32 && unsigned <= 126) {
-                builder.append((char) unsigned);
-            } else {
-                builder.append('[').append(unsigned).append(']');
-            }
-        }
-        return builder.toString();
+        assertEquals(expected, PacketDebugStrings.describe(message.toBytes()));
     }
 }

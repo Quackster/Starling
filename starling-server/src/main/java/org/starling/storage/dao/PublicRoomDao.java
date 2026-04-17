@@ -52,4 +52,30 @@ public final class PublicRoomDao {
                         .col(PublicRoomEntity::getId).asc())
                 .toList());
     }
+
+    public static void resetCurrentUsers() {
+        EntityContext.inTransaction(context -> {
+            try (var statement = context.conn().prepareStatement("UPDATE public_rooms SET current_users = 0")) {
+                statement.executeUpdate();
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to reset public room occupancy", e);
+            }
+            return null;
+        });
+    }
+
+    public static void saveCurrentUsers(int roomId, int currentUsers) {
+        int persistedCurrentUsers = Math.max(currentUsers, 0);
+        EntityContext.inTransaction(context -> {
+            try (var statement = context.conn()
+                    .prepareStatement("UPDATE public_rooms SET current_users = ? WHERE id = ?")) {
+                statement.setInt(1, persistedCurrentUsers);
+                statement.setInt(2, roomId);
+                statement.executeUpdate();
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to save public room occupancy", e);
+            }
+            return null;
+        });
+    }
 }

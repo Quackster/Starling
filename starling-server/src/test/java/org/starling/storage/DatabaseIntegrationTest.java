@@ -84,37 +84,50 @@ class DatabaseIntegrationTest {
         assertNotNull(UserDao.findBySsoTicket("starling-sso-ticket"));
 
         List<NavigatorCategoryEntity> categories = NavigatorDao.findAll();
-        assertEquals(7, categories.size());
-        assertEquals(List.of(3, 4), NavigatorDao.findByParentId(1).stream().map(NavigatorCategoryEntity::getId).toList());
+        assertEquals(35, categories.size());
+        assertTrue(categories.stream().anyMatch(category -> category.getId() == 3 && category.getParentId() == 1));
+        assertTrue(categories.stream().anyMatch(category -> category.getId() == 4 && category.getParentId() == 2));
+        assertTrue(categories.stream().anyMatch(category -> category.getId() == 35 && "No category".equals(category.getName())));
 
         List<PublicRoomEntity> publicRooms = PublicRoomDao.findVisibleByCategoryId(3);
-        assertEquals(2, publicRooms.size());
+        assertEquals(List.of(101), publicRooms.stream().map(PublicRoomEntity::getId).toList());
         assertEquals(101, PublicRoomDao.findByPort(101).getId());
+        assertEquals("newbie_lobby", PublicRoomDao.findByPort(101).getUnitStrId());
         assertEquals(List.of(101, 102), PublicRoomDao.findByIds(List.of(101, 102)).stream().map(PublicRoomEntity::getId).toList());
 
         RoomModelEntity privateModel = RoomModelDao.findByModelName("MODEL_A", false);
         assertNotNull(privateModel);
         assertEquals("model_a", privateModel.getModelName());
-        assertTrue(RoomModelDao.findByModelName("lobby_a", true).isPublicModel());
+        assertTrue(RoomModelDao.findByModelName("newbie_lobby", true).isPublicModel());
+        assertTrue(RoomModelDao.findByModelName("pool_a", true).getPublicRoomItems().contains("pool_chair2"));
     }
 
     @Test
     void bootstrapIsIdempotent() throws Exception {
+        int categoryCount = countRows("rooms_categories", null);
+        int roomModelCount = countRows("room_models", null);
+        int guestRoomCount = countRows("rooms", null);
+        int publicRoomCount = countRows("public_rooms", null);
+
         DatabaseBootstrap.ensureSchema(config);
         DatabaseBootstrap.seedDefaults();
 
         assertEquals(1, countRows("users", "username = 'admin'"));
-        assertEquals(7, countRows("rooms_categories", null));
-        assertEquals(7, countRows("room_models", null));
-        assertEquals(4, countRows("rooms", null));
-        assertEquals(3, countRows("public_rooms", null));
+        assertEquals(35, categoryCount);
+        assertTrue(roomModelCount >= 25);
+        assertEquals(4, guestRoomCount);
+        assertEquals(22, publicRoomCount);
+        assertEquals(categoryCount, countRows("rooms_categories", null));
+        assertEquals(roomModelCount, countRows("room_models", null));
+        assertEquals(guestRoomCount, countRows("rooms", null));
+        assertEquals(publicRoomCount, countRows("public_rooms", null));
     }
 
     @Test
     void roomDaoSupportsInsertQueryUpdateAndDelete() {
         String token = "db-room-" + UUID.randomUUID().toString().substring(0, 8);
         RoomEntity room = new RoomEntity();
-        room.setCategoryId(5);
+        room.setCategoryId(28);
         room.setOwnerId(UserDao.findByUsername("admin").getId());
         room.setOwnerName("DBTestOwner");
         room.setName(token);
@@ -143,7 +156,7 @@ class DatabaseIntegrationTest {
         assertNotNull(fetched);
         assertEquals(token, fetched.getName());
         assertTrue(RoomDao.findByOwner("dbtestowner").stream().anyMatch(candidate -> candidate.getId() == persisted.getId()));
-        assertTrue(RoomDao.findByCategoryId(5).stream().anyMatch(candidate -> candidate.getId() == persisted.getId()));
+        assertTrue(RoomDao.findByCategoryId(28).stream().anyMatch(candidate -> candidate.getId() == persisted.getId()));
         assertTrue(RoomDao.findByIds(List.of(persisted.getId())).stream().anyMatch(candidate -> candidate.getId() == persisted.getId()));
         assertTrue(RoomDao.search(token.toUpperCase()).stream().anyMatch(candidate -> candidate.getId() == persisted.getId()));
         assertTrue(RoomDao.findRecommended(10).stream().anyMatch(candidate -> candidate.getId() == persisted.getId()));
@@ -166,7 +179,7 @@ class DatabaseIntegrationTest {
         assertNotNull(admin);
 
         RoomEntity room = new RoomEntity();
-        room.setCategoryId(5);
+        room.setCategoryId(28);
         room.setOwnerId(admin.getId());
         room.setOwnerName(admin.getUsername());
         room.setName("fav-room-" + UUID.randomUUID().toString().substring(0, 8));

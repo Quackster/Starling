@@ -29,6 +29,9 @@ public class RoomModelEntity {
     @Column(name = "heightmap", nullable = false, type = "TEXT")
     private String heightmap = "";
 
+    @Column(name = "public_room_items", type = "TEXT")
+    private String publicRoomItems = "";
+
     @Column(name = "wallpaper", nullable = false, length = 32)
     private String wallpaper = "";
 
@@ -48,6 +51,7 @@ public class RoomModelEntity {
     public double getDoorZ() { return doorZ; }
     public int getDoorDir() { return doorDir; }
     public String getHeightmap() { return heightmap == null ? "" : heightmap; }
+    public String getPublicRoomItems() { return publicRoomItems == null ? "" : publicRoomItems; }
     public String getWallpaper() { return wallpaper == null ? "" : wallpaper; }
     public String getFloorPattern() { return floorPattern == null ? "" : floorPattern; }
     public String getLandscape() { return landscape == null ? "" : landscape; }
@@ -59,6 +63,7 @@ public class RoomModelEntity {
     public void setDoorZ(double doorZ) { this.doorZ = doorZ; }
     public void setDoorDir(int doorDir) { this.doorDir = doorDir; }
     public void setHeightmap(String heightmap) { this.heightmap = heightmap == null ? "" : heightmap; }
+    public void setPublicRoomItems(String publicRoomItems) { this.publicRoomItems = publicRoomItems == null ? "" : publicRoomItems; }
     public void setWallpaper(String wallpaper) { this.wallpaper = wallpaper == null ? "" : wallpaper; }
     public void setFloorPattern(String floorPattern) { this.floorPattern = floorPattern == null ? "" : floorPattern; }
     public void setLandscape(String landscape) { this.landscape = landscape == null ? "" : landscape; }

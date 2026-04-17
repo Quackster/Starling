@@ -11,6 +11,9 @@ public final class DiffieHellman {
             "EE8BC67BAA0DCB7183F16401F5CB838E3B6EE86B9EF2E5D0F3C49D4DC4EDC2B9", 16);
     private static final BigInteger INIT_GENERATOR = BigInteger.valueOf(5L);
     private static final String INIT_PRIVATE_CHARS = "012345679abcdef";
+    private static final String INIT_COMPAT_SUFFIX_CHARS = "GHIJKLMNOPQRSTUVWXYZ";
+    private static final int INIT_COMPAT_MIN_PADDING = 11;
+    private static final int INIT_COMPAT_PADDING_VARIATION = 8;
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final BigInteger prime;
@@ -27,6 +30,22 @@ public final class DiffieHellman {
         return generate(INIT_PRIME, INIT_GENERATOR, 40, INIT_PRIVATE_CHARS, 72, 4);
     }
 
+    // Director r26 only accepts a narrow compatibility shape after opcode 1.
+    // A zero-padded "1" plus one trailing non-hex letter is the working
+    // family captured from real Basilisk sessions in the local logs.
+    public static String initCompatibilityPublicKeyHex() {
+        int zeroCount = INIT_COMPAT_MIN_PADDING + RANDOM.nextInt(INIT_COMPAT_PADDING_VARIATION);
+        char suffix = INIT_COMPAT_SUFFIX_CHARS.charAt(RANDOM.nextInt(INIT_COMPAT_SUFFIX_CHARS.length()));
+
+        StringBuilder value = new StringBuilder(zeroCount + 2);
+        for (int i = 0; i < zeroCount; i++) {
+            value.append('0');
+        }
+        value.append('1');
+        value.append(suffix);
+        return value.toString();
+    }
+
     public String getPublicKeyHex() {
         return publicKey.toString(16).toUpperCase();
     }
@@ -36,7 +55,7 @@ public final class DiffieHellman {
     }
 
     public byte[] computeSharedSecret(String clientPublicKeyHex) {
-        BigInteger clientPublic = new BigInteger(clientPublicKeyHex, 16);
+        BigInteger clientPublic = parsePublicKeyHex(clientPublicKeyHex);
         BigInteger sharedSecret = clientPublic.modPow(privateKey, prime);
         String sharedHex = sharedSecret.toString(16);
 
@@ -49,6 +68,30 @@ public final class DiffieHellman {
             result[i] = (byte) Integer.parseInt(sharedHex.substring(i * 2, i * 2 + 2), 16);
         }
         return result;
+    }
+
+    public static BigInteger parsePublicKeyHex(String value) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("Public key cannot be blank");
+        }
+
+        try {
+            return new BigInteger(value, 16);
+        } catch (NumberFormatException ignored) {
+            StringBuilder hexDigits = new StringBuilder(value.length());
+            for (int i = 0; i < value.length(); i++) {
+                char current = value.charAt(i);
+                if (Character.digit(current, 16) >= 0) {
+                    hexDigits.append(current);
+                }
+            }
+
+            if (hexDigits.isEmpty()) {
+                throw new IllegalArgumentException("Compatibility key does not contain hex digits: " + value);
+            }
+
+            return new BigInteger(hexDigits.toString(), 16);
+        }
     }
 
     private static DiffieHellman generate(

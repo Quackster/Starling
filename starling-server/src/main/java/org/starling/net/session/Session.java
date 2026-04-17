@@ -6,8 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.starling.crypto.DiffieHellman;
 import org.starling.crypto.HabboCipher;
-import org.starling.game.Player;
-import org.starling.message.OutgoingPackets;
+import org.starling.game.player.Player;
 import org.starling.net.codec.ServerMessage;
 
 /**
@@ -33,7 +32,7 @@ public class Session {
     private String debugSharedSecretHex;
     private boolean encryptedDiagnosticsContextLogged;
     private Player player;
-    private RoomState roomState = RoomState.empty();
+    private RoomPresence roomPresence = RoomPresence.none();
 
     public Session(Channel channel) {
         this.channel = channel;
@@ -218,18 +217,48 @@ public class Session {
         return channel.remoteAddress() != null ? channel.remoteAddress().toString() : "unknown";
     }
 
-    public RoomState getRoomState() {
-        return roomState;
+    public RoomPresence getRoomPresence() {
+        return roomPresence;
     }
 
-    public void setRoomState(RoomState roomState) {
-        this.roomState = roomState == null ? RoomState.empty() : roomState;
+    public void setRoomPresence(RoomPresence roomPresence) {
+        this.roomPresence = roomPresence == null ? RoomPresence.none() : roomPresence;
     }
 
-    public record RoomState(boolean active, boolean publicRoom, int roomId, String marker, int doorId) {
-        public static RoomState empty() {
-            return new RoomState(false, false, 0, "", 0);
+    public record RoomPresence(RoomPhase phase, RoomType type, int roomId, String marker, int doorId) {
+        public static RoomPresence none() {
+            return new RoomPresence(RoomPhase.NONE, RoomType.PRIVATE, 0, "", 0);
         }
+
+        public static RoomPresence pendingPrivate(int roomId, String marker) {
+            return new RoomPresence(RoomPhase.PENDING_PRIVATE_ENTRY, RoomType.PRIVATE, roomId,
+                    marker == null ? "" : marker, 0);
+        }
+
+        public static RoomPresence activePrivate(int roomId, String marker) {
+            return new RoomPresence(RoomPhase.ACTIVE, RoomType.PRIVATE, roomId,
+                    marker == null ? "" : marker, 0);
+        }
+
+        public static RoomPresence activePublic(int roomId, String marker, int doorId) {
+            return new RoomPresence(RoomPhase.ACTIVE, RoomType.PUBLIC, roomId,
+                    marker == null ? "" : marker, doorId);
+        }
+
+        public boolean active() {
+            return phase == RoomPhase.ACTIVE;
+        }
+    }
+
+    public enum RoomPhase {
+        NONE,
+        PENDING_PRIVATE_ENTRY,
+        ACTIVE
+    }
+
+    public enum RoomType {
+        PRIVATE,
+        PUBLIC
     }
 
     public enum CryptoMode {

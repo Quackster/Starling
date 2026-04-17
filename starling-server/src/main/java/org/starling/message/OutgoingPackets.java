@@ -27,6 +27,8 @@ public final class OutgoingPackets {
 
     // Room
     public static final int OPC_OK = 19;
+    public static final int HOTEL_VIEW = 18;
+    public static final int LOGOUT = 29;
     public static final int ROOM_USERS = 28;
     public static final int ROOM_OBJECTS = 30;
     public static final int HEIGHTMAP = 31;

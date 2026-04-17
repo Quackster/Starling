@@ -1,4 +1,4 @@
-package org.starling.game;
+package org.starling.game.navigator;
 
 import org.starling.storage.dao.NavigatorDao;
 import org.starling.storage.entity.NavigatorCategoryEntity;

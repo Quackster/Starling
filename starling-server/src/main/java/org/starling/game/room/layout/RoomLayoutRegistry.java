@@ -1,4 +1,4 @@
-package org.starling.game.room;
+package org.starling.game.room.layout;
 
 import org.starling.storage.dao.RoomModelDao;
 import org.starling.storage.entity.PublicRoomEntity;

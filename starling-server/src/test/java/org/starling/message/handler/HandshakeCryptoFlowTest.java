@@ -16,9 +16,12 @@ import org.starling.net.codec.GameEncoder;
 import org.starling.net.codec.ServerMessage;
 import org.starling.net.codec.VL64Encoding;
 import org.starling.net.session.Session;
+import org.starling.support.PacketDebugStrings;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -108,7 +111,11 @@ class HandshakeCryptoFlowTest {
         byte[] serverSecretPacket = readOutboundBytes(channel);
         String serverPublicKeyWire = extractServerBody(serverSecretPacket);
 
-        assertEquals("1", serverPublicKeyWire);
+        assertTrue(serverPublicKeyWire.length() > 1);
+        assertTrue(serverPublicKeyWire.matches("0+1[G-Z]"), "expected zero-padded compatibility key with one suffix");
+        assertTrue(serverPublicKeyWire.length() >= 13, "expected compatibility key to be padded");
+        assertEquals("1", serverPublicKeyWire.substring(0, serverPublicKeyWire.length() - 1).replace("0", ""),
+                "expected padded portion to collapse to digit 1");
 
         byte[] directorSharedKey = new byte[]{0x01};
         byte[] plaintext = clientFrame(IncomingPackets.SECRETKEY, encodeStringBody(ENCODED_SECRET_KEY));
@@ -129,6 +136,19 @@ class HandshakeCryptoFlowTest {
             assertTrue(publicKeyHex.length() >= 72, "expected init public key length >= 72, got " + publicKeyHex.length());
             assertTrue(publicKeyHex.matches("[0-9A-F]+"), "expected uppercase init hex public key");
         }
+    }
+
+    @Test
+    void compatibilityPublicKeyMatchesRealClientCompatibleShape() {
+        Set<String> seen = new HashSet<>();
+        for (int i = 0; i < 16; i++) {
+            String wireKey = DiffieHellman.initCompatibilityPublicKeyHex();
+            assertTrue(wireKey.matches("0+1[G-Z]"), "expected zero-padded compatibility key, got " + wireKey);
+            assertEquals("1", wireKey.substring(0, wireKey.length() - 1).replace("0", ""),
+                    "expected padded portion to collapse to digit 1");
+            seen.add(wireKey);
+        }
+        assertTrue(seen.size() > 1, "expected compatibility key generation to vary across sessions");
     }
 
     @Test
@@ -262,20 +282,5 @@ class HandshakeCryptoFlowTest {
 
     private static String extractServerBody(byte[] packet) {
         return new String(packet, 2, packet.length - 3, UTF_8);
-    }
-
-    private static byte[] computeSharedSecret(String otherPublicKeyHex, BigInteger privateKey, BigInteger prime) {
-        BigInteger otherPublicKey = new BigInteger(otherPublicKeyHex, 16);
-        BigInteger sharedSecret = otherPublicKey.modPow(privateKey, prime);
-        String sharedHex = sharedSecret.toString(16);
-        if ((sharedHex.length() & 1) != 0) {
-            sharedHex = "0" + sharedHex;
-        }
-
-        byte[] sharedBytes = new byte[sharedHex.length() / 2];
-        for (int i = 0; i < sharedBytes.length; i++) {
-            sharedBytes[i] = (byte) Integer.parseInt(sharedHex.substring(i * 2, (i * 2) + 2), 16);
-        }
-        return sharedBytes;
     }
 }

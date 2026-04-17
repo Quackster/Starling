@@ -2,30 +2,31 @@ package org.starling.message.handler;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.starling.game.Player;
-import org.starling.game.room.RoomLayoutRegistry;
-import org.starling.message.IncomingPackets;
-import org.starling.message.OutgoingPackets;
+import org.starling.game.player.Player;
+import org.starling.game.room.access.RoomAccess;
+import org.starling.game.room.lifecycle.RoomLifecycleService;
+import org.starling.game.room.response.RoomResponseWriter;
+import org.starling.message.support.HandlerParsing;
+import org.starling.message.support.HandlerResponses;
+import org.starling.message.support.SessionGuards;
 import org.starling.net.codec.ClientMessage;
-import org.starling.net.codec.ServerMessage;
 import org.starling.net.session.Session;
-import org.starling.storage.dao.PublicRoomDao;
 import org.starling.storage.dao.RoomDao;
-import org.starling.storage.dao.RoomRightDao;
 import org.starling.storage.entity.PublicRoomEntity;
 import org.starling.storage.entity.RoomEntity;
 
 public final class RoomHandlers {
 
     private static final Logger log = LogManager.getLogger(RoomHandlers.class);
-    private static final String HOLOGRAPH_ROOM_URL = "http://wwww.vista4life.com/bf.php?p=emu";
+    private static final RoomResponseWriter responses = new RoomResponseWriter();
+    private static final RoomLifecycleService roomLifecycleService = RoomLifecycleService.getInstance();
 
     private RoomHandlers() {}
 
     public static void handleGetInterstitial(Session session, ClientMessage msg) {
         String slot = msg.readRawBody().trim();
         log.debug("Room interstitial requested: '{}'", slot);
-        session.send(buildSingleZeroMessage(OutgoingPackets.INTERSTITIAL_DATA));
+        responses.sendInterstitial(session);
     }
 
     public static void handleRoomDirectory(Session session, ClientMessage msg) {
@@ -38,282 +39,143 @@ public final class RoomHandlers {
         if (!publicRoom) {
             RoomEntity room = RoomDao.findById(roomId);
             if (room == null) {
-                session.send(new ServerMessage(OutgoingPackets.ERROR).writeRaw("nav_prvrooms_notfound"));
+                HandlerResponses.sendError(session, "nav_prvrooms_notfound");
                 return;
             }
 
-            session.send(new ServerMessage(OutgoingPackets.OPC_OK));
-            sendRoomUrl(session);
+            responses.sendPrivateRoomDirectory(session);
             return;
         }
 
-        PublicRoomEntity room = PublicRoomDao.findByPort(roomId);
+        PublicRoomEntity room = RoomAccess.findPublicRoom(roomId);
         if (room == null) {
-            room = PublicRoomDao.findById(roomId);
-        }
-        if (room == null) {
-            session.send(new ServerMessage(OutgoingPackets.ERROR).writeRaw("Public room not found"));
+            HandlerResponses.sendError(session, "Public room not found");
             return;
         }
 
-        enterPublicRoom(session, room, doorId);
+        if (SessionGuards.requirePlayer(session, log, "public room directory") == null) {
+            return;
+        }
+        roomLifecycleService.enterPublicRoom(session, room, doorId);
+        responses.enterPublicRoom(session, room, doorId);
     }
 
     public static void handleTryFlat(Session session, ClientMessage msg) {
-        Player player = requirePlayer(session);
+        Player player = SessionGuards.requirePlayer(session, log, "try flat");
         if (player == null) {
             return;
         }
 
         String[] parts = msg.readRawBody().trim().split("/", 2);
-        int roomId = parseInt(parts.length > 0 ? parts[0] : "");
+        int roomId = HandlerParsing.parseIntOrDefault(parts.length > 0 ? parts[0] : "", 0);
         String password = parts.length > 1 ? parts[1] : "";
 
         RoomEntity room = RoomDao.findById(roomId);
         if (room == null) {
-            session.send(new ServerMessage(OutgoingPackets.ERROR).writeRaw("nav_prvrooms_notfound"));
+            HandlerResponses.sendError(session, "nav_prvrooms_notfound");
             return;
         }
 
-        boolean owner = isOwner(player, room);
-        RoomLayoutRegistry.RoomVisuals visuals = RoomLayoutRegistry.forPrivateRoom(room);
+        boolean owner = RoomAccess.isOwner(player, room);
         if (!owner) {
             if (room.getDoorMode() == 1) {
-                session.send(new ServerMessage(OutgoingPackets.ERROR).writeRaw("Password required"));
+                HandlerResponses.sendError(session, "Password required");
                 return;
             }
             if (room.getDoorMode() == 2) {
                 if (password.isEmpty()) {
-                    session.send(new ServerMessage(OutgoingPackets.ERROR).writeRaw("Password required"));
+                    HandlerResponses.sendError(session, "Password required");
                     return;
                 }
                 if (!room.getDoorPassword().equals(password)) {
-                    session.send(new ServerMessage(OutgoingPackets.ERROR).writeRaw("Incorrect flat password"));
+                    HandlerResponses.sendError(session, "Incorrect flat password");
                     return;
                 }
             }
         }
 
-        session.setRoomState(new Session.RoomState(false, false, room.getId(), visuals.marker(), 0));
-        session.send(new ServerMessage(OutgoingPackets.FLAT_LETIN));
+        roomLifecycleService.authorizePrivateRoomEntry(session, room);
+        responses.allowPrivateRoomEntry(session, room);
     }
 
     public static void handleGotoFlat(Session session, ClientMessage msg) {
-        Player player = requirePlayer(session);
+        Player player = SessionGuards.requirePlayer(session, log, "goto flat");
         if (player == null) {
             return;
         }
 
-        int roomId = parseInt(msg.readRawBody().trim());
+        int roomId = HandlerParsing.parseIntOrDefault(msg.readRawBody().trim(), 0);
         RoomEntity room = RoomDao.findById(roomId);
         if (room == null) {
-            session.send(new ServerMessage(OutgoingPackets.ERROR).writeRaw("nav_prvrooms_notfound"));
+            HandlerResponses.sendError(session, "nav_prvrooms_notfound");
             return;
         }
 
-        RoomLayoutRegistry.RoomVisuals visuals = RoomLayoutRegistry.forPrivateRoom(room);
-        session.setRoomState(new Session.RoomState(true, false, room.getId(), visuals.marker(), 0));
-        session.send(buildRoomReadyMessage(visuals.marker(), room.getId()));
-        sendPrivateRoomProperties(session, visuals);
-        sendRoomRights(session, player, room);
+        if (!roomLifecycleService.enterPrivateRoom(session, room)) {
+            HandlerResponses.sendError(session, "Room entry is no longer pending.");
+            return;
+        }
+        responses.enterPrivateRoom(session, player, room);
+    }
+
+    public static void handleQuit(Session session, ClientMessage msg) {
+        roomLifecycleService.handleQuit(session);
     }
 
     public static void handleGetHeightmap(Session session, ClientMessage msg) {
-        Session.RoomState roomState = requireActiveRoom(session);
-        if (roomState == null) {
+        Session.RoomPresence roomPresence = SessionGuards.requireActiveRoom(session, log, "room heightmap");
+        if (roomPresence == null) {
             return;
         }
-        RoomLayoutRegistry.RoomVisuals visuals = resolveRoomVisuals(roomState);
-        log.debug("Sending room visuals for marker={} public={} heightmapLen={}",
-                visuals.marker(), roomState.publicRoom(), visuals.heightmap().length());
-        session.send(new ServerMessage(OutgoingPackets.HEIGHTMAP).writeRaw(visuals.heightmap()));
+        responses.sendHeightmap(session, roomPresence);
     }
 
     public static void handleGetUsers(Session session, ClientMessage msg) {
-        Session.RoomState roomState = requireActiveRoom(session);
-        Player player = requirePlayer(session);
-        if (roomState == null || player == null) {
+        Session.RoomPresence roomPresence = SessionGuards.requireActiveRoom(session, log, "room users");
+        Player player = SessionGuards.requirePlayer(session, log, "room users");
+        if (roomPresence == null || player == null) {
             return;
         }
-        RoomLayoutRegistry.RoomVisuals visuals = resolveRoomVisuals(roomState);
-        session.send(new ServerMessage(OutgoingPackets.ROOM_USERS).writeRaw(buildUserObjectsPayload(player, visuals)));
+        responses.sendUsers(session, roomPresence);
     }
 
     public static void handleGetPassiveObjects(Session session, ClientMessage msg) {
-        if (requireActiveRoom(session) == null) {
+        Session.RoomPresence roomPresence = SessionGuards.requireActiveRoom(session, log, "room objects");
+        if (roomPresence == null) {
             return;
         }
-        session.send(new ServerMessage(OutgoingPackets.ROOM_OBJECTS).writeInt(0));
-        sendActiveObjects(session);
+        responses.sendPassiveObjects(session, roomPresence);
     }
 
     public static void handleGetItems(Session session, ClientMessage msg) {
-        if (requireActiveRoom(session) == null) {
+        if (SessionGuards.requireActiveRoom(session, log, "room items") == null) {
             return;
         }
-        session.send(new ServerMessage(OutgoingPackets.ROOM_ITEMS));
+        responses.sendItems(session);
     }
 
     public static void handleStatus(Session session, ClientMessage msg) {
-        Player player = requirePlayer(session);
-        Session.RoomState roomState = requireActiveRoom(session);
-        if (player == null || roomState == null) {
+        Player player = SessionGuards.requirePlayer(session, log, "room status");
+        Session.RoomPresence roomPresence = SessionGuards.requireActiveRoom(session, log, "room status");
+        if (player == null || roomPresence == null) {
             return;
         }
 
-        RoomLayoutRegistry.RoomVisuals visuals = resolveRoomVisuals(roomState);
-        session.send(new ServerMessage(OutgoingPackets.STATUS).writeRaw(buildUserStatusPayload(player, visuals)));
+        responses.sendStatus(session, roomPresence);
     }
 
     public static void handleStop(Session session, ClientMessage msg) {
-        if (requireActiveRoom(session) == null) {
+        if (SessionGuards.requireActiveRoom(session, log, "room stop") == null) {
             return;
         }
         log.debug("Client stop action while entering room: '{}'", msg.readRawBody());
     }
 
     public static void handleGetRoomAd(Session session, ClientMessage msg) {
-        session.send(buildSingleZeroMessage(OutgoingPackets.ROOM_AD));
+        responses.sendRoomAd(session);
     }
 
     public static void handleGetSpectatorAmount(Session session, ClientMessage msg) {
-        session.send(new ServerMessage(OutgoingPackets.SPECTATOR_AMOUNT)
-                .writeInt(0)
-                .writeInt(0));
-    }
-
-    private static String buildUserObjectsPayload(Player player, RoomLayoutRegistry.RoomVisuals visuals) {
-        StringBuilder payload = new StringBuilder();
-        payload.append('\r');
-        payload.append("i:").append(player.getId()).append('\r');
-        payload.append("a:").append(player.getId()).append('\r');
-        payload.append("n:").append(player.getUsername()).append('\r');
-        payload.append("f:").append(player.getFigure()).append('\r');
-        payload.append("s:").append(player.getSex()).append('\r');
-        payload.append("l:").append(visuals.doorX()).append(' ')
-                .append(visuals.doorY()).append(' ')
-                .append(formatHeight(visuals.doorZ())).append('\r');
-        if (player.getMotto() != null && !player.getMotto().isBlank()) {
-            payload.append("c:").append(player.getMotto()).append('\r');
-        }
-        return payload.toString();
-    }
-
-    private static String buildUserStatusPayload(Player player, RoomLayoutRegistry.RoomVisuals visuals) {
-        return player.getId() + " "
-                + visuals.doorX() + "," + visuals.doorY() + "," + formatHeight(visuals.doorZ()) + ","
-                + visuals.doorDir() + "," + visuals.doorDir() + "/\r";
-    }
-
-    private static void enterPublicRoom(Session session, PublicRoomEntity room, int doorId) {
-        Player player = requirePlayer(session);
-        if (player == null) {
-            return;
-        }
-
-        RoomLayoutRegistry.RoomVisuals visuals = RoomLayoutRegistry.forPublicRoom(room);
-        session.setRoomState(new Session.RoomState(true, true, room.getId(), visuals.marker(), doorId));
-        session.send(new ServerMessage(OutgoingPackets.OPC_OK));
-        sendRoomUrl(session);
-        session.send(buildRoomReadyMessage(visuals.marker(), room.getId()));
-    }
-
-    private static void sendActiveObjects(Session session) {
-        session.send(new ServerMessage(OutgoingPackets.ROOM_ACTIVE_OBJECTS).writeInt(0));
-    }
-
-    private static void sendRoomUrl(Session session) {
-        session.send(new ServerMessage(OutgoingPackets.ROOM_URL).writeRaw(HOLOGRAPH_ROOM_URL));
-    }
-
-    private static ServerMessage buildRoomReadyMessage(String marker, int roomId) {
-        String safeMarker = marker == null ? "" : marker.trim();
-        log.debug("Sending ROOM_READY payload marker='{}' roomId={}", safeMarker, roomId);
-        return new ServerMessage(OutgoingPackets.ROOM_READY).writeRaw(safeMarker + " " + roomId);
-    }
-
-    private static ServerMessage buildSingleZeroMessage(int header) {
-        return new ServerMessage(header).writeRaw("0");
-    }
-
-    private static String formatHeight(double value) {
-        if (Math.floor(value) == value) {
-            return Integer.toString((int) value);
-        }
-        return Double.toString(value);
-    }
-
-    private static void sendPrivateRoomProperties(Session session, RoomLayoutRegistry.RoomVisuals visuals) {
-        sendFlatProperty(session, "landscape", visuals.landscape());
-        sendFlatProperty(session, "wallpaper", visuals.wallpaper());
-        sendFlatProperty(session, "floor", visuals.floorPattern());
-    }
-
-    private static void sendFlatProperty(Session session, String key, String value) {
-        if (value == null || value.isBlank()) {
-            return;
-        }
-        log.debug("Sending flat property {}={}", key, value);
-        session.send(new ServerMessage(OutgoingPackets.FLAT_PROPERTY).writeRaw(key + "/" + value));
-    }
-
-    private static void sendRoomRights(Session session, Player player, RoomEntity room) {
-        if (player == null || room == null) {
-            return;
-        }
-
-        boolean owner = isOwner(player, room);
-        boolean controller = owner || RoomRightDao.exists(room.getId(), player.getId());
-        if (owner) {
-            session.send(new ServerMessage(OutgoingPackets.ROOM_RIGHTS_OWNER));
-        }
-        if (controller) {
-            session.send(new ServerMessage(OutgoingPackets.ROOM_RIGHTS_CONTROLLER));
-        }
-    }
-
-    private static RoomLayoutRegistry.RoomVisuals resolveRoomVisuals(Session.RoomState roomState) {
-        if (roomState.publicRoom()) {
-            PublicRoomEntity room = PublicRoomDao.findById(roomState.roomId());
-            return room != null ? RoomLayoutRegistry.forPublicRoom(room) : RoomLayoutRegistry.defaultPublicRoom(roomState.marker());
-        }
-
-        RoomEntity room = RoomDao.findById(roomState.roomId());
-        return room != null ? RoomLayoutRegistry.forPrivateRoom(room) : RoomLayoutRegistry.defaultPrivateRoom(roomState.marker());
-    }
-
-    private static Session.RoomState requireActiveRoom(Session session) {
-        Session.RoomState roomState = session.getRoomState();
-        if (!roomState.active()) {
-            log.debug("Ignoring room state request from inactive session {}", session.getRemoteAddress());
-            return null;
-        }
-        return roomState;
-    }
-
-    private static Player requirePlayer(Session session) {
-        Player player = session.getPlayer();
-        if (player == null) {
-            log.debug("Ignoring room request from unauthenticated session {}", session.getRemoteAddress());
-        }
-        return player;
-    }
-
-    private static boolean isOwner(Player player, RoomEntity room) {
-        if (player == null || room == null) {
-            return false;
-        }
-        if (room.getOwnerId() != null && room.getOwnerId() == player.getId()) {
-            return true;
-        }
-        return room.getOwnerName() != null && room.getOwnerName().equalsIgnoreCase(player.getUsername());
-    }
-
-    private static int parseInt(String value) {
-        try {
-            return Integer.parseInt(value);
-        } catch (Exception ignored) {
-            return 0;
-        }
+        responses.sendSpectatorAmount(session);
     }
 }
