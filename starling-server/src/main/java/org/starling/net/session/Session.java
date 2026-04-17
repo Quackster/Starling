@@ -23,9 +23,15 @@ public class Session {
     private DiffieHellman diffieHellman;
     private HabboCipher inboundCipher;
     private HabboCipher outboundCipher;
+    private byte[] inboundSharedSecret;
     private volatile boolean inboundEncrypted;
     private volatile boolean outboundEncrypted;
     private CryptoMode cryptoMode = CryptoMode.NONE;
+    private String debugClientPublicKeyHex;
+    private String debugServerPrivateKeyHex;
+    private String debugServerPublicKeyHex;
+    private String debugSharedSecretHex;
+    private boolean encryptedDiagnosticsContextLogged;
     private Player player;
     private RoomState roomState = RoomState.empty();
 
@@ -92,6 +98,14 @@ public class Session {
         this.outboundCipher = outboundCipher;
     }
 
+    public byte[] getInboundSharedSecret() {
+        return inboundSharedSecret == null ? null : inboundSharedSecret.clone();
+    }
+
+    public void setInboundSharedSecret(byte[] inboundSharedSecret) {
+        this.inboundSharedSecret = inboundSharedSecret == null ? null : inboundSharedSecret.clone();
+    }
+
     public boolean isInboundEncrypted() {
         return inboundEncrypted;
     }
@@ -120,9 +134,15 @@ public class Session {
         this.diffieHellman = null;
         this.inboundCipher = null;
         this.outboundCipher = null;
+        this.inboundSharedSecret = null;
         this.inboundEncrypted = false;
         this.outboundEncrypted = false;
         this.cryptoMode = CryptoMode.NONE;
+        this.debugClientPublicKeyHex = null;
+        this.debugServerPrivateKeyHex = null;
+        this.debugServerPublicKeyHex = null;
+        this.debugSharedSecretHex = null;
+        this.encryptedDiagnosticsContextLogged = false;
     }
 
     /**
@@ -143,6 +163,41 @@ public class Session {
 
     public void setEncrypted(boolean encrypted) {
         setInboundEncrypted(encrypted);
+    }
+
+    public void setDebugDhMaterial(
+            String clientPublicKeyHex,
+            String serverPrivateKeyHex,
+            String serverPublicKeyHex,
+            String sharedSecretHex
+    ) {
+        this.debugClientPublicKeyHex = clientPublicKeyHex;
+        this.debugServerPrivateKeyHex = serverPrivateKeyHex;
+        this.debugServerPublicKeyHex = serverPublicKeyHex;
+        this.debugSharedSecretHex = sharedSecretHex;
+        this.encryptedDiagnosticsContextLogged = false;
+    }
+
+    public String getDebugClientPublicKeyHex() {
+        return debugClientPublicKeyHex;
+    }
+
+    public String getDebugServerPrivateKeyHex() {
+        return debugServerPrivateKeyHex;
+    }
+
+    public String getDebugServerPublicKeyHex() {
+        return debugServerPublicKeyHex;
+    }
+
+    public String getDebugSharedSecretHex() {
+        return debugSharedSecretHex;
+    }
+
+    public boolean markEncryptedDiagnosticsContextLogged() {
+        boolean alreadyLogged = encryptedDiagnosticsContextLogged;
+        encryptedDiagnosticsContextLogged = true;
+        return alreadyLogged;
     }
 
     // --- Player ---

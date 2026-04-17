@@ -39,13 +39,38 @@ public class HabboCipher {
         this.algorithm = Algorithm.INIT_SOCKET;
         this.discardPostFrameBytes = true;
 
-        byte[] modKey = new byte[sharedKey.length];
-        for (int i = 0; i < sharedKey.length; i++) {
-            modKey[i] = (byte) ((sharedKey[i] & 0xFF) ^ (XOR_KEY[i % XOR_KEY.length] & 0xFF));
-        }
-
-        initSboxFromBytes(modKey);
+        initSboxFromBytes(xorSharedKey(sharedKey));
         premix(INIT_PREMIX_STRING, 52);
+    }
+
+    /**
+     * Diagnostic variant of the init-socket cipher that skips the 52-round
+     * premix while keeping the Director XOR-key and PRGA.
+     */
+    public void initInitSocketNoPremix(byte[] sharedKey) {
+        this.algorithm = Algorithm.INIT_SOCKET;
+        this.discardPostFrameBytes = true;
+        initSboxFromBytes(xorSharedKey(sharedKey));
+    }
+
+    /**
+     * Initializes the standard RC4-style PRGA directly from raw key bytes.
+     * Used only for diagnostics against Director compatibility issues.
+     */
+    public void initStandardBytes(byte[] keyBytes) {
+        this.algorithm = Algorithm.STANDARD;
+        this.discardPostFrameBytes = false;
+        initSboxFromBytes(keyBytes);
+    }
+
+    /**
+     * Diagnostic variant that applies the Director XOR-key to the shared
+     * secret, but uses the standard RC4-style PRGA instead of init-socket.
+     */
+    public void initStandardXoredShared(byte[] sharedKey) {
+        this.algorithm = Algorithm.STANDARD;
+        this.discardPostFrameBytes = false;
+        initSboxFromBytes(xorSharedKey(sharedKey));
     }
 
     public void initServerToClientSecretKey(int secretKey) {
@@ -66,6 +91,19 @@ public class HabboCipher {
     }
 
     /**
+     * Returns a compact snapshot of the current cipher state for diagnostics.
+     * Uses a copied cipher for keystream preview so the live state is unchanged.
+     */
+    public String debugStateSummary(int keystreamBytes) {
+        HabboCipher snapshot = copy();
+        byte[] keystream = snapshot.applyKeystream(new byte[Math.max(0, keystreamBytes)]);
+        return "alg=" + algorithm.name().toLowerCase()
+                + ",q=" + q
+                + ",j=" + j
+                + ",ks=" + bytesToHex(keystream);
+    }
+
+    /**
      * Decrypts an ASCII hex-encoded client frame.
      */
     public byte[] decryptFrame(byte[] hexData) {
@@ -73,10 +111,22 @@ public class HabboCipher {
             throw new IllegalArgumentException("Encrypted frame length must be even");
         }
 
-        byte[] encryptedBytes = decodeHex(hexData);
+        byte[] encryptedBytes = decodeHexBytes(hexData);
         byte[] plaintext = applyKeystream(encryptedBytes);
         advancePostFrameState();
         return plaintext;
+    }
+
+    /**
+     * Decrypts ASCII hex-encoded bytes without applying the per-frame post-mix
+     * advance. This is useful for prefix preview and diagnostics.
+     */
+    public byte[] decryptHexStream(byte[] hexData) {
+        if ((hexData.length % 2) != 0) {
+            throw new IllegalArgumentException("Encrypted frame length must be even");
+        }
+
+        return applyKeystream(decodeHexBytes(hexData));
     }
 
     /**
@@ -163,6 +213,14 @@ public class HabboCipher {
         return output;
     }
 
+    private byte[] xorSharedKey(byte[] sharedKey) {
+        byte[] modKey = new byte[sharedKey.length];
+        for (int i = 0; i < sharedKey.length; i++) {
+            modKey[i] = (byte) ((sharedKey[i] & 0xFF) ^ (XOR_KEY[i % XOR_KEY.length] & 0xFF));
+        }
+        return modKey;
+    }
+
     private byte[] runInitSocketPrga(byte[] input) {
         byte[] output = new byte[input.length];
 
@@ -188,7 +246,7 @@ public class HabboCipher {
         return output;
     }
 
-    private byte[] decodeHex(byte[] hexData) {
+    private byte[] decodeHexBytes(byte[] hexData) {
         byte[] decoded = new byte[hexData.length / 2];
 
         for (int i = 0; i < decoded.length; i++) {
@@ -240,6 +298,11 @@ public class HabboCipher {
             parsed[i] = Integer.parseInt(values[i].trim());
         }
         return parsed;
+    }
+
+    private static String bytesToHex(byte[] bytes) {
+        byte[] hex = new HabboCipher().encodeHex(bytes);
+        return new String(hex, StandardCharsets.US_ASCII);
     }
 
     private enum Algorithm {

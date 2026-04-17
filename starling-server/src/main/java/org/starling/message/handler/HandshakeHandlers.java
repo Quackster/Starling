@@ -15,6 +15,8 @@ public final class HandshakeHandlers {
 
     private static final Logger log = LogManager.getLogger(HandshakeHandlers.class);
     private static final boolean SERVER_TO_CLIENT_ENCRYPTION = false;
+    private static final byte[] INIT_COMPAT_SHARED_SECRET = new byte[]{0x01};
+    private static final String INIT_COMPAT_SERVER_PUBLIC_KEY = "1";
 
     private HandshakeHandlers() {}
 
@@ -40,29 +42,45 @@ public final class HandshakeHandlers {
      */
     public static void handleGenerateKey(Session session, ClientMessage msg) {
         String clientPublicKeyHex = msg.readString();
-        DiffieHellman dh = DiffieHellman.init();
-        session.setDiffieHellman(dh);
         session.setCryptoMode(Session.CryptoMode.INIT);
 
-        // Compute shared secret
-        byte[] sharedSecret = dh.computeSharedSecret(clientPublicKeyHex);
-        log.debug("DH shared secret computed ({} bytes)", sharedSecret.length);
+        // Director r26 computes the shared key through a hidden bigint bridge.
+        // Replying with public key "1" collapses that path to a deterministic
+        // shared secret of 0x01 without needing the missing client-side math.
+        byte[] sharedSecret = INIT_COMPAT_SHARED_SECRET.clone();
+        String sharedSecretHex = bytesToHex(sharedSecret);
+        log.debug("Init-compat shared secret selected ({} bytes)", sharedSecret.length);
 
         HabboCipher cipher = new HabboCipher();
         cipher.initInitSocket(sharedSecret);
         session.setInboundCipher(cipher);
+        session.setInboundSharedSecret(sharedSecret);
 
-        // Send our public key to the client (ServerSecretKey, opcode 1)
-        // The client will also compute the same shared secret and init its cipher
-        String serverPublicKeyHex = dh.getPublicKeyHex();
+        // Send our compatibility public key to the client (ServerSecretKey, opcode 1).
+        String serverPublicKeyHex = INIT_COMPAT_SERVER_PUBLIC_KEY;
+        String serverPublicKeyWire = INIT_COMPAT_SERVER_PUBLIC_KEY;
         ServerMessage response = new ServerMessage(OutgoingPackets.SERVER_SECRET_KEY)
-                .writeRaw(serverPublicKeyHex);
+                .writeRaw(serverPublicKeyWire);
         session.send(response);
+
+        session.setDebugDhMaterial(
+                clientPublicKeyHex,
+                null,
+                serverPublicKeyHex,
+                sharedSecretHex
+        );
+
+        if (log.isDebugEnabled()) {
+            log.debug("DH material for {} clientPublicKeyHex={}", session.getRemoteAddress(), clientPublicKeyHex);
+            log.debug("DH material for {} serverPublicKeyHex={}", session.getRemoteAddress(), serverPublicKeyHex);
+            log.debug("DH material for {} serverPublicKeyWire={}", session.getRemoteAddress(), serverPublicKeyWire);
+            log.debug("DH material for {} sharedSecretHex={}", session.getRemoteAddress(), sharedSecretHex);
+        }
 
         // Mark session as encrypted - all subsequent incoming messages will be decrypted
         session.setInboundEncrypted(true);
 
-        log.info("DH key exchange complete using init socket crypto for {}",
+        log.info("Init handshake complete using compatibility public key for {}",
                 session.getRemoteAddress());
     }
 
@@ -142,5 +160,14 @@ public final class HandshakeHandlers {
 
         session.send(response);
         log.debug("Sent SessionParameters");
+    }
+
+    private static String bytesToHex(byte[] value) {
+        StringBuilder hex = new StringBuilder(value.length * 2);
+        for (byte current : value) {
+            hex.append(Character.forDigit((current >>> 4) & 0x0F, 16));
+            hex.append(Character.forDigit(current & 0x0F, 16));
+        }
+        return hex.toString().toUpperCase();
     }
 }

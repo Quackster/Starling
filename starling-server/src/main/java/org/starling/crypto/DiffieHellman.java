@@ -31,6 +31,10 @@ public final class DiffieHellman {
         return publicKey.toString(16).toUpperCase();
     }
 
+    public String getPrivateKeyHex() {
+        return privateKey.toString(16).toUpperCase();
+    }
+
     public byte[] computeSharedSecret(String clientPublicKeyHex) {
         BigInteger clientPublic = new BigInteger(clientPublicKeyHex, 16);
         BigInteger sharedSecret = clientPublic.modPow(privateKey, prime);

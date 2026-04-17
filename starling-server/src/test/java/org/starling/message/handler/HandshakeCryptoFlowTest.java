@@ -11,15 +11,20 @@ import org.starling.message.IncomingPackets;
 import org.starling.message.OutgoingPackets;
 import org.starling.net.codec.Base64Encoding;
 import org.starling.net.codec.ClientMessage;
+import org.starling.net.codec.GameDecoder;
 import org.starling.net.codec.GameEncoder;
 import org.starling.net.codec.ServerMessage;
+import org.starling.net.codec.VL64Encoding;
 import org.starling.net.session.Session;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HandshakeCryptoFlowTest {
@@ -72,7 +77,7 @@ class HandshakeCryptoFlowTest {
         HabboCipher decoder = new HabboCipher();
         decoder.initInitSocket(sharedKey);
 
-        byte[] decryptedPreview = decoder.copy().decryptFrame(new byte[]{
+        byte[] decryptedPreview = decoder.copy().decryptHexStream(new byte[]{
                 encryptedFrame[0], encryptedFrame[1],
                 encryptedFrame[2], encryptedFrame[3],
                 encryptedFrame[4], encryptedFrame[5]
@@ -103,7 +108,9 @@ class HandshakeCryptoFlowTest {
         byte[] serverSecretPacket = readOutboundBytes(channel);
         String serverPublicKeyWire = extractServerBody(serverSecretPacket);
 
-        byte[] directorSharedKey = computeSharedSecret(serverPublicKeyWire, clientPrivateKey, INIT_PRIME);
+        assertEquals("1", serverPublicKeyWire);
+
+        byte[] directorSharedKey = new byte[]{0x01};
         byte[] plaintext = clientFrame(IncomingPackets.SECRETKEY, encodeStringBody(ENCODED_SECRET_KEY));
 
         HabboCipher directorEncoder = new HabboCipher();
@@ -122,6 +129,50 @@ class HandshakeCryptoFlowTest {
             assertTrue(publicKeyHex.length() >= 72, "expected init public key length >= 72, got " + publicKeyHex.length());
             assertTrue(publicKeyHex.matches("[0-9A-F]+"), "expected uppercase init hex public key");
         }
+    }
+
+    @Test
+    void compatibilitySharedSecretDecodesEncryptedVersionCheck() {
+        EmbeddedChannel channel = new EmbeddedChannel(new GameDecoder());
+        Session session = new Session(channel);
+        channel.attr(Session.KEY).set(session);
+        session.setCryptoMode(Session.CryptoMode.INIT);
+
+        byte[] directorSharedKey = new byte[]{0x01};
+        HabboCipher serverDecoder = new HabboCipher();
+        serverDecoder.initInitSocket(directorSharedKey);
+        session.setInboundCipher(serverDecoder);
+        session.setInboundSharedSecret(directorSharedKey);
+        session.setInboundEncrypted(true);
+
+        byte[] plaintext = clientFrame(
+                IncomingPackets.VERSIONCHECK,
+                encodeBody(
+                        VL64Encoding.encode(401),
+                        encodeStringBody("2"),
+                        encodeStringBody("http://localhost/gamedata/external_variables.txt")
+                )
+        );
+
+        HabboCipher directorEncoder = new HabboCipher();
+        directorEncoder.initInitSocket(directorSharedKey);
+        byte[] encryptedFrame = directorEncoder.encryptToHex(plaintext);
+
+        assertFalse(channel.writeInbound(Unpooled.wrappedBuffer(Arrays.copyOf(encryptedFrame, encryptedFrame.length / 2))));
+        assertTrue(channel.writeInbound(Unpooled.wrappedBuffer(Arrays.copyOfRange(encryptedFrame, encryptedFrame.length / 2, encryptedFrame.length))));
+
+        ClientMessage decoded = channel.readInbound();
+        assertNotNull(decoded);
+        try {
+            assertEquals(IncomingPackets.VERSIONCHECK, decoded.getOpcode());
+            assertEquals(401, decoded.readInt());
+            assertEquals("2", decoded.readString());
+            assertEquals("http://localhost/gamedata/external_variables.txt", decoded.readString());
+        } finally {
+            decoded.release();
+        }
+
+        channel.finishAndReleaseAll();
     }
 
     private static void assertEncryptedEndOfCrypto() {
@@ -181,6 +232,21 @@ class HandshakeCryptoFlowTest {
         System.arraycopy(header, 0, frame, length.length, header.length);
         System.arraycopy(body, 0, frame, length.length + header.length, body.length);
         return frame;
+    }
+
+    private static byte[] encodeBody(byte[]... parts) {
+        int length = 0;
+        for (byte[] part : parts) {
+            length += part.length;
+        }
+
+        byte[] body = new byte[length];
+        int offset = 0;
+        for (byte[] part : parts) {
+            System.arraycopy(part, 0, body, offset, part.length);
+            offset += part.length;
+        }
+        return body;
     }
 
     private static byte[] readOutboundBytes(EmbeddedChannel channel) {
