@@ -101,7 +101,9 @@ class DatabaseIntegrationTest {
         assertTrue(categories.stream().anyMatch(category -> category.getId() == 35 && "No category".equals(category.getName())));
 
         List<PublicRoomEntity> publicRooms = PublicRoomDao.findVisibleByCategoryId(3);
-        assertEquals(List.of(101), publicRooms.stream().map(PublicRoomEntity::getId).toList());
+        assertTrue(publicRooms.stream().anyMatch(room -> room.getId() == 101));
+        assertTrue(publicRooms.stream().anyMatch(room -> room.getId() == 217));
+        assertTrue(publicRooms.stream().anyMatch(room -> room.getId() == 251));
         assertEquals(101, PublicRoomDao.findByPort(101).getId());
         assertEquals("Welcome Lounge", PublicRoomDao.findByPort(101).getName());
         assertEquals("New? Lost? Get a warm welcome here.", PublicRoomDao.findByPort(101).getDescription());
@@ -109,12 +111,15 @@ class DatabaseIntegrationTest {
         assertEquals("Habbo Lido", PublicRoomDao.findById(102).getName());
         assertEquals("Dive right in!", PublicRoomDao.findById(102).getDescription());
         assertEquals("Theatredrome Habboween", PublicRoomDao.findById(103).getName());
+        assertEquals("Gamehall Lobby", PublicRoomDao.findById(218).getName());
+        assertEquals("MuchMusic HQ", PublicRoomDao.findById(238).getName());
         assertEquals(List.of(101, 102), PublicRoomDao.findByIds(List.of(101, 102)).stream().map(PublicRoomEntity::getId).toList());
 
         RoomModelEntity privateModel = RoomModelDao.findByModelName("MODEL_A", false);
         assertNotNull(privateModel);
         assertEquals("model_a", privateModel.getModelName());
         assertTrue(RoomModelDao.findByModelName("newbie_lobby", true).isPublicModel());
+        assertTrue(RoomModelDao.findByModelName("tv_studio", true).isPublicModel());
         assertTrue(RoomModelDao.findByModelName("pool_a", true).getPublicRoomItems().contains("pool_chair2"));
         assertEquals(63, PublicRoomItemDao.findByRoomModel("newbie_lobby").size());
         assertTrue(PublicRoomItemDao.findByRoomModel("pool_b").stream()
@@ -136,7 +141,7 @@ class DatabaseIntegrationTest {
         assertEquals(35, categoryCount);
         assertTrue(roomModelCount >= 25);
         assertEquals(4, guestRoomCount);
-        assertEquals(22, publicRoomCount);
+        assertEquals(87, publicRoomCount);
         assertTrue(publicRoomItemCount >= 3465);
         assertEquals(categoryCount, countRows("rooms_categories", null));
         assertEquals(roomModelCount, countRows("room_models", null));
