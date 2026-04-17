@@ -25,11 +25,12 @@ public final class RoomCollisionPipeline {
     }
 
     public static Builder defaultsBuilder() {
-        return builder()
-                .addDetector(new RoomBoundsCollisionDetector())
-                .addDetector(new RoomItemCollisionDetector())
-                .addDetector(new RoomEntityCollisionDetector())
-                .addDetector(new RoomHeightCollisionDetector());
+        return builder().addDetectors(List.of(
+                new RoomBoundsCollisionDetector(),
+                new RoomItemCollisionDetector(),
+                new RoomEntityCollisionDetector(),
+                new RoomHeightCollisionDetector()
+        ));
     }
 
     public RoomStepEvaluation evaluateStep(

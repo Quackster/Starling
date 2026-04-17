@@ -1,6 +1,7 @@
 package org.starling.game.room.runtime;
 
 import org.starling.game.room.collision.RoomCollisionPipeline;
+import org.starling.game.room.collision.RoomCollisionRegistry;
 import org.starling.game.room.collision.RoomStepEvaluation;
 import org.starling.game.room.geometry.RoomCoordinate;
 import org.starling.game.room.geometry.RoomPosition;
@@ -18,23 +19,21 @@ public final class RoomMovementService {
     private static final RoomMovementService INSTANCE = new RoomMovementService(
             RoomRegistry.getInstance(),
             new RoomResponseWriter(),
-            RoomCollisionPipeline.defaults()
+            RoomCollisionRegistry.getInstance()
     );
 
     private final RoomRegistry roomRegistry;
     private final RoomResponseWriter responses;
-    private final RoomCollisionPipeline collisionPipeline;
-    private final RoomPathfinder pathfinder;
+    private final RoomCollisionRegistry collisionRegistry;
 
     private RoomMovementService(
             RoomRegistry roomRegistry,
             RoomResponseWriter responses,
-            RoomCollisionPipeline collisionPipeline
+            RoomCollisionRegistry collisionRegistry
     ) {
         this.roomRegistry = roomRegistry;
         this.responses = responses;
-        this.collisionPipeline = collisionPipeline;
-        this.pathfinder = new RoomPathfinder(collisionPipeline);
+        this.collisionRegistry = collisionRegistry;
     }
 
     public static RoomMovementService getInstance() {
@@ -47,6 +46,8 @@ public final class RoomMovementService {
             return false;
         }
 
+        RoomCollisionPipeline collisionPipeline = collisionRegistry.snapshotPipeline();
+        RoomPathfinder pathfinder = new RoomPathfinder(collisionPipeline);
         boolean broadcastStatus = false;
         synchronized (room) {
             RoomOccupant occupant = room.getOccupant(session);
@@ -97,10 +98,11 @@ public final class RoomMovementService {
     }
 
     public void tickRoom(LoadedRoom<?> room) {
+        RoomCollisionPipeline collisionPipeline = collisionRegistry.snapshotPipeline();
         boolean changed = false;
         synchronized (room) {
             for (RoomOccupant occupant : room.getOccupantUnits()) {
-                changed |= advanceOccupant(room, occupant);
+                changed |= advanceOccupant(room, occupant, collisionPipeline);
             }
         }
 
@@ -109,7 +111,7 @@ public final class RoomMovementService {
         }
     }
 
-    private boolean advanceOccupant(LoadedRoom<?> room, RoomOccupant occupant) {
+    private boolean advanceOccupant(LoadedRoom<?> room, RoomOccupant occupant, RoomCollisionPipeline collisionPipeline) {
         boolean changed = false;
         RoomPosition current = occupant.getPosition();
 
