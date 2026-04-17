@@ -13,8 +13,10 @@ import org.starling.game.player.Player;
 import org.starling.game.player.PlayerManager;
 import org.starling.game.room.lifecycle.RoomLifecycleService;
 import org.starling.game.room.registry.RoomRegistry;
+import org.starling.game.room.runtime.RoomTaskManager;
 import org.starling.message.IncomingPackets;
 import org.starling.message.OutgoingPackets;
+import org.starling.net.codec.Base64Encoding;
 import org.starling.net.codec.ClientMessage;
 import org.starling.net.codec.ServerMessage;
 import org.starling.net.codec.VL64Encoding;
@@ -289,6 +291,74 @@ class RoomEntryFlowIntegrationTest {
         finish(replacementSession);
     }
 
+    @Test
+    void walkUsesRoomTaskToStageAndAdvanceMovement() {
+        Session session = authenticatedSession("admin");
+        Player player = player("admin");
+
+        invoke(rawMessage(IncomingPackets.TRYFLAT, "1"), message -> RoomHandlers.handleTryFlat(session, message));
+        drainPackets(session.getChannel());
+        invoke(rawMessage(IncomingPackets.GOTOFLAT, "1"), message -> RoomHandlers.handleGotoFlat(session, message));
+        drainPackets(session.getChannel());
+
+        invoke(walkMessage(5, 5), message -> RoomHandlers.handleWalk(session, message));
+        assertTrue(drainPackets(session.getChannel()).isEmpty());
+
+        RoomTaskManager.getInstance().tickNow();
+        List<String> firstTick = drainPackets(session.getChannel());
+        assertEquals(1, firstTick.size());
+        assertTrue(firstTick.get(0).contains(player.getId() + " 3,5,0,2,2/mv 4,5,0/"));
+
+        RoomTaskManager.getInstance().tickNow();
+        List<String> secondTick = drainPackets(session.getChannel());
+        assertEquals(1, secondTick.size());
+        assertTrue(secondTick.get(0).contains(player.getId() + " 4,5,0,2,2/mv 5,5,0/"));
+
+        RoomTaskManager.getInstance().tickNow();
+        List<String> thirdTick = drainPackets(session.getChannel());
+        assertEquals(1, thirdTick.size());
+        assertTrue(thirdTick.get(0).contains(player.getId() + " 5,5,0,2,2/"));
+        assertFalse(thirdTick.get(0).contains("/mv "));
+
+        invoke(rawMessage(IncomingPackets.G_USRS, ""), message -> RoomHandlers.handleGetUsers(session, message));
+        List<String> users = drainPackets(session.getChannel());
+        assertEquals(1, users.size());
+        assertTrue(users.get(0).contains("l:5 5 0"));
+
+        finish(session);
+    }
+
+    @Test
+    void stopClearsQueuedMovementBeforeNextStep() {
+        Session session = authenticatedSession("admin");
+        Player player = player("admin");
+
+        invoke(rawMessage(IncomingPackets.TRYFLAT, "1"), message -> RoomHandlers.handleTryFlat(session, message));
+        drainPackets(session.getChannel());
+        invoke(rawMessage(IncomingPackets.GOTOFLAT, "1"), message -> RoomHandlers.handleGotoFlat(session, message));
+        drainPackets(session.getChannel());
+
+        invoke(walkMessage(5, 5), message -> RoomHandlers.handleWalk(session, message));
+        RoomTaskManager.getInstance().tickNow();
+        drainPackets(session.getChannel());
+
+        invoke(rawMessage(IncomingPackets.STOP, ""), message -> RoomHandlers.handleStop(session, message));
+        List<String> stopped = drainPackets(session.getChannel());
+        assertEquals(1, stopped.size());
+        assertTrue(stopped.get(0).contains(player.getId() + " 3,5,0,2,2/"));
+        assertFalse(stopped.get(0).contains("/mv "));
+
+        RoomTaskManager.getInstance().tickNow();
+        assertTrue(drainPackets(session.getChannel()).isEmpty());
+
+        invoke(rawMessage(IncomingPackets.G_USRS, ""), message -> RoomHandlers.handleGetUsers(session, message));
+        List<String> users = drainPackets(session.getChannel());
+        assertEquals(1, users.size());
+        assertTrue(users.get(0).contains("l:3 5 0"));
+
+        finish(session);
+    }
+
     private Session authenticatedSession(String username) {
         EmbeddedChannel channel = new EmbeddedChannel();
         Session session = new Session(channel);
@@ -378,6 +448,13 @@ class RoomEntryFlowIntegrationTest {
 
     private static ClientMessage rawMessage(int opcode, String body) {
         return new ClientMessage(opcode, Unpooled.copiedBuffer(body, UTF_8));
+    }
+
+    private static ClientMessage walkMessage(int x, int y) {
+        ByteBuf body = Unpooled.buffer();
+        body.writeBytes(Base64Encoding.encodeShort(x));
+        body.writeBytes(Base64Encoding.encodeShort(y));
+        return new ClientMessage(IncomingPackets.WALK, body);
     }
 
     private static void invoke(ClientMessage message, MessageInvocation invocation) {

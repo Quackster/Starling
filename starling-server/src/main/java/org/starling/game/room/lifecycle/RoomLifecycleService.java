@@ -112,7 +112,7 @@ public final class RoomLifecycleService {
             return;
         }
 
-        for (Session occupant : loadedRoom.getOccupants()) {
+        for (Session occupant : loadedRoom.getSessions()) {
             if (occupant != leavingSession) {
                 responses.sendLogout(occupant, leavingPlayer.getId());
             }

@@ -37,6 +37,7 @@ public final class IncomingPackets {
     public static final int G_ITEMS = 63;
     public static final int G_STAT = 64;
     public static final int QUIT = 53;
+    public static final int WALK = 75;
     public static final int STOP = 88;
     public static final int GETROOMAD = 126;
     public static final int GETINTERST = 182;

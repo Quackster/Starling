@@ -4,9 +4,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.starling.game.player.Player;
 import org.starling.game.room.access.RoomAccess;
+import org.starling.game.room.geometry.RoomPosition;
 import org.starling.game.room.layout.RoomLayoutRegistry;
 import org.starling.game.room.registry.LoadedRoom;
 import org.starling.game.room.registry.RoomRegistry;
+import org.starling.game.room.runtime.RoomOccupantSnapshot;
 import org.starling.message.OutgoingPackets;
 import org.starling.message.support.HandlerResponses;
 import org.starling.net.codec.ServerMessage;
@@ -69,9 +71,10 @@ public final class RoomResponseWriter {
     }
 
     public void sendUsers(Session session, Session.RoomPresence roomPresence) {
+        LoadedRoom<?> loadedRoom = resolveLoadedRoom(roomPresence);
         RoomLayoutRegistry.RoomVisuals visuals = resolveRoomVisuals(roomPresence);
         session.send(new ServerMessage(OutgoingPackets.ROOM_USERS)
-                .writeRaw(buildUserObjectsPayload(resolveOccupants(session, roomPresence), visuals)));
+                .writeRaw(buildUserObjectsPayload(resolveOccupants(session, roomPresence, loadedRoom, visuals))));
     }
 
     public void sendPassiveObjects(Session session, Session.RoomPresence roomPresence) {
@@ -114,9 +117,22 @@ public final class RoomResponseWriter {
     }
 
     public void sendStatus(Session session, Session.RoomPresence roomPresence) {
+        LoadedRoom<?> loadedRoom = resolveLoadedRoom(roomPresence);
         RoomLayoutRegistry.RoomVisuals visuals = resolveRoomVisuals(roomPresence);
         session.send(new ServerMessage(OutgoingPackets.STATUS)
-                .writeRaw(buildUserStatusPayload(resolveOccupants(session, roomPresence), visuals)));
+                .writeRaw(buildUserStatusPayload(resolveOccupants(session, roomPresence, loadedRoom, visuals))));
+    }
+
+    public void broadcastStatus(LoadedRoom<?> loadedRoom) {
+        if (loadedRoom == null) {
+            return;
+        }
+
+        String payload = buildUserStatusPayload(resolveOccupants(loadedRoom));
+        ServerMessage message = new ServerMessage(OutgoingPackets.STATUS).writeRaw(payload);
+        for (Session occupant : loadedRoom.getSessions()) {
+            occupant.send(message);
+        }
     }
 
     public void sendRoomAd(Session session) {
@@ -137,23 +153,24 @@ public final class RoomResponseWriter {
         session.send(new ServerMessage(OutgoingPackets.LOGOUT).writeInt(playerId));
     }
 
-    private String buildUserObjectsPayload(List<Session> occupants, RoomLayoutRegistry.RoomVisuals visuals) {
+    private String buildUserObjectsPayload(List<RoomOccupantSnapshot> occupants) {
         StringBuilder payload = new StringBuilder();
         payload.append('\r');
-        for (Session occupant : occupants) {
-            Player player = occupant.getPlayer();
+        for (RoomOccupantSnapshot occupant : occupants) {
+            Player player = occupant.player();
             if (player == null) {
                 continue;
             }
 
+            RoomPosition position = occupant.position();
             payload.append("i:").append(player.getId()).append('\r');
             payload.append("a:").append(player.getId()).append('\r');
             payload.append("n:").append(player.getUsername()).append('\r');
             payload.append("f:").append(player.getFigure()).append('\r');
             payload.append("s:").append(player.getSex()).append('\r');
-            payload.append("l:").append(visuals.doorX()).append(' ')
-                    .append(visuals.doorY()).append(' ')
-                    .append(formatHeight(visuals.doorZ())).append('\r');
+            payload.append("l:").append(position.x()).append(' ')
+                    .append(position.y()).append(' ')
+                    .append(formatHeight(position.z())).append('\r');
             if (player.getMotto() != null && !player.getMotto().isBlank()) {
                 payload.append("c:").append(player.getMotto()).append('\r');
             }
@@ -161,20 +178,28 @@ public final class RoomResponseWriter {
         return payload.toString();
     }
 
-    private String buildUserStatusPayload(List<Session> occupants, RoomLayoutRegistry.RoomVisuals visuals) {
+    private String buildUserStatusPayload(List<RoomOccupantSnapshot> occupants) {
         StringBuilder payload = new StringBuilder();
-        for (Session occupant : occupants) {
-            Player player = occupant.getPlayer();
+        for (RoomOccupantSnapshot occupant : occupants) {
+            Player player = occupant.player();
             if (player == null) {
                 continue;
             }
 
+            RoomPosition position = occupant.position();
             payload.append(player.getId()).append(' ')
-                    .append(visuals.doorX()).append(',')
-                    .append(visuals.doorY()).append(',')
-                    .append(formatHeight(visuals.doorZ())).append(',')
-                    .append(visuals.doorDir()).append(',')
-                    .append(visuals.doorDir()).append("/\r");
+                    .append(position.x()).append(',')
+                    .append(position.y()).append(',')
+                    .append(formatHeight(position.z())).append(',')
+                    .append(occupant.bodyRotation()).append(',')
+                    .append(occupant.headRotation()).append('/');
+            if (occupant.nextPosition() != null) {
+                payload.append("mv ")
+                        .append(occupant.nextPosition().x()).append(',')
+                        .append(occupant.nextPosition().y()).append(',')
+                        .append(formatHeight(occupant.nextPosition().z())).append('/');
+            }
+            payload.append('\r');
         }
         return payload.toString();
     }
@@ -225,15 +250,37 @@ public final class RoomResponseWriter {
         }
     }
 
-    private List<Session> resolveOccupants(Session session, Session.RoomPresence roomPresence) {
-        LoadedRoom<?> loadedRoom = RoomRegistry.getInstance().find(roomPresence.type(), roomPresence.roomId());
+    private List<RoomOccupantSnapshot> resolveOccupants(
+            Session session,
+            Session.RoomPresence roomPresence,
+            LoadedRoom<?> loadedRoom,
+            RoomLayoutRegistry.RoomVisuals visuals
+    ) {
         if (loadedRoom == null || loadedRoom.isEmpty()) {
-            return session.getPlayer() == null ? List.of() : List.of(session);
+            if (session.getPlayer() == null) {
+                return List.of();
+            }
+            return List.of(new RoomOccupantSnapshot(
+                    session,
+                    session.getPlayer(),
+                    new RoomPosition(visuals.doorX(), visuals.doorY(), visuals.doorZ()),
+                    null,
+                    visuals.doorDir(),
+                    visuals.doorDir()
+            ));
         }
 
-        List<Session> occupants = new ArrayList<>(loadedRoom.getOccupants());
-        occupants.sort(Comparator.comparingInt(occupant -> occupant.getPlayer().getId()));
+        return resolveOccupants(loadedRoom);
+    }
+
+    private List<RoomOccupantSnapshot> resolveOccupants(LoadedRoom<?> loadedRoom) {
+        List<RoomOccupantSnapshot> occupants = new ArrayList<>(loadedRoom.getOccupantSnapshots());
+        occupants.sort(Comparator.comparingInt(RoomOccupantSnapshot::playerId));
         return occupants;
+    }
+
+    private LoadedRoom<?> resolveLoadedRoom(Session.RoomPresence roomPresence) {
+        return RoomRegistry.getInstance().find(roomPresence.type(), roomPresence.roomId());
     }
 
     private RoomLayoutRegistry.RoomVisuals resolveRoomVisuals(Session.RoomPresence roomPresence) {

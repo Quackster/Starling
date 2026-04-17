@@ -6,6 +6,7 @@ import org.starling.config.ServerConfig;
 import org.starling.game.navigator.NavigatorManager;
 import org.starling.game.player.PlayerManager;
 import org.starling.game.room.registry.RoomRegistry;
+import org.starling.game.room.runtime.RoomTaskManager;
 import org.starling.message.MessageRouter;
 import org.starling.net.NettyServer;
 import org.starling.storage.DatabaseBootstrap;
@@ -31,6 +32,7 @@ public class StarlingServer {
         PublicRoomDao.resetCurrentUsers();
         PlayerManager.getInstance().clear();
         RoomRegistry.getInstance().clear();
+        RoomTaskManager.getInstance().start();
 
         // Load navigator categories from DB
         NavigatorManager.getInstance().load();
@@ -44,6 +46,7 @@ public class StarlingServer {
         NettyServer server = new NettyServer(config.serverPort(), router);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             server.shutdown();
+            RoomTaskManager.getInstance().stop();
             EntityContext.shutdown();
         }));
         server.start();

@@ -17,6 +17,7 @@ public final class RoomRouteRegistrar implements MessageRouteRegistrar {
         router.register(IncomingPackets.G_OBJS, RoomHandlers::handleGetPassiveObjects);
         router.register(IncomingPackets.G_ITEMS, RoomHandlers::handleGetItems);
         router.register(IncomingPackets.G_STAT, RoomHandlers::handleStatus);
+        router.register(IncomingPackets.WALK, RoomHandlers::handleWalk);
         router.register(IncomingPackets.STOP, RoomHandlers::handleStop);
         router.register(IncomingPackets.GETROOMAD, RoomHandlers::handleGetRoomAd);
         router.register(IncomingPackets.GETINTERST, RoomHandlers::handleGetInterstitial);

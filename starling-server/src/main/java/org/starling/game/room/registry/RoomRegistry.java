@@ -5,6 +5,7 @@ import org.starling.net.session.Session;
 import org.starling.storage.entity.PublicRoomEntity;
 import org.starling.storage.entity.RoomEntity;
 
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -51,6 +52,12 @@ public final class RoomRegistry {
 
     public LoadedRoom<?> find(Session.RoomType roomType, int roomId) {
         return roomsFor(roomType).get(roomId);
+    }
+
+    public Collection<LoadedRoom<?>> loadedRooms() {
+        return roomsByType.values().stream()
+                .flatMap(rooms -> rooms.values().stream())
+                .toList();
     }
 
     public void unloadIfEmpty(LoadedRoom<?> room) {

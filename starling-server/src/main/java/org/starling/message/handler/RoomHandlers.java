@@ -6,6 +6,7 @@ import org.starling.game.player.Player;
 import org.starling.game.room.access.RoomAccess;
 import org.starling.game.room.lifecycle.RoomLifecycleService;
 import org.starling.game.room.response.RoomResponseWriter;
+import org.starling.game.room.runtime.RoomMovementService;
 import org.starling.message.support.HandlerParsing;
 import org.starling.message.support.HandlerResponses;
 import org.starling.message.support.SessionGuards;
@@ -20,6 +21,7 @@ public final class RoomHandlers {
     private static final Logger log = LogManager.getLogger(RoomHandlers.class);
     private static final RoomResponseWriter responses = new RoomResponseWriter();
     private static final RoomLifecycleService roomLifecycleService = RoomLifecycleService.getInstance();
+    private static final RoomMovementService roomMovementService = RoomMovementService.getInstance();
 
     private RoomHandlers() {}
 
@@ -165,11 +167,22 @@ public final class RoomHandlers {
         responses.sendStatus(session, roomPresence);
     }
 
+    public static void handleWalk(Session session, ClientMessage msg) {
+        if (SessionGuards.requirePlayer(session, log, "room walk") == null
+                || SessionGuards.requireActiveRoom(session, log, "room walk") == null) {
+            return;
+        }
+
+        int x = msg.readShort();
+        int y = msg.readShort();
+        roomMovementService.walk(session, x, y);
+    }
+
     public static void handleStop(Session session, ClientMessage msg) {
         if (SessionGuards.requireActiveRoom(session, log, "room stop") == null) {
             return;
         }
-        log.debug("Client stop action while entering room: '{}'", msg.readRawBody());
+        roomMovementService.stopWalking(session);
     }
 
     public static void handleGetRoomAd(Session session, ClientMessage msg) {
