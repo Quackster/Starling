@@ -1,0 +1,110 @@
+package org.starling.game.room.response;
+
+import org.starling.message.OutgoingPackets;
+import org.starling.net.codec.ServerMessage;
+import org.starling.storage.entity.PublicRoomItemEntity;
+
+import java.util.List;
+import java.util.Locale;
+
+final class PublicRoomItemSerializer {
+
+    ServerMessage buildObjectsMessage(List<PublicRoomItemEntity> items) {
+        List<PublicRoomItemEntity> worldItems = items.stream()
+                .filter(this::isWorldObject)
+                .toList();
+
+        ServerMessage message = new ServerMessage(OutgoingPackets.ROOM_OBJECTS).writeInt(worldItems.size());
+        for (PublicRoomItemEntity item : worldItems) {
+            message.writeRaw(instanceId(item) + " ");
+            message.writeString(item.getSprite());
+            message.writeRaw(item.getX() + " " + item.getY() + " " + (int) item.getZ() + " " + item.getRotation());
+            if (hasBehaviour(item, "extra_parameter")) {
+                message.writeRaw(" 2");
+            }
+            message.writeRaw("\r");
+        }
+        return message;
+    }
+
+    ServerMessage buildActiveObjectsMessage(List<PublicRoomItemEntity> items) {
+        List<PublicRoomItemEntity> activeItems = items.stream()
+                .filter(this::isActiveObject)
+                .toList();
+
+        ServerMessage message = new ServerMessage(OutgoingPackets.ROOM_ACTIVE_OBJECTS).writeInt(activeItems.size());
+        for (PublicRoomItemEntity item : activeItems) {
+            message.writeString(Integer.toString(item.getId()));
+            message.writeString(item.getSprite());
+            message.writeInt(item.getX());
+            message.writeInt(item.getY());
+            message.writeInt(Math.max(item.getLength(), 0));
+            message.writeInt(Math.max(item.getWidth(), 0));
+            message.writeInt(item.getRotation());
+            message.writeString(formatHeight(item.getZ()));
+            message.writeString("");
+            message.writeString("");
+            message.writeInt(0);
+            message.writeString("");
+        }
+        return message;
+    }
+
+    ServerMessage buildItemsMessage(List<PublicRoomItemEntity> items) {
+        ServerMessage message = new ServerMessage(OutgoingPackets.ROOM_ITEMS);
+        for (PublicRoomItemEntity item : items) {
+            if (!hasBehaviour(item, "wall_item")) {
+                continue;
+            }
+
+            message.writeRaw(item.getId() + "\t");
+            message.writeRaw(item.getSprite() + "\t");
+            message.writeRaw(" \t");
+            message.writeRaw(":w=0,0 l=0,0 l\t");
+            message.writeRaw(item.getCurrentProgram());
+            message.writeRaw("\r");
+        }
+        return message;
+    }
+
+    private boolean isWorldObject(PublicRoomItemEntity item) {
+        return !hasBehaviour(item, "private_furniture")
+                && !hasBehaviour(item, "wall_item")
+                && !isQueueTile(item)
+                && !hasBehaviour(item, "invisible");
+    }
+
+    private boolean isActiveObject(PublicRoomItemEntity item) {
+        return !hasBehaviour(item, "wall_item")
+                && (hasBehaviour(item, "private_furniture") || isQueueTile(item));
+    }
+
+    private boolean isQueueTile(PublicRoomItemEntity item) {
+        return item.getSprite().toLowerCase(Locale.ROOT).contains("queue_tile2");
+    }
+
+    private boolean hasBehaviour(PublicRoomItemEntity item, String behaviour) {
+        String raw = item.getBehaviour();
+        if (raw.isBlank()) {
+            return false;
+        }
+
+        for (String token : raw.split(",")) {
+            if (behaviour.equalsIgnoreCase(token.trim())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String instanceId(PublicRoomItemEntity item) {
+        return "pub" + Integer.toString(item.getId(), 36);
+    }
+
+    private String formatHeight(double value) {
+        if (Math.floor(value) == value) {
+            return Integer.toString((int) value);
+        }
+        return Double.toString(value);
+    }
+}

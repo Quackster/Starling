@@ -12,10 +12,12 @@ import org.starling.message.support.HandlerResponses;
 import org.starling.net.codec.ServerMessage;
 import org.starling.net.session.Session;
 import org.starling.storage.dao.PublicRoomDao;
+import org.starling.storage.dao.PublicRoomItemDao;
 import org.starling.storage.dao.RoomModelDao;
 import org.starling.storage.dao.RoomDao;
 import org.starling.storage.dao.RoomRightDao;
 import org.starling.storage.entity.PublicRoomEntity;
+import org.starling.storage.entity.PublicRoomItemEntity;
 import org.starling.storage.entity.RoomEntity;
 import org.starling.storage.entity.RoomModelEntity;
 
@@ -29,6 +31,8 @@ public final class RoomResponseWriter {
     private static final String HOLOGRAPH_ROOM_URL = "http://wwww.vista4life.com/bf.php?p=emu";
     private static final PublicRoomFurnitureSerializer publicRoomFurnitureSerializer =
             new PublicRoomFurnitureSerializer();
+    private static final PublicRoomItemSerializer publicRoomItemSerializer =
+            new PublicRoomItemSerializer();
 
     public void sendInterstitial(Session session) {
         session.send(HandlerResponses.singleZeroMessage(OutgoingPackets.INTERSTITIAL_DATA));
@@ -74,6 +78,13 @@ public final class RoomResponseWriter {
         if (roomPresence.type() == Session.RoomType.PUBLIC) {
             PublicRoomEntity room = PublicRoomDao.findById(roomPresence.roomId());
             if (room != null) {
+                List<PublicRoomItemEntity> publicRoomItems = PublicRoomItemDao.findByRoomModel(room.getUnitStrId());
+                if (!publicRoomItems.isEmpty()) {
+                    session.send(publicRoomItemSerializer.buildObjectsMessage(publicRoomItems));
+                    session.send(publicRoomItemSerializer.buildActiveObjectsMessage(publicRoomItems));
+                    return;
+                }
+
                 RoomModelEntity model = RoomModelDao.findByModelName(room.getUnitStrId(), true);
                 if (model != null && !model.getPublicRoomItems().isBlank()) {
                     session.send(publicRoomFurnitureSerializer.buildObjectsMessage(model.getPublicRoomItems()));
@@ -87,7 +98,18 @@ public final class RoomResponseWriter {
         session.send(new ServerMessage(OutgoingPackets.ROOM_ACTIVE_OBJECTS).writeInt(0));
     }
 
-    public void sendItems(Session session) {
+    public void sendItems(Session session, Session.RoomPresence roomPresence) {
+        if (roomPresence.type() == Session.RoomType.PUBLIC) {
+            PublicRoomEntity room = PublicRoomDao.findById(roomPresence.roomId());
+            if (room != null) {
+                List<PublicRoomItemEntity> publicRoomItems = PublicRoomItemDao.findByRoomModel(room.getUnitStrId());
+                if (!publicRoomItems.isEmpty()) {
+                    session.send(publicRoomItemSerializer.buildItemsMessage(publicRoomItems));
+                    return;
+                }
+            }
+        }
+
         session.send(new ServerMessage(OutgoingPackets.ROOM_ITEMS));
     }
 

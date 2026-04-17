@@ -7,6 +7,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.starling.config.ServerConfig;
 import org.starling.storage.dao.NavigatorDao;
 import org.starling.storage.dao.PublicRoomDao;
+import org.starling.storage.dao.PublicRoomItemDao;
 import org.starling.storage.dao.RoomDao;
 import org.starling.storage.dao.RoomFavoriteDao;
 import org.starling.storage.dao.RoomModelDao;
@@ -75,6 +76,7 @@ class DatabaseIntegrationTest {
         assertTrue(tableExists("rooms"));
         assertTrue(tableExists("room_models"));
         assertTrue(tableExists("public_rooms"));
+        assertTrue(tableExists("public_room_items"));
         assertTrue(tableExists("room_favorites"));
         assertTrue(tableExists("room_rights"));
 
@@ -100,6 +102,9 @@ class DatabaseIntegrationTest {
         assertEquals("model_a", privateModel.getModelName());
         assertTrue(RoomModelDao.findByModelName("newbie_lobby", true).isPublicModel());
         assertTrue(RoomModelDao.findByModelName("pool_a", true).getPublicRoomItems().contains("pool_chair2"));
+        assertEquals(63, PublicRoomItemDao.findByRoomModel("newbie_lobby").size());
+        assertTrue(PublicRoomItemDao.findByRoomModel("pool_b").stream()
+                .anyMatch(item -> "queue_tile2".equals(item.getSprite())));
     }
 
     @Test
@@ -108,6 +113,7 @@ class DatabaseIntegrationTest {
         int roomModelCount = countRows("room_models", null);
         int guestRoomCount = countRows("rooms", null);
         int publicRoomCount = countRows("public_rooms", null);
+        int publicRoomItemCount = countRows("public_room_items", null);
 
         DatabaseBootstrap.ensureSchema(config);
         DatabaseBootstrap.seedDefaults();
@@ -117,10 +123,12 @@ class DatabaseIntegrationTest {
         assertTrue(roomModelCount >= 25);
         assertEquals(4, guestRoomCount);
         assertEquals(22, publicRoomCount);
+        assertTrue(publicRoomItemCount >= 3465);
         assertEquals(categoryCount, countRows("rooms_categories", null));
         assertEquals(roomModelCount, countRows("room_models", null));
         assertEquals(guestRoomCount, countRows("rooms", null));
         assertEquals(publicRoomCount, countRows("public_rooms", null));
+        assertEquals(publicRoomItemCount, countRows("public_room_items", null));
     }
 
     @Test

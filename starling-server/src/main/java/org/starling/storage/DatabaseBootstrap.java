@@ -76,6 +76,39 @@ public final class DatabaseBootstrap {
             statement.executeUpdate("ALTER TABLE room_models ADD COLUMN IF NOT EXISTS door_z DOUBLE NOT NULL DEFAULT 0 AFTER door_y");
             statement.executeUpdate("ALTER TABLE room_models ADD COLUMN IF NOT EXISTS door_dir INT NOT NULL DEFAULT 2 AFTER door_z");
             statement.executeUpdate("ALTER TABLE room_models ADD COLUMN IF NOT EXISTS public_room_items TEXT NULL AFTER heightmap");
+            statement.executeUpdate("""
+                    CREATE TABLE IF NOT EXISTS public_room_items (
+                        id INT NOT NULL,
+                        room_model VARCHAR(64) NOT NULL,
+                        sprite VARCHAR(255) NOT NULL DEFAULT '',
+                        x INT NOT NULL DEFAULT 0,
+                        y INT NOT NULL DEFAULT 0,
+                        z DOUBLE NOT NULL DEFAULT 0,
+                        rotation INT NOT NULL DEFAULT 0,
+                        top_height DOUBLE NOT NULL DEFAULT 1,
+                        length INT NOT NULL DEFAULT 1,
+                        width INT NOT NULL DEFAULT 1,
+                        behaviour VARCHAR(255) NOT NULL DEFAULT '',
+                        current_program VARCHAR(255) NOT NULL DEFAULT '',
+                        teleport_to VARCHAR(50) NULL,
+                        swim_to VARCHAR(50) NULL,
+                        PRIMARY KEY (id),
+                        KEY idx_public_room_items_model (room_model)
+                    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+                    """);
+            statement.executeUpdate("ALTER TABLE public_room_items ADD COLUMN IF NOT EXISTS room_model VARCHAR(64) NOT NULL DEFAULT '' AFTER id");
+            statement.executeUpdate("ALTER TABLE public_room_items ADD COLUMN IF NOT EXISTS sprite VARCHAR(255) NOT NULL DEFAULT '' AFTER room_model");
+            statement.executeUpdate("ALTER TABLE public_room_items ADD COLUMN IF NOT EXISTS x INT NOT NULL DEFAULT 0 AFTER sprite");
+            statement.executeUpdate("ALTER TABLE public_room_items ADD COLUMN IF NOT EXISTS y INT NOT NULL DEFAULT 0 AFTER x");
+            statement.executeUpdate("ALTER TABLE public_room_items ADD COLUMN IF NOT EXISTS z DOUBLE NOT NULL DEFAULT 0 AFTER y");
+            statement.executeUpdate("ALTER TABLE public_room_items ADD COLUMN IF NOT EXISTS rotation INT NOT NULL DEFAULT 0 AFTER z");
+            statement.executeUpdate("ALTER TABLE public_room_items ADD COLUMN IF NOT EXISTS top_height DOUBLE NOT NULL DEFAULT 1 AFTER rotation");
+            statement.executeUpdate("ALTER TABLE public_room_items ADD COLUMN IF NOT EXISTS length INT NOT NULL DEFAULT 1 AFTER top_height");
+            statement.executeUpdate("ALTER TABLE public_room_items ADD COLUMN IF NOT EXISTS width INT NOT NULL DEFAULT 1 AFTER length");
+            statement.executeUpdate("ALTER TABLE public_room_items ADD COLUMN IF NOT EXISTS behaviour VARCHAR(255) NOT NULL DEFAULT '' AFTER width");
+            statement.executeUpdate("ALTER TABLE public_room_items ADD COLUMN IF NOT EXISTS current_program VARCHAR(255) NOT NULL DEFAULT '' AFTER behaviour");
+            statement.executeUpdate("ALTER TABLE public_room_items ADD COLUMN IF NOT EXISTS teleport_to VARCHAR(50) NULL AFTER current_program");
+            statement.executeUpdate("ALTER TABLE public_room_items ADD COLUMN IF NOT EXISTS swim_to VARCHAR(50) NULL AFTER teleport_to");
             statement.executeUpdate("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS owner_id INT NULL AFTER category_id");
             statement.executeUpdate("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS model_name VARCHAR(64) NULL AFTER description");
             statement.executeUpdate("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS heightmap TEXT NULL AFTER model_name");
@@ -142,6 +175,8 @@ public final class DatabaseBootstrap {
             statement.executeUpdate("UPDATE room_models SET public_room_items = '' WHERE public_room_items IS NULL");
             statement.executeUpdate("ALTER TABLE public_rooms ADD COLUMN IF NOT EXISTS heightmap TEXT NULL AFTER unit_str_id");
             statement.executeUpdate("UPDATE public_rooms SET heightmap = '' WHERE heightmap IS NULL");
+            statement.executeUpdate("UPDATE public_room_items SET behaviour = '' WHERE behaviour IS NULL");
+            statement.executeUpdate("UPDATE public_room_items SET current_program = '' WHERE current_program IS NULL");
             log.info("Ensured navigator schema extensions exist");
         } catch (Exception e) {
             log.error("Failed to ensure schema extensions: {}", e.getMessage(), e);

@@ -9,7 +9,8 @@ public final class DatabaseSeedRegistrars {
             new NavigatorCategorySeedRegistrar(),
             new RoomModelSeedRegistrar(),
             new GuestRoomSeedRegistrar(),
-            new PublicRoomSeedRegistrar()
+            new PublicRoomSeedRegistrar(),
+            new PublicRoomItemSeedRegistrar()
     );
 
     private DatabaseSeedRegistrars() {}

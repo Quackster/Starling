@@ -148,10 +148,11 @@ public final class RoomHandlers {
     }
 
     public static void handleGetItems(Session session, ClientMessage msg) {
-        if (SessionGuards.requireActiveRoom(session, log, "room items") == null) {
+        Session.RoomPresence roomPresence = SessionGuards.requireActiveRoom(session, log, "room items");
+        if (roomPresence == null) {
             return;
         }
-        responses.sendItems(session);
+        responses.sendItems(session, roomPresence);
     }
 
     public static void handleStatus(Session session, ClientMessage msg) {

@@ -127,8 +127,42 @@ class RoomEntryFlowIntegrationTest {
 
         List<String> packets = drainPackets(session.getChannel());
         assertEquals(2, packets.size());
-        assertTrue(packets.get(0).contains("pool_chair2[2]8 20 7 4 2[13]"));
+        assertTrue(packets.get(0).contains("pool_chairy[2]10 34 7 4[13]"));
         assertEquals(packet(new ServerMessage(OutgoingPackets.ROOM_ACTIVE_OBJECTS).writeInt(0)), packets.get(1));
+
+        finish(session);
+    }
+
+    @Test
+    void publicRoomActiveObjectsIncludeLisbonQueueTiles() {
+        Session session = authenticatedSession("admin");
+
+        invoke(roomDirectoryMessage(true, 107, 0), message -> RoomHandlers.handleRoomDirectory(session, message));
+        drainPackets(session.getChannel());
+
+        invoke(rawMessage(IncomingPackets.G_OBJS, ""), message -> RoomHandlers.handleGetPassiveObjects(session, message));
+
+        List<String> packets = drainPackets(session.getChannel());
+        assertEquals(2, packets.size());
+        assertTrue(packets.get(0).contains("pool_chair"));
+        assertTrue(packets.get(1).contains("queue_tile2[2]"));
+
+        finish(session);
+    }
+
+    @Test
+    void publicRoomActiveObjectsIncludeLisbonPrivateFurniture() {
+        Session session = authenticatedSession("admin");
+
+        invoke(roomDirectoryMessage(true, 112, 0), message -> RoomHandlers.handleRoomDirectory(session, message));
+        drainPackets(session.getChannel());
+
+        invoke(rawMessage(IncomingPackets.G_OBJS, ""), message -> RoomHandlers.handleGetPassiveObjects(session, message));
+
+        List<String> packets = drainPackets(session.getChannel());
+        assertEquals(2, packets.size());
+        assertFalse(packets.get(0).contains("bar_basic"));
+        assertTrue(packets.get(1).contains("bar_basic[2]"));
 
         finish(session);
     }
