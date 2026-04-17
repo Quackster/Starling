@@ -5,6 +5,7 @@ import org.starling.game.room.geometry.RoomPosition;
 import org.starling.game.room.runtime.RoomOccupant;
 import org.starling.game.room.runtime.WalkableRoom;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public final class RoomCollisionPipeline {
@@ -16,12 +17,19 @@ public final class RoomCollisionPipeline {
     }
 
     public static RoomCollisionPipeline defaults() {
-        return new RoomCollisionPipeline(List.of(
-                new RoomBoundsCollisionDetector(),
-                new RoomItemCollisionDetector(),
-                new RoomEntityCollisionDetector(),
-                new RoomHeightCollisionDetector()
-        ));
+        return defaultsBuilder().build();
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static Builder defaultsBuilder() {
+        return builder()
+                .addDetector(new RoomBoundsCollisionDetector())
+                .addDetector(new RoomItemCollisionDetector())
+                .addDetector(new RoomEntityCollisionDetector())
+                .addDetector(new RoomHeightCollisionDetector());
     }
 
     public RoomStepEvaluation evaluateStep(
@@ -71,5 +79,30 @@ public final class RoomCollisionPipeline {
         RoomCoordinate sideB = new RoomCoordinate(from.x(), target.y());
         return !evaluateStep(room, mover, from, sideA, goal, false, false).allowed()
                 && !evaluateStep(room, mover, from, sideB, goal, false, false).allowed();
+    }
+
+    public static final class Builder {
+
+        private final List<RoomCollisionDetector> detectors = new ArrayList<>();
+
+        public Builder addDetector(RoomCollisionDetector detector) {
+            if (detector != null) {
+                detectors.add(detector);
+            }
+            return this;
+        }
+
+        public Builder addDetectors(List<? extends RoomCollisionDetector> detectors) {
+            if (detectors != null) {
+                for (RoomCollisionDetector detector : detectors) {
+                    addDetector(detector);
+                }
+            }
+            return this;
+        }
+
+        public RoomCollisionPipeline build() {
+            return new RoomCollisionPipeline(detectors);
+        }
     }
 }

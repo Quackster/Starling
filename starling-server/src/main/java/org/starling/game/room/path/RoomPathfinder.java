@@ -47,6 +47,7 @@ public final class RoomPathfinder {
                 .comparingInt(RoomPathNode::estimatedTotalCost)
                 .thenComparingInt(RoomPathNode::costFromStart));
         Map<RoomCoordinate, Integer> bestCosts = new HashMap<>();
+        RoomPathNode bestAlternative = null;
         RoomPathNode startNode = new RoomPathNode(
                 start,
                 mover.getPosition(),
@@ -61,6 +62,9 @@ public final class RoomPathfinder {
             RoomPathNode current = open.poll();
             if (current.coordinate().equals(goal)) {
                 return buildPath(current);
+            }
+            if (!current.coordinate().equals(start) && betterAlternative(current, bestAlternative, goal)) {
+                bestAlternative = current;
             }
 
             for (int[] move : MOVES) {
@@ -97,7 +101,7 @@ public final class RoomPathfinder {
             }
         }
 
-        return List.of();
+        return bestAlternative == null ? List.of() : buildPath(bestAlternative);
     }
 
     private List<RoomPosition> buildPath(RoomPathNode destination) {
@@ -117,5 +121,30 @@ public final class RoomPathfinder {
         int deltaX = Math.abs(from.x() - to.x());
         int deltaY = Math.abs(from.y() - to.y());
         return 10 * Math.max(deltaX, deltaY) + 4 * Math.min(deltaX, deltaY);
+    }
+
+    private boolean betterAlternative(RoomPathNode candidate, RoomPathNode currentBest, RoomCoordinate goal) {
+        if (candidate == null) {
+            return false;
+        }
+        if (currentBest == null) {
+            return true;
+        }
+
+        int candidateDistance = heuristic(candidate.coordinate(), goal);
+        int currentDistance = heuristic(currentBest.coordinate(), goal);
+        if (candidateDistance != currentDistance) {
+            return candidateDistance < currentDistance;
+        }
+
+        if (candidate.costFromStart() != currentBest.costFromStart()) {
+            return candidate.costFromStart() < currentBest.costFromStart();
+        }
+
+        if (candidate.coordinate().y() != currentBest.coordinate().y()) {
+            return candidate.coordinate().y() < currentBest.coordinate().y();
+        }
+
+        return candidate.coordinate().x() < currentBest.coordinate().x();
     }
 }

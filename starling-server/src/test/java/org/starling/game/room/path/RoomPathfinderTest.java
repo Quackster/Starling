@@ -3,6 +3,7 @@ package org.starling.game.room.path;
 import io.netty.channel.embedded.EmbeddedChannel;
 import org.junit.jupiter.api.Test;
 import org.starling.game.room.collision.RoomCollisionPipeline;
+import org.starling.game.room.collision.RoomCollisionDetector;
 import org.starling.game.room.geometry.RoomCoordinate;
 import org.starling.game.room.geometry.RoomGeometry;
 import org.starling.game.room.geometry.RoomPosition;
@@ -72,6 +73,39 @@ class RoomPathfinderTest {
         assertTrue(path.isEmpty());
     }
 
+    @Test
+    void fallsBackToNearestReachableTileWhenGoalIsBlocked() {
+        TestWalkableRoom room = room(
+                "..."
+        ).withOccupants(List.of(snapshotAt(2, 0)));
+        RoomOccupant mover = occupantAt(0, 0);
+
+        List<RoomPosition> path = pathfinder.findPath(room, mover, new RoomCoordinate(2, 0));
+
+        assertFalse(path.isEmpty());
+        assertTrue(path.get(path.size() - 1).coordinate().equals(new RoomCoordinate(1, 0)));
+    }
+
+    @Test
+    void supportsAppendingCustomCollisionDetectors() {
+        RoomCollisionDetector customDetector = (context, state) -> {
+            if (context.target().equals(new RoomCoordinate(1, 0))) {
+                state.block();
+            }
+        };
+        RoomPathfinder customPathfinder = new RoomPathfinder(RoomCollisionPipeline.defaultsBuilder()
+                .addDetector(customDetector)
+                .build());
+        TestWalkableRoom room = room(
+                "..."
+        );
+        RoomOccupant mover = occupantAt(0, 0);
+
+        List<RoomPosition> path = customPathfinder.findPath(room, mover, new RoomCoordinate(2, 0));
+
+        assertTrue(path.isEmpty());
+    }
+
     private static TestWalkableRoom room(String... rows) {
         RoomTile[][] tiles = new RoomTile[rows.length][rows[0].length()];
         for (int y = 0; y < rows.length; y++) {
@@ -95,7 +129,16 @@ class RoomPathfinderTest {
         return new RoomOccupant(new Session(new EmbeddedChannel()), new RoomPosition(x, y, 0), 2);
     }
 
-    private record TestWalkableRoom(RoomGeometry geometry) implements WalkableRoom {
+    private static RoomOccupantSnapshot snapshotAt(int x, int y) {
+        Session session = new Session(new EmbeddedChannel());
+        return new RoomOccupantSnapshot(session, null, new RoomPosition(x, y, 0), null, 2, 2);
+    }
+
+    private record TestWalkableRoom(RoomGeometry geometry, List<RoomOccupantSnapshot> occupants) implements WalkableRoom {
+
+        private TestWalkableRoom(RoomGeometry geometry) {
+            this(geometry, List.of());
+        }
 
         @Override
         public RoomGeometry getGeometry() {
@@ -104,7 +147,11 @@ class RoomPathfinderTest {
 
         @Override
         public List<RoomOccupantSnapshot> getOccupantSnapshots() {
-            return List.of();
+            return occupants;
+        }
+
+        private TestWalkableRoom withOccupants(List<RoomOccupantSnapshot> occupants) {
+            return new TestWalkableRoom(geometry, occupants);
         }
     }
 }
