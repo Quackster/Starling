@@ -19,10 +19,17 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * Exercises the room pathfinder against blocked tiles, height limits, fallback
+ * targets, and custom collision detectors.
+ */
 class RoomPathfinderTest {
 
     private final RoomPathfinder pathfinder = new RoomPathfinder(RoomCollisionPipeline.defaults());
 
+    /**
+     * Findses route around blocked tile.
+     */
     @Test
     void findsRouteAroundBlockedTile() {
         TestWalkableRoom room = room(
@@ -39,6 +46,9 @@ class RoomPathfinderTest {
         assertTrue(path.get(path.size() - 1).coordinate().equals(new RoomCoordinate(2, 2)));
     }
 
+    /**
+     * Blockses diagonal corner cutting.
+     */
     @Test
     void blocksDiagonalCornerCutting() {
         TestWalkableRoom room = room(
@@ -52,6 +62,9 @@ class RoomPathfinderTest {
         assertTrue(path.isEmpty());
     }
 
+    /**
+     * Rejectses steps that are too high.
+     */
     @Test
     void rejectsStepsThatAreTooHigh() {
         RoomTile[][] tiles = new RoomTile[][]{
@@ -73,6 +86,9 @@ class RoomPathfinderTest {
         assertTrue(path.isEmpty());
     }
 
+    /**
+     * Fallses back to nearest reachable tile when goal is blocked.
+     */
     @Test
     void fallsBackToNearestReachableTileWhenGoalIsBlocked() {
         TestWalkableRoom room = room(
@@ -86,6 +102,9 @@ class RoomPathfinderTest {
         assertTrue(path.get(path.size() - 1).coordinate().equals(new RoomCoordinate(1, 0)));
     }
 
+    /**
+     * Supportses appending custom collision detectors.
+     */
     @Test
     void supportsAppendingCustomCollisionDetectors() {
         RoomCollisionDetector customDetector = (context, state) -> {
@@ -106,6 +125,11 @@ class RoomPathfinderTest {
         assertTrue(path.isEmpty());
     }
 
+    /**
+     * Rooms.
+     * @param rows the rows value
+     * @return the resulting room
+     */
     private static TestWalkableRoom room(String... rows) {
         RoomTile[][] tiles = new RoomTile[rows.length][rows[0].length()];
         for (int y = 0; y < rows.length; y++) {
@@ -125,10 +149,22 @@ class RoomPathfinderTest {
         ));
     }
 
+    /**
+     * Occupants at.
+     * @param x the x value
+     * @param y the y value
+     * @return the resulting occupant at
+     */
     private static RoomOccupant occupantAt(int x, int y) {
         return new RoomOccupant(new Session(new EmbeddedChannel()), new RoomPosition(x, y, 0), 2);
     }
 
+    /**
+     * Snapshots at.
+     * @param x the x value
+     * @param y the y value
+     * @return the resulting snapshot at
+     */
     private static RoomOccupantSnapshot snapshotAt(int x, int y) {
         Session session = new Session(new EmbeddedChannel());
         return new RoomOccupantSnapshot(session, null, new RoomPosition(x, y, 0), null, 2, 2);
@@ -136,20 +172,37 @@ class RoomPathfinderTest {
 
     private record TestWalkableRoom(RoomGeometry geometry, List<RoomOccupantSnapshot> occupants) implements WalkableRoom {
 
+        /**
+         * Creates a new TestWalkableRoom.
+         * @param geometry the geometry value
+         */
         private TestWalkableRoom(RoomGeometry geometry) {
             this(geometry, List.of());
         }
 
+        /**
+         * Returns the geometry.
+         * @return the geometry
+         */
         @Override
         public RoomGeometry getGeometry() {
             return geometry;
         }
 
+        /**
+         * Returns the occupant snapshots.
+         * @return the occupant snapshots
+         */
         @Override
         public List<RoomOccupantSnapshot> getOccupantSnapshots() {
             return occupants;
         }
 
+        /**
+         * Returns a copy with occupants.
+         * @param occupants the occupants value
+         * @return the result of this operation
+         */
         private TestWalkableRoom withOccupants(List<RoomOccupantSnapshot> occupants) {
             return new TestWalkableRoom(geometry, occupants);
         }

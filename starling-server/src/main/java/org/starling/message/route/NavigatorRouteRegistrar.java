@@ -6,6 +6,10 @@ import org.starling.message.handler.NavigatorHandlers;
 
 public final class NavigatorRouteRegistrar implements MessageRouteRegistrar {
 
+    /**
+     * Registers.
+     * @param router the router value
+     */
     @Override
     public void register(MessageRouter router) {
         router.register(IncomingPackets.FRIENDLIST_INIT, NavigatorHandlers::handleFriendListInit);

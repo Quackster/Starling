@@ -13,8 +13,15 @@ public final class DatabaseSeedRegistrars {
             new PublicRoomItemSeedRegistrar()
     );
 
+    /**
+     * Creates a new DatabaseSeedRegistrars.
+     */
     private DatabaseSeedRegistrars() {}
 
+    /**
+     * Defaultses.
+     * @return the resulting defaults
+     */
     public static List<DatabaseSeedRegistrar> defaults() {
         return DEFAULTS;
     }

@@ -9,8 +9,16 @@ import java.util.List;
 
 public final class RoomFavoriteDao {
 
+    /**
+     * Creates a new RoomFavoriteDao.
+     */
     private RoomFavoriteDao() {}
 
+    /**
+     * Finds by user id.
+     * @param userId the user id value
+     * @return the resulting find by user id
+     */
     public static List<RoomFavoriteEntity> findByUserId(int userId) {
         return EntityContext.withContext(context -> context.from(RoomFavoriteEntity.class)
                 .filter(filter -> filter.equals(RoomFavoriteEntity::getUserId, userId))
@@ -20,12 +28,24 @@ public final class RoomFavoriteDao {
                 .toList());
     }
 
+    /**
+     * Counts by user id.
+     * @param userId the user id value
+     * @return the result of this operation
+     */
     public static long countByUserId(int userId) {
         return EntityContext.withContext(context -> context.from(RoomFavoriteEntity.class)
                 .filter(filter -> filter.equals(RoomFavoriteEntity::getUserId, userId))
                 .count());
     }
 
+    /**
+     * Existses.
+     * @param userId the user id value
+     * @param roomType the room type value
+     * @param roomId the room id value
+     * @return the result of this operation
+     */
     public static boolean exists(int userId, int roomType, int roomId) {
         return EntityContext.withContext(context -> context.from(RoomFavoriteEntity.class)
                 .filter(filter -> filter
@@ -35,6 +55,12 @@ public final class RoomFavoriteDao {
                 .count() > 0);
     }
 
+    /**
+     * Adds favorite.
+     * @param userId the user id value
+     * @param roomType the room type value
+     * @param roomId the room id value
+     */
     public static void addFavorite(int userId, int roomType, int roomId) {
         EntityContext.inTransaction(context -> {
             RoomFavoriteEntity favorite = new RoomFavoriteEntity();
@@ -47,6 +73,12 @@ public final class RoomFavoriteDao {
         });
     }
 
+    /**
+     * Removes favorite.
+     * @param userId the user id value
+     * @param roomType the room type value
+     * @param roomId the room id value
+     */
     public static void removeFavorite(int userId, int roomType, int roomId) {
         EntityContext.inTransaction(context -> {
             context.from(RoomFavoriteEntity.class)
@@ -59,14 +91,27 @@ public final class RoomFavoriteDao {
         });
     }
 
+    /**
+     * Deletes by private room id.
+     * @param roomId the room id value
+     */
     public static void deleteByPrivateRoomId(int roomId) {
         deleteByRoom(0, roomId);
     }
 
+    /**
+     * Deletes by public room id.
+     * @param roomId the room id value
+     */
     public static void deleteByPublicRoomId(int roomId) {
         deleteByRoom(1, roomId);
     }
 
+    /**
+     * Deletes by room.
+     * @param roomType the room type value
+     * @param roomId the room id value
+     */
     private static void deleteByRoom(int roomType, int roomId) {
         EntityContext.inTransaction(context -> {
             context.from(RoomFavoriteEntity.class)

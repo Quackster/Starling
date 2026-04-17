@@ -23,14 +23,27 @@ public final class RoomHandlers {
     private static final RoomLifecycleService roomLifecycleService = RoomLifecycleService.getInstance();
     private static final RoomMovementService roomMovementService = RoomMovementService.getInstance();
 
+    /**
+     * Creates a new RoomHandlers.
+     */
     private RoomHandlers() {}
 
+    /**
+     * Handles get interstitial.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleGetInterstitial(Session session, ClientMessage msg) {
         String slot = msg.readRawBody().trim();
         log.debug("Room interstitial requested: '{}'", slot);
         responses.sendInterstitial(session);
     }
 
+    /**
+     * Handles room directory.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleRoomDirectory(Session session, ClientMessage msg) {
         boolean publicRoom = msg.readBoolean();
         int roomId = msg.readInt();
@@ -62,6 +75,11 @@ public final class RoomHandlers {
         responses.enterPublicRoom(session, room, doorId);
     }
 
+    /**
+     * Handles try flat.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleTryFlat(Session session, ClientMessage msg) {
         Player player = SessionGuards.requirePlayer(session, log, "try flat");
         if (player == null) {
@@ -100,6 +118,11 @@ public final class RoomHandlers {
         responses.allowPrivateRoomEntry(session, room);
     }
 
+    /**
+     * Handles goto flat.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleGotoFlat(Session session, ClientMessage msg) {
         Player player = SessionGuards.requirePlayer(session, log, "goto flat");
         if (player == null) {
@@ -120,10 +143,20 @@ public final class RoomHandlers {
         responses.enterPrivateRoom(session, player, room);
     }
 
+    /**
+     * Handles quit.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleQuit(Session session, ClientMessage msg) {
         roomLifecycleService.handleQuit(session);
     }
 
+    /**
+     * Handles get heightmap.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleGetHeightmap(Session session, ClientMessage msg) {
         Session.RoomPresence roomPresence = SessionGuards.requireActiveRoom(session, log, "room heightmap");
         if (roomPresence == null) {
@@ -132,6 +165,11 @@ public final class RoomHandlers {
         responses.sendHeightmap(session, roomPresence);
     }
 
+    /**
+     * Handles get users.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleGetUsers(Session session, ClientMessage msg) {
         Session.RoomPresence roomPresence = SessionGuards.requireActiveRoom(session, log, "room users");
         Player player = SessionGuards.requirePlayer(session, log, "room users");
@@ -141,6 +179,11 @@ public final class RoomHandlers {
         responses.sendUsers(session, roomPresence);
     }
 
+    /**
+     * Handles get passive objects.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleGetPassiveObjects(Session session, ClientMessage msg) {
         Session.RoomPresence roomPresence = SessionGuards.requireActiveRoom(session, log, "room objects");
         if (roomPresence == null) {
@@ -149,6 +192,11 @@ public final class RoomHandlers {
         responses.sendPassiveObjects(session, roomPresence);
     }
 
+    /**
+     * Handles get items.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleGetItems(Session session, ClientMessage msg) {
         Session.RoomPresence roomPresence = SessionGuards.requireActiveRoom(session, log, "room items");
         if (roomPresence == null) {
@@ -157,6 +205,11 @@ public final class RoomHandlers {
         responses.sendItems(session, roomPresence);
     }
 
+    /**
+     * Handles status.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleStatus(Session session, ClientMessage msg) {
         Player player = SessionGuards.requirePlayer(session, log, "room status");
         Session.RoomPresence roomPresence = SessionGuards.requireActiveRoom(session, log, "room status");
@@ -167,6 +220,11 @@ public final class RoomHandlers {
         responses.sendStatus(session, roomPresence);
     }
 
+    /**
+     * Handles walk.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleWalk(Session session, ClientMessage msg) {
         if (SessionGuards.requirePlayer(session, log, "room walk") == null
                 || SessionGuards.requireActiveRoom(session, log, "room walk") == null) {
@@ -178,6 +236,11 @@ public final class RoomHandlers {
         roomMovementService.walk(session, x, y);
     }
 
+    /**
+     * Handles stop.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleStop(Session session, ClientMessage msg) {
         if (SessionGuards.requireActiveRoom(session, log, "room stop") == null) {
             return;
@@ -185,10 +248,20 @@ public final class RoomHandlers {
         roomMovementService.stopWalking(session);
     }
 
+    /**
+     * Handles get room ad.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleGetRoomAd(Session session, ClientMessage msg) {
         responses.sendRoomAd(session);
     }
 
+    /**
+     * Handles get spectator amount.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleGetSpectatorAmount(Session session, ClientMessage msg) {
         responses.sendSpectatorAmount(session);
     }

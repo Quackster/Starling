@@ -18,6 +18,9 @@ public final class HandshakeHandlers {
     private static final boolean SERVER_TO_CLIENT_ENCRYPTION = false;
     private static final byte[] INIT_COMPAT_SHARED_SECRET = new byte[]{0x01};
 
+    /**
+     * Creates a new HandshakeHandlers.
+     */
     private HandshakeHandlers() {}
 
     /**
@@ -153,6 +156,11 @@ public final class HandshakeHandlers {
         log.debug("Sent SessionParameters");
     }
 
+    /**
+     * Byteses to hex.
+     * @param value the value value
+     * @return the result of this operation
+     */
     private static String bytesToHex(byte[] value) {
         StringBuilder hex = new StringBuilder(value.length * 2);
         for (byte current : value) {

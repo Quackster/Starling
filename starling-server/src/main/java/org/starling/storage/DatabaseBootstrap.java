@@ -19,8 +19,15 @@ public final class DatabaseBootstrap {
 
     private static final Logger log = LogManager.getLogger(DatabaseBootstrap.class);
 
+    /**
+     * Creates a new DatabaseBootstrap.
+     */
     private DatabaseBootstrap() {}
 
+    /**
+     * Ensures database.
+     * @param config the config value
+     */
     public static void ensureDatabase(ServerConfig config) {
         try {
             Class.forName("org.mariadb.jdbc.Driver");
@@ -45,6 +52,10 @@ public final class DatabaseBootstrap {
         }
     }
 
+    /**
+     * Ensures schema.
+     * @param config the config value
+     */
     public static void ensureSchema(ServerConfig config) {
         try (DbContext context = EntityContext.openContext();
              Statement statement = context.conn().createStatement()) {
@@ -184,6 +195,9 @@ public final class DatabaseBootstrap {
         }
     }
 
+    /**
+     * Seeds defaults.
+     */
     public static void seedDefaults() {
         try (DbContext context = EntityContext.openContext();
              Transaction transaction = context.beginTransaction()) {
@@ -197,6 +211,11 @@ public final class DatabaseBootstrap {
         }
     }
 
+    /**
+     * Escapes identifier.
+     * @param identifier the identifier value
+     * @return the result of this operation
+     */
     private static String escapeIdentifier(String identifier) {
         return identifier.replace("`", "``");
     }

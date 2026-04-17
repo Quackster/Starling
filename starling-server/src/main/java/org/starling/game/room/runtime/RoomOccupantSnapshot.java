@@ -15,6 +15,10 @@ public record RoomOccupantSnapshot(
         int bodyRotation,
         int headRotation
 ) {
+    /**
+     * Players id.
+     * @return the resulting player id
+     */
     public int playerId() {
         return player == null ? 0 : player.getId();
     }

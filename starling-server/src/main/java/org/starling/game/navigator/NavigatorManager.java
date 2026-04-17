@@ -23,12 +23,22 @@ public final class NavigatorManager {
     private final Map<Integer, NavigatorCategoryEntity> categories = new ConcurrentHashMap<>();
     private final Map<Integer, List<NavigatorCategoryEntity>> childrenByParent = new ConcurrentHashMap<>();
 
+    /**
+     * Creates a new NavigatorManager.
+     */
     private NavigatorManager() {}
 
+    /**
+     * Returns the instance.
+     * @return the instance
+     */
     public static NavigatorManager getInstance() {
         return INSTANCE;
     }
 
+    /**
+     * Loads.
+     */
     public void load() {
         List<NavigatorCategoryEntity> all = NavigatorDao.findAll();
         categories.clear();
@@ -44,10 +54,20 @@ public final class NavigatorManager {
         }
     }
 
+    /**
+     * Gets category.
+     * @param id the id value
+     * @return the result of this operation
+     */
     public NavigatorCategoryEntity getCategory(int id) {
         return categories.get(id);
     }
 
+    /**
+     * Gets children.
+     * @param parentId the parent id value
+     * @return the result of this operation
+     */
     public List<NavigatorCategoryEntity> getChildren(int parentId) {
         return childrenByParent.getOrDefault(parentId, Collections.emptyList());
     }
@@ -60,6 +80,11 @@ public final class NavigatorManager {
                 .toList();
     }
 
+    /**
+     * Gets assignable flat categories.
+     * @param rank the rank value
+     * @return the result of this operation
+     */
     public List<NavigatorCategoryEntity> getAssignableFlatCategories(int rank) {
         return getFlatCategories().stream()
                 .filter(category -> rank >= category.getMinRoleAccess())
@@ -67,6 +92,12 @@ public final class NavigatorManager {
                 .toList();
     }
 
+    /**
+     * Gets accessible children.
+     * @param parentId the parent id value
+     * @param rank the rank value
+     * @return the result of this operation
+     */
     public List<NavigatorCategoryEntity> getAccessibleChildren(int parentId, int rank) {
         List<NavigatorCategoryEntity> children = getChildren(parentId);
         if (children.isEmpty()) {
@@ -78,6 +109,11 @@ public final class NavigatorManager {
                 .toList();
     }
 
+    /**
+     * Gets parent chain.
+     * @param categoryId the category id value
+     * @return the result of this operation
+     */
     public List<NavigatorCategoryEntity> getParentChain(int categoryId) {
         NavigatorCategoryEntity current = getCategory(categoryId);
         if (current == null) {
@@ -94,6 +130,10 @@ public final class NavigatorManager {
         return chain;
     }
 
+    /**
+     * Returns the category count.
+     * @return the category count
+     */
     public int getCategoryCount() {
         return categories.size();
     }

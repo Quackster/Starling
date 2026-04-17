@@ -17,8 +17,15 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+/**
+ * Verifies that the collision registry snapshot reflects appended detectors
+ * and feeds those detectors into pathfinding.
+ */
 class RoomCollisionRegistryTest {
 
+    /**
+     * Appendeds detector changes snapshot pipeline.
+     */
     @Test
     void appendedDetectorChangesSnapshotPipeline() {
         RoomCollisionRegistry registry = new RoomCollisionRegistry();
@@ -34,6 +41,11 @@ class RoomCollisionRegistryTest {
         assertEquals(List.of(), path);
     }
 
+    /**
+     * Rooms.
+     * @param rows the rows value
+     * @return the resulting room
+     */
     private static WalkableRoom room(String... rows) {
         RoomTile[][] tiles = new RoomTile[rows.length][rows[0].length()];
         for (int y = 0; y < rows.length; y++) {
@@ -52,11 +64,19 @@ class RoomCollisionRegistryTest {
                 2
         );
         return new WalkableRoom() {
+            /**
+             * Returns the geometry.
+             * @return the geometry
+             */
             @Override
             public RoomGeometry getGeometry() {
                 return geometry;
             }
 
+            /**
+             * Returns the occupant snapshots.
+             * @return the occupant snapshots
+             */
             @Override
             public List<RoomOccupantSnapshot> getOccupantSnapshots() {
                 return List.of();
@@ -64,6 +84,12 @@ class RoomCollisionRegistryTest {
         };
     }
 
+    /**
+     * Occupants at.
+     * @param x the x value
+     * @param y the y value
+     * @return the resulting occupant at
+     */
     private static RoomOccupant occupantAt(int x, int y) {
         return new RoomOccupant(new Session(new EmbeddedChannel()), new RoomPosition(x, y, 0), 2);
     }

@@ -22,14 +22,45 @@ public class RoomRightEntity {
     @Column(name = "created_at", nullable = false)
     private Timestamp createdAt = Timestamp.from(Instant.now());
 
+    /**
+     * Creates a new RoomRightEntity.
+     */
     public RoomRightEntity() {}
 
+    /**
+     * Returns the id.
+     * @return the id
+     */
     public int getId() { return id; }
+    /**
+     * Returns the room id.
+     * @return the room id
+     */
     public int getRoomId() { return roomId; }
+    /**
+     * Returns the user id.
+     * @return the user id
+     */
     public int getUserId() { return userId; }
+    /**
+     * Returns the created at.
+     * @return the created at
+     */
     public Timestamp getCreatedAt() { return createdAt; }
 
+    /**
+     * Sets the room id.
+     * @param roomId the room id value
+     */
     public void setRoomId(int roomId) { this.roomId = roomId; }
+    /**
+     * Sets the user id.
+     * @param userId the user id value
+     */
     public void setUserId(int userId) { this.userId = userId; }
+    /**
+     * Sets the created at.
+     * @param createdAt the created at value
+     */
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
 }

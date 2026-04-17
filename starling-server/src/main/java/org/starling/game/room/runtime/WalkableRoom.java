@@ -9,7 +9,15 @@ import java.util.List;
  */
 public interface WalkableRoom {
 
+    /**
+     * Returns the geometry.
+     * @return the geometry
+     */
     RoomGeometry getGeometry();
 
+    /**
+     * Returns the occupant snapshots.
+     * @return the occupant snapshots
+     */
     List<RoomOccupantSnapshot> getOccupantSnapshots();
 }

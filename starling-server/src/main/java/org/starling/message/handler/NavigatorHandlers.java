@@ -35,6 +35,9 @@ public final class NavigatorHandlers {
     private static final FavoriteRoomResolver favoriteRoomResolver = new FavoriteRoomResolver();
     private static final PrivateRoomFactory privateRoomFactory = new PrivateRoomFactory();
 
+    /**
+     * Creates a new NavigatorHandlers.
+     */
     private NavigatorHandlers() {}
 
     /**
@@ -45,6 +48,11 @@ public final class NavigatorHandlers {
         responses.sendFriendListInit(session);
     }
 
+    /**
+     * Handles navigate.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleNavigate(Session session, ClientMessage msg) {
         int hideFull = msg.readInt();
         int categoryId = msg.readInt();
@@ -60,6 +68,11 @@ public final class NavigatorHandlers {
         responses.sendNavigate(session, hideFull, categoryId, root, children);
     }
 
+    /**
+     * Handles get user flat cats.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleGetUserFlatCats(Session session, ClientMessage msg) {
         Player player = session.getPlayer();
         int rank = player != null ? player.getRank() : 1;
@@ -68,6 +81,11 @@ public final class NavigatorHandlers {
         responses.sendUserFlatCategories(session, flatCats);
     }
 
+    /**
+     * Handles get flat category.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleGetFlatCategory(Session session, ClientMessage msg) {
         int flatId = msg.readInt();
         RoomEntity room = RoomDao.findById(flatId);
@@ -78,6 +96,11 @@ public final class NavigatorHandlers {
         responses.sendFlatCategory(session, room);
     }
 
+    /**
+     * Handles get own flats.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleGetOwnFlats(Session session, ClientMessage msg) {
         String ownerName = msg.readRawBody().trim();
         Player player = session.getPlayer();
@@ -89,12 +112,22 @@ public final class NavigatorHandlers {
         responses.sendOwnFlats(session, ownerName, rooms);
     }
 
+    /**
+     * Handles search flats.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleSearchFlats(Session session, ClientMessage msg) {
         String query = msg.readRawBody().trim();
         List<RoomEntity> rooms = RoomDao.search(query);
         responses.sendSearchResults(session, rooms);
     }
 
+    /**
+     * Handles get favorite flats.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleGetFavoriteFlats(Session session, ClientMessage msg) {
         Player player = SessionGuards.requirePlayer(session, log, "favorite rooms");
         if (player == null) {
@@ -109,6 +142,11 @@ public final class NavigatorHandlers {
         responses.sendFavoriteRooms(session, player, favorites.privateRooms(), favorites.publicRooms());
     }
 
+    /**
+     * Handles add favorite room.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleAddFavoriteRoom(Session session, ClientMessage msg) {
         Player player = SessionGuards.requirePlayer(session, log, "add favorite room");
         if (player == null) {
@@ -137,6 +175,11 @@ public final class NavigatorHandlers {
         HandlerResponses.sendSuccess(session, IncomingPackets.ADD_FAVORITE_ROOM);
     }
 
+    /**
+     * Handles remove favorite room.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleRemoveFavoriteRoom(Session session, ClientMessage msg) {
         Player player = SessionGuards.requirePlayer(session, log, "remove favorite room");
         if (player == null) {
@@ -149,6 +192,11 @@ public final class NavigatorHandlers {
         HandlerResponses.sendSuccess(session, IncomingPackets.DEL_FAVORITE_ROOM);
     }
 
+    /**
+     * Handles get flat info.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleGetFlatInfo(Session session, ClientMessage msg) {
         int flatId = HandlerParsing.parseRoomId(msg.readRawBody());
         if (flatId <= 0) {
@@ -164,6 +212,11 @@ public final class NavigatorHandlers {
         responses.sendFlatInfo(session, session.getPlayer(), room);
     }
 
+    /**
+     * Handles delete flat.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleDeleteFlat(Session session, ClientMessage msg) {
         Player player = SessionGuards.requirePlayer(session, log, "delete flat");
         if (player == null) {
@@ -194,6 +247,11 @@ public final class NavigatorHandlers {
         HandlerResponses.sendSuccess(session, IncomingPackets.DELETEFLAT);
     }
 
+    /**
+     * Handles update flat.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleUpdateFlat(Session session, ClientMessage msg) {
         Player player = SessionGuards.requirePlayer(session, log, "update flat");
         if (player == null) {
@@ -233,6 +291,11 @@ public final class NavigatorHandlers {
         HandlerResponses.sendSuccess(session, IncomingPackets.UPDATEFLAT);
     }
 
+    /**
+     * Handles set flat info.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleSetFlatInfo(Session session, ClientMessage msg) {
         Player player = SessionGuards.requirePlayer(session, log, "set flat info");
         if (player == null) {
@@ -285,6 +348,11 @@ public final class NavigatorHandlers {
         HandlerResponses.sendSuccess(session, IncomingPackets.SETFLATINFO);
     }
 
+    /**
+     * Handles create flat.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleCreateFlat(Session session, ClientMessage msg) {
         Player player = SessionGuards.requirePlayer(session, log, "create flat");
         if (player == null) {
@@ -320,6 +388,11 @@ public final class NavigatorHandlers {
         responses.sendFlatCreated(session, persisted);
     }
 
+    /**
+     * Handles set flat category.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleSetFlatCategory(Session session, ClientMessage msg) {
         Player player = SessionGuards.requirePlayer(session, log, "set flat category");
         if (player == null) {
@@ -351,11 +424,21 @@ public final class NavigatorHandlers {
         HandlerResponses.sendSuccess(session, IncomingPackets.SETFLATCAT);
     }
 
+    /**
+     * Handles get space node users.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleGetSpaceNodeUsers(Session session, ClientMessage msg) {
         int nodeId = msg.readInt();
         responses.sendSpaceNodeUsers(session, nodeId);
     }
 
+    /**
+     * Handles remove all rights.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleRemoveAllRights(Session session, ClientMessage msg) {
         Player player = SessionGuards.requirePlayer(session, log, "remove all rights");
         if (player == null) {
@@ -377,6 +460,11 @@ public final class NavigatorHandlers {
         HandlerResponses.sendSuccess(session, IncomingPackets.REMOVEALLRIGHTS);
     }
 
+    /**
+     * Handles get parent chain.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleGetParentChain(Session session, ClientMessage msg) {
         int categoryId = msg.readInt();
         NavigatorCategoryEntity root = NavigatorManager.getInstance().getCategory(categoryId);
@@ -387,11 +475,22 @@ public final class NavigatorHandlers {
         responses.sendParentChain(session, root, NavigatorManager.getInstance().getParentChain(categoryId));
     }
 
+    /**
+     * Handles get recommended rooms.
+     * @param session the session value
+     * @param msg the msg value
+     */
     public static void handleGetRecommendedRooms(Session session, ClientMessage msg) {
         List<RoomEntity> rooms = RoomDao.findRecommended(3);
         responses.sendRecommendedRooms(session, session.getPlayer(), rooms);
     }
 
+    /**
+     * Rooms exists.
+     * @param roomType the room type value
+     * @param roomId the room id value
+     * @return the resulting room exists
+     */
     private static boolean roomExists(int roomType, int roomId) {
         if (roomType == ROOM_TYPE_PUBLIC) {
             return RoomAccess.findPublicRoom(roomId) != null;

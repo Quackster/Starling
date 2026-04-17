@@ -54,10 +54,19 @@ public final class StarlingClient implements AutoCloseable {
     private ServerFrameReader serverReader;
     private ClientCipher outgoingCipher;
 
+    /**
+     * Creates a new StarlingClient.
+     * @param config the config value
+     */
     private StarlingClient(Config config) {
         this.config = config;
     }
 
+    /**
+     * Starts the application entry point.
+     * @param args the args value
+     * @throws Exception if the operation fails
+     */
     public static void main(String[] args) throws Exception {
         Config config = Config.parse(args);
         try (StarlingClient client = new StarlingClient(config)) {
@@ -65,6 +74,10 @@ public final class StarlingClient implements AutoCloseable {
         }
     }
 
+    /**
+     * Runs.
+     * @throws Exception if the operation fails
+     */
     private void run() throws Exception {
         connect();
 
@@ -108,6 +121,10 @@ public final class StarlingClient implements AutoCloseable {
         }
     }
 
+    /**
+     * Connects.
+     * @throws IOException if the operation fails
+     */
     private void connect() throws IOException {
         socket = new Socket();
         socket.connect(new InetSocketAddress(config.host, config.port), config.timeoutMs);
@@ -118,22 +135,49 @@ public final class StarlingClient implements AutoCloseable {
         log("connected " + config.host + ":" + config.port + " mode=init");
     }
 
+    /**
+     * Sends plain.
+     * @param opcode the opcode value
+     * @throws IOException if the operation fails
+     */
     private void sendPlain(int opcode) throws IOException {
         send(opcode, new byte[0], false);
     }
 
+    /**
+     * Sends plain string.
+     * @param opcode the opcode value
+     * @param value the value value
+     * @throws IOException if the operation fails
+     */
     private void sendPlainString(int opcode, String value) throws IOException {
         send(opcode, encodeString(value), false);
     }
 
+    /**
+     * Sends encrypted.
+     * @param opcode the opcode value
+     * @param body the body value
+     * @throws IOException if the operation fails
+     */
     private void sendEncrypted(int opcode, byte[] body) throws IOException {
         send(opcode, body, true);
     }
 
+    /**
+     * Sends encrypted string.
+     * @param opcode the opcode value
+     * @param value the value value
+     * @throws IOException if the operation fails
+     */
     private void sendEncryptedString(int opcode, String value) throws IOException {
         send(opcode, encodeString(value), true);
     }
 
+    /**
+     * Sends encrypted version check.
+     * @throws IOException if the operation fails
+     */
     private void sendEncryptedVersionCheck() throws IOException {
         ByteArrayOutputStream body = new ByteArrayOutputStream();
         body.writeBytes(VL64Encoding.encode(config.version));
@@ -142,6 +186,13 @@ public final class StarlingClient implements AutoCloseable {
         send(IncomingPackets.VERSIONCHECK, body.toByteArray(), true);
     }
 
+    /**
+     * Sends.
+     * @param opcode the opcode value
+     * @param body the body value
+     * @param encrypted the encrypted value
+     * @throws IOException if the operation fails
+     */
     private void send(int opcode, byte[] body, boolean encrypted) throws IOException {
         byte[] header = Base64Encoding.encodeHeader(opcode);
         byte[] length = Base64Encoding.encodeLength(header.length + body.length);
@@ -164,12 +215,23 @@ public final class StarlingClient implements AutoCloseable {
         logSend(opcode, wire, encrypted);
     }
 
+    /**
+     * Reads packet.
+     * @return the resulting read packet
+     * @throws IOException if the operation fails
+     */
     private ServerPacket readPacket() throws IOException {
         ServerPacket packet = serverReader.readPacket();
         logRecv(packet);
         return packet;
     }
 
+    /**
+     * Expects opcode.
+     * @param packet the packet value
+     * @param expected the expected value
+     * @param name the name value
+     */
     private static void expectOpcode(ServerPacket packet, int expected, String name) {
         if (packet.opcode != expected) {
             throw new IllegalStateException(
@@ -177,6 +239,11 @@ public final class StarlingClient implements AutoCloseable {
         }
     }
 
+    /**
+     * Reads single int.
+     * @param body the body value
+     * @return the resulting read single int
+     */
     private static int readSingleInt(byte[] body) {
         ByteBuf buffer = Unpooled.wrappedBuffer(body);
         try {
@@ -186,6 +253,10 @@ public final class StarlingClient implements AutoCloseable {
         }
     }
 
+    /**
+     * Creates encoded secret key.
+     * @return the resulting create encoded secret key
+     */
     private String createEncodedSecretKey() {
         int keyLength = 30 + Math.floorMod(random.nextInt(), 40);
         StringBuilder table = new StringBuilder(keyLength * 2);
@@ -201,6 +272,11 @@ public final class StarlingClient implements AutoCloseable {
         return table.append(key).toString();
     }
 
+    /**
+     * Encodes string.
+     * @param value the value value
+     * @return the resulting encode string
+     */
     private static byte[] encodeString(String value) {
         byte[] bytes = value == null ? new byte[0] : value.getBytes(StandardCharsets.UTF_8);
         byte[] length = Base64Encoding.encodeShort(bytes.length);
@@ -210,6 +286,11 @@ public final class StarlingClient implements AutoCloseable {
         return output.toByteArray();
     }
 
+    /**
+     * Formats wire.
+     * @param bytes the bytes value
+     * @return the resulting format wire
+     */
     private static String formatWire(byte[] bytes) {
         StringBuilder formatted = new StringBuilder(bytes.length * 3);
         for (byte value : bytes) {
@@ -223,19 +304,37 @@ public final class StarlingClient implements AutoCloseable {
         return formatted.toString();
     }
 
+    /**
+     * Logs send.
+     * @param opcode the opcode value
+     * @param wire the wire value
+     * @param encrypted the encrypted value
+     */
     private void logSend(int opcode, byte[] wire, boolean encrypted) {
         log(">>> opcode=" + opcode + " encrypted=" + encrypted + " raw=" + formatWire(wire));
     }
 
+    /**
+     * Logs recv.
+     * @param packet the packet value
+     */
     private void logRecv(ServerPacket packet) {
         log("<<< opcode=" + packet.opcode + " (" + packet.header() + ") bodyLen=" + packet.body.length +
                 " raw=" + formatWire(packet.rawFrame));
     }
 
+    /**
+     * Logs.
+     * @param message the message value
+     */
     private void log(String message) {
         System.out.println("[starling-client] " + message);
     }
 
+    /**
+     * Closes this resource.
+     * @throws IOException if the operation fails
+     */
     @Override
     public void close() throws IOException {
         if (socket != null) {
@@ -253,6 +352,11 @@ public final class StarlingClient implements AutoCloseable {
             String machineId,
             boolean handshakeOnly
     ) {
+        /**
+         * Parses.
+         * @param args the args value
+         * @return the resulting parse
+         */
         private static Config parse(String[] args) {
             String host = "127.0.0.1";
             int port = 30000;
@@ -293,20 +397,38 @@ public final class StarlingClient implements AutoCloseable {
         private final byte[] body;
         private final byte[] rawFrame;
 
+        /**
+         * Creates a new ServerPacket.
+         * @param opcode the opcode value
+         * @param body the body value
+         * @param rawFrame the raw frame value
+         */
         private ServerPacket(int opcode, byte[] body, byte[] rawFrame) {
             this.opcode = opcode;
             this.body = body;
             this.rawFrame = rawFrame;
         }
 
+        /**
+         * Bodies.
+         * @return the result of this operation
+         */
         private byte[] body() {
             return body;
         }
 
+        /**
+         * Bodies string.
+         * @return the result of this operation
+         */
         private String bodyString() {
             return new String(body, StandardCharsets.UTF_8);
         }
 
+        /**
+         * Headers.
+         * @return the result of this operation
+         */
         private String header() {
             return new String(Base64Encoding.encodeHeader(opcode), StandardCharsets.US_ASCII);
         }
@@ -316,14 +438,27 @@ public final class StarlingClient implements AutoCloseable {
         private final InputStream input;
         private ServerCipher cipher;
 
+        /**
+         * Creates a new ServerFrameReader.
+         * @param input the input value
+         */
         private ServerFrameReader(InputStream input) {
             this.input = input;
         }
 
+        /**
+         * Enables encrypted.
+         * @param cipher the cipher value
+         */
         private void enableEncrypted(ServerCipher cipher) {
             this.cipher = cipher;
         }
 
+        /**
+         * Reads packet.
+         * @return the resulting read packet
+         * @throws IOException if the operation fails
+         */
         private ServerPacket readPacket() throws IOException {
             ByteArrayOutputStream frame = new ByteArrayOutputStream();
 
@@ -348,6 +483,11 @@ public final class StarlingClient implements AutoCloseable {
             return new ServerPacket(opcode, body, raw);
         }
 
+        /**
+         * Reads server byte.
+         * @return the resulting read server byte
+         * @throws IOException if the operation fails
+         */
         private int readServerByte() throws IOException {
             if (cipher == null) {
                 return input.read();
@@ -364,10 +504,25 @@ public final class StarlingClient implements AutoCloseable {
     }
 
     private record DhKeyPair(BigInteger prime, BigInteger generator, BigInteger privateKey, String publicKeyHex) {
+        /**
+         * Inits.
+         * @param random the random value
+         * @return the result of this operation
+         */
         private static DhKeyPair init(SecureRandom random) {
             return generate(random, INIT_PRIME, INIT_GENERATOR, 40, INIT_PRIVATE_CHARS, 72);
         }
 
+        /**
+         * Generates.
+         * @param random the random value
+         * @param prime the prime value
+         * @param generator the generator value
+         * @param privateHexBytes the private hex bytes value
+         * @param alphabet the alphabet value
+         * @param minimumPublicLength the minimum public length value
+         * @return the result of this operation
+         */
         private static DhKeyPair generate(
                 SecureRandom random,
                 BigInteger prime,
@@ -391,6 +546,11 @@ public final class StarlingClient implements AutoCloseable {
             return new DhKeyPair(prime, generator, privateKey, publicKeyHex);
         }
 
+        /**
+         * Computes shared key.
+         * @param otherPublicKeyHex the other public key hex value
+         * @return the result of this operation
+         */
         private byte[] computeSharedKey(String otherPublicKeyHex) {
             BigInteger otherPublicKey = DiffieHellman.parsePublicKeyHex(otherPublicKeyHex);
             BigInteger sharedSecret = otherPublicKey.modPow(privateKey, prime);
@@ -406,6 +566,13 @@ public final class StarlingClient implements AutoCloseable {
             return sharedBytes;
         }
 
+        /**
+         * Randoms hex.
+         * @param random the random value
+         * @param length the length value
+         * @param alphabet the alphabet value
+         * @return the result of this operation
+         */
         private static String randomHex(SecureRandom random, int length, String alphabet) {
             StringBuilder value = new StringBuilder(length);
             for (int i = 0; i < length; i++) {
@@ -416,8 +583,18 @@ public final class StarlingClient implements AutoCloseable {
     }
 
     private interface ClientCipher {
+        /**
+         * Encrypts frame.
+         * @param plaintext the plaintext value
+         * @return the result of this operation
+         */
         byte[] encryptFrame(byte[] plaintext);
 
+        /**
+         * Inits.
+         * @param sharedKey the shared key value
+         * @return the result of this operation
+         */
         static ClientCipher init(byte[] sharedKey) {
             return new InitSocketCipher(sharedKey);
         }
@@ -428,6 +605,10 @@ public final class StarlingClient implements AutoCloseable {
         private int q;
         private int j;
 
+        /**
+         * Creates a new InitSocketCipher.
+         * @param sharedKey the shared key value
+         */
         private InitSocketCipher(byte[] sharedKey) {
             byte[] modKey = new byte[sharedKey.length];
             for (int i = 0; i < sharedKey.length; i++) {
@@ -441,6 +622,11 @@ public final class StarlingClient implements AutoCloseable {
             }
         }
 
+        /**
+         * Encrypts frame.
+         * @param plaintext the plaintext value
+         * @return the result of this operation
+         */
         @Override
         public byte[] encryptFrame(byte[] plaintext) {
             byte[] encrypted = apply(plaintext);
@@ -448,6 +634,10 @@ public final class StarlingClient implements AutoCloseable {
             return encodeHex(encrypted);
         }
 
+        /**
+         * Inits sbox.
+         * @param keyBytes the key bytes value
+         */
         private void initSbox(byte[] keyBytes) {
             int[] key = new int[256];
             for (int i = 0; i < 256; i++) {
@@ -464,6 +654,11 @@ public final class StarlingClient implements AutoCloseable {
             j = 0;
         }
 
+        /**
+         * Applies.
+         * @param input the input value
+         * @return the result of this operation
+         */
         private byte[] apply(byte[] input) {
             byte[] output = new byte[input.length];
             for (int index = 0; index < input.length; index++) {
@@ -487,6 +682,11 @@ public final class StarlingClient implements AutoCloseable {
             return output;
         }
 
+        /**
+         * Swaps.
+         * @param left the left value
+         * @param right the right value
+         */
         private void swap(int left, int right) {
             int temp = sbox[left];
             sbox[left] = sbox[right];
@@ -495,8 +695,19 @@ public final class StarlingClient implements AutoCloseable {
     }
 
     private interface ServerCipher {
+        /**
+         * Decrypts hex pair.
+         * @param high the high value
+         * @param low the low value
+         * @return the result of this operation
+         */
         int decryptHexPair(byte high, byte low);
 
+        /**
+         * Olds socket.
+         * @param secretKey the secret key value
+         * @return the result of this operation
+         */
         static ServerCipher oldSocket(int secretKey) {
             return new OldServerCipher(secretKey);
         }
@@ -507,6 +718,10 @@ public final class StarlingClient implements AutoCloseable {
         private int q;
         private int j;
 
+        /**
+         * Creates a new OldServerCipher.
+         * @param secretKey the secret key value
+         */
         private OldServerCipher(int secretKey) {
             initArtificialKey(secretKey);
             for (int i = 0; i < 17; i++) {
@@ -514,6 +729,12 @@ public final class StarlingClient implements AutoCloseable {
             }
         }
 
+        /**
+         * Decrypts hex pair.
+         * @param high the high value
+         * @param low the low value
+         * @return the result of this operation
+         */
         @Override
         public int decryptHexPair(byte high, byte low) {
             int encrypted = (hexToNibble(high) << 4) | hexToNibble(low);
@@ -524,6 +745,10 @@ public final class StarlingClient implements AutoCloseable {
             return encrypted ^ keyByte;
         }
 
+        /**
+         * Inits artificial key.
+         * @param secretKey the secret key value
+         */
         private void initArtificialKey(int secretKey) {
             int length = (secretKey & 248) / 8;
             if (length < 20) {
@@ -553,6 +778,10 @@ public final class StarlingClient implements AutoCloseable {
             j = 0;
         }
 
+        /**
+         * Applies.
+         * @param data the data value
+         */
         private void apply(byte[] data) {
             for (byte ignored : data) {
                 q = (q + 1) & 0xFF;
@@ -565,6 +794,11 @@ public final class StarlingClient implements AutoCloseable {
             }
         }
 
+        /**
+         * Swaps.
+         * @param left the left value
+         * @param right the right value
+         */
         private void swap(int left, int right) {
             int temp = sbox[left];
             sbox[left] = sbox[right];
@@ -572,6 +806,11 @@ public final class StarlingClient implements AutoCloseable {
         }
     }
 
+    /**
+     * Encodes hex.
+     * @param data the data value
+     * @return the resulting encode hex
+     */
     private static byte[] encodeHex(byte[] data) {
         byte[] encoded = new byte[data.length * 2];
         for (int i = 0; i < data.length; i++) {
@@ -582,10 +821,20 @@ public final class StarlingClient implements AutoCloseable {
         return encoded;
     }
 
+    /**
+     * Nibbles to hex.
+     * @param value the value value
+     * @return the result of this operation
+     */
     private static byte nibbleToHex(int value) {
         return (byte) (value < 10 ? ('0' + value) : ('A' + (value - 10)));
     }
 
+    /**
+     * Hexes to nibble.
+     * @param value the value value
+     * @return the result of this operation
+     */
     private static int hexToNibble(byte value) {
         if (value >= '0' && value <= '9') {
             return value - '0';
@@ -599,6 +848,10 @@ public final class StarlingClient implements AutoCloseable {
         throw new IllegalArgumentException("Invalid hex char: " + (char) value);
     }
 
+    /**
+     * Parses artificial key.
+     * @return the resulting parse artificial key
+     */
     private static int[] parseArtificialKey() {
         String csv =
                 "204,53,74,109,63,4,163,182,210,186,19,162,160,115,139,83,235,177,14,15,11,127,4,210,222,138,10,138,151,236,158,186,67,1,168,69,139,214,243,32,157,161,211,155,20,192,214,155,12,153,192,112,98,146,33,30,22,131,81,161,105,142,103,204,112,9,167,185,176,51,27,166,249,228,24,165,197,25,166,216,74,14,104,15,77,49,6,50,65,126,10,187,15,17,189,155,246,221,92,104,79,87,186,88,80,50,223,126,148,217,81,223,91,70,165,237,150,95,195,205,199,176,156,122,187,232,252,230,169,94,157,194,44,164,208,22,141,139,167,236,201,42,130,14,44,57,253,224,130,118,242,226,146,202,154,40,201,171,160,91,143,144,150,197,169,204,121,131,139,112,214,196,74,123,159,220,77,176,151,73,125,135,166,26,176,31,255,234,91,30,218,41,121,17,45,3,234,35,185,52,112,108,65,72,184,93,225,113,62,0,110,38,43,15,44,114,162,167,69,40,103,144,114,215,228,47,112,235,179,211,116,237,70,167,36,224,183,11,0,74,145,241,153,40,151,211,231,199,235,176,109,95,160,141,137,236,39,17,246,97,120,227,12,1,195,239,150,169,85,226,23,58,145,157,37,218,132,168,94,15,240,24,152,230,249,80,145,208,209,144,154,228,197,40,6,248,90,15,1,82,145,77,220,27,167,0,149,0,103,53,226,242,175,9,177,130,65,216,107,4,194,71,135,231,151,178,188,220,33,152,120,165,73,124,32,215,127,130,29,40,20,3,212,254,106,42,98,7,8,129,195,30,74,118,169,81,88,235,149,232,181,182,206,82,163,26,116,37,41,50,63,185,165,2,81,10,149,103,211,168,34,55,32,233,16,238,219,235,170,255,244,12,89,211,88,33,24,38,190,75,70,86,89,2,189,134,207,65,6,148,124,22,57,21,118,227,173,21,236,236,139,189,230,153,153,182,230,216,26,0,9,50,32,189,97,3,208,201,103,163,96,0,42,11,173,98,102,76,31,243,59,71,223,252,186,157,231,90,212,83,10,69,69,165,209,112,157,237,24,90,4,44,247,32,159,126,171,99,216,196,228,217,157,143,32,16,111,67,106,231,10,167,13,240,182,105,52,12,84,91,243,205,180,180,35,58,238,240,0,209,48,249,243,209,93,10,22,183,5,177,110,16,188,201,240,194,11,76,219,67,254,176,139,66,81,138,109,178,71,143,74,217,52,0,127,190,12,214,231,84,239,165,155,89,95,106,62,30,182,137,85,39,221,51,188,149,104,167,71,11,220,212,246,114,10,4,216,127,233,231,178,174,181,29,49,118,177,108,156,174,118,196,216,106,203,96,65,12,140,248,152,35,152,17,89,136,138,94,5,190,92,189,16,216,61,70,165,36,238,167,16,61,206,140,226,251,37,225,211,111,42,195,36,248,233,67,146,100,244,23,154,103,48,4,15,33,169,151,13,151,115,173,37,103,172,23,182,29,22,25,54,46,188,14,24,12,182,241,163,90,121,172,29,73,191,91,232,229,197,200,32,7,67,214,141,248,10,135,168,4,144,17,94,228,76,202,130,174,251,170,100,173,232,183,132,130,35,163,1,154,134,56,202,13,190,224,56,107,107,244,16,12,149,220,120,245,179,103,85,255,195,187,191,82,225,13,206,106,60,212,12,211,247,112,185,5,56,226,236,179,181,208,204,16,159,158,36,65,101,148,23,89,125,27,61,117,255,142,32,138,105,166,203,253,113,138,30,247,250,198,21,244,113,40,161,229,179,100,76,30,177,69,87,90,9,135,254,108,99,145,195,145,138,223,237,52,126,244,109,171,44,0,187,129,127,49,220,100,253,0,116,93,87,39,245,5,54,203,241,155,255,125,80,253,75,71,242,147,153,148,214,91,33,181,78,10,82,171,89,179,221,144,224,138,112,254,152,186,190,224,44,251,60,133,65,70,72,203,126,123,212,108,68,185,42,208,51,11,177,3,24,207,14,148,113,55,1,19,179,31,133,11,227,72,145,242,157,244,239,129,124,109,56,134,56,95,110,161,73,151,136,67,176,201,193,70,53,31,238,84,81,65,50,182,20,17,247,179,217,14,34,182,97,55,117,176,108,234,147,89,168,7,251,212,22,107,63,248,179,222,167,214,136,74,53,47,120,233,131,41,167,220,56,12,51,125,207,112,179,211,47,134,223,112,223,46,249,24,64,58,36,187,77,132,116,116,111,36,127,217,177,24,58,102,166,105,119,234,187,198,77,153,23,157,103,92,33,136,182,131,154,141,149,4,117,213,226,64,116,55,6,159,126,225";

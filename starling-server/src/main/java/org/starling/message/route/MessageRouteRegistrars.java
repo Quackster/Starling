@@ -11,8 +11,15 @@ public final class MessageRouteRegistrars {
             new NavigatorRouteRegistrar()
     );
 
+    /**
+     * Creates a new MessageRouteRegistrars.
+     */
     private MessageRouteRegistrars() {}
 
+    /**
+     * Defaultses.
+     * @return the resulting defaults
+     */
     public static List<MessageRouteRegistrar> defaults() {
         return DEFAULTS;
     }

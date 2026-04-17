@@ -16,10 +16,20 @@ public class MessageRouter {
 
     private final Map<Integer, MessageHandler> handlers = new HashMap<>();
 
+    /**
+     * Registers.
+     * @param opcode the opcode value
+     * @param handler the handler value
+     */
     public void register(int opcode, MessageHandler handler) {
         handlers.put(opcode, handler);
     }
 
+    /**
+     * Routes.
+     * @param session the session value
+     * @param message the message value
+     */
     public void route(Session session, ClientMessage message) {
         MessageHandler handler = handlers.get(message.getOpcode());
         if (handler != null) {

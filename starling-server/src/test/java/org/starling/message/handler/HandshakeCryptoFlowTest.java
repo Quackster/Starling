@@ -39,11 +39,17 @@ class HandshakeCryptoFlowTest {
             "EE8BC67BAA0DCB7183F16401F5CB838E3B6EE86B9EF2E5D0F3C49D4DC4EDC2B9", 16);
     private static final BigInteger INIT_GENERATOR = BigInteger.valueOf(5L);
 
+    /**
+     * Secrets decode matches director algorithm.
+     */
     @Test
     void secretDecodeMatchesDirectorAlgorithm() {
         assertEquals(69155, SecretKeyCodec.secretDecode(ENCODED_SECRET_KEY));
     }
 
+    /**
+     * Inits crypto disables server to client encryption.
+     */
     @Test
     void initCryptoDisablesServerToClientEncryption() {
         EmbeddedChannel channel = new EmbeddedChannel();
@@ -62,11 +68,17 @@ class HandshakeCryptoFlowTest {
         channel.finishAndReleaseAll();
     }
 
+    /**
+     * Secrets key enables encrypted end of crypto params.
+     */
     @Test
     void secretKeyEnablesEncryptedEndOfCryptoParams() {
         assertEncryptedEndOfCrypto();
     }
 
+    /**
+     * Inits socket cipher copy keeps frame preview and full decrypt in sync.
+     */
     @Test
     void initSocketCipherCopyKeepsFramePreviewAndFullDecryptInSync() {
         byte[] sharedKey = new byte[]{
@@ -93,6 +105,9 @@ class HandshakeCryptoFlowTest {
         assertArrayEquals(plaintext, decryptedFrame);
     }
 
+    /**
+     * Generates key response is director compatible for init handshake.
+     */
     @Test
     void generateKeyResponseIsDirectorCompatibleForInitHandshake() {
         EmbeddedChannel channel = new EmbeddedChannel();
@@ -132,6 +147,9 @@ class HandshakeCryptoFlowTest {
         channel.finishAndReleaseAll();
     }
 
+    /**
+     * Inits diffie hellman matches director public key requirements.
+     */
     @Test
     void initDiffieHellmanMatchesDirectorPublicKeyRequirements() {
         for (int i = 0; i < 32; i++) {
@@ -141,6 +159,9 @@ class HandshakeCryptoFlowTest {
         }
     }
 
+    /**
+     * Compatibilities public key matches real client compatible shape.
+     */
     @Test
     void compatibilityPublicKeyMatchesRealClientCompatibleShape() {
         Set<String> seen = new HashSet<>();
@@ -154,6 +175,9 @@ class HandshakeCryptoFlowTest {
         assertTrue(seen.size() > 1, "expected compatibility key generation to vary across sessions");
     }
 
+    /**
+     * Compatibilities shared secret decodes encrypted version check.
+     */
     @Test
     void compatibilitySharedSecretDecodesEncryptedVersionCheck() {
         EmbeddedChannel channel = new EmbeddedChannel();
@@ -197,6 +221,9 @@ class HandshakeCryptoFlowTest {
         channel.finishAndReleaseAll();
     }
 
+    /**
+     * Asserts encrypted end of crypto.
+     */
     private static void assertEncryptedEndOfCrypto() {
         EmbeddedChannel channel = new EmbeddedChannel();
         channel.pipeline()
@@ -227,6 +254,12 @@ class HandshakeCryptoFlowTest {
         channel.finishAndReleaseAll();
     }
 
+    /**
+     * Strings message.
+     * @param opcode the opcode value
+     * @param value the value value
+     * @return the result of this operation
+     */
     private static ClientMessage stringMessage(int opcode, String value) {
         byte[] encodedBody = encodeStringBody(value);
         ByteBuf body = Unpooled.buffer(encodedBody.length);
@@ -234,6 +267,11 @@ class HandshakeCryptoFlowTest {
         return new ClientMessage(opcode, body);
     }
 
+    /**
+     * Encodes string body.
+     * @param value the value value
+     * @return the resulting encode string body
+     */
     private static byte[] encodeStringBody(String value) {
         byte[] bytes = value.getBytes(UTF_8);
         ByteBuf body = Unpooled.buffer(bytes.length + 2);
@@ -248,6 +286,12 @@ class HandshakeCryptoFlowTest {
         }
     }
 
+    /**
+     * Clients frame.
+     * @param opcode the opcode value
+     * @param body the body value
+     * @return the result of this operation
+     */
     private static byte[] clientFrame(int opcode, byte[] body) {
         byte[] header = Base64Encoding.encodeHeader(opcode);
         byte[] length = Base64Encoding.encodeLength(header.length + body.length);
@@ -258,6 +302,11 @@ class HandshakeCryptoFlowTest {
         return frame;
     }
 
+    /**
+     * Encodes body.
+     * @param parts the parts value
+     * @return the resulting encode body
+     */
     private static byte[] encodeBody(byte[]... parts) {
         int length = 0;
         for (byte[] part : parts) {
@@ -273,6 +322,11 @@ class HandshakeCryptoFlowTest {
         return body;
     }
 
+    /**
+     * Reads outbound bytes.
+     * @param channel the channel value
+     * @return the resulting read outbound bytes
+     */
     private static byte[] readOutboundBytes(EmbeddedChannel channel) {
         ByteBuf buffer = channel.readOutbound();
         try {
@@ -284,6 +338,11 @@ class HandshakeCryptoFlowTest {
         }
     }
 
+    /**
+     * Extracts server body.
+     * @param packet the packet value
+     * @return the result of this operation
+     */
     private static String extractServerBody(byte[] packet) {
         return new String(packet, 2, packet.length - 3, UTF_8);
     }

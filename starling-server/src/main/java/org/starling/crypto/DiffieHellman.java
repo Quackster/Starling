@@ -20,12 +20,22 @@ public final class DiffieHellman {
     private final BigInteger privateKey;
     private final BigInteger publicKey;
 
+    /**
+     * Creates a new DiffieHellman.
+     * @param prime the prime value
+     * @param privateKey the private key value
+     * @param publicKey the public key value
+     */
     private DiffieHellman(BigInteger prime, BigInteger privateKey, BigInteger publicKey) {
         this.prime = prime;
         this.privateKey = privateKey;
         this.publicKey = publicKey;
     }
 
+    /**
+     * Inits.
+     * @return the result of this operation
+     */
     public static DiffieHellman init() {
         return generate(INIT_PRIME, INIT_GENERATOR, 40, INIT_PRIVATE_CHARS, 72, 4);
     }
@@ -33,6 +43,10 @@ public final class DiffieHellman {
     // Director r26 only accepts a narrow compatibility shape after opcode 1.
     // A zero-padded "1" plus one trailing non-hex letter is the working
     // family captured from real Basilisk sessions in the local logs.
+    /**
+     * Inits compatibility public key hex.
+     * @return the result of this operation
+     */
     public static String initCompatibilityPublicKeyHex() {
         int zeroCount = INIT_COMPAT_MIN_PADDING + RANDOM.nextInt(INIT_COMPAT_PADDING_VARIATION);
         char suffix = INIT_COMPAT_SUFFIX_CHARS.charAt(RANDOM.nextInt(INIT_COMPAT_SUFFIX_CHARS.length()));
@@ -46,14 +60,27 @@ public final class DiffieHellman {
         return value.toString();
     }
 
+    /**
+     * Returns the public key hex.
+     * @return the public key hex
+     */
     public String getPublicKeyHex() {
         return publicKey.toString(16).toUpperCase();
     }
 
+    /**
+     * Returns the private key hex.
+     * @return the private key hex
+     */
     public String getPrivateKeyHex() {
         return privateKey.toString(16).toUpperCase();
     }
 
+    /**
+     * Computes shared secret.
+     * @param clientPublicKeyHex the client public key hex value
+     * @return the result of this operation
+     */
     public byte[] computeSharedSecret(String clientPublicKeyHex) {
         BigInteger clientPublic = parsePublicKeyHex(clientPublicKeyHex);
         BigInteger sharedSecret = clientPublic.modPow(privateKey, prime);
@@ -70,6 +97,11 @@ public final class DiffieHellman {
         return result;
     }
 
+    /**
+     * Parses public key hex.
+     * @param value the value value
+     * @return the resulting parse public key hex
+     */
     public static BigInteger parsePublicKeyHex(String value) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException("Public key cannot be blank");
@@ -94,6 +126,16 @@ public final class DiffieHellman {
         }
     }
 
+    /**
+     * Generates.
+     * @param prime the prime value
+     * @param generator the generator value
+     * @param privateHexBytes the private hex bytes value
+     * @param alphabet the alphabet value
+     * @param minimumPublicLength the minimum public length value
+     * @param maxAttempts the max attempts value
+     * @return the result of this operation
+     */
     private static DiffieHellman generate(
             BigInteger prime,
             BigInteger generator,
@@ -119,6 +161,12 @@ public final class DiffieHellman {
         return new DiffieHellman(prime, privateKey, publicKey);
     }
 
+    /**
+     * Randoms hex.
+     * @param length the length value
+     * @param alphabet the alphabet value
+     * @return the result of this operation
+     */
     private static String randomHex(int length, String alphabet) {
         StringBuilder value = new StringBuilder(length);
         for (int i = 0; i < length; i++) {

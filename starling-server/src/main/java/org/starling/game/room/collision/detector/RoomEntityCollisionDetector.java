@@ -9,6 +9,11 @@ import org.starling.game.room.runtime.RoomOccupantSnapshot;
  */
 public final class RoomEntityCollisionDetector implements RoomCollisionDetector {
 
+    /**
+     * Evaluates.
+     * @param context the context value
+     * @param state the state value
+     */
     @Override
     public void evaluate(Context context, State state) {
         for (RoomOccupantSnapshot snapshot : context.room().getOccupantSnapshots()) {
@@ -24,6 +29,12 @@ public final class RoomEntityCollisionDetector implements RoomCollisionDetector 
         }
     }
 
+    /**
+     * Ises mover.
+     * @param context the context value
+     * @param snapshot the snapshot value
+     * @return the result of this operation
+     */
     private boolean isMover(Context context, RoomOccupantSnapshot snapshot) {
         if (context.mover().getSession() != null && context.mover().getSession() == snapshot.session()) {
             return true;
@@ -34,6 +45,12 @@ public final class RoomEntityCollisionDetector implements RoomCollisionDetector 
                 && context.mover().getPlayer().getId() == snapshot.player().getId();
     }
 
+    /**
+     * Occupieses.
+     * @param occupied the occupied value
+     * @param target the target value
+     * @return the result of this operation
+     */
     private boolean occupies(RoomCoordinate occupied, RoomCoordinate target) {
         return occupied != null && occupied.equals(target);
     }

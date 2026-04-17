@@ -16,8 +16,15 @@ public final class EntityContext {
     private static final Logger log = LogManager.getLogger(EntityContext.class);
     private static ServerConfig config;
 
+    /**
+     * Creates a new EntityContext.
+     */
     private EntityContext() {}
 
+    /**
+     * Inits.
+     * @param serverConfig the server config value
+     */
     public static void init(ServerConfig serverConfig) {
         config = Objects.requireNonNull(serverConfig, "serverConfig");
 
@@ -30,10 +37,18 @@ public final class EntityContext {
         log.info("Entity4j configured for {}", config.jdbcUrl());
     }
 
+    /**
+     * Returns whether initialized.
+     * @return whether initialized
+     */
     public static boolean isInitialized() {
         return config != null;
     }
 
+    /**
+     * Opens context.
+     * @return the result of this operation
+     */
     public static DbContext openContext() {
         if (config == null) {
             throw new IllegalStateException("EntityContext has not been initialized");
@@ -53,6 +68,11 @@ public final class EntityContext {
         }
     }
 
+    /**
+     * Returns a copy with context.
+     * @param action the action value
+     * @return the result of this operation
+     */
     public static <T> T withContext(Function<DbContext, T> action) {
         Objects.requireNonNull(action, "action");
 
@@ -61,6 +81,11 @@ public final class EntityContext {
         }
     }
 
+    /**
+     * Ins transaction.
+     * @param action the action value
+     * @return the result of this operation
+     */
     public static <T> T inTransaction(Function<DbContext, T> action) {
         Objects.requireNonNull(action, "action");
 
@@ -76,6 +101,9 @@ public final class EntityContext {
         }
     }
 
+    /**
+     * Shutdowns.
+     */
     public static void shutdown() {
         config = null;
     }

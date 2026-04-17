@@ -2,6 +2,9 @@ package org.starling.message;
 
 /** Client->Server opcode constants. Source: regMsgList() tCmds across all handler classes. */
 public final class IncomingPackets {
+    /**
+     * Creates a new IncomingPackets.
+     */
     private IncomingPackets() {}
 
     // Handshake

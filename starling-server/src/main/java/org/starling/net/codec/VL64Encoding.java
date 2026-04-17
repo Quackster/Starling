@@ -20,8 +20,16 @@ public final class VL64Encoding {
 
     private static final int B64 = 64;
 
+    /**
+     * Creates a new VL64Encoding.
+     */
     private VL64Encoding() {}
 
+    /**
+     * Encodes.
+     * @param value the value value
+     * @return the resulting encode
+     */
     public static byte[] encode(int value) {
         boolean negative = value < 0;
         int abs = Math.abs(value);
@@ -51,6 +59,11 @@ public final class VL64Encoding {
         return result;
     }
 
+    /**
+     * Decodes.
+     * @param buf the buf value
+     * @return the resulting decode
+     */
     public static int decode(ByteBuf buf) {
         int firstByte = buf.readByte() & 63; // strip B64 mask
         int count = (firstByte >> 3) & 7;

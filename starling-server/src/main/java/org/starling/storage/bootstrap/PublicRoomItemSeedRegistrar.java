@@ -13,6 +13,10 @@ public final class PublicRoomItemSeedRegistrar implements DatabaseSeedRegistrar 
     private static final List<LisbonPublicItemCatalog.PublicRoomItemSeed> DEFAULT_PUBLIC_ROOM_ITEMS =
             LisbonPublicItemCatalog.load().publicRoomItems();
 
+    /**
+     * Seeds.
+     * @param context the context value
+     */
     @Override
     public void seed(DbContext context) {
         String sql = """

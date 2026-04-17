@@ -26,20 +26,40 @@ public final class RoomLifecycleService {
     private final RoomRegistry roomRegistry;
     private final RoomResponseWriter responses;
 
+    /**
+     * Creates a new RoomLifecycleService.
+     * @param roomRegistry the room registry value
+     * @param responses the responses value
+     */
     private RoomLifecycleService(RoomRegistry roomRegistry, RoomResponseWriter responses) {
         this.roomRegistry = roomRegistry;
         this.responses = responses;
     }
 
+    /**
+     * Returns the instance.
+     * @return the instance
+     */
     public static RoomLifecycleService getInstance() {
         return INSTANCE;
     }
 
+    /**
+     * Authorizes private room entry.
+     * @param session the session value
+     * @param room the room value
+     */
     public void authorizePrivateRoomEntry(Session session, RoomEntity room) {
         leaveRoom(session, false);
         session.setRoomPresence(Session.RoomPresence.pendingPrivate(room.getId(), privateMarker(room)));
     }
 
+    /**
+     * Hases pending private entry.
+     * @param session the session value
+     * @param roomId the room id value
+     * @return the result of this operation
+     */
     public boolean hasPendingPrivateEntry(Session session, int roomId) {
         Session.RoomPresence presence = session.getRoomPresence();
         return presence.phase() == Session.RoomPhase.PENDING_PRIVATE_ENTRY
@@ -47,6 +67,12 @@ public final class RoomLifecycleService {
                 && presence.roomId() == roomId;
     }
 
+    /**
+     * Enters private room.
+     * @param session the session value
+     * @param room the room value
+     * @return the result of this operation
+     */
     public boolean enterPrivateRoom(Session session, RoomEntity room) {
         if (!hasPendingPrivateEntry(session, room.getId())) {
             log.debug("Ignoring goto flat without matching pending entry for room {} from {}",
@@ -59,6 +85,12 @@ public final class RoomLifecycleService {
         return true;
     }
 
+    /**
+     * Enters public room.
+     * @param session the session value
+     * @param room the room value
+     * @param doorId the door id value
+     */
     public void enterPublicRoom(Session session, PublicRoomEntity room, int doorId) {
         Session.RoomPresence presence = session.getRoomPresence();
         String marker = publicMarker(room);
@@ -73,15 +105,28 @@ public final class RoomLifecycleService {
                 Session.RoomPresence.activePublic(room.getId(), marker, doorId));
     }
 
+    /**
+     * Handles quit.
+     * @param session the session value
+     */
     public void handleQuit(Session session) {
         leaveRoom(session, true);
     }
 
+    /**
+     * Handles disconnect.
+     * @param session the session value
+     */
     public void handleDisconnect(Session session) {
         leaveRoom(session, false);
         PlayerManager.getInstance().unregister(session);
     }
 
+    /**
+     * Leaves room.
+     * @param session the session value
+     * @param userInitiated the user initiated value
+     */
     private void leaveRoom(Session session, boolean userInitiated) {
         Session.RoomPresence presence = session.getRoomPresence();
         if (presence.phase() == Session.RoomPhase.NONE) {
@@ -109,6 +154,11 @@ public final class RoomLifecycleService {
         clearPresence(session, userInitiated);
     }
 
+    /**
+     * Broadcasts logout.
+     * @param loadedRoom the loaded room value
+     * @param leavingSession the leaving session value
+     */
     private void broadcastLogout(LoadedRoom<?> loadedRoom, Session leavingSession) {
         Player leavingPlayer = leavingSession.getPlayer();
         if (leavingPlayer == null) {
@@ -122,6 +172,11 @@ public final class RoomLifecycleService {
         }
     }
 
+    /**
+     * Persists occupancy.
+     * @param loadedRoom the loaded room value
+     * @param occupantCount the occupant count value
+     */
     private void persistOccupancy(LoadedRoom<?> loadedRoom, int occupantCount) {
         int persistedOccupantCount = Math.max(occupantCount, 0);
         if (loadedRoom.getRoomType() == Session.RoomType.PUBLIC) {
@@ -131,12 +186,23 @@ public final class RoomLifecycleService {
         }
     }
 
+    /**
+     * Activates room.
+     * @param session the session value
+     * @param loadedRoom the loaded room value
+     * @param presence the presence value
+     */
     private void activateRoom(Session session, LoadedRoom<?> loadedRoom, Session.RoomPresence presence) {
         LoadedRoom.OccupantChange change = loadedRoom.addOccupant(session);
         persistOccupancy(loadedRoom, change.occupantCount());
         session.setRoomPresence(presence);
     }
 
+    /**
+     * Clears presence.
+     * @param session the session value
+     * @param userInitiated the user initiated value
+     */
     private void clearPresence(Session session, boolean userInitiated) {
         session.setRoomPresence(Session.RoomPresence.none());
         if (userInitiated) {
@@ -144,25 +210,52 @@ public final class RoomLifecycleService {
         }
     }
 
+    /**
+     * Ises active room.
+     * @param presence the presence value
+     * @param roomType the room type value
+     * @param roomId the room id value
+     * @return the result of this operation
+     */
     private boolean isActiveRoom(Session.RoomPresence presence, Session.RoomType roomType, int roomId) {
         return presence.phase() == Session.RoomPhase.ACTIVE
                 && presence.type() == roomType
                 && presence.roomId() == roomId;
     }
 
+    /**
+     * Privates marker.
+     * @param room the room value
+     * @return the result of this operation
+     */
     private String privateMarker(RoomEntity room) {
         return RoomLayoutRegistry.forPrivateRoom(room).marker();
     }
 
+    /**
+     * Publics marker.
+     * @param room the room value
+     * @return the result of this operation
+     */
     private String publicMarker(PublicRoomEntity room) {
         return RoomLayoutRegistry.forPublicRoom(room).marker();
     }
 
+    /**
+     * Persists private occupancy.
+     * @param room the room value
+     * @param occupantCount the occupant count value
+     */
     private void persistPrivateOccupancy(RoomEntity room, int occupantCount) {
         room.setCurrentUsers(Math.max(occupantCount, 0));
         RoomDao.saveCurrentUsers(room.getId(), room.getCurrentUsers());
     }
 
+    /**
+     * Persists public occupancy.
+     * @param room the room value
+     * @param occupantCount the occupant count value
+     */
     private void persistPublicOccupancy(PublicRoomEntity room, int occupantCount) {
         room.setCurrentUsers(Math.max(occupantCount, 0));
         PublicRoomDao.saveCurrentUsers(room.getId(), room.getCurrentUsers());

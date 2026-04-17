@@ -34,10 +34,18 @@ public class Session {
     private Player player;
     private RoomPresence roomPresence = RoomPresence.none();
 
+    /**
+     * Creates a new Session.
+     * @param channel the channel value
+     */
     public Session(Channel channel) {
         this.channel = channel;
     }
 
+    /**
+     * Returns the channel.
+     * @return the channel
+     */
     public Channel getChannel() {
         return channel;
     }
@@ -54,10 +62,20 @@ public class Session {
         }
     }
 
+    /**
+     * Shoulds trace wire packet.
+     * @param opcode the opcode value
+     * @return the result of this operation
+     */
     private static boolean shouldTraceWirePacket(int opcode) {
         return true;
     }
 
+    /**
+     * Formats wire bytes.
+     * @param wireBytes the wire bytes value
+     * @return the resulting format wire bytes
+     */
     private static String formatWireBytes(byte[] wireBytes) {
         StringBuilder formatted = new StringBuilder(wireBytes.length * 3);
         for (byte wireByte : wireBytes) {
@@ -73,62 +91,121 @@ public class Session {
 
     // --- DH / Crypto ---
 
+    /**
+     * Returns the diffie hellman.
+     * @return the diffie hellman
+     */
     public DiffieHellman getDiffieHellman() {
         return diffieHellman;
     }
 
+    /**
+     * Sets the diffie hellman.
+     * @param dh the dh value
+     */
     public void setDiffieHellman(DiffieHellman dh) {
         this.diffieHellman = dh;
     }
 
+    /**
+     * Returns the inbound cipher.
+     * @return the inbound cipher
+     */
     public HabboCipher getInboundCipher() {
         return inboundCipher;
     }
 
+    /**
+     * Sets the inbound cipher.
+     * @param inboundCipher the inbound cipher value
+     */
     public void setInboundCipher(HabboCipher inboundCipher) {
         this.inboundCipher = inboundCipher;
     }
 
+    /**
+     * Returns the outbound cipher.
+     * @return the outbound cipher
+     */
     public HabboCipher getOutboundCipher() {
         return outboundCipher;
     }
 
+    /**
+     * Sets the outbound cipher.
+     * @param outboundCipher the outbound cipher value
+     */
     public void setOutboundCipher(HabboCipher outboundCipher) {
         this.outboundCipher = outboundCipher;
     }
 
+    /**
+     * Returns the inbound shared secret.
+     * @return the inbound shared secret
+     */
     public byte[] getInboundSharedSecret() {
         return inboundSharedSecret == null ? null : inboundSharedSecret.clone();
     }
 
+    /**
+     * Sets the inbound shared secret.
+     * @param inboundSharedSecret the inbound shared secret value
+     */
     public void setInboundSharedSecret(byte[] inboundSharedSecret) {
         this.inboundSharedSecret = inboundSharedSecret == null ? null : inboundSharedSecret.clone();
     }
 
+    /**
+     * Returns whether inbound encrypted.
+     * @return whether inbound encrypted
+     */
     public boolean isInboundEncrypted() {
         return inboundEncrypted;
     }
 
+    /**
+     * Sets the inbound encrypted.
+     * @param inboundEncrypted the inbound encrypted value
+     */
     public void setInboundEncrypted(boolean inboundEncrypted) {
         this.inboundEncrypted = inboundEncrypted;
     }
 
+    /**
+     * Returns whether outbound encrypted.
+     * @return whether outbound encrypted
+     */
     public boolean isOutboundEncrypted() {
         return outboundEncrypted;
     }
 
+    /**
+     * Sets the outbound encrypted.
+     * @param outboundEncrypted the outbound encrypted value
+     */
     public void setOutboundEncrypted(boolean outboundEncrypted) {
         this.outboundEncrypted = outboundEncrypted;
     }
 
+    /**
+     * Returns the crypto mode.
+     * @return the crypto mode
+     */
     public CryptoMode getCryptoMode() {
         return cryptoMode;
     }
 
+    /**
+     * Sets the crypto mode.
+     * @param cryptoMode the crypto mode value
+     */
     public void setCryptoMode(CryptoMode cryptoMode) {
         this.cryptoMode = cryptoMode == null ? CryptoMode.NONE : cryptoMode;
     }
 
+    /**
+     * Resets crypto.
+     */
     public void resetCrypto() {
         this.diffieHellman = null;
         this.inboundCipher = null;
@@ -152,18 +229,37 @@ public class Session {
         return getInboundCipher();
     }
 
+    /**
+     * Sets the cipher.
+     * @param cipher the cipher value
+     */
     public void setCipher(HabboCipher cipher) {
         setInboundCipher(cipher);
     }
 
+    /**
+     * Returns whether encrypted.
+     * @return whether encrypted
+     */
     public boolean isEncrypted() {
         return isInboundEncrypted();
     }
 
+    /**
+     * Sets the encrypted.
+     * @param encrypted the encrypted value
+     */
     public void setEncrypted(boolean encrypted) {
         setInboundEncrypted(encrypted);
     }
 
+    /**
+     * Sets debug dh material.
+     * @param clientPublicKeyHex the client public key hex value
+     * @param serverPrivateKeyHex the server private key hex value
+     * @param serverPublicKeyHex the server public key hex value
+     * @param sharedSecretHex the shared secret hex value
+     */
     public void setDebugDhMaterial(
             String clientPublicKeyHex,
             String serverPrivateKeyHex,
@@ -177,22 +273,42 @@ public class Session {
         this.encryptedDiagnosticsContextLogged = false;
     }
 
+    /**
+     * Returns the debug client public key hex.
+     * @return the debug client public key hex
+     */
     public String getDebugClientPublicKeyHex() {
         return debugClientPublicKeyHex;
     }
 
+    /**
+     * Returns the debug server private key hex.
+     * @return the debug server private key hex
+     */
     public String getDebugServerPrivateKeyHex() {
         return debugServerPrivateKeyHex;
     }
 
+    /**
+     * Returns the debug server public key hex.
+     * @return the debug server public key hex
+     */
     public String getDebugServerPublicKeyHex() {
         return debugServerPublicKeyHex;
     }
 
+    /**
+     * Returns the debug shared secret hex.
+     * @return the debug shared secret hex
+     */
     public String getDebugSharedSecretHex() {
         return debugSharedSecretHex;
     }
 
+    /**
+     * Marks encrypted diagnostics context logged.
+     * @return the result of this operation
+     */
     public boolean markEncryptedDiagnosticsContextLogged() {
         boolean alreadyLogged = encryptedDiagnosticsContextLogged;
         encryptedDiagnosticsContextLogged = true;
@@ -201,50 +317,101 @@ public class Session {
 
     // --- Player ---
 
+    /**
+     * Returns the player.
+     * @return the player
+     */
     public Player getPlayer() {
         return player;
     }
 
+    /**
+     * Sets the player.
+     * @param player the player value
+     */
     public void setPlayer(Player player) {
         this.player = player;
     }
 
+    /**
+     * Returns whether logged in.
+     * @return whether logged in
+     */
     public boolean isLoggedIn() {
         return player != null;
     }
 
+    /**
+     * Returns the remote address.
+     * @return the remote address
+     */
     public String getRemoteAddress() {
         return channel.remoteAddress() != null ? channel.remoteAddress().toString() : "unknown";
     }
 
+    /**
+     * Returns the room presence.
+     * @return the room presence
+     */
     public RoomPresence getRoomPresence() {
         return roomPresence;
     }
 
+    /**
+     * Sets the room presence.
+     * @param roomPresence the room presence value
+     */
     public void setRoomPresence(RoomPresence roomPresence) {
         this.roomPresence = roomPresence == null ? RoomPresence.none() : roomPresence;
     }
 
     public record RoomPresence(RoomPhase phase, RoomType type, int roomId, String marker, int doorId) {
+        /**
+         * Nones.
+         * @return the result of this operation
+         */
         public static RoomPresence none() {
             return new RoomPresence(RoomPhase.NONE, RoomType.PRIVATE, 0, "", 0);
         }
 
+        /**
+         * Pendings private.
+         * @param roomId the room id value
+         * @param marker the marker value
+         * @return the result of this operation
+         */
         public static RoomPresence pendingPrivate(int roomId, String marker) {
             return new RoomPresence(RoomPhase.PENDING_PRIVATE_ENTRY, RoomType.PRIVATE, roomId,
                     marker == null ? "" : marker, 0);
         }
 
+        /**
+         * Actives private.
+         * @param roomId the room id value
+         * @param marker the marker value
+         * @return the result of this operation
+         */
         public static RoomPresence activePrivate(int roomId, String marker) {
             return new RoomPresence(RoomPhase.ACTIVE, RoomType.PRIVATE, roomId,
                     marker == null ? "" : marker, 0);
         }
 
+        /**
+         * Actives public.
+         * @param roomId the room id value
+         * @param marker the marker value
+         * @param doorId the door id value
+         * @return the result of this operation
+         */
         public static RoomPresence activePublic(int roomId, String marker, int doorId) {
             return new RoomPresence(RoomPhase.ACTIVE, RoomType.PUBLIC, roomId,
                     marker == null ? "" : marker, doorId);
         }
 
+        /**
+         * Actives.
+         * @return the result of this operation
+         */
         public boolean active() {
             return phase == RoomPhase.ACTIVE;
         }

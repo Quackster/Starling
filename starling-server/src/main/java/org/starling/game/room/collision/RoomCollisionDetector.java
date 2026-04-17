@@ -10,6 +10,11 @@ import org.starling.game.room.runtime.WalkableRoom;
  */
 public interface RoomCollisionDetector {
 
+    /**
+     * Evaluates.
+     * @param context the context value
+     * @param state the state value
+     */
     void evaluate(Context context, State state);
 
     /**
@@ -23,6 +28,10 @@ public interface RoomCollisionDetector {
             RoomCoordinate goal,
             boolean finalStep
     ) {
+        /**
+         * Diagonals move.
+         * @return the result of this operation
+         */
         public boolean diagonalMove() {
             return from != null && from.x() != target.x() && from.y() != target.y();
         }
@@ -36,20 +45,35 @@ public interface RoomCollisionDetector {
         private boolean blocked;
         private double walkHeight = Double.NaN;
 
+        /**
+         * Blocks.
+         */
         public void block() {
             blocked = true;
         }
 
+        /**
+         * Blockeds.
+         * @return the result of this operation
+         */
         public boolean blocked() {
             return blocked;
         }
 
+        /**
+         * Sets the walk height.
+         * @param walkHeight the walk height value
+         */
         public void setWalkHeight(double walkHeight) {
             if (Double.isNaN(this.walkHeight) || walkHeight > this.walkHeight) {
                 this.walkHeight = walkHeight;
             }
         }
 
+        /**
+         * Walks height.
+         * @return the result of this operation
+         */
         public double walkHeight() {
             return Double.isNaN(walkHeight) ? 0.0 : walkHeight;
         }
@@ -60,10 +84,19 @@ public interface RoomCollisionDetector {
      */
     record Evaluation(boolean allowed, RoomPosition position) {
 
+        /**
+         * Blockeds.
+         * @return the result of this operation
+         */
         public static Evaluation blocked() {
             return new Evaluation(false, null);
         }
 
+        /**
+         * Alloweds.
+         * @param position the position value
+         * @return the result of this operation
+         */
         public static Evaluation allowed(RoomPosition position) {
             return new Evaluation(true, position);
         }

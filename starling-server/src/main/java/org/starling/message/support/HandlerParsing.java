@@ -5,8 +5,17 @@ import java.util.Map;
 
 public final class HandlerParsing {
 
+    /**
+     * Creates a new HandlerParsing.
+     */
     private HandlerParsing() {}
 
+    /**
+     * Parses int or default.
+     * @param value the value value
+     * @param defaultValue the default value value
+     * @return the resulting parse int or default
+     */
     public static int parseIntOrDefault(String value, int defaultValue) {
         try {
             return Integer.parseInt(value == null ? "" : value.trim());
@@ -15,6 +24,11 @@ public final class HandlerParsing {
         }
     }
 
+    /**
+     * Parses room id.
+     * @param rawRoomId the raw room id value
+     * @return the resulting parse room id
+     */
     public static int parseRoomId(String rawRoomId) {
         if (rawRoomId == null) {
             return 0;
@@ -27,6 +41,11 @@ public final class HandlerParsing {
         return parseIntOrDefault(normalized, 0);
     }
 
+    /**
+     * Sanitizes room name.
+     * @param roomName the room name value
+     * @return the resulting sanitize room name
+     */
     public static String sanitizeRoomName(String roomName) {
         if (roomName == null) {
             return "";
@@ -34,6 +53,11 @@ public final class HandlerParsing {
         return roomName.replace("/", "").trim();
     }
 
+    /**
+     * Normalizes lines.
+     * @param rawBody the raw body value
+     * @return the resulting normalize lines
+     */
     public static String[] normalizeLines(String rawBody) {
         if (rawBody == null || rawBody.isEmpty()) {
             return new String[0];
@@ -41,6 +65,12 @@ public final class HandlerParsing {
         return rawBody.replace("\n", "").split("\r");
     }
 
+    /**
+     * Parses key values.
+     * @param lines the lines value
+     * @param startIndex the start index value
+     * @return the resulting parse key values
+     */
     public static Map<String, String> parseKeyValues(String[] lines, int startIndex) {
         Map<String, String> values = new LinkedHashMap<>();
         for (int i = startIndex; i < lines.length; i++) {

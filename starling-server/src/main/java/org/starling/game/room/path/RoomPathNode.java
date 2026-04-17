@@ -14,6 +14,14 @@ final class RoomPathNode {
     private final int estimatedTotalCost;
     private final RoomPathNode previous;
 
+    /**
+     * Creates a new RoomPathNode.
+     * @param coordinate the coordinate value
+     * @param position the position value
+     * @param costFromStart the cost from start value
+     * @param estimatedTotalCost the estimated total cost value
+     * @param previous the previous value
+     */
     RoomPathNode(
             RoomCoordinate coordinate,
             RoomPosition position,
@@ -28,22 +36,42 @@ final class RoomPathNode {
         this.previous = previous;
     }
 
+    /**
+     * Coordinates.
+     * @return the result of this operation
+     */
     RoomCoordinate coordinate() {
         return coordinate;
     }
 
+    /**
+     * Positions.
+     * @return the result of this operation
+     */
     RoomPosition position() {
         return position;
     }
 
+    /**
+     * Costs from start.
+     * @return the result of this operation
+     */
     int costFromStart() {
         return costFromStart;
     }
 
+    /**
+     * Estimateds total cost.
+     * @return the result of this operation
+     */
     int estimatedTotalCost() {
         return estimatedTotalCost;
     }
 
+    /**
+     * Previouses.
+     * @return the result of this operation
+     */
     RoomPathNode previous() {
         return previous;
     }

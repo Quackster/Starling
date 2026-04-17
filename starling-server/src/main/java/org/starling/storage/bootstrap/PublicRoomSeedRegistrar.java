@@ -13,6 +13,10 @@ public final class PublicRoomSeedRegistrar implements DatabaseSeedRegistrar {
     private static final List<HolographPublicSpaceCatalog.PublicRoomSeed> DEFAULT_PUBLIC_ROOMS =
             HolographPublicSpaceCatalog.load().publicRooms();
 
+    /**
+     * Seeds.
+     * @param context the context value
+     */
     @Override
     public void seed(DbContext context) {
         String sql = """

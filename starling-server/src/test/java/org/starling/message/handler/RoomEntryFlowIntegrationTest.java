@@ -56,6 +56,10 @@ class RoomEntryFlowIntegrationTest {
 
     private ServerConfig config;
 
+    /**
+     * Sets up database.
+     * @throws Exception if the operation fails
+     */
     @BeforeAll
     void setUpDatabase() throws Exception {
         String databaseName = "starling_room_entry_it_" + Long.toUnsignedString(Instant.now().toEpochMilli(), 36);
@@ -68,6 +72,9 @@ class RoomEntryFlowIntegrationTest {
         ensureUser("alice", "F", "Testing quit flow");
     }
 
+    /**
+     * Resets runtime state.
+     */
     @BeforeEach
     void resetRuntimeState() {
         PlayerManager.getInstance().clear();
@@ -76,6 +83,10 @@ class RoomEntryFlowIntegrationTest {
         PublicRoomDao.resetCurrentUsers();
     }
 
+    /**
+     * Tears down database.
+     * @throws Exception if the operation fails
+     */
     @AfterAll
     void tearDownDatabase() throws Exception {
         try {
@@ -88,6 +99,9 @@ class RoomEntryFlowIntegrationTest {
         }
     }
 
+    /**
+     * Rooms boot reset clears persisted current users.
+     */
     @Test
     void roomBootResetClearsPersistedCurrentUsers() {
         RoomDao.saveCurrentUsers(1, 5);
@@ -100,6 +114,9 @@ class RoomEntryFlowIntegrationTest {
         assertEquals(0, PublicRoomDao.findById(101).getCurrentUsers());
     }
 
+    /**
+     * Publics room directory loads live room and persists occupancy.
+     */
     @Test
     void publicRoomDirectoryLoadsLiveRoomAndPersistsOccupancy() {
         Session session = authenticatedSession("admin");
@@ -118,6 +135,9 @@ class RoomEntryFlowIntegrationTest {
         finish(session);
     }
 
+    /**
+     * Publics room passive objects use imported furniture.
+     */
     @Test
     void publicRoomPassiveObjectsUseImportedFurniture() {
         Session session = authenticatedSession("admin");
@@ -135,6 +155,9 @@ class RoomEntryFlowIntegrationTest {
         finish(session);
     }
 
+    /**
+     * Publics room active objects include lisbon queue tiles.
+     */
     @Test
     void publicRoomActiveObjectsIncludeLisbonQueueTiles() {
         Session session = authenticatedSession("admin");
@@ -152,6 +175,9 @@ class RoomEntryFlowIntegrationTest {
         finish(session);
     }
 
+    /**
+     * Publics room active objects include lisbon private furniture.
+     */
     @Test
     void publicRoomActiveObjectsIncludeLisbonPrivateFurniture() {
         Session session = authenticatedSession("admin");
@@ -169,6 +195,9 @@ class RoomEntryFlowIntegrationTest {
         finish(session);
     }
 
+    /**
+     * Tries flat does not increment until goto flat.
+     */
     @Test
     void tryFlatDoesNotIncrementUntilGotoFlat() {
         Session session = authenticatedSession("admin");
@@ -194,6 +223,9 @@ class RoomEntryFlowIntegrationTest {
         finish(session);
     }
 
+    /**
+     * Quits broadcasts logout sends hotel view and unloads room when empty.
+     */
     @Test
     void quitBroadcastsLogoutSendsHotelViewAndUnloadsRoomWhenEmpty() {
         Session adminSession = authenticatedSession("admin");
@@ -222,6 +254,9 @@ class RoomEntryFlowIntegrationTest {
         finish(aliceSession);
     }
 
+    /**
+     * Disconnects cleanup is idempotent after quit.
+     */
     @Test
     void disconnectCleanupIsIdempotentAfterQuit() {
         Session session = authenticatedSession("admin");
@@ -238,6 +273,9 @@ class RoomEntryFlowIntegrationTest {
         finish(session);
     }
 
+    /**
+     * Switchings rooms leaves old room before entering new one.
+     */
     @Test
     void switchingRoomsLeavesOldRoomBeforeEnteringNewOne() {
         Session session = authenticatedSession("admin");
@@ -269,6 +307,9 @@ class RoomEntryFlowIntegrationTest {
         finish(session);
     }
 
+    /**
+     * Duplicates login keeps replacement session registered while old disconnect cleans room state.
+     */
     @Test
     void duplicateLoginKeepsReplacementSessionRegisteredWhileOldDisconnectCleansRoomState() {
         Session oldSession = authenticatedSession("admin");
@@ -291,6 +332,9 @@ class RoomEntryFlowIntegrationTest {
         finish(replacementSession);
     }
 
+    /**
+     * Walks uses room task to stage and advance movement.
+     */
     @Test
     void walkUsesRoomTaskToStageAndAdvanceMovement() {
         Session session = authenticatedSession("admin");
@@ -328,6 +372,9 @@ class RoomEntryFlowIntegrationTest {
         finish(session);
     }
 
+    /**
+     * Stops clears queued movement before next step.
+     */
     @Test
     void stopClearsQueuedMovementBeforeNextStep() {
         Session session = authenticatedSession("admin");
@@ -359,6 +406,9 @@ class RoomEntryFlowIntegrationTest {
         finish(session);
     }
 
+    /**
+     * Reroutings mid step keeps pending tile and avoids snap back.
+     */
     @Test
     void reroutingMidStepKeepsPendingTileAndAvoidsSnapBack() {
         Session session = authenticatedSession("admin");
@@ -397,6 +447,9 @@ class RoomEntryFlowIntegrationTest {
         finish(session);
     }
 
+    /**
+     * Walkings to pending tile finishes current step without repeating it.
+     */
     @Test
     void walkingToPendingTileFinishesCurrentStepWithoutRepeatingIt() {
         Session session = authenticatedSession("admin");
@@ -433,6 +486,11 @@ class RoomEntryFlowIntegrationTest {
         finish(session);
     }
 
+    /**
+     * Authenticateds session.
+     * @param username the username value
+     * @return the result of this operation
+     */
     private Session authenticatedSession(String username) {
         EmbeddedChannel channel = new EmbeddedChannel();
         Session session = new Session(channel);
@@ -441,11 +499,23 @@ class RoomEntryFlowIntegrationTest {
         return session;
     }
 
+    /**
+     * Players.
+     * @param username the username value
+     * @return the resulting player
+     */
     private Player player(String username) {
         UserEntity user = UserDao.findByUsername(username);
         return new Player(user);
     }
 
+    /**
+     * Ensures user.
+     * @param username the username value
+     * @param sex the sex value
+     * @param motto the motto value
+     * @throws Exception if the operation fails
+     */
     private void ensureUser(String username, String sex, String motto) throws Exception {
         if (UserDao.findByUsername(username) != null) {
             return;
@@ -512,6 +582,13 @@ class RoomEntryFlowIntegrationTest {
         }
     }
 
+    /**
+     * Rooms directory message.
+     * @param publicRoom the public room value
+     * @param roomId the room id value
+     * @param doorId the door id value
+     * @return the resulting room directory message
+     */
     private static ClientMessage roomDirectoryMessage(boolean publicRoom, int roomId, int doorId) {
         ByteBuf body = Unpooled.buffer();
         body.writeByte(publicRoom ? 1 : 0);
@@ -520,10 +597,22 @@ class RoomEntryFlowIntegrationTest {
         return new ClientMessage(IncomingPackets.ROOM_DIRECTORY, body);
     }
 
+    /**
+     * Raws message.
+     * @param opcode the opcode value
+     * @param body the body value
+     * @return the result of this operation
+     */
     private static ClientMessage rawMessage(int opcode, String body) {
         return new ClientMessage(opcode, Unpooled.copiedBuffer(body, UTF_8));
     }
 
+    /**
+     * Walks message.
+     * @param x the x value
+     * @param y the y value
+     * @return the result of this operation
+     */
     private static ClientMessage walkMessage(int x, int y) {
         ByteBuf body = Unpooled.buffer();
         body.writeBytes(Base64Encoding.encodeShort(x));
@@ -531,6 +620,11 @@ class RoomEntryFlowIntegrationTest {
         return new ClientMessage(IncomingPackets.WALK, body);
     }
 
+    /**
+     * Invokes.
+     * @param message the message value
+     * @param invocation the invocation value
+     */
     private static void invoke(ClientMessage message, MessageInvocation invocation) {
         try {
             invocation.invoke(message);
@@ -539,6 +633,11 @@ class RoomEntryFlowIntegrationTest {
         }
     }
 
+    /**
+     * Drains packets.
+     * @param channel the channel value
+     * @return the result of this operation
+     */
     private static List<String> drainPackets(io.netty.channel.Channel channel) {
         List<String> packets = new ArrayList<>();
         for (;;) {
@@ -550,16 +649,29 @@ class RoomEntryFlowIntegrationTest {
         }
     }
 
+    /**
+     * Packets.
+     * @param message the message value
+     * @return the resulting packet
+     */
     private static String packet(ServerMessage message) {
         return PacketDebugStrings.describe(message.toBytes());
     }
 
+    /**
+     * Finishes.
+     * @param session the session value
+     */
     private static void finish(Session session) {
         ((EmbeddedChannel) session.getChannel()).finishAndReleaseAll();
     }
 
     @FunctionalInterface
     private interface MessageInvocation {
+        /**
+         * Invokes.
+         * @param message the message value
+         */
         void invoke(ClientMessage message);
     }
 }

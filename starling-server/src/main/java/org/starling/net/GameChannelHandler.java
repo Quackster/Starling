@@ -18,10 +18,18 @@ public class GameChannelHandler extends SimpleChannelInboundHandler<ClientMessag
     private final MessageRouter messageRouter;
     private final RoomLifecycleService roomLifecycleService = RoomLifecycleService.getInstance();
 
+    /**
+     * Creates a new GameChannelHandler.
+     * @param messageRouter the message router value
+     */
     public GameChannelHandler(MessageRouter messageRouter) {
         this.messageRouter = messageRouter;
     }
 
+    /**
+     * Channels active.
+     * @param ctx the ctx value
+     */
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
         Session session = new Session(ctx.channel());
@@ -33,6 +41,11 @@ public class GameChannelHandler extends SimpleChannelInboundHandler<ClientMessag
         session.send(new ServerMessage(OutgoingPackets.HELLO));
     }
 
+    /**
+     * Channels read0.
+     * @param ctx the ctx value
+     * @param msg the msg value
+     */
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, ClientMessage msg) {
         Session session = ctx.channel().attr(Session.KEY).get();
@@ -52,6 +65,10 @@ public class GameChannelHandler extends SimpleChannelInboundHandler<ClientMessag
         }
     }
 
+    /**
+     * Channels inactive.
+     * @param ctx the ctx value
+     */
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
         Session session = ctx.channel().attr(Session.KEY).get();
@@ -61,6 +78,11 @@ public class GameChannelHandler extends SimpleChannelInboundHandler<ClientMessag
         }
     }
 
+    /**
+     * Exceptions caught.
+     * @param ctx the ctx value
+     * @param cause the cause value
+     */
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         log.error("Channel exception: {}", cause.getMessage(), cause);

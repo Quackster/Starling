@@ -20,6 +20,11 @@ public final class PublicRoomContentWriter {
     private final PublicRoomFurnitureSerializer legacyFurnitureSerializer = new PublicRoomFurnitureSerializer();
     private final PublicRoomItemSerializer itemSerializer = new PublicRoomItemSerializer();
 
+    /**
+     * Sends passive objects.
+     * @param session the session value
+     * @param roomId the room id value
+     */
     public void sendPassiveObjects(Session session, int roomId) {
         PublicRoomEntity room = PublicRoomDao.findById(roomId);
         if (room == null) {
@@ -44,6 +49,11 @@ public final class PublicRoomContentWriter {
         sendEmptyObjects(session);
     }
 
+    /**
+     * Sends items.
+     * @param session the session value
+     * @param roomId the room id value
+     */
     public void sendItems(Session session, int roomId) {
         PublicRoomEntity room = PublicRoomDao.findById(roomId);
         if (room == null) {
@@ -60,6 +70,10 @@ public final class PublicRoomContentWriter {
         session.send(new ServerMessage(OutgoingPackets.ROOM_ITEMS));
     }
 
+    /**
+     * Sends empty objects.
+     * @param session the session value
+     */
     private void sendEmptyObjects(Session session) {
         session.send(new ServerMessage(OutgoingPackets.ROOM_OBJECTS).writeInt(0));
         session.send(new ServerMessage(OutgoingPackets.ROOM_ACTIVE_OBJECTS).writeInt(0));

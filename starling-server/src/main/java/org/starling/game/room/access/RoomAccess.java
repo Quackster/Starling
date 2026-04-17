@@ -10,8 +10,17 @@ import org.starling.storage.entity.RoomEntity;
  */
 public final class RoomAccess {
 
+    /**
+     * Creates a new RoomAccess.
+     */
     private RoomAccess() {}
 
+    /**
+     * Ises owner.
+     * @param player the player value
+     * @param room the room value
+     * @return the result of this operation
+     */
     public static boolean isOwner(Player player, RoomEntity room) {
         if (player == null || room == null) {
             return false;
@@ -22,6 +31,12 @@ public final class RoomAccess {
         return room.getOwnerName() != null && room.getOwnerName().equalsIgnoreCase(player.getUsername());
     }
 
+    /**
+     * Visibles owner name.
+     * @param viewer the viewer value
+     * @param room the room value
+     * @return the result of this operation
+     */
     public static String visibleOwnerName(Player viewer, RoomEntity room) {
         if (room == null) {
             return "-";
@@ -35,6 +50,11 @@ public final class RoomAccess {
         return "-";
     }
 
+    /**
+     * Finds public room.
+     * @param roomIdOrPort the room id or port value
+     * @return the resulting find public room
+     */
     public static PublicRoomEntity findPublicRoom(int roomIdOrPort) {
         PublicRoomEntity room = PublicRoomDao.findByPort(roomIdOrPort);
         if (room != null) {

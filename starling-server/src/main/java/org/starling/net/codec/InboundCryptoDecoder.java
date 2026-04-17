@@ -27,6 +27,12 @@ public class InboundCryptoDecoder extends ByteToMessageDecoder {
     private static final Logger log = LogManager.getLogger(InboundCryptoDecoder.class);
     private static final int FIXED_DH_KEY_BYTES = 64;
 
+    /**
+     * Decodes.
+     * @param ctx the ctx value
+     * @param in the in value
+     * @param out the out value
+     */
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
         Session session = ctx.channel().attr(Session.KEY).get();
@@ -142,18 +148,34 @@ public class InboundCryptoDecoder extends ByteToMessageDecoder {
         }
     }
 
+    /**
+     * Removes self.
+     * @param ctx the ctx value
+     */
     private void removeSelf(ChannelHandlerContext ctx) {
         if (ctx.pipeline().context(this) != null) {
             ctx.pipeline().remove(this);
         }
     }
 
+    /**
+     * Passes through.
+     * @param in the in value
+     * @param out the out value
+     */
     private void passThrough(ByteBuf in, List<Object> out) {
         if (in.isReadable()) {
             out.add(in.readRetainedSlice(in.readableBytes()));
         }
     }
 
+    /**
+     * Logs encrypted diagnostics.
+     * @param session the session value
+     * @param in the in value
+     * @param initCipher the init cipher value
+     * @param lengthHex the length hex value
+     */
     private void logEncryptedDiagnostics(Session session, ByteBuf in, HabboCipher initCipher, byte[] lengthHex) {
         if (!log.isDebugEnabled()) {
             return;
@@ -205,6 +227,12 @@ public class InboundCryptoDecoder extends ByteToMessageDecoder {
         }
     }
 
+    /**
+     * Lookses like hex.
+     * @param in the in value
+     * @param bytesToCheck the bytes to check value
+     * @return the result of this operation
+     */
     private static boolean looksLikeHex(ByteBuf in, int bytesToCheck) {
         int readerIndex = in.readerIndex();
         for (int i = 0; i < bytesToCheck; i++) {
@@ -216,12 +244,22 @@ public class InboundCryptoDecoder extends ByteToMessageDecoder {
         return true;
     }
 
+    /**
+     * Ises hex.
+     * @param value the value value
+     * @return the result of this operation
+     */
     private static boolean isHex(byte value) {
         return (value >= '0' && value <= '9')
                 || (value >= 'A' && value <= 'F')
                 || (value >= 'a' && value <= 'f');
     }
 
+    /**
+     * Ises habbo base64 prefix.
+     * @param value the value value
+     * @return the result of this operation
+     */
     private static boolean isHabboBase64Prefix(byte[] value) {
         return value.length >= 3
                 && isHabboBase64Byte(value[0])
@@ -229,11 +267,22 @@ public class InboundCryptoDecoder extends ByteToMessageDecoder {
                 && isHabboBase64Byte(value[2]);
     }
 
+    /**
+     * Ises habbo base64 byte.
+     * @param value the value value
+     * @return the result of this operation
+     */
     private static boolean isHabboBase64Byte(byte value) {
         int unsigned = value & 0xFF;
         return unsigned >= 64 && unsigned <= 127;
     }
 
+    /**
+     * Describes shared key hypotheses.
+     * @param rawHead the raw head value
+     * @param sharedSecret the shared secret value
+     * @return the result of this operation
+     */
     private static String describeSharedKeyHypotheses(byte[] rawHead, byte[] sharedSecret) {
         if (sharedSecret == null || sharedSecret.length == 0) {
             return "n/a";
@@ -256,6 +305,12 @@ public class InboundCryptoDecoder extends ByteToMessageDecoder {
         return summary.length() == 0 ? "n/a" : summary.toString();
     }
 
+    /**
+     * Describes cipher families.
+     * @param rawHead the raw head value
+     * @param sharedSecret the shared secret value
+     * @return the result of this operation
+     */
     private static String describeCipherFamilies(byte[] rawHead, byte[] sharedSecret) {
         if (sharedSecret == null || sharedSecret.length == 0) {
             return "n/a";
@@ -269,6 +324,12 @@ public class InboundCryptoDecoder extends ByteToMessageDecoder {
         );
     }
 
+    /**
+     * Describes shift candidates.
+     * @param rawHead the raw head value
+     * @param cipher the cipher value
+     * @return the result of this operation
+     */
     private static String describeShiftCandidates(byte[] rawHead, HabboCipher cipher) {
         int maxShiftBytes = Math.min(3, (rawHead.length / 2) - 3);
         if (maxShiftBytes < 0) {
@@ -296,6 +357,14 @@ public class InboundCryptoDecoder extends ByteToMessageDecoder {
         return summary.toString();
     }
 
+    /**
+     * Appends hypothesis.
+     * @param summary the summary value
+     * @param seen the seen value
+     * @param label the label value
+     * @param rawHead the raw head value
+     * @param candidateKey the candidate key value
+     */
     private static void appendHypothesis(
             StringBuilder summary,
             Set<String> seen,
@@ -318,6 +387,13 @@ public class InboundCryptoDecoder extends ByteToMessageDecoder {
         summary.append(describeHypothesis(label, rawHead, candidateKey));
     }
 
+    /**
+     * Describes hypothesis.
+     * @param label the label value
+     * @param rawHead the raw head value
+     * @param candidateKey the candidate key value
+     * @return the result of this operation
+     */
     private static String describeHypothesis(String label, byte[] rawHead, byte[] candidateKey) {
         HabboCipher cipher = cipherForInit(candidateKey);
 
@@ -359,6 +435,13 @@ public class InboundCryptoDecoder extends ByteToMessageDecoder {
         return description.toString();
     }
 
+    /**
+     * Describes cipher family.
+     * @param label the label value
+     * @param rawHead the raw head value
+     * @param cipher the cipher value
+     * @return the result of this operation
+     */
     private static String describeCipherFamily(String label, byte[] rawHead, HabboCipher cipher) {
         int previewHexChars = Math.min(rawHead.length, 10);
         previewHexChars -= previewHexChars & 1;
@@ -397,6 +480,11 @@ public class InboundCryptoDecoder extends ByteToMessageDecoder {
         return description.toString();
     }
 
+    /**
+     * Ises likely post dh opcode.
+     * @param opcode the opcode value
+     * @return the result of this operation
+     */
     private static boolean isLikelyPostDhOpcode(int opcode) {
         return opcode == IncomingPackets.VERSIONCHECK
                 || opcode == IncomingPackets.UNIQUEID
@@ -404,30 +492,56 @@ public class InboundCryptoDecoder extends ByteToMessageDecoder {
                 || opcode == IncomingPackets.SECRETKEY;
     }
 
+    /**
+     * Ciphers for init.
+     * @param key the key value
+     * @return the result of this operation
+     */
     private static HabboCipher cipherForInit(byte[] key) {
         HabboCipher cipher = new HabboCipher();
         cipher.initInitSocket(key);
         return cipher;
     }
 
+    /**
+     * Ciphers for init no premix.
+     * @param key the key value
+     * @return the result of this operation
+     */
     private static HabboCipher cipherForInitNoPremix(byte[] key) {
         HabboCipher cipher = new HabboCipher();
         cipher.initInitSocketNoPremix(key);
         return cipher;
     }
 
+    /**
+     * Ciphers for standard.
+     * @param key the key value
+     * @return the result of this operation
+     */
     private static HabboCipher cipherForStandard(byte[] key) {
         HabboCipher cipher = new HabboCipher();
         cipher.initStandardBytes(key);
         return cipher;
     }
 
+    /**
+     * Ciphers for standard xored.
+     * @param key the key value
+     * @return the result of this operation
+     */
     private static HabboCipher cipherForStandardXored(byte[] key) {
         HabboCipher cipher = new HabboCipher();
         cipher.initStandardXoredShared(key);
         return cipher;
     }
 
+    /**
+     * Lefts pad.
+     * @param value the value value
+     * @param length the length value
+     * @return the result of this operation
+     */
     private static byte[] leftPad(byte[] value, int length) {
         if (value.length >= length) {
             return Arrays.copyOf(value, value.length);
@@ -438,12 +552,22 @@ public class InboundCryptoDecoder extends ByteToMessageDecoder {
         return padded;
     }
 
+    /**
+     * Prepends zero.
+     * @param value the value value
+     * @return the result of this operation
+     */
     private static byte[] prependZero(byte[] value) {
         byte[] padded = new byte[value.length + 1];
         System.arraycopy(value, 0, padded, 1, value.length);
         return padded;
     }
 
+    /**
+     * Reverses.
+     * @param value the value value
+     * @return the result of this operation
+     */
     private static byte[] reverse(byte[] value) {
         byte[] reversed = Arrays.copyOf(value, value.length);
         for (int left = 0, right = reversed.length - 1; left < right; left++, right--) {
@@ -454,6 +578,12 @@ public class InboundCryptoDecoder extends ByteToMessageDecoder {
         return reversed;
     }
 
+    /**
+     * Prefixes.
+     * @param value the value value
+     * @param maxLength the max length value
+     * @return the result of this operation
+     */
     private static byte[] prefix(byte[] value, int maxLength) {
         int length = Math.min(value.length, maxLength);
         byte[] prefix = new byte[length];
@@ -461,6 +591,12 @@ public class InboundCryptoDecoder extends ByteToMessageDecoder {
         return prefix;
     }
 
+    /**
+     * Returns the hex representation.
+     * @param value the value value
+     * @param uppercase the uppercase value
+     * @return the result of this operation
+     */
     private static String toHex(byte[] value, boolean uppercase) {
         char[] digits = uppercase
                 ? new char[]{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'}
@@ -474,10 +610,20 @@ public class InboundCryptoDecoder extends ByteToMessageDecoder {
         return new String(encoded);
     }
 
+    /**
+     * Safes.
+     * @param value the value value
+     * @return the result of this operation
+     */
     private static String safe(String value) {
         return value == null ? "n/a" : value;
     }
 
+    /**
+     * Formats wire.
+     * @param wireBytes the wire bytes value
+     * @return the resulting format wire
+     */
     private static String formatWire(byte[] wireBytes) {
         StringBuilder formatted = new StringBuilder(wireBytes.length * 3);
         for (byte wireByte : wireBytes) {

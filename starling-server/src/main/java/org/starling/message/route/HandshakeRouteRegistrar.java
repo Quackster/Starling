@@ -6,6 +6,10 @@ import org.starling.message.handler.HandshakeHandlers;
 
 public final class HandshakeRouteRegistrar implements MessageRouteRegistrar {
 
+    /**
+     * Registers.
+     * @param router the router value
+     */
     @Override
     public void register(MessageRouter router) {
         router.register(IncomingPackets.INIT_CRYPTO, HandshakeHandlers::handleInitCrypto);

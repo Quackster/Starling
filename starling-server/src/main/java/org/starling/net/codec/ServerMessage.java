@@ -15,10 +15,18 @@ public class ServerMessage {
     private final int opcode;
     private final ByteArrayOutputStream body = new ByteArrayOutputStream();
 
+    /**
+     * Creates a new ServerMessage.
+     * @param opcode the opcode value
+     */
     public ServerMessage(int opcode) {
         this.opcode = opcode;
     }
 
+    /**
+     * Returns the opcode.
+     * @return the opcode
+     */
     public int getOpcode() {
         return opcode;
     }
@@ -90,6 +98,10 @@ public class ServerMessage {
         return new String(h, StandardCharsets.US_ASCII);
     }
 
+    /**
+     * Returns the string representation.
+     * @return the result of this operation
+     */
     @Override
     public String toString() {
         return "ServerMessage{opcode=" + opcode + " [" + headerString() + "], bodyLen=" + body.size() + "}";

@@ -18,6 +18,11 @@ public class StarlingServer {
 
     private static final Logger log = LogManager.getLogger(StarlingServer.class);
 
+    /**
+     * Starts the application entry point.
+     * @param args the args value
+     * @throws Exception if the operation fails
+     */
     public static void main(String[] args) throws Exception {
         log.info("Starting Starling Server...");
 

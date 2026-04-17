@@ -20,6 +20,16 @@ public final class RoomGeometry {
     private final RoomPosition doorPosition;
     private final int doorDirection;
 
+    /**
+     * Creates a new RoomGeometry.
+     * @param marker the marker value
+     * @param width the width value
+     * @param height the height value
+     * @param tiles the tiles value
+     * @param itemsByTile the items by tile value
+     * @param doorPosition the door position value
+     * @param doorDirection the door direction value
+     */
     public RoomGeometry(
             String marker,
             int width,
@@ -38,26 +48,51 @@ public final class RoomGeometry {
         this.doorDirection = doorDirection;
     }
 
+    /**
+     * Markers.
+     * @return the result of this operation
+     */
     public String marker() {
         return marker;
     }
 
+    /**
+     * Widths.
+     * @return the result of this operation
+     */
     public int width() {
         return width;
     }
 
+    /**
+     * Heights.
+     * @return the result of this operation
+     */
     public int height() {
         return height;
     }
 
+    /**
+     * Doors position.
+     * @return the result of this operation
+     */
     public RoomPosition doorPosition() {
         return doorPosition;
     }
 
+    /**
+     * Doors direction.
+     * @return the result of this operation
+     */
     public int doorDirection() {
         return doorDirection;
     }
 
+    /**
+     * Containses.
+     * @param coordinate the coordinate value
+     * @return the result of this operation
+     */
     public boolean contains(RoomCoordinate coordinate) {
         return coordinate != null
                 && coordinate.x() >= 0
@@ -66,6 +101,11 @@ public final class RoomGeometry {
                 && coordinate.y() < height;
     }
 
+    /**
+     * Tiles at.
+     * @param coordinate the coordinate value
+     * @return the result of this operation
+     */
     public RoomTile tileAt(RoomCoordinate coordinate) {
         if (!contains(coordinate)) {
             return RoomTile.closed();
@@ -73,6 +113,11 @@ public final class RoomGeometry {
         return tiles[coordinate.y()][coordinate.x()];
     }
 
+    /**
+     * Itemses at.
+     * @param coordinate the coordinate value
+     * @return the result of this operation
+     */
     public List<RoomStaticItem> itemsAt(RoomCoordinate coordinate) {
         List<RoomStaticItem> items = itemsByTile.get(coordinate);
         if (items == null || items.isEmpty()) {

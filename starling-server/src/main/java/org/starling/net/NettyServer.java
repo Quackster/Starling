@@ -18,11 +18,20 @@ public class NettyServer {
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
 
+    /**
+     * Creates a new NettyServer.
+     * @param port the port value
+     * @param messageRouter the message router value
+     */
     public NettyServer(int port, MessageRouter messageRouter) {
         this.port = port;
         this.messageRouter = messageRouter;
     }
 
+    /**
+     * Starts.
+     * @throws InterruptedException if the operation fails
+     */
     public void start() throws InterruptedException {
         bossGroup = new NioEventLoopGroup(1);
         workerGroup = new NioEventLoopGroup();
@@ -37,6 +46,9 @@ public class NettyServer {
         future.channel().closeFuture().addListener(f -> shutdown());
     }
 
+    /**
+     * Shutdowns.
+     */
     public void shutdown() {
         log.info("Shutting down server...");
         if (workerGroup != null) workerGroup.shutdownGracefully();

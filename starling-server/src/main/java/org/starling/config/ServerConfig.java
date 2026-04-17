@@ -21,6 +21,10 @@ public record ServerConfig(
 
     private static final Logger log = LogManager.getLogger(ServerConfig.class);
 
+    /**
+     * Loads.
+     * @return the resulting load
+     */
     public static ServerConfig load() {
         Properties properties = new Properties();
         loadClasspathDefaults(properties);
@@ -29,14 +33,27 @@ public record ServerConfig(
         return from(properties);
     }
 
+    /**
+     * Jdbcs url.
+     * @return the result of this operation
+     */
     public String jdbcUrl() {
         return buildJdbcUrl(dbName);
     }
 
+    /**
+     * Admins jdbc url.
+     * @return the result of this operation
+     */
     public String adminJdbcUrl() {
         return buildJdbcUrl("");
     }
 
+    /**
+     * Builds jdbc url.
+     * @param databaseName the database name value
+     * @return the resulting build jdbc url
+     */
     private String buildJdbcUrl(String databaseName) {
         StringBuilder jdbcUrl = new StringBuilder()
                 .append("jdbc:mariadb://")
@@ -56,6 +73,11 @@ public record ServerConfig(
         return jdbcUrl.toString();
     }
 
+    /**
+     * Froms.
+     * @param properties the properties value
+     * @return the result of this operation
+     */
     private static ServerConfig from(Properties properties) {
         return new ServerConfig(
                 Integer.parseInt(properties.getProperty("server.port", "30000")),
@@ -68,6 +90,10 @@ public record ServerConfig(
         );
     }
 
+    /**
+     * Loads classpath defaults.
+     * @param properties the properties value
+     */
     private static void loadClasspathDefaults(Properties properties) {
         try (InputStream stream = ServerConfig.class.getClassLoader().getResourceAsStream("server.properties")) {
             if (stream != null) {
@@ -78,6 +104,10 @@ public record ServerConfig(
         }
     }
 
+    /**
+     * Loads external overrides.
+     * @param properties the properties value
+     */
     private static void loadExternalOverrides(Properties properties) {
         Path configPath = resolveExternalConfigPath();
         if (configPath == null || !Files.exists(configPath)) {
@@ -92,6 +122,10 @@ public record ServerConfig(
         }
     }
 
+    /**
+     * Resolves external config path.
+     * @return the resulting resolve external config path
+     */
     private static Path resolveExternalConfigPath() {
         String systemPropertyPath = System.getProperty("starling.config");
         if (systemPropertyPath != null && !systemPropertyPath.isBlank()) {
@@ -107,6 +141,10 @@ public record ServerConfig(
         return Files.exists(defaultPath) ? defaultPath : null;
     }
 
+    /**
+     * Loads environment overrides.
+     * @param properties the properties value
+     */
     private static void loadEnvironmentOverrides(Properties properties) {
         overrideFromEnvironment(properties, "STARLING_SERVER_PORT", "server.port");
         overrideFromEnvironment(properties, "STARLING_DB_HOST", "db.host");
@@ -117,6 +155,12 @@ public record ServerConfig(
         overrideFromEnvironment(properties, "STARLING_DB_PARAMS", "db.params");
     }
 
+    /**
+     * Overrides from environment.
+     * @param properties the properties value
+     * @param environmentKey the environment key value
+     * @param propertyKey the property key value
+     */
     private static void overrideFromEnvironment(Properties properties, String environmentKey, String propertyKey) {
         String value = System.getenv(environmentKey);
         if (value != null && !value.isBlank()) {

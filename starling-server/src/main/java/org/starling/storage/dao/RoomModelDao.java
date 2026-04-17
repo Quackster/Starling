@@ -5,8 +5,17 @@ import org.starling.storage.entity.RoomModelEntity;
 
 public final class RoomModelDao {
 
+    /**
+     * Creates a new RoomModelDao.
+     */
     private RoomModelDao() {}
 
+    /**
+     * Finds by model name.
+     * @param modelName the model name value
+     * @param publicModel the public model value
+     * @return the resulting find by model name
+     */
     public static RoomModelEntity findByModelName(String modelName, boolean publicModel) {
         if (modelName == null || modelName.isBlank() || !EntityContext.isInitialized()) {
             return null;

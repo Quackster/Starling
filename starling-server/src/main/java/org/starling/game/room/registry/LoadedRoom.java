@@ -26,6 +26,13 @@ public final class LoadedRoom<T> implements WalkableRoom {
     private final RoomGeometry geometry;
     private final ConcurrentMap<Integer, RoomOccupant> occupantsByPlayerId = new ConcurrentHashMap<>();
 
+    /**
+     * Creates a new LoadedRoom.
+     * @param roomType the room type value
+     * @param roomId the room id value
+     * @param entity the entity value
+     * @param geometry the geometry value
+     */
     private LoadedRoom(Session.RoomType roomType, int roomId, T entity, RoomGeometry geometry) {
         this.roomType = roomType;
         this.roomId = roomId;
@@ -33,6 +40,11 @@ public final class LoadedRoom<T> implements WalkableRoom {
         this.geometry = geometry;
     }
 
+    /**
+     * Ofs.
+     * @param entity the entity value
+     * @return the result of this operation
+     */
     public static LoadedRoom<RoomEntity> of(RoomEntity entity) {
         return new LoadedRoom<>(
                 Session.RoomType.PRIVATE,
@@ -42,6 +54,11 @@ public final class LoadedRoom<T> implements WalkableRoom {
         );
     }
 
+    /**
+     * Ofs.
+     * @param entity the entity value
+     * @return the result of this operation
+     */
     public static LoadedRoom<PublicRoomEntity> of(PublicRoomEntity entity) {
         return new LoadedRoom<>(
                 Session.RoomType.PUBLIC,
@@ -51,27 +68,51 @@ public final class LoadedRoom<T> implements WalkableRoom {
         );
     }
 
+    /**
+     * Returns the entity.
+     * @return the entity
+     */
     public T getEntity() {
         return entity;
     }
 
+    /**
+     * Returns the room id.
+     * @return the room id
+     */
     public int getRoomId() {
         return roomId;
     }
 
+    /**
+     * Returns the room type.
+     * @return the room type
+     */
     public Session.RoomType getRoomType() {
         return roomType;
     }
 
+    /**
+     * Returns the geometry.
+     * @return the geometry
+     */
     @Override
     public RoomGeometry getGeometry() {
         return geometry;
     }
 
+    /**
+     * Returns the occupant units.
+     * @return the occupant units
+     */
     public synchronized List<RoomOccupant> getOccupantUnits() {
         return List.copyOf(occupantsByPlayerId.values());
     }
 
+    /**
+     * Returns the occupant snapshots.
+     * @return the occupant snapshots
+     */
     @Override
     public synchronized List<RoomOccupantSnapshot> getOccupantSnapshots() {
         return occupantsByPlayerId.values().stream()
@@ -79,6 +120,10 @@ public final class LoadedRoom<T> implements WalkableRoom {
                 .toList();
     }
 
+    /**
+     * Returns the sessions.
+     * @return the sessions
+     */
     public synchronized List<Session> getSessions() {
         return occupantsByPlayerId.values().stream()
                 .map(RoomOccupant::getSession)
@@ -86,14 +131,27 @@ public final class LoadedRoom<T> implements WalkableRoom {
                 .toList();
     }
 
+    /**
+     * Returns the occupant count.
+     * @return the occupant count
+     */
     public int getOccupantCount() {
         return occupantsByPlayerId.size();
     }
 
+    /**
+     * Returns whether empty.
+     * @return whether empty
+     */
     public boolean isEmpty() {
         return occupantsByPlayerId.isEmpty();
     }
 
+    /**
+     * Adds occupant.
+     * @param session the session value
+     * @return the result of this operation
+     */
     public OccupantChange addOccupant(Session session) {
         Player player = session.getPlayer();
         if (player == null) {
@@ -105,6 +163,11 @@ public final class LoadedRoom<T> implements WalkableRoom {
         return new OccupantChange(previous == null || previous.getSession() != session, occupantsByPlayerId.size());
     }
 
+    /**
+     * Removes occupant.
+     * @param session the session value
+     * @return the result of this operation
+     */
     public OccupantChange removeOccupant(Session session) {
         Player player = session.getPlayer();
         if (player == null) {
@@ -122,6 +185,11 @@ public final class LoadedRoom<T> implements WalkableRoom {
         return new OccupantChange(removed.get(), occupantsByPlayerId.size());
     }
 
+    /**
+     * Gets occupant.
+     * @param session the session value
+     * @return the result of this operation
+     */
     public synchronized RoomOccupant getOccupant(Session session) {
         Player player = session == null ? null : session.getPlayer();
         if (player == null) {

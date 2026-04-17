@@ -136,8 +136,15 @@ public class UserEntity {
     @Column(name = "has_flash_warning", nullable = false)
     private int hasFlashWarning = 1;
 
+    /**
+     * Creates a new UserEntity.
+     */
     public UserEntity() {}
 
+    /**
+     * Creates default admin.
+     * @return the resulting create default admin
+     */
     public static UserEntity createDefaultAdmin() {
         UserEntity user = new UserEntity();
         Timestamp now = Timestamp.from(Instant.now());
@@ -157,22 +164,90 @@ public class UserEntity {
         return user;
     }
 
+    /**
+     * Returns the id.
+     * @return the id
+     */
     public int getId() { return id; }
+    /**
+     * Returns the username.
+     * @return the username
+     */
     public String getUsername() { return username; }
+    /**
+     * Returns the password.
+     * @return the password
+     */
     public String getPassword() { return password; }
+    /**
+     * Returns the figure.
+     * @return the figure
+     */
     public String getFigure() { return figure; }
+    /**
+     * Returns the pool figure.
+     * @return the pool figure
+     */
     public String getPoolFigure() { return poolFigure; }
+    /**
+     * Returns the sex.
+     * @return the sex
+     */
     public String getSex() { return sex; }
+    /**
+     * Returns the motto.
+     * @return the motto
+     */
     public String getMotto() { return motto; }
+    /**
+     * Returns the credits.
+     * @return the credits
+     */
     public int getCredits() { return credits; }
+    /**
+     * Returns the rank.
+     * @return the rank
+     */
     public int getRank() { return rank; }
+    /**
+     * Returns the tickets.
+     * @return the tickets
+     */
     public int getTickets() { return tickets; }
+    /**
+     * Returns the film.
+     * @return the film
+     */
     public int getFilm() { return film; }
+    /**
+     * Returns the sso ticket.
+     * @return the sso ticket
+     */
     public String getSsoTicket() { return ssoTicket; }
+    /**
+     * Returns the sound enabled.
+     * @return the sound enabled
+     */
     public int getSoundEnabled() { return soundEnabled; }
+    /**
+     * Returns the selected room id.
+     * @return the selected room id
+     */
     public int getSelectedRoomId() { return selectedRoomId; }
+    /**
+     * Returns the home room.
+     * @return the home room
+     */
     public int getHomeRoom() { return homeRoom; }
 
+    /**
+     * Sets the selected room id.
+     * @param selectedRoomId the selected room id value
+     */
     public void setSelectedRoomId(int selectedRoomId) { this.selectedRoomId = selectedRoomId; }
+    /**
+     * Sets the home room.
+     * @param homeRoom the home room value
+     */
     public void setHomeRoom(int homeRoom) { this.homeRoom = homeRoom; }
 }

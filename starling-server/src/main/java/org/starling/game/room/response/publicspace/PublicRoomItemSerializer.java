@@ -12,6 +12,11 @@ import java.util.Locale;
  */
 final class PublicRoomItemSerializer {
 
+    /**
+     * Builds objects message.
+     * @param items the items value
+     * @return the resulting build objects message
+     */
     ServerMessage buildObjectsMessage(List<PublicRoomItemEntity> items) {
         List<PublicRoomItemEntity> worldItems = items.stream()
                 .filter(this::isWorldObject)
@@ -30,6 +35,11 @@ final class PublicRoomItemSerializer {
         return message;
     }
 
+    /**
+     * Builds active objects message.
+     * @param items the items value
+     * @return the resulting build active objects message
+     */
     ServerMessage buildActiveObjectsMessage(List<PublicRoomItemEntity> items) {
         List<PublicRoomItemEntity> activeItems = items.stream()
                 .filter(this::isActiveObject)
@@ -53,6 +63,11 @@ final class PublicRoomItemSerializer {
         return message;
     }
 
+    /**
+     * Builds items message.
+     * @param items the items value
+     * @return the resulting build items message
+     */
     ServerMessage buildItemsMessage(List<PublicRoomItemEntity> items) {
         ServerMessage message = new ServerMessage(OutgoingPackets.ROOM_ITEMS);
         for (PublicRoomItemEntity item : items) {
@@ -70,6 +85,11 @@ final class PublicRoomItemSerializer {
         return message;
     }
 
+    /**
+     * Ises world object.
+     * @param item the item value
+     * @return the result of this operation
+     */
     private boolean isWorldObject(PublicRoomItemEntity item) {
         return !hasBehaviour(item, "private_furniture")
                 && !hasBehaviour(item, "wall_item")
@@ -77,15 +97,31 @@ final class PublicRoomItemSerializer {
                 && !hasBehaviour(item, "invisible");
     }
 
+    /**
+     * Ises active object.
+     * @param item the item value
+     * @return the result of this operation
+     */
     private boolean isActiveObject(PublicRoomItemEntity item) {
         return !hasBehaviour(item, "wall_item")
                 && (hasBehaviour(item, "private_furniture") || isQueueTile(item));
     }
 
+    /**
+     * Ises queue tile.
+     * @param item the item value
+     * @return the result of this operation
+     */
     private boolean isQueueTile(PublicRoomItemEntity item) {
         return item.getSprite().toLowerCase(Locale.ROOT).contains("queue_tile2");
     }
 
+    /**
+     * Hases behaviour.
+     * @param item the item value
+     * @param behaviour the behaviour value
+     * @return the result of this operation
+     */
     private boolean hasBehaviour(PublicRoomItemEntity item, String behaviour) {
         String raw = item.getBehaviour();
         if (raw.isBlank()) {
@@ -100,10 +136,20 @@ final class PublicRoomItemSerializer {
         return false;
     }
 
+    /**
+     * Instances id.
+     * @param item the item value
+     * @return the result of this operation
+     */
     private String instanceId(PublicRoomItemEntity item) {
         return "pub" + Integer.toString(item.getId(), 36);
     }
 
+    /**
+     * Formats height.
+     * @param value the value value
+     * @return the resulting format height
+     */
     private String formatHeight(double value) {
         if (Math.floor(value) == value) {
             return Integer.toString((int) value);

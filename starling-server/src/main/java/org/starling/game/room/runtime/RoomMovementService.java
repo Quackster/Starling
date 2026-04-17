@@ -29,6 +29,12 @@ public final class RoomMovementService {
     private final RoomResponseWriter responses;
     private final RoomCollisionRegistry collisionRegistry;
 
+    /**
+     * Creates a new RoomMovementService.
+     * @param roomRegistry the room registry value
+     * @param responses the responses value
+     * @param collisionRegistry the collision registry value
+     */
     private RoomMovementService(
             RoomRegistry roomRegistry,
             RoomResponseWriter responses,
@@ -39,10 +45,21 @@ public final class RoomMovementService {
         this.collisionRegistry = collisionRegistry;
     }
 
+    /**
+     * Returns the instance.
+     * @return the instance
+     */
     public static RoomMovementService getInstance() {
         return INSTANCE;
     }
 
+    /**
+     * Walks.
+     * @param session the session value
+     * @param x the x value
+     * @param y the y value
+     * @return the result of this operation
+     */
     public boolean walk(Session session, int x, int y) {
         LoadedRoom<?> room = resolveActiveRoom(session);
         if (room == null) {
@@ -81,6 +98,11 @@ public final class RoomMovementService {
         return true;
     }
 
+    /**
+     * Stops walking.
+     * @param session the session value
+     * @return the result of this operation
+     */
     public boolean stopWalking(Session session) {
         LoadedRoom<?> room = resolveActiveRoom(session);
         if (room == null) {
@@ -99,12 +121,19 @@ public final class RoomMovementService {
         return changed;
     }
 
+    /**
+     * Ticks loaded rooms.
+     */
     public void tickLoadedRooms() {
         for (LoadedRoom<?> room : roomRegistry.loadedRooms()) {
             tickRoom(room);
         }
     }
 
+    /**
+     * Ticks room.
+     * @param room the room value
+     */
     public void tickRoom(LoadedRoom<?> room) {
         RoomCollisionPipeline collisionPipeline = collisionRegistry.snapshotPipeline();
         boolean changed = false;
@@ -119,6 +148,13 @@ public final class RoomMovementService {
         }
     }
 
+    /**
+     * Advances occupant.
+     * @param room the room value
+     * @param occupant the occupant value
+     * @param collisionPipeline the collision pipeline value
+     * @return the result of this operation
+     */
     private boolean advanceOccupant(LoadedRoom<?> room, RoomOccupant occupant, RoomCollisionPipeline collisionPipeline) {
         boolean changed = false;
         RoomPosition current = occupant.getPosition();
@@ -172,6 +208,11 @@ public final class RoomMovementService {
         return true;
     }
 
+    /**
+     * Resolves active room.
+     * @param session the session value
+     * @return the resulting resolve active room
+     */
     private LoadedRoom<?> resolveActiveRoom(Session session) {
         Session.RoomPresence presence = session == null ? null : session.getRoomPresence();
         if (presence == null || !presence.active()) {

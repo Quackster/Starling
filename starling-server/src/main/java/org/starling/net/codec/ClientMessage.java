@@ -19,19 +19,36 @@ public class ClientMessage {
     private final int opcode;
     private final ByteBuf body;
 
+    /**
+     * Creates a new ClientMessage.
+     * @param opcode the opcode value
+     * @param body the body value
+     */
     public ClientMessage(int opcode, ByteBuf body) {
         this.opcode = opcode;
         this.body = body;
     }
 
+    /**
+     * Returns the opcode.
+     * @return the opcode
+     */
     public int getOpcode() {
         return opcode;
     }
 
+    /**
+     * Returns whether this has remaining.
+     * @return whether this has remaining
+     */
     public boolean hasRemaining() {
         return body.isReadable();
     }
 
+    /**
+     * Remainings bytes.
+     * @return the result of this operation
+     */
     public int remainingBytes() {
         return body.readableBytes();
     }
@@ -77,6 +94,10 @@ public class ClientMessage {
         return new String(h, StandardCharsets.US_ASCII);
     }
 
+    /**
+     * Returns the string representation.
+     * @return the result of this operation
+     */
     @Override
     public String toString() {
         return "ClientMessage{opcode=" + opcode + " [" + headerString() + "], bodyLen=" + body.readableBytes() + "}";

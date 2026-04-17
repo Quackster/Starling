@@ -21,6 +21,11 @@ public final class FavoriteRoomResolver {
     private static final int ROOM_TYPE_PRIVATE = 0;
     private static final int ROOM_TYPE_PUBLIC = 1;
 
+    /**
+     * Resolves.
+     * @param player the player value
+     * @return the resulting resolve
+     */
     public FavoriteRooms resolve(Player player) {
         List<RoomFavoriteEntity> favorites = RoomFavoriteDao.findByUserId(player.getId());
         List<Integer> privateRoomIds = new ArrayList<>();

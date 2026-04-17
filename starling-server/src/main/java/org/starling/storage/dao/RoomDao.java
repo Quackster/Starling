@@ -8,8 +8,16 @@ import java.util.List;
 
 public final class RoomDao {
 
+    /**
+     * Creates a new RoomDao.
+     */
     private RoomDao() {}
 
+    /**
+     * Finds by category id.
+     * @param categoryId the category id value
+     * @return the resulting find by category id
+     */
     public static List<RoomEntity> findByCategoryId(int categoryId) {
         return EntityContext.withContext(context -> context.from(RoomEntity.class)
                 .filter(filter -> filter.equals(RoomEntity::getCategoryId, categoryId))
@@ -19,6 +27,11 @@ public final class RoomDao {
                 .toList());
     }
 
+    /**
+     * Finds by owner.
+     * @param ownerName the owner name value
+     * @return the resulting find by owner
+     */
     public static List<RoomEntity> findByOwner(String ownerName) {
         return EntityContext.withContext(context -> context.from(RoomEntity.class)
                 .filter(filter -> filter.equalsIgnoreCase(RoomEntity::getOwnerName, ownerName))
@@ -26,6 +39,11 @@ public final class RoomDao {
                 .toList());
     }
 
+    /**
+     * Finds by ids.
+     * @param roomIds the room ids value
+     * @return the resulting find by ids
+     */
     public static List<RoomEntity> findByIds(List<Integer> roomIds) {
         if (roomIds == null || roomIds.isEmpty()) {
             return Collections.emptyList();
@@ -39,6 +57,11 @@ public final class RoomDao {
                 .toList());
     }
 
+    /**
+     * Searches.
+     * @param query the query value
+     * @return the result of this operation
+     */
     public static List<RoomEntity> search(String query) {
         String normalizedQuery = query == null ? "" : query.trim().toLowerCase();
         if (normalizedQuery.isEmpty()) {
@@ -63,6 +86,11 @@ public final class RoomDao {
                 .toList());
     }
 
+    /**
+     * Finds by id.
+     * @param roomId the room id value
+     * @return the resulting find by id
+     */
     public static RoomEntity findById(int roomId) {
         return EntityContext.withContext(context -> context.from(RoomEntity.class)
                 .filter(filter -> filter.equals(RoomEntity::getId, roomId))
@@ -70,6 +98,11 @@ public final class RoomDao {
                 .orElse(null));
     }
 
+    /**
+     * Finds recommended.
+     * @param limit the limit value
+     * @return the resulting find recommended
+     */
     public static List<RoomEntity> findRecommended(int limit) {
         return EntityContext.withContext(context -> context.from(RoomEntity.class)
                 .orderBy(order -> order
@@ -79,6 +112,11 @@ public final class RoomDao {
                 .toList());
     }
 
+    /**
+     * Saves.
+     * @param room the room value
+     * @return the result of this operation
+     */
     public static RoomEntity save(RoomEntity room) {
         return EntityContext.inTransaction(context -> {
             if (room.getId() > 0) {
@@ -90,6 +128,10 @@ public final class RoomDao {
         });
     }
 
+    /**
+     * Deletes.
+     * @param roomId the room id value
+     */
     public static void delete(int roomId) {
         EntityContext.inTransaction(context -> {
             context.from(RoomEntity.class)
@@ -99,6 +141,9 @@ public final class RoomDao {
         });
     }
 
+    /**
+     * Resets current users.
+     */
     public static void resetCurrentUsers() {
         EntityContext.inTransaction(context -> {
             try (var statement = context.conn().prepareStatement("UPDATE rooms SET current_users = 0")) {
@@ -110,6 +155,11 @@ public final class RoomDao {
         });
     }
 
+    /**
+     * Saves current users.
+     * @param roomId the room id value
+     * @param currentUsers the current users value
+     */
     public static void saveCurrentUsers(int roomId, int currentUsers) {
         int persistedCurrentUsers = Math.max(currentUsers, 0);
         EntityContext.inTransaction(context -> {

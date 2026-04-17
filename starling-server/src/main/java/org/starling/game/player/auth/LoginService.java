@@ -16,10 +16,20 @@ public final class LoginService {
 
     private final LoginResponseWriter responses;
 
+    /**
+     * Creates a new LoginService.
+     * @param responses the responses value
+     */
     public LoginService(LoginResponseWriter responses) {
         this.responses = responses;
     }
 
+    /**
+     * Tries login.
+     * @param session the session value
+     * @param username the username value
+     * @param password the password value
+     */
     public void tryLogin(Session session, String username, String password) {
         log.info("Login attempt: {}", username);
 
@@ -33,6 +43,11 @@ public final class LoginService {
         completeLogin(session, user);
     }
 
+    /**
+     * Logins with ticket.
+     * @param session the session value
+     * @param ticket the ticket value
+     */
     public void loginWithTicket(Session session, String ticket) {
         log.info("SSO login attempt with ticket: {}...", ticket.length() > 8 ? ticket.substring(0, 8) : ticket);
 
@@ -46,6 +61,11 @@ public final class LoginService {
         completeLogin(session, user);
     }
 
+    /**
+     * Completes login.
+     * @param session the session value
+     * @param user the user value
+     */
     private void completeLogin(Session session, UserEntity user) {
         responses.sendLoginSuccess(session, user);
         PlayerManager.getInstance().register(session);

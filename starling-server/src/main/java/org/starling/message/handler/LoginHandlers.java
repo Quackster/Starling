@@ -15,6 +15,9 @@ public final class LoginHandlers {
     private static final LoginResponseWriter responses = new LoginResponseWriter();
     private static final LoginService loginService = new LoginService(responses);
 
+    /**
+     * Creates a new LoginHandlers.
+     */
     private LoginHandlers() {}
 
     /**

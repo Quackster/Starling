@@ -9,6 +9,16 @@ import org.starling.storage.entity.RoomEntity;
  */
 public final class PrivateRoomFactory {
 
+    /**
+     * Creates.
+     * @param player the player value
+     * @param categoryId the category id value
+     * @param roomName the room name value
+     * @param layoutToken the layout token value
+     * @param doorModeToken the door mode token value
+     * @param showOwnerName the show owner name value
+     * @return the resulting create
+     */
     public RoomEntity create(Player player, int categoryId, String roomName, String layoutToken, String doorModeToken, int showOwnerName) {
         RoomLayoutRegistry.RoomVisuals visuals = RoomLayoutRegistry.defaultPrivateRoom(layoutToken);
 

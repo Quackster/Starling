@@ -17,14 +17,25 @@ public final class RoomTaskManager {
     private final AtomicBoolean started = new AtomicBoolean(false);
     private ScheduledExecutorService scheduler;
 
+    /**
+     * Creates a new RoomTaskManager.
+     * @param roomMovementService the room movement service value
+     */
     private RoomTaskManager(RoomMovementService roomMovementService) {
         this.roomMovementService = roomMovementService;
     }
 
+    /**
+     * Returns the instance.
+     * @return the instance
+     */
     public static RoomTaskManager getInstance() {
         return INSTANCE;
     }
 
+    /**
+     * Starts.
+     */
     public void start() {
         if (!started.compareAndSet(false, true)) {
             return;
@@ -34,6 +45,9 @@ public final class RoomTaskManager {
         scheduler.scheduleAtFixedRate(this::tickNow, 500, 500, TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * Stops.
+     */
     public void stop() {
         started.set(false);
         if (scheduler != null) {
@@ -42,6 +56,9 @@ public final class RoomTaskManager {
         }
     }
 
+    /**
+     * Ticks now.
+     */
     public void tickNow() {
         roomMovementService.tickLoadedRooms();
     }
@@ -51,6 +68,11 @@ public final class RoomTaskManager {
      */
     private static final class RoomTaskThreadFactory implements ThreadFactory {
 
+        /**
+         * News thread.
+         * @param runnable the runnable value
+         * @return the result of this operation
+         */
         @Override
         public Thread newThread(Runnable runnable) {
             Thread thread = new Thread(runnable, "starling-room-task");

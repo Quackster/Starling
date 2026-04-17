@@ -10,18 +10,34 @@ public final class LisbonPublicItemCatalog {
 
     private final List<PublicRoomItemSeed> publicRoomItems;
 
+    /**
+     * Creates a new LisbonPublicItemCatalog.
+     * @param publicRoomItems the public room items value
+     */
     private LisbonPublicItemCatalog(List<PublicRoomItemSeed> publicRoomItems) {
         this.publicRoomItems = List.copyOf(publicRoomItems);
     }
 
+    /**
+     * Loads.
+     * @return the resulting load
+     */
     public static LisbonPublicItemCatalog load() {
         return INSTANCE;
     }
 
+    /**
+     * Publics room items.
+     * @return the result of this operation
+     */
     public List<PublicRoomItemSeed> publicRoomItems() {
         return publicRoomItems;
     }
 
+    /**
+     * Loads catalog.
+     * @return the resulting load catalog
+     */
     private static LisbonPublicItemCatalog loadCatalog() {
         String sql = BootstrapSqlSupport.readBundledSql(LisbonPublicItemCatalog.class, RESOURCE_PATH);
         List<List<String>> rows = BootstrapSqlSupport.parseInsertRows(sql, "public_items", RESOURCE_PATH);

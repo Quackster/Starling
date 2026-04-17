@@ -11,6 +11,11 @@ import java.util.List;
  */
 final class PublicRoomFurnitureSerializer {
 
+    /**
+     * Builds objects message.
+     * @param rawFurniture the raw furniture value
+     * @return the resulting build objects message
+     */
     ServerMessage buildObjectsMessage(String rawFurniture) {
         List<FurnitureItem> furnitureItems = parse(rawFurniture);
         ServerMessage message = new ServerMessage(OutgoingPackets.ROOM_OBJECTS).writeInt(furnitureItems.size());
@@ -20,6 +25,11 @@ final class PublicRoomFurnitureSerializer {
         return message;
     }
 
+    /**
+     * Parses.
+     * @param rawFurniture the raw furniture value
+     * @return the resulting parse
+     */
     private List<FurnitureItem> parse(String rawFurniture) {
         if (rawFurniture == null || rawFurniture.isBlank()) {
             return List.of();
@@ -40,6 +50,11 @@ final class PublicRoomFurnitureSerializer {
         return furnitureItems;
     }
 
+    /**
+     * Parses line.
+     * @param line the line value
+     * @return the resulting parse line
+     */
     private FurnitureItem parseLine(String line) {
         if (line == null || line.isBlank()) {
             return null;
@@ -70,6 +85,10 @@ final class PublicRoomFurnitureSerializer {
             String direction,
             String extras
     ) {
+        /**
+         * Writes to.
+         * @param message the message value
+         */
         private void writeTo(ServerMessage message) {
             message.writeRaw(instanceId + " ");
             message.writeString(sprite);

@@ -15,13 +15,26 @@ import java.util.Map;
  */
 public final class RoomGeometryLoader {
 
+    /**
+     * Creates a new RoomGeometryLoader.
+     */
     private RoomGeometryLoader() {}
 
+    /**
+     * Fors private room.
+     * @param room the room value
+     * @return the result of this operation
+     */
     public static RoomGeometry forPrivateRoom(RoomEntity room) {
         RoomLayoutRegistry.RoomVisuals visuals = RoomLayoutRegistry.forPrivateRoom(room);
         return buildGeometry(visuals, List.of());
     }
 
+    /**
+     * Fors public room.
+     * @param room the room value
+     * @return the result of this operation
+     */
     public static RoomGeometry forPublicRoom(PublicRoomEntity room) {
         RoomLayoutRegistry.RoomVisuals visuals = RoomLayoutRegistry.forPublicRoom(room);
         List<RoomStaticItem> items = PublicRoomItemDao.findByRoomModel(room.getUnitStrId()).stream()
@@ -30,6 +43,12 @@ public final class RoomGeometryLoader {
         return buildGeometry(visuals, items);
     }
 
+    /**
+     * Builds geometry.
+     * @param visuals the visuals value
+     * @param items the items value
+     * @return the resulting build geometry
+     */
     private static RoomGeometry buildGeometry(RoomLayoutRegistry.RoomVisuals visuals, List<RoomStaticItem> items) {
         String[] rawLines = visuals.heightmap().split("\r", -1);
         List<String> lines = new ArrayList<>(rawLines.length);
@@ -76,6 +95,11 @@ public final class RoomGeometryLoader {
         );
     }
 
+    /**
+     * Parses tile.
+     * @param tileChar the tile char value
+     * @return the resulting parse tile
+     */
     private static RoomTile parseTile(char tileChar) {
         if (tileChar == 'x' || tileChar == 'X') {
             return RoomTile.closed();

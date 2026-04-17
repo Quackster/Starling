@@ -10,6 +10,12 @@ import io.netty.handler.codec.MessageToByteEncoder;
  */
 public class GameEncoder extends MessageToByteEncoder<ServerMessage> {
 
+    /**
+     * Encodes.
+     * @param ctx the ctx value
+     * @param msg the msg value
+     * @param out the out value
+     */
     @Override
     protected void encode(ChannelHandlerContext ctx, ServerMessage msg, ByteBuf out) {
         out.writeBytes(msg.toBytes());

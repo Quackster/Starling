@@ -18,6 +18,10 @@ public final class GuestRoomSeedRegistrar implements DatabaseSeedRegistrar {
             createRoomSeed(4, 29, "admin", "Rooftop Chill", "Quiet seating, skyline views, and open chat.", "model_d", 2, "starling", 2, 15, 40, 1, 1, 0, 0, "", 0)
     );
 
+    /**
+     * Seeds.
+     * @param context the context value
+     */
     @Override
     public void seed(DbContext context) {
         String sql = """
@@ -103,6 +107,27 @@ public final class GuestRoomSeedRegistrar implements DatabaseSeedRegistrar {
         log.info("Ensured default guest rooms exist");
     }
 
+    /**
+     * Creates room seed.
+     * @param id the id value
+     * @param categoryId the category id value
+     * @param ownerName the owner name value
+     * @param name the name value
+     * @param description the description value
+     * @param modelName the model name value
+     * @param doorMode the door mode value
+     * @param doorPassword the door password value
+     * @param currentUsers the current users value
+     * @param maxUsers the max users value
+     * @param absoluteMaxUsers the absolute max users value
+     * @param showOwnerName the show owner name value
+     * @param allowTrading the allow trading value
+     * @param allowOthersMoveFurniture the allow others move furniture value
+     * @param alertState the alert state value
+     * @param navigatorFilter the navigator filter value
+     * @param port the port value
+     * @return the resulting create room seed
+     */
     private static RoomSeed createRoomSeed(
             int id,
             int categoryId,

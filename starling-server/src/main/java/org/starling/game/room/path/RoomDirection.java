@@ -7,8 +7,17 @@ import org.starling.game.room.geometry.RoomCoordinate;
  */
 public final class RoomDirection {
 
+    /**
+     * Creates a new RoomDirection.
+     */
     private RoomDirection() {}
 
+    /**
+     * Froms step.
+     * @param from the from value
+     * @param to the to value
+     * @return the result of this operation
+     */
     public static int fromStep(RoomCoordinate from, RoomCoordinate to) {
         int deltaX = Integer.compare(to.x(), from.x());
         int deltaY = Integer.compare(to.y(), from.y());

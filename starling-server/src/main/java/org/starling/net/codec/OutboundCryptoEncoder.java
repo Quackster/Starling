@@ -13,6 +13,12 @@ import org.starling.net.session.Session;
  */
 public class OutboundCryptoEncoder extends MessageToByteEncoder<ByteBuf> {
 
+    /**
+     * Encodes.
+     * @param ctx the ctx value
+     * @param msg the msg value
+     * @param out the out value
+     */
     @Override
     protected void encode(ChannelHandlerContext ctx, ByteBuf msg, ByteBuf out) {
         Session session = ctx.channel().attr(Session.KEY).get();

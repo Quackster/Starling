@@ -6,6 +6,10 @@ import org.starling.message.handler.LoginHandlers;
 
 public final class LoginRouteRegistrar implements MessageRouteRegistrar {
 
+    /**
+     * Registers.
+     * @param router the router value
+     */
     @Override
     public void register(MessageRouter router) {
         router.register(IncomingPackets.TRY_LOGIN, LoginHandlers::handleTryLogin);

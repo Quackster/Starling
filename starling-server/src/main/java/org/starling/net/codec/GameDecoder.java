@@ -16,6 +16,12 @@ public class GameDecoder extends ByteToMessageDecoder {
 
     private static final Logger log = LogManager.getLogger(GameDecoder.class);
 
+    /**
+     * Decodes.
+     * @param ctx the ctx value
+     * @param in the in value
+     * @param out the out value
+     */
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
         while (in.readableBytes() >= 3) {

@@ -6,6 +6,10 @@ import org.starling.message.handler.RoomHandlers;
 
 public final class RoomRouteRegistrar implements MessageRouteRegistrar {
 
+    /**
+     * Registers.
+     * @param router the router value
+     */
     @Override
     public void register(MessageRouter router) {
         router.register(IncomingPackets.ROOM_DIRECTORY, RoomHandlers::handleRoomDirectory);

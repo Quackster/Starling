@@ -8,6 +8,11 @@ import org.starling.game.room.geometry.RoomTile;
  */
 public final class RoomBoundsCollisionDetector implements RoomCollisionDetector {
 
+    /**
+     * Evaluates.
+     * @param context the context value
+     * @param state the state value
+     */
     @Override
     public void evaluate(Context context, State state) {
         RoomTile tile = context.room().getGeometry().tileAt(context.target());

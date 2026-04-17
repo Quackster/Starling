@@ -16,6 +16,11 @@ import java.util.List;
  */
 public final class RoomOccupantPayloadWriter {
 
+    /**
+     * Builds user objects payload.
+     * @param occupants the occupants value
+     * @return the resulting build user objects payload
+     */
     public String buildUserObjectsPayload(List<RoomOccupantSnapshot> occupants) {
         StringBuilder payload = new StringBuilder("\r");
         for (RoomOccupantSnapshot occupant : occupants) {
@@ -40,6 +45,11 @@ public final class RoomOccupantPayloadWriter {
         return payload.toString();
     }
 
+    /**
+     * Builds user status payload.
+     * @param occupants the occupants value
+     * @return the resulting build user status payload
+     */
     public String buildUserStatusPayload(List<RoomOccupantSnapshot> occupants) {
         StringBuilder payload = new StringBuilder();
         for (RoomOccupantSnapshot occupant : occupants) {
@@ -66,6 +76,13 @@ public final class RoomOccupantPayloadWriter {
         return payload.toString();
     }
 
+    /**
+     * Resolves occupants.
+     * @param session the session value
+     * @param loadedRoom the loaded room value
+     * @param visuals the visuals value
+     * @return the resulting resolve occupants
+     */
     public List<RoomOccupantSnapshot> resolveOccupants(
             Session session,
             LoadedRoom<?> loadedRoom,
@@ -81,12 +98,23 @@ public final class RoomOccupantPayloadWriter {
         return resolveOccupants(loadedRoom);
     }
 
+    /**
+     * Resolves occupants.
+     * @param loadedRoom the loaded room value
+     * @return the resulting resolve occupants
+     */
     public List<RoomOccupantSnapshot> resolveOccupants(LoadedRoom<?> loadedRoom) {
         List<RoomOccupantSnapshot> occupants = new ArrayList<>(loadedRoom.getOccupantSnapshots());
         occupants.sort(Comparator.comparingInt(RoomOccupantSnapshot::playerId));
         return occupants;
     }
 
+    /**
+     * Fallbacks snapshot.
+     * @param session the session value
+     * @param visuals the visuals value
+     * @return the result of this operation
+     */
     private RoomOccupantSnapshot fallbackSnapshot(Session session, RoomLayoutRegistry.RoomVisuals visuals) {
         return new RoomOccupantSnapshot(
                 session,
@@ -98,6 +126,11 @@ public final class RoomOccupantPayloadWriter {
         );
     }
 
+    /**
+     * Formats height.
+     * @param value the value value
+     * @return the resulting format height
+     */
     private String formatHeight(double value) {
         return Math.floor(value) == value ? Integer.toString((int) value) : Double.toString(value);
     }

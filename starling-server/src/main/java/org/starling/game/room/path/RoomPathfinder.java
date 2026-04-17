@@ -32,10 +32,21 @@ public final class RoomPathfinder {
 
     private final RoomCollisionPipeline collisionPipeline;
 
+    /**
+     * Creates a new RoomPathfinder.
+     * @param collisionPipeline the collision pipeline value
+     */
     public RoomPathfinder(RoomCollisionPipeline collisionPipeline) {
         this.collisionPipeline = collisionPipeline;
     }
 
+    /**
+     * Finds path.
+     * @param room the room value
+     * @param mover the mover value
+     * @param goal the goal value
+     * @return the resulting find path
+     */
     public List<RoomPosition> findPath(WalkableRoom room, RoomOccupant mover, RoomCoordinate goal) {
         RoomPosition startPosition = mover == null ? null : mover.getPathingPosition();
         if (room == null || mover == null || goal == null || startPosition == null) {
@@ -108,6 +119,11 @@ public final class RoomPathfinder {
         return bestAlternative == null ? List.of() : buildPath(bestAlternative);
     }
 
+    /**
+     * Builds path.
+     * @param destination the destination value
+     * @return the resulting build path
+     */
     private List<RoomPosition> buildPath(RoomPathNode destination) {
         List<RoomPosition> reversed = new ArrayList<>();
         for (RoomPathNode node = destination; node != null && node.previous() != null; node = node.previous()) {
@@ -121,12 +137,25 @@ public final class RoomPathfinder {
         return path;
     }
 
+    /**
+     * Heuristics.
+     * @param from the from value
+     * @param to the to value
+     * @return the result of this operation
+     */
     private int heuristic(RoomCoordinate from, RoomCoordinate to) {
         int deltaX = Math.abs(from.x() - to.x());
         int deltaY = Math.abs(from.y() - to.y());
         return 10 * Math.max(deltaX, deltaY) + 4 * Math.min(deltaX, deltaY);
     }
 
+    /**
+     * Betters alternative.
+     * @param candidate the candidate value
+     * @param currentBest the current best value
+     * @param goal the goal value
+     * @return the result of this operation
+     */
     private boolean betterAlternative(RoomPathNode candidate, RoomPathNode currentBest, RoomCoordinate goal) {
         if (candidate == null) {
             return false;

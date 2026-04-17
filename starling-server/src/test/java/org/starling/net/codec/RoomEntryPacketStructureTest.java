@@ -8,26 +8,41 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class RoomEntryPacketStructureTest {
 
+    /**
+     * Opens connection is bodyless.
+     */
     @Test
     void openConnectionIsBodyless() {
         assertSerialized(new ServerMessage(OutgoingPackets.OPC_OK), "@S[1]");
     }
 
+    /**
+     * Hotels view is bodyless.
+     */
     @Test
     void hotelViewIsBodyless() {
         assertSerialized(new ServerMessage(OutgoingPackets.HOTEL_VIEW), "@R[1]");
     }
 
+    /**
+     * Flats let in is bodyless.
+     */
     @Test
     void flatLetInIsBodyless() {
         assertSerialized(new ServerMessage(OutgoingPackets.FLAT_LETIN), "@i[1]");
     }
 
+    /**
+     * Logouts writes single instance id.
+     */
     @Test
     void logoutWritesSingleInstanceId() {
         assertSerialized(new ServerMessage(OutgoingPackets.LOGOUT).writeInt(1), "@]I[1]");
     }
 
+    /**
+     * Rooms url uses single terminated string.
+     */
     @Test
     void roomUrlUsesSingleTerminatedString() {
         assertSerialized(
@@ -36,6 +51,9 @@ class RoomEntryPacketStructureTest {
         );
     }
 
+    /**
+     * Rooms ready matches holograph structure.
+     */
     @Test
     void roomReadyMatchesHolographStructure() {
         assertSerialized(
@@ -44,6 +62,9 @@ class RoomEntryPacketStructureTest {
         );
     }
 
+    /**
+     * Flats property uses raw key value body.
+     */
     @Test
     void flatPropertyUsesRawKeyValueBody() {
         assertSerialized(
@@ -52,16 +73,25 @@ class RoomEntryPacketStructureTest {
         );
     }
 
+    /**
+     * Rooms ad writes single zero integer.
+     */
     @Test
     void roomAdWritesSingleZeroInteger() {
         assertSerialized(new ServerMessage(OutgoingPackets.ROOM_AD).writeRaw("0"), "CP0[1]");
     }
 
+    /**
+     * Interstitials writes single zero integer.
+     */
     @Test
     void interstitialWritesSingleZeroInteger() {
         assertSerialized(new ServerMessage(OutgoingPackets.INTERSTITIAL_DATA).writeRaw("0"), "DB0[1]");
     }
 
+    /**
+     * Spectators amount writes two zero integers.
+     */
     @Test
     void spectatorAmountWritesTwoZeroIntegers() {
         assertSerialized(
@@ -72,6 +102,11 @@ class RoomEntryPacketStructureTest {
         );
     }
 
+    /**
+     * Asserts serialized.
+     * @param message the message value
+     * @param expected the expected value
+     */
     private static void assertSerialized(ServerMessage message, String expected) {
         assertEquals(expected, PacketDebugStrings.describe(message.toBytes()));
     }

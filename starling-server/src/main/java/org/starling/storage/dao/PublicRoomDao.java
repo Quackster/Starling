@@ -8,8 +8,16 @@ import java.util.List;
 
 public final class PublicRoomDao {
 
+    /**
+     * Creates a new PublicRoomDao.
+     */
     private PublicRoomDao() {}
 
+    /**
+     * Finds visible by category id.
+     * @param categoryId the category id value
+     * @return the resulting find visible by category id
+     */
     public static List<PublicRoomEntity> findVisibleByCategoryId(int categoryId) {
         return EntityContext.withContext(context -> context.from(PublicRoomEntity.class)
                 .filter(filter -> filter
@@ -21,6 +29,11 @@ public final class PublicRoomDao {
                 .toList());
     }
 
+    /**
+     * Finds by id.
+     * @param roomId the room id value
+     * @return the resulting find by id
+     */
     public static PublicRoomEntity findById(int roomId) {
         return EntityContext.withContext(context -> context.from(PublicRoomEntity.class)
                 .filter(filter -> filter.equals(PublicRoomEntity::getId, roomId))
@@ -28,6 +41,11 @@ public final class PublicRoomDao {
                 .orElse(null));
     }
 
+    /**
+     * Finds by port.
+     * @param port the port value
+     * @return the resulting find by port
+     */
     public static PublicRoomEntity findByPort(int port) {
         return EntityContext.withContext(context -> context.from(PublicRoomEntity.class)
                 .filter(filter -> filter
@@ -38,6 +56,11 @@ public final class PublicRoomDao {
                 .orElse(null));
     }
 
+    /**
+     * Finds by ids.
+     * @param roomIds the room ids value
+     * @return the resulting find by ids
+     */
     public static List<PublicRoomEntity> findByIds(List<Integer> roomIds) {
         if (roomIds == null || roomIds.isEmpty()) {
             return Collections.emptyList();
@@ -53,6 +76,9 @@ public final class PublicRoomDao {
                 .toList());
     }
 
+    /**
+     * Resets current users.
+     */
     public static void resetCurrentUsers() {
         EntityContext.inTransaction(context -> {
             try (var statement = context.conn().prepareStatement("UPDATE public_rooms SET current_users = 0")) {
@@ -64,6 +90,11 @@ public final class PublicRoomDao {
         });
     }
 
+    /**
+     * Saves current users.
+     * @param roomId the room id value
+     * @param currentUsers the current users value
+     */
     public static void saveCurrentUsers(int roomId, int currentUsers) {
         int persistedCurrentUsers = Math.max(currentUsers, 0);
         EntityContext.inTransaction(context -> {

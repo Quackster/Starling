@@ -21,17 +21,31 @@ public final class PlayerManager {
     private final ConcurrentMap<Integer, Session> sessionsByPlayerId = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Session> sessionsByUsername = new ConcurrentHashMap<>();
 
+    /**
+     * Creates a new PlayerManager.
+     */
     private PlayerManager() {}
 
+    /**
+     * Returns the instance.
+     * @return the instance
+     */
     public static PlayerManager getInstance() {
         return INSTANCE;
     }
 
+    /**
+     * Clears.
+     */
     public void clear() {
         sessionsByPlayerId.clear();
         sessionsByUsername.clear();
     }
 
+    /**
+     * Registers.
+     * @param session the session value
+     */
     public void register(Session session) {
         Player player = session.getPlayer();
         if (player == null) {
@@ -54,6 +68,10 @@ public final class PlayerManager {
         }
     }
 
+    /**
+     * Unregisters.
+     * @param session the session value
+     */
     public void unregister(Session session) {
         Player player = session.getPlayer();
         if (player == null) {
@@ -66,32 +84,65 @@ public final class PlayerManager {
                 (ignored, existing) -> existing == session ? null : existing);
     }
 
+    /**
+     * Gets session by player id.
+     * @param playerId the player id value
+     * @return the result of this operation
+     */
     public Session getSessionByPlayerId(int playerId) {
         return sessionsByPlayerId.get(playerId);
     }
 
+    /**
+     * Gets session by username.
+     * @param username the username value
+     * @return the result of this operation
+     */
     public Session getSessionByUsername(String username) {
         return sessionsByUsername.get(normalize(username));
     }
 
+    /**
+     * Gets player by player id.
+     * @param playerId the player id value
+     * @return the result of this operation
+     */
     public Player getPlayerByPlayerId(int playerId) {
         Session session = getSessionByPlayerId(playerId);
         return session == null ? null : session.getPlayer();
     }
 
+    /**
+     * Gets player by username.
+     * @param username the username value
+     * @return the result of this operation
+     */
     public Player getPlayerByUsername(String username) {
         Session session = getSessionByUsername(username);
         return session == null ? null : session.getPlayer();
     }
 
+    /**
+     * Ises online.
+     * @param playerId the player id value
+     * @return the result of this operation
+     */
     public boolean isOnline(int playerId) {
         return sessionsByPlayerId.containsKey(playerId);
     }
 
+    /**
+     * Returns the online sessions.
+     * @return the online sessions
+     */
     public Collection<Session> getOnlineSessions() {
         return List.copyOf(new LinkedHashSet<>(sessionsByPlayerId.values()));
     }
 
+    /**
+     * Returns the online players.
+     * @return the online players
+     */
     public Collection<Player> getOnlinePlayers() {
         return getOnlineSessions().stream()
                 .map(Session::getPlayer)
@@ -99,6 +150,11 @@ public final class PlayerManager {
                 .toList();
     }
 
+    /**
+     * Normalizes.
+     * @param username the username value
+     * @return the resulting normalize
+     */
     private static String normalize(String username) {
         return username == null ? "" : username.trim().toLowerCase(Locale.ROOT);
     }

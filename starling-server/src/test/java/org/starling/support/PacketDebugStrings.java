@@ -2,8 +2,16 @@ package org.starling.support;
 
 public final class PacketDebugStrings {
 
+    /**
+     * Creates a new PacketDebugStrings.
+     */
     private PacketDebugStrings() {}
 
+    /**
+     * Describes.
+     * @param bytes the bytes value
+     * @return the result of this operation
+     */
     public static String describe(byte[] bytes) {
         StringBuilder builder = new StringBuilder(bytes.length * 3);
         for (byte value : bytes) {

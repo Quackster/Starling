@@ -14,6 +14,11 @@ public final class RoomItemCollisionDetector implements RoomCollisionDetector {
     private static final Comparator<RoomStaticItem> ITEM_HEIGHT =
             Comparator.comparingDouble(RoomStaticItem::walkingHeight);
 
+    /**
+     * Evaluates.
+     * @param context the context value
+     * @param state the state value
+     */
     @Override
     public void evaluate(Context context, State state) {
         List<RoomStaticItem> items = context.room().getGeometry().itemsAt(context.target());

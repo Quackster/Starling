@@ -2,6 +2,9 @@ package org.starling.message;
 
 /** Server->Client opcode constants. Source: regMsgList() tMsgs across all handler classes. */
 public final class OutgoingPackets {
+    /**
+     * Creates a new OutgoingPackets.
+     */
     private OutgoingPackets() {}
 
     // Handshake

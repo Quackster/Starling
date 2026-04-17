@@ -99,8 +99,16 @@ public final class RoomLayoutRegistry {
             )
     );
 
+    /**
+     * Creates a new RoomLayoutRegistry.
+     */
     private RoomLayoutRegistry() {}
 
+    /**
+     * Fors private room.
+     * @param room the room value
+     * @return the result of this operation
+     */
     public static RoomVisuals forPrivateRoom(RoomEntity room) {
         RoomVisuals defaults = PRIVATE_VISUALS.getOrDefault(normalize(room.getModelName()), DEFAULT_PRIVATE_VISUALS);
         RoomVisuals modelDefaults = resolveFromDatabase(room.getModelName(), false, defaults);
@@ -117,6 +125,11 @@ public final class RoomLayoutRegistry {
         );
     }
 
+    /**
+     * Fors public room.
+     * @param room the room value
+     * @return the result of this operation
+     */
     public static RoomVisuals forPublicRoom(PublicRoomEntity room) {
         RoomVisuals defaults = defaultPublicRoom(room.getUnitStrId());
         return new RoomVisuals(
@@ -132,20 +145,40 @@ public final class RoomLayoutRegistry {
         );
     }
 
+    /**
+     * Defaults private room.
+     * @param modelName the model name value
+     * @return the resulting default private room
+     */
     public static RoomVisuals defaultPrivateRoom(String modelName) {
         RoomVisuals fallback = builtinPrivateRoom(modelName);
         return resolveFromDatabase(modelName, false, fallback);
     }
 
+    /**
+     * Defaults public room.
+     * @param marker the marker value
+     * @return the resulting default public room
+     */
     public static RoomVisuals defaultPublicRoom(String marker) {
         RoomVisuals fallback = builtinPublicRoom(marker);
         return resolveFromDatabase(marker, true, fallback);
     }
 
+    /**
+     * Builtins private room.
+     * @param modelName the model name value
+     * @return the result of this operation
+     */
     public static RoomVisuals builtinPrivateRoom(String modelName) {
         return PRIVATE_VISUALS.getOrDefault(normalize(modelName), DEFAULT_PRIVATE_VISUALS);
     }
 
+    /**
+     * Builtins public room.
+     * @param marker the marker value
+     * @return the result of this operation
+     */
     public static RoomVisuals builtinPublicRoom(String marker) {
         RoomVisuals defaults = PUBLIC_VISUALS.get(normalize(marker));
         if (defaults != null) {
@@ -166,10 +199,21 @@ public final class RoomLayoutRegistry {
         );
     }
 
+    /**
+     * Firsts non blank.
+     * @param value the value value
+     * @param fallback the fallback value
+     * @return the result of this operation
+     */
     private static String firstNonBlank(String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value;
     }
 
+    /**
+     * Normalizes.
+     * @param value the value value
+     * @return the resulting normalize
+     */
     private static String normalize(String value) {
         if (value == null) {
             return "";
@@ -177,6 +221,11 @@ public final class RoomLayoutRegistry {
         return value.trim().toLowerCase(Locale.ROOT);
     }
 
+    /**
+     * Normalizes heightmap.
+     * @param value the value value
+     * @return the resulting normalize heightmap
+     */
     private static String normalizeHeightmap(String value) {
         if (value == null || value.isBlank()) {
             return "";
@@ -184,6 +233,11 @@ public final class RoomLayoutRegistry {
         return decodeHeightmap(value);
     }
 
+    /**
+     * Decodes heightmap.
+     * @param value the value value
+     * @return the resulting decode heightmap
+     */
     private static String decodeHeightmap(String value) {
         if (value == null) {
             return "";
@@ -204,6 +258,13 @@ public final class RoomLayoutRegistry {
         return decoded.toString();
     }
 
+    /**
+     * Resolves from database.
+     * @param marker the marker value
+     * @param publicRoom the public room value
+     * @param fallback the fallback value
+     * @return the resulting resolve from database
+     */
     private static RoomVisuals resolveFromDatabase(String marker, boolean publicRoom, RoomVisuals fallback) {
         RoomModelEntity model = RoomModelDao.findByModelName(normalize(marker), publicRoom);
         if (model == null) {

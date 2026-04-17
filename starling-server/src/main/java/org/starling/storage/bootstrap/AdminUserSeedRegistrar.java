@@ -9,6 +9,10 @@ public final class AdminUserSeedRegistrar implements DatabaseSeedRegistrar {
 
     private static final Logger log = LogManager.getLogger(AdminUserSeedRegistrar.class);
 
+    /**
+     * Seeds.
+     * @param context the context value
+     */
     @Override
     public void seed(DbContext context) {
         long existingUsers = context.from(UserEntity.class)

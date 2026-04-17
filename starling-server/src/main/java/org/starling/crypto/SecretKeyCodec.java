@@ -6,8 +6,16 @@ package org.starling.crypto;
  */
 public final class SecretKeyCodec {
 
+    /**
+     * Creates a new SecretKeyCodec.
+     */
     private SecretKeyCodec() {}
 
+    /**
+     * Secrets decode.
+     * @param encodedKey the encoded key value
+     * @return the result of this operation
+     */
     public static int secretDecode(String encodedKey) {
         if (encodedKey == null || encodedKey.isEmpty()) {
             return 0;

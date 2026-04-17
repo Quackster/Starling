@@ -35,6 +35,10 @@ public class HabboCipher {
     private int q;
     private int j;
 
+    /**
+     * Inits init socket.
+     * @param sharedKey the shared key value
+     */
     public void initInitSocket(byte[] sharedKey) {
         this.algorithm = Algorithm.INIT_SOCKET;
         this.discardPostFrameBytes = true;
@@ -73,6 +77,10 @@ public class HabboCipher {
         initSboxFromBytes(xorSharedKey(sharedKey));
     }
 
+    /**
+     * Inits server to client secret key.
+     * @param secretKey the secret key value
+     */
     public void initServerToClientSecretKey(int secretKey) {
         this.algorithm = Algorithm.STANDARD;
         this.discardPostFrameBytes = false;
@@ -80,6 +88,10 @@ public class HabboCipher {
         premix(SERVER_TO_CLIENT_PREMIX, 17);
     }
 
+    /**
+     * Copies.
+     * @return the result of this operation
+     */
     public HabboCipher copy() {
         HabboCipher copy = new HabboCipher();
         copy.algorithm = this.algorithm;
@@ -138,6 +150,10 @@ public class HabboCipher {
         return encodeHex(encryptedBytes);
     }
 
+    /**
+     * Inits sbox from bytes.
+     * @param keyBytes the key bytes value
+     */
     private void initSboxFromBytes(byte[] keyBytes) {
         int[] key = new int[256];
         for (int i = 0; i < 256; i++) {
@@ -148,6 +164,10 @@ public class HabboCipher {
         initSbox(key);
     }
 
+    /**
+     * Inits sbox from artificial key.
+     * @param secretKey the secret key value
+     */
     private void initSboxFromArtificialKey(int secretKey) {
         int length = (secretKey & 248) / 8;
         if (length < 20) {
@@ -171,6 +191,10 @@ public class HabboCipher {
         initSbox(key);
     }
 
+    /**
+     * Inits sbox.
+     * @param key the key value
+     */
     private void initSbox(int[] key) {
         int swapIndex = 0;
         for (int i = 0; i < 256; i++) {
@@ -182,22 +206,40 @@ public class HabboCipher {
         j = 0;
     }
 
+    /**
+     * Premixes.
+     * @param value the value value
+     * @param rounds the rounds value
+     */
     private void premix(byte[] value, int rounds) {
         for (int round = 0; round < rounds; round++) {
             applyKeystream(value);
         }
     }
 
+    /**
+     * Applies keystream.
+     * @param input the input value
+     * @return the result of this operation
+     */
     private byte[] applyKeystream(byte[] input) {
         return algorithm == Algorithm.INIT_SOCKET ? runInitSocketPrga(input) : runStandardPrga(input);
     }
 
+    /**
+     * Advances post frame state.
+     */
     private void advancePostFrameState() {
         if (discardPostFrameBytes && algorithm == Algorithm.INIT_SOCKET) {
             runInitSocketPrga(INIT_POST_FRAME_STRING);
         }
     }
 
+    /**
+     * Runs standard prga.
+     * @param input the input value
+     * @return the result of this operation
+     */
     private byte[] runStandardPrga(byte[] input) {
         byte[] output = new byte[input.length];
 
@@ -213,6 +255,11 @@ public class HabboCipher {
         return output;
     }
 
+    /**
+     * Xors shared key.
+     * @param sharedKey the shared key value
+     * @return the result of this operation
+     */
     private byte[] xorSharedKey(byte[] sharedKey) {
         byte[] modKey = new byte[sharedKey.length];
         for (int i = 0; i < sharedKey.length; i++) {
@@ -221,6 +268,11 @@ public class HabboCipher {
         return modKey;
     }
 
+    /**
+     * Runs init socket prga.
+     * @param input the input value
+     * @return the result of this operation
+     */
     private byte[] runInitSocketPrga(byte[] input) {
         byte[] output = new byte[input.length];
 
@@ -246,6 +298,11 @@ public class HabboCipher {
         return output;
     }
 
+    /**
+     * Decodes hex bytes.
+     * @param hexData the hex data value
+     * @return the resulting decode hex bytes
+     */
     private byte[] decodeHexBytes(byte[] hexData) {
         byte[] decoded = new byte[hexData.length / 2];
 
@@ -258,6 +315,11 @@ public class HabboCipher {
         return decoded;
     }
 
+    /**
+     * Encodes hex.
+     * @param data the data value
+     * @return the resulting encode hex
+     */
     private byte[] encodeHex(byte[] data) {
         byte[] encoded = new byte[data.length * 2];
         for (int i = 0; i < data.length; i++) {
@@ -268,12 +330,22 @@ public class HabboCipher {
         return encoded;
     }
 
+    /**
+     * Swaps.
+     * @param left the left value
+     * @param right the right value
+     */
     private void swap(int left, int right) {
         int temp = sbox[left];
         sbox[left] = sbox[right];
         sbox[right] = temp;
     }
 
+    /**
+     * Hexes char to nibble.
+     * @param value the value value
+     * @return the result of this operation
+     */
     private static int hexCharToNibble(byte value) {
         if (value >= '0' && value <= '9') {
             return value - '0';
@@ -287,10 +359,19 @@ public class HabboCipher {
         throw new IllegalArgumentException("Invalid hex char: " + (char) value);
     }
 
+    /**
+     * Nibbles to hex.
+     * @param value the value value
+     * @return the result of this operation
+     */
     private static byte nibbleToHex(int value) {
         return (byte) (value < 10 ? ('0' + value) : ('A' + (value - 10)));
     }
 
+    /**
+     * Parses artificial key.
+     * @return the resulting parse artificial key
+     */
     private static int[] parseArtificialKey() {
         String[] values = ARTIFICIAL_KEY_CSV.split(",");
         int[] parsed = new int[values.length];
@@ -300,6 +381,11 @@ public class HabboCipher {
         return parsed;
     }
 
+    /**
+     * Byteses to hex.
+     * @param bytes the bytes value
+     * @return the result of this operation
+     */
     private static String bytesToHex(byte[] bytes) {
         byte[] hex = new HabboCipher().encodeHex(bytes);
         return new String(hex, StandardCharsets.US_ASCII);

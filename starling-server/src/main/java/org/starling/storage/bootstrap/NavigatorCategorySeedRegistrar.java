@@ -13,6 +13,10 @@ public final class NavigatorCategorySeedRegistrar implements DatabaseSeedRegistr
     private static final List<HolographPublicSpaceCatalog.NavigatorCategorySeed> DEFAULT_CATEGORIES =
             HolographPublicSpaceCatalog.load().navigatorCategories();
 
+    /**
+     * Seeds.
+     * @param context the context value
+     */
     @Override
     public void seed(DbContext context) {
         String sql = """
