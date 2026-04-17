@@ -26,6 +26,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -46,6 +47,10 @@ class DatabaseIntegrationTest {
 
     private ServerConfig config;
 
+    /**
+     * Sets up database.
+     * @throws Exception if the operation fails
+     */
     @BeforeAll
     void setUpDatabase() throws Exception {
         String databaseName = "starling_it_" + Long.toUnsignedString(Instant.now().toEpochMilli(), 36);
@@ -57,6 +62,10 @@ class DatabaseIntegrationTest {
         DatabaseBootstrap.seedDefaults();
     }
 
+    /**
+     * Tears down database.
+     * @throws Exception if the operation fails
+     */
     @AfterAll
     void tearDownDatabase() throws Exception {
         try {
@@ -69,6 +78,10 @@ class DatabaseIntegrationTest {
         }
     }
 
+    /**
+     * Bootstraps creates schema and seed data.
+     * @throws Exception if the operation fails
+     */
     @Test
     void bootstrapCreatesSchemaAndSeedData() throws Exception {
         assertTrue(tableExists("users"));
@@ -118,14 +131,43 @@ class DatabaseIntegrationTest {
         RoomModelEntity privateModel = RoomModelDao.findByModelName("MODEL_A", false);
         assertNotNull(privateModel);
         assertEquals("model_a", privateModel.getModelName());
+        RoomModelEntity extendedPrivateModel = RoomModelDao.findByModelName("model_r", false);
+        assertNotNull(extendedPrivateModel);
+        assertEquals(10, extendedPrivateModel.getDoorX());
+        assertEquals(4, extendedPrivateModel.getDoorY());
+        assertEquals(3.0, extendedPrivateModel.getDoorZ());
         assertTrue(RoomModelDao.findByModelName("newbie_lobby", true).isPublicModel());
         assertTrue(RoomModelDao.findByModelName("tv_studio", true).isPublicModel());
+        RoomModelEntity cinemaModel = RoomModelDao.findByModelName("cinema_a", true);
+        assertNotNull(cinemaModel);
+        assertEquals(20, cinemaModel.getDoorX());
+        assertEquals(27, cinemaModel.getDoorY());
+        assertEquals(1.0, cinemaModel.getDoorZ());
+        RoomModelEntity parkModel = RoomModelDao.findByModelName("gate_park", true);
+        assertNotNull(parkModel);
+        assertEquals(17, parkModel.getDoorX());
+        assertEquals(26, parkModel.getDoorY());
+        assertEquals(0.0, parkModel.getDoorZ());
+        RoomModelEntity terraceModel = RoomModelDao.findByModelName("sun_terrace", true);
+        assertNotNull(terraceModel);
+        assertEquals(9, terraceModel.getDoorX());
+        assertEquals(17, terraceModel.getDoorY());
+        assertEquals(0.0, terraceModel.getDoorZ());
+        assertNotNull(RoomModelDao.findByModelName("pizza", true));
+        for (String roomModel : distinctPublicItemModels()) {
+            assertNotNull(RoomModelDao.findByModelName(roomModel, true),
+                    "Expected room model seed for public item model " + roomModel);
+        }
         assertTrue(RoomModelDao.findByModelName("pool_a", true).getPublicRoomItems().contains("pool_chair2"));
         assertEquals(63, PublicRoomItemDao.findByRoomModel("newbie_lobby").size());
         assertTrue(PublicRoomItemDao.findByRoomModel("pool_b").stream()
                 .anyMatch(item -> "queue_tile2".equals(item.getSprite())));
     }
 
+    /**
+     * Bootstraps is idempotent.
+     * @throws Exception if the operation fails
+     */
     @Test
     void bootstrapIsIdempotent() throws Exception {
         int categoryCount = countRows("rooms_categories", null);
@@ -139,7 +181,7 @@ class DatabaseIntegrationTest {
 
         assertEquals(1, countRows("users", "username = 'admin'"));
         assertEquals(35, categoryCount);
-        assertTrue(roomModelCount >= 25);
+        assertTrue(roomModelCount >= 100);
         assertEquals(4, guestRoomCount);
         assertEquals(87, publicRoomCount);
         assertTrue(publicRoomItemCount >= 3465);
@@ -150,6 +192,9 @@ class DatabaseIntegrationTest {
         assertEquals(publicRoomItemCount, countRows("public_room_items", null));
     }
 
+    /**
+     * Rooms dao supports insert query update and delete.
+     */
     @Test
     void roomDaoSupportsInsertQueryUpdateAndDelete() {
         String token = "db-room-" + UUID.randomUUID().toString().substring(0, 8);
@@ -200,6 +245,10 @@ class DatabaseIntegrationTest {
         assertNull(RoomDao.findById(persisted.getId()));
     }
 
+    /**
+     * Favoriteses rights and user room references work.
+     * @throws Exception if the operation fails
+     */
     @Test
     void favoritesRightsAndUserRoomReferencesWork() throws Exception {
         UserEntity admin = UserDao.findByUsername("admin");
@@ -260,6 +309,12 @@ class DatabaseIntegrationTest {
         RoomDao.delete(room.getId());
     }
 
+    /**
+     * Tables exists.
+     * @param tableName the table name value
+     * @return the result of this operation
+     * @throws Exception if the operation fails
+     */
     private boolean tableExists(String tableName) throws Exception {
         try (Connection connection = DriverManager.getConnection(config.jdbcUrl(), config.dbUsername(), config.dbPassword())) {
             ResultSet tables = connection.getMetaData().getTables(config.dbName(), null, tableName, null);
@@ -267,6 +322,13 @@ class DatabaseIntegrationTest {
         }
     }
 
+    /**
+     * Counts rows.
+     * @param tableName the table name value
+     * @param whereClause the where clause value
+     * @return the result of this operation
+     * @throws Exception if the operation fails
+     */
     private int countRows(String tableName, String whereClause) throws Exception {
         String sql = "SELECT COUNT(*) FROM " + tableName + (whereClause == null || whereClause.isBlank() ? "" : " WHERE " + whereClause);
         try (Connection connection = DriverManager.getConnection(config.jdbcUrl(), config.dbUsername(), config.dbPassword());
@@ -277,6 +339,31 @@ class DatabaseIntegrationTest {
         }
     }
 
+    /**
+     * Distincts public item models.
+     * @return the result of this operation
+     * @throws Exception if the operation fails
+     */
+    private List<String> distinctPublicItemModels() throws Exception {
+        try (Connection connection = DriverManager.getConnection(config.jdbcUrl(), config.dbUsername(), config.dbPassword());
+             Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(
+                     "SELECT DISTINCT room_model FROM public_room_items ORDER BY room_model"
+             )) {
+            List<String> models = new ArrayList<>();
+            while (resultSet.next()) {
+                models.add(resultSet.getString(1));
+            }
+            return models;
+        }
+    }
+
+    /**
+     * Inserts room right.
+     * @param roomId the room id value
+     * @param userId the user id value
+     * @throws Exception if the operation fails
+     */
     private void insertRoomRight(int roomId, int userId) throws Exception {
         try (Connection connection = DriverManager.getConnection(config.jdbcUrl(), config.dbUsername(), config.dbPassword());
              PreparedStatement statement = connection.prepareStatement(

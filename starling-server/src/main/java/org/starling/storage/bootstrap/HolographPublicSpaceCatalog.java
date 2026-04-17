@@ -100,6 +100,12 @@ public final class HolographPublicSpaceCatalog {
     private final List<PublicRoomSeed> publicRooms;
     private final List<RoomModelSeed> roomModels;
 
+    /**
+     * Creates a new HolographPublicSpaceCatalog.
+     * @param navigatorCategories the navigator categories value
+     * @param publicRooms the public rooms value
+     * @param roomModels the room models value
+     */
     private HolographPublicSpaceCatalog(
             List<NavigatorCategorySeed> navigatorCategories,
             List<PublicRoomSeed> publicRooms,
@@ -110,22 +116,42 @@ public final class HolographPublicSpaceCatalog {
         this.roomModels = List.copyOf(roomModels);
     }
 
+    /**
+     * Loads.
+     * @return the resulting load
+     */
     public static HolographPublicSpaceCatalog load() {
         return INSTANCE;
     }
 
+    /**
+     * Navigators categories.
+     * @return the result of this operation
+     */
     public List<NavigatorCategorySeed> navigatorCategories() {
         return navigatorCategories;
     }
 
+    /**
+     * Publics rooms.
+     * @return the result of this operation
+     */
     public List<PublicRoomSeed> publicRooms() {
         return publicRooms;
     }
 
+    /**
+     * Rooms models.
+     * @return the resulting room models
+     */
     public List<RoomModelSeed> roomModels() {
         return roomModels;
     }
 
+    /**
+     * Loads catalog.
+     * @return the resulting load catalog
+     */
     private static HolographPublicSpaceCatalog loadCatalog() {
         String sql = readBundledSql();
 
@@ -143,6 +169,10 @@ public final class HolographPublicSpaceCatalog {
         return new HolographPublicSpaceCatalog(navigatorCategories, publicRooms, roomModels);
     }
 
+    /**
+     * Reads bundled sql.
+     * @return the resulting read bundled sql
+     */
     private static String readBundledSql() {
         try (InputStream input = HolographPublicSpaceCatalog.class.getClassLoader().getResourceAsStream(RESOURCE_PATH)) {
             if (input == null) {
@@ -154,6 +184,11 @@ public final class HolographPublicSpaceCatalog {
         }
     }
 
+    /**
+     * Parses categories.
+     * @param sql the sql value
+     * @return the resulting parse categories
+     */
     private static List<SourceCategory> parseCategories(String sql) {
         List<List<String>> rows = parseInsertRows(sql, "room_categories");
         List<SourceCategory> categories = new ArrayList<>(rows.size());
@@ -170,6 +205,11 @@ public final class HolographPublicSpaceCatalog {
         return categories;
     }
 
+    /**
+     * Parses public rooms.
+     * @param sql the sql value
+     * @return the resulting parse public rooms
+     */
     private static List<SourcePublicRoom> parsePublicRooms(String sql) {
         List<List<String>> rows = parseInsertRows(sql, "rooms");
         List<SourcePublicRoom> publicRooms = new ArrayList<>();
@@ -196,6 +236,11 @@ public final class HolographPublicSpaceCatalog {
         return publicRooms;
     }
 
+    /**
+     * Parses room models.
+     * @param sql the sql value
+     * @return the resulting parse room models
+     */
     private static List<SourceRoomModel> parseRoomModels(String sql) {
         List<List<String>> rows = parseInsertRows(sql, "room_modeldata");
         List<SourceRoomModel> roomModels = new ArrayList<>(rows.size());
@@ -213,6 +258,11 @@ public final class HolographPublicSpaceCatalog {
         return roomModels;
     }
 
+    /**
+     * Builds category id map.
+     * @param sourceCategories the source categories value
+     * @return the resulting build category id map
+     */
     private static Map<Integer, Integer> buildCategoryIdMap(List<SourceCategory> sourceCategories) {
         int maxSourceCategoryId = 0;
         for (SourceCategory category : sourceCategories) {
@@ -227,6 +277,12 @@ public final class HolographPublicSpaceCatalog {
         return categoryIdMap;
     }
 
+    /**
+     * Builds navigator categories.
+     * @param sourceCategories the source categories value
+     * @param categoryIdMap the category id map value
+     * @return the resulting build navigator categories
+     */
     private static List<NavigatorCategorySeed> buildNavigatorCategories(
             List<SourceCategory> sourceCategories,
             Map<Integer, Integer> categoryIdMap
@@ -269,6 +325,12 @@ public final class HolographPublicSpaceCatalog {
         return categories;
     }
 
+    /**
+     * Builds public rooms.
+     * @param sourceRooms the source rooms value
+     * @param categoryIdMap the category id map value
+     * @return the resulting build public rooms
+     */
     private static List<PublicRoomSeed> buildPublicRooms(
             List<SourcePublicRoom> sourceRooms,
             Map<Integer, Integer> categoryIdMap
@@ -334,10 +396,21 @@ public final class HolographPublicSpaceCatalog {
         return publicRooms;
     }
 
+    /**
+     * Resolves category name.
+     * @param sourceCategoryId the source category id value
+     * @param fallbackName the fallback name value
+     * @return the resulting resolve category name
+     */
     private static String resolveCategoryName(int sourceCategoryId, String fallbackName) {
         return CATEGORY_NAME_OVERRIDES.getOrDefault(sourceCategoryId, fallbackName);
     }
 
+    /**
+     * Resolves public room text.
+     * @param room the room value
+     * @return the resulting resolve public room text
+     */
     private static PublicRoomText resolvePublicRoomText(SourcePublicRoom room) {
         PublicRoomText override = PUBLIC_ROOM_TEXT_OVERRIDES.get(room.id());
         if (override != null) {
@@ -351,6 +424,13 @@ public final class HolographPublicSpaceCatalog {
         return new PublicRoomText(room.name(), description);
     }
 
+    /**
+     * Resolves public room model.
+     * @param rawModelName the raw model name value
+     * @param description the description value
+     * @param casts the casts value
+     * @return the resulting resolve public room model
+     */
     private static String resolvePublicRoomModel(String rawModelName, String description, String casts) {
         String normalizedModel = normalize(rawModelName);
         if (!normalizedModel.isBlank()) {
@@ -369,6 +449,12 @@ public final class HolographPublicSpaceCatalog {
         throw new IllegalStateException("Unable to infer public room model for description '" + description + "'");
     }
 
+    /**
+     * Builds room models.
+     * @param sourceModels the source models value
+     * @param publicModelNames the public model names value
+     * @return the resulting build room models
+     */
     private static List<RoomModelSeed> buildRoomModels(List<SourceRoomModel> sourceModels, Set<String> publicModelNames) {
         List<RoomModelSeed> roomModels = new ArrayList<>(sourceModels.size() + publicModelNames.size());
         Set<String> seededModels = new HashSet<>();
@@ -414,6 +500,10 @@ public final class HolographPublicSpaceCatalog {
         return roomModels;
     }
 
+    /**
+     * Builds supplemental public rooms.
+     * @return the resulting build supplemental public rooms
+     */
     private static List<SupplementalPublicRoomSeed> buildSupplementalPublicRooms() {
         List<SupplementalPublicRoomSeed> rooms = new ArrayList<>();
 
@@ -485,6 +575,11 @@ public final class HolographPublicSpaceCatalog {
         return List.copyOf(rooms);
     }
 
+    /**
+     * Adds tv studio variants.
+     * @param rooms the rooms value
+     * @param startingId the starting id value
+     */
     private static void addTvStudioVariants(List<SupplementalPublicRoomSeed> rooms, int startingId) {
         rooms.add(supplementalRoom(startingId, 7, "TV Studio", "tv_studio", "hh_room_tv_studio_general", 30,
                 "Lights, camera, action!"));
@@ -494,6 +589,11 @@ public final class HolographPublicSpaceCatalog {
                 "Hit the studio floor and hang out with music fans."));
     }
 
+    /**
+     * Adds theatredrome variants.
+     * @param rooms the rooms value
+     * @param startingId the starting id value
+     */
     private static void addTheatredromeVariants(List<SupplementalPublicRoomSeed> rooms, int startingId) {
         rooms.add(supplementalRoom(startingId, 7, "Theatredrome", "theater", "hh_room_theater", 40,
                 "I still miss Ralph, I really really do."));
@@ -515,6 +615,11 @@ public final class HolographPublicSpaceCatalog {
                 "A special AXE takeover at the Theatredrome."));
     }
 
+    /**
+     * Adds floor lobbies.
+     * @param rooms the rooms value
+     * @param startingId the starting id value
+     */
     private static void addFloorLobbies(List<SupplementalPublicRoomSeed> rooms, int startingId) {
         String[] models = {"floorlobby_a", "floorlobby_b", "floorlobby_c"};
         for (int index = 0; index < models.length; index++) {
@@ -530,6 +635,11 @@ public final class HolographPublicSpaceCatalog {
         }
     }
 
+    /**
+     * Adds hallways.
+     * @param rooms the rooms value
+     * @param startingId the starting id value
+     */
     private static void addHallways(List<SupplementalPublicRoomSeed> rooms, int startingId) {
         for (int index = 0; index < ROMAN_NUMERALS.size(); index++) {
             String description = index == 1 ? "Beware witches and warlocks." : GENERIC_HALLWAY_DESCRIPTION;
@@ -545,6 +655,17 @@ public final class HolographPublicSpaceCatalog {
         }
     }
 
+    /**
+     * Supplementals room.
+     * @param id the id value
+     * @param categoryId the category id value
+     * @param name the name value
+     * @param unitStrId the unit str id value
+     * @param casts the casts value
+     * @param maxUsers the max users value
+     * @param description the description value
+     * @return the result of this operation
+     */
     private static SupplementalPublicRoomSeed supplementalRoom(
             int id,
             int categoryId,
@@ -565,19 +686,30 @@ public final class HolographPublicSpaceCatalog {
         );
     }
 
+    /**
+     * Parses insert rows.
+     * @param sql the sql value
+     * @param tableName the table name value
+     * @return the resulting parse insert rows
+     */
     private static List<List<String>> parseInsertRows(String sql, String tableName) {
         Matcher matcher = Pattern.compile(
                 String.format(INSERT_PATTERN_TEMPLATE.pattern(), Pattern.quote(tableName)),
                 INSERT_PATTERN_TEMPLATE.flags())
                 .matcher(sql);
 
-        if (!matcher.find()) {
-            return Collections.emptyList();
+        List<List<String>> rows = new ArrayList<>();
+        while (matcher.find()) {
+            rows.addAll(parseTuples(matcher.group(1)));
         }
-
-        return parseTuples(matcher.group(1));
+        return rows;
     }
 
+    /**
+     * Parses tuples.
+     * @param valuesBlock the values block value
+     * @return the resulting parse tuples
+     */
     private static List<List<String>> parseTuples(String valuesBlock) {
         List<List<String>> tuples = new ArrayList<>();
         List<String> fields = null;
@@ -652,6 +784,11 @@ public final class HolographPublicSpaceCatalog {
         return tuples;
     }
 
+    /**
+     * Appends decoded escaped character.
+     * @param builder the builder value
+     * @param next the next value
+     */
     private static void appendDecodedEscapedCharacter(StringBuilder builder, char next) {
         switch (next) {
             case 'r' -> builder.append('\r');
@@ -666,6 +803,12 @@ public final class HolographPublicSpaceCatalog {
         }
     }
 
+    /**
+     * Parses int.
+     * @param row the row value
+     * @param index the index value
+     * @return the resulting parse int
+     */
     private static int parseInt(List<String> row, int index) {
         String value = row.get(index);
         if (value == null || value.isBlank() || value.equalsIgnoreCase("NULL")) {
@@ -674,6 +817,12 @@ public final class HolographPublicSpaceCatalog {
         return (int) Math.round(Double.parseDouble(value));
     }
 
+    /**
+     * Parses double.
+     * @param row the row value
+     * @param index the index value
+     * @return the resulting parse double
+     */
     private static double parseDouble(List<String> row, int index) {
         String value = row.get(index);
         if (value == null || value.isBlank() || value.equalsIgnoreCase("NULL")) {
@@ -682,11 +831,23 @@ public final class HolographPublicSpaceCatalog {
         return Double.parseDouble(value);
     }
 
+    /**
+     * Parses string.
+     * @param row the row value
+     * @param index the index value
+     * @return the resulting parse string
+     */
     private static String parseString(List<String> row, int index) {
         String value = parseNullableString(row, index);
         return value == null ? "" : value;
     }
 
+    /**
+     * Parses nullable string.
+     * @param row the row value
+     * @param index the index value
+     * @return the resulting parse nullable string
+     */
     private static String parseNullableString(List<String> row, int index) {
         String value = row.get(index);
         if (value == null || value.equalsIgnoreCase("NULL")) {
@@ -695,14 +856,29 @@ public final class HolographPublicSpaceCatalog {
         return value;
     }
 
+    /**
+     * Defaults string.
+     * @param value the value value
+     * @return the resulting default string
+     */
     private static String defaultString(String value) {
         return value == null ? "" : value;
     }
 
+    /**
+     * Lookses like text key.
+     * @param value the value value
+     * @return the result of this operation
+     */
     private static boolean looksLikeTextKey(String value) {
         return value.indexOf(' ') < 0 && value.contains("_");
     }
 
+    /**
+     * Normalizes.
+     * @param value the value value
+     * @return the resulting normalize
+     */
     private static String normalize(String value) {
         if (value == null) {
             return "";
@@ -776,6 +952,10 @@ public final class HolographPublicSpaceCatalog {
             int currentUsers,
             int maxUsers
     ) {
+        /**
+         * Returns whether public room.
+         * @return whether public room
+         */
         private boolean isPublicRoom() {
             return categoryId > 0 && (ownerName == null || ownerName.isBlank());
         }
