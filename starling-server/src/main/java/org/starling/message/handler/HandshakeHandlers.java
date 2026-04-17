@@ -7,6 +7,7 @@ import org.starling.crypto.HabboCipher;
 import org.starling.crypto.SecretKeyCodec;
 import org.starling.message.IncomingPackets;
 import org.starling.message.OutgoingPackets;
+import org.starling.net.GameChannelPipeline;
 import org.starling.net.codec.ClientMessage;
 import org.starling.net.codec.ServerMessage;
 import org.starling.net.session.Session;
@@ -26,7 +27,7 @@ public final class HandshakeHandlers {
      * then generate a DH keypair for this session.
      */
     public static void handleInitCrypto(Session session, ClientMessage msg) {
-        session.resetCrypto();
+        GameChannelPipeline.resetCrypto(session);
 
         session.send(new ServerMessage(OutgoingPackets.CRYPTO_PARAMETERS)
                 .writeInt(SERVER_TO_CLIENT_ENCRYPTION ? 1 : 0));
@@ -49,8 +50,7 @@ public final class HandshakeHandlers {
 
         HabboCipher cipher = new HabboCipher();
         cipher.initInitSocket(sharedSecret);
-        session.setInboundCipher(cipher);
-        session.setInboundSharedSecret(sharedSecret);
+        GameChannelPipeline.enableInboundCrypto(session, cipher, sharedSecret);
 
         String serverPublicKeyHex = DiffieHellman.initCompatibilityPublicKeyHex();
         String serverPublicKeyWire = serverPublicKeyHex;
@@ -71,9 +71,6 @@ public final class HandshakeHandlers {
             log.debug("DH material for {} serverPublicKeyWire={}", session.getRemoteAddress(), serverPublicKeyWire);
             log.debug("DH material for {} sharedSecretHex={}", session.getRemoteAddress(), sharedSecretHex);
         }
-
-        // Mark session as encrypted - all subsequent incoming messages will be decrypted
-        session.setInboundEncrypted(true);
 
         log.info("Init handshake complete using compatibility public key for {}",
                 session.getRemoteAddress());
@@ -99,8 +96,7 @@ public final class HandshakeHandlers {
         // after the init-socket DH exchange.
         HabboCipher cipher = new HabboCipher();
         cipher.initServerToClientSecretKey(secretKey);
-        session.setOutboundCipher(cipher);
-        session.setOutboundEncrypted(true);
+        GameChannelPipeline.enableOutboundCrypto(session, cipher);
         session.send(new ServerMessage(OutgoingPackets.END_OF_CRYPTO_PARAMS));
 
         log.info("Enabled server->client SECRETKEY crypto for {} ({})",

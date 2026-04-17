@@ -42,7 +42,7 @@ public class Session {
         return channel;
     }
 
-    /** Send a server message (always plaintext). */
+    /** Send a server message through the Netty pipeline. */
     public void send(ServerMessage msg) {
         if (channel.isActive()) {
             byte[] wireBytes = msg.toBytes();

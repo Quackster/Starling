@@ -9,6 +9,7 @@ import org.starling.crypto.HabboCipher;
 import org.starling.crypto.SecretKeyCodec;
 import org.starling.message.IncomingPackets;
 import org.starling.message.OutgoingPackets;
+import org.starling.net.GameChannelPipeline;
 import org.starling.net.codec.Base64Encoding;
 import org.starling.net.codec.ClientMessage;
 import org.starling.net.codec.GameDecoder;
@@ -45,7 +46,8 @@ class HandshakeCryptoFlowTest {
 
     @Test
     void initCryptoDisablesServerToClientEncryption() {
-        EmbeddedChannel channel = new EmbeddedChannel(new GameEncoder());
+        EmbeddedChannel channel = new EmbeddedChannel();
+        channel.pipeline().addLast(GameChannelPipeline.ENCODER, new GameEncoder());
         Session session = new Session(channel);
         channel.attr(Session.KEY).set(session);
 
@@ -93,7 +95,8 @@ class HandshakeCryptoFlowTest {
 
     @Test
     void generateKeyResponseIsDirectorCompatibleForInitHandshake() {
-        EmbeddedChannel channel = new EmbeddedChannel(new GameEncoder());
+        EmbeddedChannel channel = new EmbeddedChannel();
+        channel.pipeline().addLast(GameChannelPipeline.ENCODER, new GameEncoder());
         Session session = new Session(channel);
         channel.attr(Session.KEY).set(session);
 
@@ -153,7 +156,8 @@ class HandshakeCryptoFlowTest {
 
     @Test
     void compatibilitySharedSecretDecodesEncryptedVersionCheck() {
-        EmbeddedChannel channel = new EmbeddedChannel(new GameDecoder());
+        EmbeddedChannel channel = new EmbeddedChannel();
+        channel.pipeline().addLast(GameChannelPipeline.DECODER, new GameDecoder());
         Session session = new Session(channel);
         channel.attr(Session.KEY).set(session);
         session.setCryptoMode(Session.CryptoMode.INIT);
@@ -161,9 +165,7 @@ class HandshakeCryptoFlowTest {
         byte[] directorSharedKey = new byte[]{0x01};
         HabboCipher serverDecoder = new HabboCipher();
         serverDecoder.initInitSocket(directorSharedKey);
-        session.setInboundCipher(serverDecoder);
-        session.setInboundSharedSecret(directorSharedKey);
-        session.setInboundEncrypted(true);
+        GameChannelPipeline.enableInboundCrypto(session, serverDecoder, directorSharedKey);
 
         byte[] plaintext = clientFrame(
                 IncomingPackets.VERSIONCHECK,
@@ -196,7 +198,9 @@ class HandshakeCryptoFlowTest {
     }
 
     private static void assertEncryptedEndOfCrypto() {
-        EmbeddedChannel channel = new EmbeddedChannel(new GameEncoder());
+        EmbeddedChannel channel = new EmbeddedChannel();
+        channel.pipeline()
+                .addLast(GameChannelPipeline.ENCODER, new GameEncoder());
         Session session = new Session(channel);
         channel.attr(Session.KEY).set(session);
         session.setCryptoMode(Session.CryptoMode.INIT);
