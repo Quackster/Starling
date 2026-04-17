@@ -1,4 +1,4 @@
-package org.starling.game.navigator;
+package org.starling.game.navigator.creation;
 
 import org.starling.game.player.Player;
 import org.starling.game.room.layout.RoomLayoutRegistry;

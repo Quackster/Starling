@@ -13,9 +13,9 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Manages navigator categories. Loads from DB on startup and caches.
  */
-public class NavigatorManager {
+public final class NavigatorManager {
 
-    private static NavigatorManager instance;
+    private static final NavigatorManager INSTANCE = new NavigatorManager();
     private static final Comparator<NavigatorCategoryEntity> CATEGORY_ORDER =
             Comparator.comparingInt(NavigatorCategoryEntity::getOrderId)
                     .thenComparingInt(NavigatorCategoryEntity::getId);
@@ -23,11 +23,10 @@ public class NavigatorManager {
     private final Map<Integer, NavigatorCategoryEntity> categories = new ConcurrentHashMap<>();
     private final Map<Integer, List<NavigatorCategoryEntity>> childrenByParent = new ConcurrentHashMap<>();
 
+    private NavigatorManager() {}
+
     public static NavigatorManager getInstance() {
-        if (instance == null) {
-            instance = new NavigatorManager();
-        }
-        return instance;
+        return INSTANCE;
     }
 
     public void load() {
@@ -35,14 +34,10 @@ public class NavigatorManager {
         categories.clear();
         childrenByParent.clear();
 
-        for (NavigatorCategoryEntity cat : all) {
-            categories.put(cat.getId(), cat);
-        }
-
-        // Build parent->children index
-        for (NavigatorCategoryEntity cat : all) {
-            childrenByParent.computeIfAbsent(cat.getParentId(), k -> new java.util.ArrayList<>()).add(cat);
-        }
+        all.forEach(category -> categories.put(category.getId(), category));
+        all.forEach(category -> childrenByParent
+                .computeIfAbsent(category.getParentId(), ignored -> new ArrayList<>())
+                .add(category));
 
         for (List<NavigatorCategoryEntity> children : childrenByParent.values()) {
             children.sort(CATEGORY_ORDER);
@@ -78,13 +73,9 @@ public class NavigatorManager {
             return children;
         }
 
-        List<NavigatorCategoryEntity> filtered = new ArrayList<>();
-        for (NavigatorCategoryEntity child : children) {
-            if (rank >= child.getMinRoleAccess()) {
-                filtered.add(child);
-            }
-        }
-        return filtered;
+        return children.stream()
+                .filter(child -> rank >= child.getMinRoleAccess())
+                .toList();
     }
 
     public List<NavigatorCategoryEntity> getParentChain(int categoryId) {

@@ -1,4 +1,4 @@
-package org.starling.game.room.response;
+package org.starling.game.room.response.publicspace;
 
 import org.starling.message.OutgoingPackets;
 import org.starling.net.codec.ServerMessage;

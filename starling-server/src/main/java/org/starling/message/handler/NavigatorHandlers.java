@@ -2,10 +2,10 @@ package org.starling.message.handler;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.starling.game.navigator.FavoriteRoomResolver;
 import org.starling.game.navigator.NavigatorManager;
-import org.starling.game.navigator.NavigatorResponseWriter;
-import org.starling.game.navigator.PrivateRoomFactory;
+import org.starling.game.navigator.creation.PrivateRoomFactory;
+import org.starling.game.navigator.favorite.FavoriteRoomResolver;
+import org.starling.game.navigator.response.NavigatorResponseWriter;
 import org.starling.game.player.Player;
 import org.starling.game.room.access.RoomAccess;
 import org.starling.message.IncomingPackets;

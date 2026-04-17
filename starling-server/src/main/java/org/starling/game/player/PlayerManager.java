@@ -90,14 +90,10 @@ public final class PlayerManager {
     }
 
     public Collection<Player> getOnlinePlayers() {
-        Collection<Session> sessions = getOnlineSessions();
-        List<Player> players = new ArrayList<>(sessions.size());
-        for (Session session : sessions) {
-            if (session.getPlayer() != null) {
-                players.add(session.getPlayer());
-            }
-        }
-        return List.copyOf(players);
+        return getOnlineSessions().stream()
+                .map(Session::getPlayer)
+                .filter(player -> player != null)
+                .toList();
     }
 
     private static String normalize(String username) {

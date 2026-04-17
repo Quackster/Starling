@@ -13,13 +13,12 @@ public final class LoginResponseWriter {
         HandlerResponses.sendError(session, "login incorrect");
     }
 
-    public Player sendLoginSuccess(Session session, UserEntity user) {
+    public void sendLoginSuccess(Session session, UserEntity user) {
         Player player = new Player(user);
         session.setPlayer(player);
 
         session.send(new ServerMessage(OutgoingPackets.LOGIN_OK));
         session.send(buildUserRightsMessage());
-        return player;
     }
 
     public void sendUserObject(Session session, Player player) {

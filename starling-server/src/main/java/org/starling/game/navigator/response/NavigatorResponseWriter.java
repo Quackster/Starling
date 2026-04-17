@@ -1,4 +1,4 @@
-package org.starling.game.navigator;
+package org.starling.game.navigator.response;
 
 import org.starling.game.player.Player;
 import org.starling.game.room.access.RoomAccess;
@@ -12,7 +12,6 @@ import org.starling.storage.entity.NavigatorCategoryEntity;
 import org.starling.storage.entity.PublicRoomEntity;
 import org.starling.storage.entity.RoomEntity;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public final class NavigatorResponseWriter {
@@ -234,54 +233,27 @@ public final class NavigatorResponseWriter {
     }
 
     private List<RoomEntity> filterRooms(List<RoomEntity> rooms, boolean hideFullRooms) {
-        if (!hideFullRooms) {
-            return rooms;
-        }
-
-        List<RoomEntity> filtered = new ArrayList<>();
-        for (RoomEntity room : rooms) {
-            if (room.getCurrentUsers() < room.getMaxUsers()) {
-                filtered.add(room);
-            }
-        }
-        return filtered;
+        return hideFullRooms
+                ? rooms.stream().filter(room -> room.getCurrentUsers() < room.getMaxUsers()).toList()
+                : rooms;
     }
 
     private List<PublicRoomEntity> filterPublicRooms(List<PublicRoomEntity> rooms, boolean hideFullRooms) {
-        if (!hideFullRooms) {
-            return rooms;
-        }
-
-        List<PublicRoomEntity> filtered = new ArrayList<>();
-        for (PublicRoomEntity room : rooms) {
-            if (room.getCurrentUsers() < room.getMaxUsers()) {
-                filtered.add(room);
-            }
-        }
-        return filtered;
+        return hideFullRooms
+                ? rooms.stream().filter(room -> room.getCurrentUsers() < room.getMaxUsers()).toList()
+                : rooms;
     }
 
     private int totalUsers(List<RoomEntity> rooms) {
-        int total = 0;
-        for (RoomEntity room : rooms) {
-            total += room.getCurrentUsers();
-        }
-        return total;
+        return rooms.stream().mapToInt(RoomEntity::getCurrentUsers).sum();
     }
 
     private int totalPublicUsers(List<PublicRoomEntity> rooms) {
-        int total = 0;
-        for (PublicRoomEntity room : rooms) {
-            total += room.getCurrentUsers();
-        }
-        return total;
+        return rooms.stream().mapToInt(PublicRoomEntity::getCurrentUsers).sum();
     }
 
     private int totalCapacity(List<RoomEntity> rooms) {
-        int total = 0;
-        for (RoomEntity room : rooms) {
-            total += room.getMaxUsers();
-        }
+        int total = rooms.stream().mapToInt(RoomEntity::getMaxUsers).sum();
         return total > 0 ? total : 100;
     }
 
@@ -290,9 +262,7 @@ public final class NavigatorResponseWriter {
         if (total == 100 && privateRooms.isEmpty()) {
             total = 0;
         }
-        for (PublicRoomEntity room : publicRooms) {
-            total += room.getMaxUsers();
-        }
+        total += publicRooms.stream().mapToInt(PublicRoomEntity::getMaxUsers).sum();
         return total > 0 ? total : 100;
     }
 }
