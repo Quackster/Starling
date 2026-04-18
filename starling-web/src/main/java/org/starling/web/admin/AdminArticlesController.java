@@ -1,0 +1,113 @@
+package org.starling.web.admin;
+
+import io.javalin.http.Context;
+import org.starling.web.cms.model.CmsArticle;
+import org.starling.web.render.TemplateRenderer;
+import org.starling.web.request.ArticleDraftRequest;
+import org.starling.web.service.ArticleService;
+import org.starling.web.util.Htmx;
+import org.starling.web.view.AdminPageModelFactory;
+import org.starling.web.view.CmsViewModelFactory;
+
+import java.util.Map;
+
+public final class AdminArticlesController {
+
+    private final TemplateRenderer templateRenderer;
+    private final AdminPageModelFactory adminPageModelFactory;
+    private final ArticleService articleService;
+    private final CmsViewModelFactory cmsViewModelFactory;
+
+    /**
+     * Creates a new AdminArticlesController.
+     * @param templateRenderer the template renderer
+     * @param adminPageModelFactory the admin page model factory
+     * @param articleService the article service
+     * @param cmsViewModelFactory the CMS view model factory
+     */
+    public AdminArticlesController(
+            TemplateRenderer templateRenderer,
+            AdminPageModelFactory adminPageModelFactory,
+            ArticleService articleService,
+            CmsViewModelFactory cmsViewModelFactory
+    ) {
+        this.templateRenderer = templateRenderer;
+        this.adminPageModelFactory = adminPageModelFactory;
+        this.articleService = articleService;
+        this.cmsViewModelFactory = cmsViewModelFactory;
+    }
+
+    /**
+     * Renders the article index.
+     * @param context the request context
+     */
+    public void index(Context context) {
+        Map<String, Object> model = adminPageModelFactory.create(context, "/admin/articles");
+        model.put("articles", articleService.listAll().stream().map(cmsViewModelFactory::articleSummary).toList());
+        context.html(templateRenderer.render("admin-layout", "admin/articles/index", model));
+    }
+
+    /**
+     * Renders the new article editor.
+     * @param context the request context
+     */
+    public void newArticle(Context context) {
+        renderEditor(context, null);
+    }
+
+    /**
+     * Renders an existing article editor.
+     * @param context the request context
+     */
+    public void edit(Context context) {
+        renderEditor(context, articleService.require(Integer.parseInt(context.pathParam("id"))));
+    }
+
+    /**
+     * Creates an article draft.
+     * @param context the request context
+     */
+    public void create(Context context) {
+        save(context, null);
+    }
+
+    /**
+     * Updates an article draft.
+     * @param context the request context
+     */
+    public void update(Context context) {
+        save(context, Integer.parseInt(context.pathParam("id")));
+    }
+
+    /**
+     * Publishes an article.
+     * @param context the request context
+     */
+    public void publish(Context context) {
+        int id = Integer.parseInt(context.pathParam("id"));
+        articleService.publish(id);
+        Htmx.redirect(context, "/admin/articles/" + id + "/edit?notice=Article%20published");
+    }
+
+    /**
+     * Unpublishes an article.
+     * @param context the request context
+     */
+    public void unpublish(Context context) {
+        int id = Integer.parseInt(context.pathParam("id"));
+        articleService.unpublish(id);
+        Htmx.redirect(context, "/admin/articles/" + id + "/edit?notice=Article%20unpublished");
+    }
+
+    private void renderEditor(Context context, CmsArticle article) {
+        Map<String, Object> model = adminPageModelFactory.create(context, "/admin/articles");
+        model.put("article", article == null ? cmsViewModelFactory.blankArticle() : cmsViewModelFactory.articleEditor(article));
+        model.put("isNew", article == null);
+        context.html(templateRenderer.render("admin-layout", "admin/articles/form", model));
+    }
+
+    private void save(Context context, Integer id) {
+        int articleId = articleService.saveDraft(id, ArticleDraftRequest.from(context).toDraft());
+        Htmx.redirect(context, "/admin/articles/" + articleId + "/edit?notice=Draft%20saved");
+    }
+}
