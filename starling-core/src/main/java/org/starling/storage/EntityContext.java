@@ -5,7 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.oldskooler.entity4j.DbContext;
 import org.oldskooler.entity4j.dialect.SqlDialectType;
 import org.oldskooler.entity4j.transaction.Transaction;
-import org.starling.config.ServerConfig;
+import org.starling.config.DatabaseConfig;
 
 import java.sql.DriverManager;
 import java.util.Objects;
@@ -14,7 +14,7 @@ import java.util.function.Function;
 public final class EntityContext {
 
     private static final Logger log = LogManager.getLogger(EntityContext.class);
-    private static ServerConfig config;
+    private static DatabaseConfig config;
 
     /**
      * Creates a new EntityContext.
@@ -23,10 +23,10 @@ public final class EntityContext {
 
     /**
      * Inits.
-     * @param serverConfig the server config value
+     * @param databaseConfig the database config value
      */
-    public static void init(ServerConfig serverConfig) {
-        config = Objects.requireNonNull(serverConfig, "serverConfig");
+    public static void init(DatabaseConfig databaseConfig) {
+        config = Objects.requireNonNull(databaseConfig, "databaseConfig");
 
         try {
             Class.forName("org.mariadb.jdbc.Driver");

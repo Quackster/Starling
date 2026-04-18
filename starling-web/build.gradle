@@ -1,0 +1,57 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+def javalinVersion = '6.3.0'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+dependencies {
+    implementation project(':starling-core')
+    implementation "io.javalin:javalin:${javalinVersion}"
+    implementation 'io.pebbletemplates:pebble:3.2.2'
+    implementation 'org.commonmark:commonmark:0.22.0'
+    implementation 'org.jsoup:jsoup:1.17.2'
+    implementation 'org.apache.logging.log4j:log4j-core:2.23.0'
+    implementation 'org.apache.logging.log4j:log4j-slf4j2-impl:2.23.0'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testImplementation "io.javalin:javalin-testtools:${javalinVersion}"
+}
+
+application {
+    applicationName = 'starling-web'
+    mainClass = 'org.starling.web.StarlingWebApplication'
+}
+
+def packagedDistDir = file("${projectDir}/dist")
+
+jar {
+    manifest {
+        attributes 'Main-Class': application.mainClass.get()
+    }
+}
+
+tasks.register('packageDist', Sync) {
+    dependsOn installDist
+
+    from(layout.buildDirectory.dir("install/${application.applicationName}"))
+    into(packagedDistDir)
+    preserve {
+        include 'logs/**'
+        include 'uploads/**'
+    }
+
+    into('config') {
+        from('src/main/resources/web.properties')
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

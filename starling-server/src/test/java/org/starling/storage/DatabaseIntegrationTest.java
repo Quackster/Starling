@@ -57,7 +57,7 @@ class DatabaseIntegrationTest {
         this.config = new ServerConfig(0, DB_HOST, DB_PORT, databaseName, DB_USERNAME, DB_PASSWORD, DB_PARAMS);
 
         DatabaseBootstrap.ensureDatabase(config);
-        EntityContext.init(config);
+        EntityContext.init(config.database());
         DatabaseBootstrap.ensureSchema(config);
         DatabaseBootstrap.seedDefaults();
     }

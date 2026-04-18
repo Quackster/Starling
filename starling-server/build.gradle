@@ -1,0 +1,56 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+dependencies {
+    implementation project(':starling-core')
+    implementation 'io.netty:netty-all:4.1.108.Final'
+    implementation 'org.apache.logging.log4j:log4j-core:2.23.0'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+}
+
+application {
+    applicationName = 'starling-server'
+    mainClass = 'org.starling.StarlingServer'
+}
+
+def packagedDistDir = file("${projectDir}/dist")
+
+jar {
+    manifest {
+        attributes 'Main-Class': application.mainClass.get()
+    }
+}
+
+tasks.register('packageDist', Sync) {
+    dependsOn installDist
+
+    from(layout.buildDirectory.dir("install/${application.applicationName}"))
+    into(packagedDistDir)
+    preserve {
+        include 'logs/**'
+    }
+
+    into('config') {
+        from('src/main/resources/server.properties')
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+tasks.register('starlingClient', JavaExec) {
+    group = 'application'
+    description = 'Runs the r26 normal-socket handshake probe against a Starling server.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.starling.client.StarlingClient'
+}

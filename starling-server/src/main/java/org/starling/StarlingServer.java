@@ -30,7 +30,7 @@ public class StarlingServer {
         log.info("Using database '{}@{}:{}'", config.dbName(), config.dbHost(), config.dbPort());
 
         DatabaseBootstrap.ensureDatabase(config);
-        EntityContext.init(config);
+        EntityContext.init(config.database());
         DatabaseBootstrap.ensureSchema(config);
         DatabaseBootstrap.seedDefaults();
         RoomDao.resetCurrentUsers();

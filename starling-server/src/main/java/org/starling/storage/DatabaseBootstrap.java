@@ -5,14 +5,13 @@ import org.apache.logging.log4j.Logger;
 import org.oldskooler.entity4j.DbContext;
 import org.oldskooler.entity4j.transaction.Transaction;
 import org.starling.config.ServerConfig;
+import org.starling.storage.DatabaseSupport;
 import org.starling.storage.bootstrap.DatabaseSeedRegistrar;
 import org.starling.storage.bootstrap.DatabaseSeedRegistrars;
 import org.starling.storage.entity.NavigatorCategoryEntity;
 import org.starling.storage.entity.RoomEntity;
 import org.starling.storage.entity.UserEntity;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.Statement;
 
 public final class DatabaseBootstrap {
@@ -29,27 +28,7 @@ public final class DatabaseBootstrap {
      * @param config the config value
      */
     public static void ensureDatabase(ServerConfig config) {
-        try {
-            Class.forName("org.mariadb.jdbc.Driver");
-        } catch (ClassNotFoundException e) {
-            throw new IllegalStateException("MariaDB JDBC driver is not available", e);
-        }
-
-        String createDatabaseSql = "CREATE DATABASE IF NOT EXISTS `" + escapeIdentifier(config.dbName())
-                + "` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci";
-
-        try (Connection connection = DriverManager.getConnection(
-                config.adminJdbcUrl(),
-                config.dbUsername(),
-                config.dbPassword()
-        );
-             Statement statement = connection.createStatement()) {
-            statement.executeUpdate(createDatabaseSql);
-            log.info("Ensured database '{}' exists", config.dbName());
-        } catch (Exception e) {
-            log.error("Failed to create database '{}': {}", config.dbName(), e.getMessage(), e);
-            throw new RuntimeException(e);
-        }
+        DatabaseSupport.ensureDatabase(config.database());
     }
 
     /**
@@ -209,14 +188,5 @@ public final class DatabaseBootstrap {
             log.error("Failed to seed default data: {}", e.getMessage(), e);
             throw new RuntimeException(e);
         }
-    }
-
-    /**
-     * Escapes identifier.
-     * @param identifier the identifier value
-     * @return the result of this operation
-     */
-    private static String escapeIdentifier(String identifier) {
-        return identifier.replace("`", "``");
     }
 }

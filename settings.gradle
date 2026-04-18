@@ -1,1 +1,5 @@
-rootProject.name = 'starling-server'
+rootProject.name = 'starling'
+
+include 'starling-core'
+include 'starling-server'
+include 'starling-web'
