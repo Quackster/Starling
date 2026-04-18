@@ -23,6 +23,7 @@ application {
 }
 
 def packagedDistDir = file("${projectDir}/dist")
+def packagedInstallDir = layout.buildDirectory.dir("install/${application.applicationName}")
 
 jar {
     manifest {
@@ -30,17 +31,30 @@ jar {
     }
 }
 
-tasks.register('packageDist', Sync) {
+tasks.register('packageDist') {
     dependsOn installDist
+    inputs.dir(packagedInstallDir)
+    inputs.file('src/main/resources/server.properties')
+    outputs.dir(packagedDistDir)
 
-    from(layout.buildDirectory.dir("install/${application.applicationName}"))
-    into(packagedDistDir)
-    preserve {
-        include 'logs/**'
+    doFirst {
+        delete(
+                new File(packagedDistDir, 'bin'),
+                new File(packagedDistDir, 'lib'),
+                new File(packagedDistDir, 'config')
+        )
     }
 
-    into('config') {
-        from('src/main/resources/server.properties')
+    doLast {
+        copy {
+            from(packagedInstallDir)
+            into(packagedDistDir)
+        }
+
+        copy {
+            from('src/main/resources/server.properties')
+            into(new File(packagedDistDir, 'config'))
+        }
     }
 }
 
