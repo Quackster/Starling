@@ -44,36 +44,21 @@ public final class HandshakeHandlers {
      * cipher, then send our public key back.
      */
     public static void handleGenerateKey(Session session, ClientMessage msg) {
-        String clientPublicKeyHex = msg.readString();
+        msg.readString();
         session.setCryptoMode(Session.CryptoMode.INIT);
 
         byte[] sharedSecret = INIT_COMPAT_SHARED_SECRET;
-        String sharedSecretHex = bytesToHex(sharedSecret);
         log.debug("Init shared secret selected from zero-padded compatibility public key ({} bytes)", sharedSecret.length);
 
         HabboCipher cipher = new HabboCipher();
         cipher.initInitSocket(sharedSecret);
-        GameChannelPipeline.enableInboundCrypto(session, cipher, sharedSecret);
+        GameChannelPipeline.enableInboundCrypto(session, cipher);
 
         String serverPublicKeyHex = DiffieHellman.initCompatibilityPublicKeyHex();
         String serverPublicKeyWire = serverPublicKeyHex;
         ServerMessage response = new ServerMessage(OutgoingPackets.SERVER_SECRET_KEY)
                 .writeRaw(serverPublicKeyWire);
         session.send(response);
-
-        session.setDebugDhMaterial(
-                clientPublicKeyHex,
-                "n/a",
-                serverPublicKeyHex,
-                sharedSecretHex
-        );
-
-        if (log.isDebugEnabled()) {
-            log.debug("DH material for {} clientPublicKeyHex={}", session.getRemoteAddress(), clientPublicKeyHex);
-            log.debug("DH material for {} serverPublicKeyHex={}", session.getRemoteAddress(), serverPublicKeyHex);
-            log.debug("DH material for {} serverPublicKeyWire={}", session.getRemoteAddress(), serverPublicKeyWire);
-            log.debug("DH material for {} sharedSecretHex={}", session.getRemoteAddress(), sharedSecretHex);
-        }
 
         log.info("Init handshake complete using compatibility public key for {}",
                 session.getRemoteAddress());
@@ -154,19 +139,5 @@ public final class HandshakeHandlers {
 
         session.send(response);
         log.debug("Sent SessionParameters");
-    }
-
-    /**
-     * Byteses to hex.
-     * @param value the value value
-     * @return the result of this operation
-     */
-    private static String bytesToHex(byte[] value) {
-        StringBuilder hex = new StringBuilder(value.length * 2);
-        for (byte current : value) {
-            hex.append(Character.forDigit((current >>> 4) & 0x0F, 16));
-            hex.append(Character.forDigit(current & 0x0F, 16));
-        }
-        return hex.toString().toUpperCase();
     }
 }

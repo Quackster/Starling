@@ -48,36 +48,6 @@ public class HabboCipher {
     }
 
     /**
-     * Diagnostic variant of the init-socket cipher that skips the 52-round
-     * premix while keeping the Director XOR-key and PRGA.
-     */
-    public void initInitSocketNoPremix(byte[] sharedKey) {
-        this.algorithm = Algorithm.INIT_SOCKET;
-        this.discardPostFrameBytes = true;
-        initSboxFromBytes(xorSharedKey(sharedKey));
-    }
-
-    /**
-     * Initializes the standard RC4-style PRGA directly from raw key bytes.
-     * Used only for diagnostics against Director compatibility issues.
-     */
-    public void initStandardBytes(byte[] keyBytes) {
-        this.algorithm = Algorithm.STANDARD;
-        this.discardPostFrameBytes = false;
-        initSboxFromBytes(keyBytes);
-    }
-
-    /**
-     * Diagnostic variant that applies the Director XOR-key to the shared
-     * secret, but uses the standard RC4-style PRGA instead of init-socket.
-     */
-    public void initStandardXoredShared(byte[] sharedKey) {
-        this.algorithm = Algorithm.STANDARD;
-        this.discardPostFrameBytes = false;
-        initSboxFromBytes(xorSharedKey(sharedKey));
-    }
-
-    /**
      * Inits server to client secret key.
      * @param secretKey the secret key value
      */
@@ -100,19 +70,6 @@ public class HabboCipher {
         copy.j = this.j;
         System.arraycopy(this.sbox, 0, copy.sbox, 0, this.sbox.length);
         return copy;
-    }
-
-    /**
-     * Returns a compact snapshot of the current cipher state for diagnostics.
-     * Uses a copied cipher for keystream preview so the live state is unchanged.
-     */
-    public String debugStateSummary(int keystreamBytes) {
-        HabboCipher snapshot = copy();
-        byte[] keystream = snapshot.applyKeystream(new byte[Math.max(0, keystreamBytes)]);
-        return "alg=" + algorithm.name().toLowerCase()
-                + ",q=" + q
-                + ",j=" + j
-                + ",ks=" + bytesToHex(keystream);
     }
 
     /**
@@ -380,17 +337,6 @@ public class HabboCipher {
         }
         return parsed;
     }
-
-    /**
-     * Byteses to hex.
-     * @param bytes the bytes value
-     * @return the result of this operation
-     */
-    private static String bytesToHex(byte[] bytes) {
-        byte[] hex = new HabboCipher().encodeHex(bytes);
-        return new String(hex, StandardCharsets.US_ASCII);
-    }
-
     private enum Algorithm {
         STANDARD,
         INIT_SOCKET
