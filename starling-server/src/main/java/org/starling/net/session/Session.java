@@ -4,14 +4,13 @@ import io.netty.channel.Channel;
 import io.netty.util.AttributeKey;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.starling.crypto.DiffieHellman;
 import org.starling.crypto.HabboCipher;
 import org.starling.game.player.Player;
 import org.starling.net.codec.ServerMessage;
 
 /**
- * Per-connection session state. Attached to the Netty Channel via an AttributeKey.
- * Holds DH key exchange state, cipher, and the logged-in Player reference.
+ * Per-connection session state. Attached to the Netty Channel via an
+ * AttributeKey and used by the Netty pipeline handlers.
  */
 public class Session {
 
@@ -19,18 +18,11 @@ public class Session {
     public static final AttributeKey<Session> KEY = AttributeKey.valueOf("session");
 
     private final Channel channel;
-    private DiffieHellman diffieHellman;
     private HabboCipher inboundCipher;
     private HabboCipher outboundCipher;
-    private byte[] inboundSharedSecret;
     private volatile boolean inboundEncrypted;
     private volatile boolean outboundEncrypted;
     private CryptoMode cryptoMode = CryptoMode.NONE;
-    private String debugClientPublicKeyHex;
-    private String debugServerPrivateKeyHex;
-    private String debugServerPublicKeyHex;
-    private String debugSharedSecretHex;
-    private boolean encryptedDiagnosticsContextLogged;
     private Player player;
     private RoomPresence roomPresence = RoomPresence.none();
 
@@ -89,23 +81,7 @@ public class Session {
         return formatted.toString();
     }
 
-    // --- DH / Crypto ---
-
-    /**
-     * Returns the diffie hellman.
-     * @return the diffie hellman
-     */
-    public DiffieHellman getDiffieHellman() {
-        return diffieHellman;
-    }
-
-    /**
-     * Sets the diffie hellman.
-     * @param dh the dh value
-     */
-    public void setDiffieHellman(DiffieHellman dh) {
-        this.diffieHellman = dh;
-    }
+    // --- Crypto ---
 
     /**
      * Returns the inbound cipher.
@@ -137,22 +113,6 @@ public class Session {
      */
     public void setOutboundCipher(HabboCipher outboundCipher) {
         this.outboundCipher = outboundCipher;
-    }
-
-    /**
-     * Returns the inbound shared secret.
-     * @return the inbound shared secret
-     */
-    public byte[] getInboundSharedSecret() {
-        return inboundSharedSecret == null ? null : inboundSharedSecret.clone();
-    }
-
-    /**
-     * Sets the inbound shared secret.
-     * @param inboundSharedSecret the inbound shared secret value
-     */
-    public void setInboundSharedSecret(byte[] inboundSharedSecret) {
-        this.inboundSharedSecret = inboundSharedSecret == null ? null : inboundSharedSecret.clone();
     }
 
     /**
@@ -207,112 +167,11 @@ public class Session {
      * Resets crypto.
      */
     public void resetCrypto() {
-        this.diffieHellman = null;
         this.inboundCipher = null;
         this.outboundCipher = null;
-        this.inboundSharedSecret = null;
         this.inboundEncrypted = false;
         this.outboundEncrypted = false;
         this.cryptoMode = CryptoMode.NONE;
-        this.debugClientPublicKeyHex = null;
-        this.debugServerPrivateKeyHex = null;
-        this.debugServerPublicKeyHex = null;
-        this.debugSharedSecretHex = null;
-        this.encryptedDiagnosticsContextLogged = false;
-    }
-
-    /**
-     * Backward-compatible alias for the inbound cipher while the rest of the
-     * server migrates to explicit inbound/outbound naming.
-     */
-    public HabboCipher getCipher() {
-        return getInboundCipher();
-    }
-
-    /**
-     * Sets the cipher.
-     * @param cipher the cipher value
-     */
-    public void setCipher(HabboCipher cipher) {
-        setInboundCipher(cipher);
-    }
-
-    /**
-     * Returns whether encrypted.
-     * @return whether encrypted
-     */
-    public boolean isEncrypted() {
-        return isInboundEncrypted();
-    }
-
-    /**
-     * Sets the encrypted.
-     * @param encrypted the encrypted value
-     */
-    public void setEncrypted(boolean encrypted) {
-        setInboundEncrypted(encrypted);
-    }
-
-    /**
-     * Sets debug dh material.
-     * @param clientPublicKeyHex the client public key hex value
-     * @param serverPrivateKeyHex the server private key hex value
-     * @param serverPublicKeyHex the server public key hex value
-     * @param sharedSecretHex the shared secret hex value
-     */
-    public void setDebugDhMaterial(
-            String clientPublicKeyHex,
-            String serverPrivateKeyHex,
-            String serverPublicKeyHex,
-            String sharedSecretHex
-    ) {
-        this.debugClientPublicKeyHex = clientPublicKeyHex;
-        this.debugServerPrivateKeyHex = serverPrivateKeyHex;
-        this.debugServerPublicKeyHex = serverPublicKeyHex;
-        this.debugSharedSecretHex = sharedSecretHex;
-        this.encryptedDiagnosticsContextLogged = false;
-    }
-
-    /**
-     * Returns the debug client public key hex.
-     * @return the debug client public key hex
-     */
-    public String getDebugClientPublicKeyHex() {
-        return debugClientPublicKeyHex;
-    }
-
-    /**
-     * Returns the debug server private key hex.
-     * @return the debug server private key hex
-     */
-    public String getDebugServerPrivateKeyHex() {
-        return debugServerPrivateKeyHex;
-    }
-
-    /**
-     * Returns the debug server public key hex.
-     * @return the debug server public key hex
-     */
-    public String getDebugServerPublicKeyHex() {
-        return debugServerPublicKeyHex;
-    }
-
-    /**
-     * Returns the debug shared secret hex.
-     * @return the debug shared secret hex
-     */
-    public String getDebugSharedSecretHex() {
-        return debugSharedSecretHex;
-    }
-
-    /**
-     * Marks encrypted diagnostics context logged.
-     * @return the result of this operation
-     */
-    public boolean markEncryptedDiagnosticsContextLogged() {
-        boolean alreadyLogged = encryptedDiagnosticsContextLogged;
-        encryptedDiagnosticsContextLogged = true;
-        return alreadyLogged;
     }
 
     // --- Player ---

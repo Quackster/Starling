@@ -189,7 +189,7 @@ class HandshakeCryptoFlowTest {
         byte[] directorSharedKey = new byte[]{0x01};
         HabboCipher serverDecoder = new HabboCipher();
         serverDecoder.initInitSocket(directorSharedKey);
-        GameChannelPipeline.enableInboundCrypto(session, serverDecoder, directorSharedKey);
+        GameChannelPipeline.enableInboundCrypto(session, serverDecoder);
 
         byte[] plaintext = clientFrame(
                 IncomingPackets.VERSIONCHECK,

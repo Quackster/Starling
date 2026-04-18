@@ -52,11 +52,9 @@ public final class GameChannelPipeline {
      * Enables inbound crypto.
      * @param session the session value
      * @param cipher the cipher value
-     * @param sharedSecret the shared secret value
      */
-    public static void enableInboundCrypto(Session session, HabboCipher cipher, byte[] sharedSecret) {
+    public static void enableInboundCrypto(Session session, HabboCipher cipher) {
         session.setInboundCipher(cipher);
-        session.setInboundSharedSecret(sharedSecret);
         session.setInboundEncrypted(true);
         addBefore(session.getChannel().pipeline(), DECODER, GameDecoder.class, INBOUND_CRYPTO, new InboundCryptoDecoder());
     }
@@ -68,7 +66,6 @@ public final class GameChannelPipeline {
     public static void disableInboundCrypto(Session session) {
         removeIfPresent(session.getChannel().pipeline(), INBOUND_CRYPTO);
         session.setInboundCipher(null);
-        session.setInboundSharedSecret(null);
         session.setInboundEncrypted(false);
     }
 
