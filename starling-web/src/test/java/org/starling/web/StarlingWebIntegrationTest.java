@@ -208,6 +208,23 @@ class StarlingWebIntegrationTest {
     }
 
     @Test
+    void unauthenticatedAdminHtmxRequestsReceiveHxRedirect() throws Exception {
+        HttpClient anonymousClient = HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .build();
+
+        HttpResponse<String> response = postForm(
+                anonymousClient,
+                "/admin/pages/preview",
+                Map.of("markdown", "Preview body"),
+                Map.of("HX-Request", "true")
+        );
+
+        assertEquals(401, response.statusCode());
+        assertEquals("/admin/login", response.headers().firstValue("HX-Redirect").orElse(""));
+    }
+
+    @Test
     void loginPreviewPublishAndAliasRoutesWork() throws Exception {
         login();
 
@@ -258,6 +275,43 @@ class StarlingWebIntegrationTest {
     }
 
     @Test
+    void adminPagePublishFlowRendersPublicPage() throws Exception {
+        login();
+
+        String slug = "page-" + UUID.randomUUID().toString().substring(0, 8);
+        HttpResponse<String> saveResponse = postForm(
+                "/admin/pages",
+                Map.of(
+                        "title", "About Starling",
+                        "slug", slug,
+                        "templateName", "page",
+                        "summary", "A public page published from the integration test.",
+                        "markdown", "## Page Body"
+                ),
+                Map.of()
+        );
+        assertEquals(200, saveResponse.statusCode());
+
+        int pageId = CmsPageDao.listAll().stream()
+                .filter(page -> slug.equals(page.slug()))
+                .findFirst()
+                .orElseThrow()
+                .id();
+
+        HttpResponse<String> publishResponse = postForm("/admin/pages/" + pageId + "/publish", Map.of(), Map.of());
+        assertEquals(200, publishResponse.statusCode());
+
+        HttpResponse<String> pageResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/page/" + slug)).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertEquals(200, pageResponse.statusCode());
+        assertTrue(pageResponse.body().contains("About Starling"));
+        assertTrue(pageResponse.body().contains("<h2>Page Body</h2>"));
+    }
+
+    @Test
     void mediaUploadsCaptureMetadata() throws Exception {
         login();
 
@@ -288,6 +342,10 @@ class StarlingWebIntegrationTest {
     }
 
     private HttpResponse<String> postForm(String path, Map<String, String> form, Map<String, String> headers) throws Exception {
+        return postForm(client, path, form, headers);
+    }
+
+    private HttpResponse<String> postForm(HttpClient httpClient, String path, Map<String, String> form, Map<String, String> headers) throws Exception {
         StringBuilder body = new StringBuilder();
         boolean first = true;
         for (Map.Entry<String, String> entry : form.entrySet()) {
@@ -307,7 +365,7 @@ class StarlingWebIntegrationTest {
             builder.header(entry.getKey(), entry.getValue());
         }
 
-        return client.send(builder.build(), HttpResponse.BodyHandlers.ofString());
+        return httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
     }
 
     private byte[] tinyPng() throws Exception {
