@@ -4,7 +4,7 @@
 </section>
 
 <section class="panel">
-    {% if articles %}
+    {% if articles | length > 0 %}
         <div class="news-list">
             {% for article in articles %}
                 <article class="news-card">

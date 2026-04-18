@@ -119,6 +119,23 @@ class StarlingWebIntegrationTest {
     }
 
     @Test
+    void homepageAndNewsIndexRender() throws Exception {
+        HttpResponse<String> homepageResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> newsIndexResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/news")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertEquals(200, homepageResponse.statusCode());
+        assertEquals(200, newsIndexResponse.statusCode());
+        assertTrue(homepageResponse.body().contains("Starling-Web"));
+        assertTrue(newsIndexResponse.body().contains("News"));
+    }
+
+    @Test
     void loginPreviewPublishAndAliasRoutesWork() throws Exception {
         login();
 

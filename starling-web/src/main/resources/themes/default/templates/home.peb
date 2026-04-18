@@ -1,7 +1,7 @@
 <section class="hero-card">
     <div class="hero-card__copy">
         <span class="hero-card__eyebrow">Starling-Web</span>
-        {% if homePage %}
+        {% if homePage != null %}
             <h1>{{ homePage.title }}</h1>
             <p class="hero-card__summary">{{ homePage.summary }}</p>
             <div class="formatted-copy">
@@ -20,7 +20,7 @@
 <section class="content-grid">
     <article class="panel">
         <h2>Latest News</h2>
-        {% if articles %}
+        {% if articles | length > 0 %}
             <div class="news-list">
                 {% for article in articles %}
                     <a class="news-card" href="{{ article.url }}">
