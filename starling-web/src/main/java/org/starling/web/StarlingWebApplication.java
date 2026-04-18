@@ -6,6 +6,8 @@ import io.javalin.http.Handler;
 import io.javalin.http.UploadedFile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.starling.storage.dao.UserDao;
+import org.starling.storage.entity.UserEntity;
 import org.starling.storage.EntityContext;
 import org.starling.web.cms.auth.PasswordHasher;
 import org.starling.web.cms.auth.SignedSessionService;
@@ -28,15 +30,27 @@ import org.starling.web.config.WebConfig;
 import org.starling.web.render.MarkdownRenderer;
 import org.starling.web.render.TemplateRenderer;
 import org.starling.web.theme.ThemeResourceResolver;
+import org.starling.web.user.CaptchaService;
+import org.starling.web.user.UserSessionService;
 import org.starling.web.util.Htmx;
 import org.starling.web.util.Slugifier;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.Year;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -79,10 +93,19 @@ public final class StarlingWebApplication {
         TemplateRenderer templateRenderer = new TemplateRenderer(themeResourceResolver);
         MarkdownRenderer markdownRenderer = new MarkdownRenderer();
         SignedSessionService signedSessionService = new SignedSessionService(config.sessionSecret());
+        UserSessionService userSessionService = new UserSessionService(config.sessionSecret());
         MediaStorageService mediaStorageService = new MediaStorageService(config);
 
         Javalin app = Javalin.create(javalinConfig -> javalinConfig.showJavalinBanner = false);
-        registerRoutes(app, templateRenderer, markdownRenderer, signedSessionService, themeResourceResolver, mediaStorageService);
+        registerRoutes(
+                app,
+                templateRenderer,
+                markdownRenderer,
+                signedSessionService,
+                userSessionService,
+                themeResourceResolver,
+                mediaStorageService
+        );
         return app;
     }
 
@@ -92,6 +115,7 @@ public final class StarlingWebApplication {
      * @param templateRenderer the template renderer value
      * @param markdownRenderer the markdown renderer value
      * @param signedSessionService the signed session service value
+     * @param userSessionService the user session service value
      * @param themeResourceResolver the theme resource resolver value
      * @param mediaStorageService the media storage service value
      */
@@ -100,21 +124,52 @@ public final class StarlingWebApplication {
             TemplateRenderer templateRenderer,
             MarkdownRenderer markdownRenderer,
             SignedSessionService signedSessionService,
+            UserSessionService userSessionService,
             ThemeResourceResolver themeResourceResolver,
             MediaStorageService mediaStorageService
     ) {
-        app.get("/", ctx -> renderHomepage(ctx, templateRenderer, markdownRenderer));
-        app.get("/index", ctx -> renderHomepage(ctx, templateRenderer, markdownRenderer));
-        app.get("/home", ctx -> renderHomepage(ctx, templateRenderer, markdownRenderer));
+        app.get("/", ctx -> renderHomepage(ctx, templateRenderer, markdownRenderer, userSessionService));
+        app.get("/index", ctx -> renderHomepage(ctx, templateRenderer, markdownRenderer, userSessionService));
+        app.get("/home", ctx -> renderHomepage(ctx, templateRenderer, markdownRenderer, userSessionService));
+        app.get("/me", ctx -> renderMe(ctx, templateRenderer, userSessionService));
+        app.get("/welcome", ctx -> renderWelcome(ctx, templateRenderer, userSessionService));
+        app.get("/security_check", StarlingWebApplication::renderSecurityCheck);
+        app.get("/register", ctx -> renderRegister(ctx, templateRenderer, userSessionService));
+        app.post("/register", ctx -> handleRegister(ctx, userSessionService));
+        app.get("/register/cancel", StarlingWebApplication::cancelRegister);
+        app.get("/account/login", ctx -> renderAccountLogin(ctx, templateRenderer, userSessionService));
+        app.get("/account/logout", ctx -> logoutUser(ctx, userSessionService));
 
-        app.get("/news", ctx -> renderNewsIndex(ctx, templateRenderer));
-        app.get("/articles", ctx -> renderNewsIndex(ctx, templateRenderer));
-        app.get("/news/{slug}", ctx -> renderArticleDetail(ctx, templateRenderer, markdownRenderer));
-        app.get("/articles/{slug}", ctx -> renderArticleDetail(ctx, templateRenderer, markdownRenderer));
-        app.get("/page/{slug}", ctx -> renderPageDetail(ctx, templateRenderer, markdownRenderer));
+        app.get("/community", ctx -> renderNewsIndex(ctx, templateRenderer, markdownRenderer, userSessionService, "news", false));
+        app.get("/news", ctx -> renderNewsIndex(ctx, templateRenderer, markdownRenderer, userSessionService, "news", false));
+        app.get("/articles", ctx -> renderNewsIndex(ctx, templateRenderer, markdownRenderer, userSessionService, "news", false));
+        app.get("/articles/archive", ctx -> renderNewsIndex(ctx, templateRenderer, markdownRenderer, userSessionService, "news", true));
+        app.get("/community/events", ctx -> renderNewsIndex(ctx, templateRenderer, markdownRenderer, userSessionService, "events", false));
+        app.get("/community/events/archive", ctx -> renderNewsIndex(ctx, templateRenderer, markdownRenderer, userSessionService, "events", true));
+        app.get("/community/fansites", ctx -> renderNewsIndex(ctx, templateRenderer, markdownRenderer, userSessionService, "fansites", false));
+        app.get("/community/fansites/archive", ctx -> renderNewsIndex(ctx, templateRenderer, markdownRenderer, userSessionService, "fansites", true));
+        app.get("/news/{slug}", ctx -> renderArticleDetail(ctx, templateRenderer, markdownRenderer, userSessionService, "news"));
+        app.get("/articles/{slug}", ctx -> renderArticleDetail(ctx, templateRenderer, markdownRenderer, userSessionService, "news"));
+        app.get("/community/events/{slug}", ctx -> renderArticleDetail(ctx, templateRenderer, markdownRenderer, userSessionService, "events"));
+        app.get("/community/fansites/{slug}", ctx -> renderArticleDetail(ctx, templateRenderer, markdownRenderer, userSessionService, "fansites"));
+        app.get("/page/{slug}", ctx -> renderPageDetail(ctx, templateRenderer, markdownRenderer, userSessionService));
+        app.get("/home/{username}", ctx -> ctx.redirect("/me"));
 
         app.get("/media/{id}/{filename}", ctx -> serveMediaAsset(ctx, mediaStorageService));
-        app.get("/assets/{asset}", ctx -> serveThemeAsset(ctx, themeResourceResolver));
+        app.get("/web-gallery/<asset>", ctx -> serveThemeAsset(ctx, themeResourceResolver, "web-gallery"));
+        app.get("/assets/<asset>", ctx -> serveThemeAsset(ctx, themeResourceResolver, null));
+        app.get("/captcha.jpg", StarlingWebApplication::serveCaptcha);
+        app.get("/habbo-imaging/avatarimage", StarlingWebApplication::serveAvatarPlaceholder);
+        app.get("/games", ctx -> ctx.redirect("/news"));
+        app.get("/credits", ctx -> ctx.redirect("/news"));
+        app.get("/tag", ctx -> ctx.redirect("/news"));
+        app.get("/papers/disclaimer", ctx -> ctx.redirect("/"));
+        app.get("/papers/privacy", ctx -> ctx.redirect("/"));
+        app.get("/account/password/forgot", ctx -> ctx.redirect("/account/login"));
+        app.get("/client", ctx -> routeClientEntry(ctx, userSessionService));
+        app.get("/shockwave_client", ctx -> ctx.redirect("/client"));
+        app.get("/flash_client", ctx -> ctx.redirect("/client"));
+        app.post("/account/submit", ctx -> handleLegacyAccountSubmit(ctx, userSessionService));
 
         app.get("/admin/login", ctx -> renderAdminLogin(ctx, templateRenderer));
         app.post("/admin/login", ctx -> handleAdminLogin(ctx, templateRenderer, signedSessionService));
@@ -200,24 +255,300 @@ public final class StarlingWebApplication {
      * @param context the context value
      * @param templateRenderer the renderer value
      * @param markdownRenderer the markdown renderer value
+     * @param userSessionService the user session service value
      */
-    private static void renderHomepage(Context context, TemplateRenderer templateRenderer, MarkdownRenderer markdownRenderer) {
-        Map<String, Object> model = publicModel("/");
+    private static void renderHomepage(
+            Context context,
+            TemplateRenderer templateRenderer,
+            MarkdownRenderer markdownRenderer,
+            UserSessionService userSessionService
+    ) {
+        if (userSessionService.authenticate(context).isPresent()) {
+            context.redirect("/me");
+            return;
+        }
+
+        Map<String, Object> model = publicModel(context, "community", userSessionService);
         Optional<CmsPage> homePage = CmsPageDao.findPublishedBySlug("home");
         model.put("homePage", homePage.map(page -> pageView(page, markdownRenderer)).orElse(null));
-        model.put("articles", CmsArticleDao.listPublished().stream().limit(5).map(article -> articleSummaryView(article)).toList());
-        context.html(templateRenderer.render("layout", "home", model));
+        model.put("tagCloud", Collections.emptyMap());
+        model.put("rememberMe", "true".equalsIgnoreCase(context.queryParam("rememberme")));
+        model.put("username", valueOrEmpty(context.queryParam("username")));
+        context.html(templateRenderer.render("index", model));
+    }
+
+    /**
+     * Renders the public account login popup.
+     * @param context the context value
+     * @param templateRenderer the renderer value
+     * @param userSessionService the user session service value
+     */
+    private static void renderAccountLogin(Context context, TemplateRenderer templateRenderer, UserSessionService userSessionService) {
+        if (userSessionService.authenticate(context).isPresent()) {
+            context.redirect("/me");
+            return;
+        }
+
+        Map<String, Object> model = publicModel(context, "community", userSessionService);
+        model.put("rememberMe", "true".equalsIgnoreCase(context.queryParam("rememberme")));
+        model.put("username", valueOrEmpty(context.queryParam("username")));
+        context.html(templateRenderer.render("account/login", model));
+    }
+
+    /**
+     * Renders the Lisbon security check redirect.
+     * @param context the context value
+     */
+    private static void renderSecurityCheck(Context context) {
+        String nextPath = valueOrDefault(context.sessionAttribute("postLoginPath"), "/me");
+        context.sessionAttribute("postLoginPath", null);
+        context.redirect(nextPath);
+    }
+
+    /**
+     * Renders the public user home.
+     * @param context the context value
+     * @param templateRenderer the renderer value
+     * @param userSessionService the user session service value
+     */
+    private static void renderMe(Context context, TemplateRenderer templateRenderer, UserSessionService userSessionService) {
+        Optional<UserEntity> currentUser = userSessionService.authenticate(context);
+        if (currentUser.isEmpty()) {
+            context.redirect("/");
+            return;
+        }
+
+        Map<String, Object> model = publicModel(context, "me", userSessionService);
+        List<Map<String, Object>> featuredArticles = CmsArticleDao.listPublished().stream()
+                .limit(5)
+                .map(StarlingWebApplication::articleSummaryView)
+                .toList();
+
+        for (int index = 0; index < 5; index++) {
+            model.put("article" + (index + 1), index < featuredArticles.size() ? featuredArticles.get(index) : emptyFeaturedArticle(index + 1));
+        }
+
+        model.put("currentUser", userView(currentUser.get()));
+        model.put("onlineFriends", List.of("RetroGuide", "PixelPilot", "Newsie"));
+        model.put("recommendedGroups", List.of(
+                Map.of("name", "Starling Builders", "badge", "b0514Xs09114s05013s05014"),
+                Map.of("name", "Rare Traders", "badge", "b04124s09113s05013s05014")
+        ));
+        model.put("tagCloud", List.of("cms", "retro", "hotel"));
+        context.html(templateRenderer.render("me", model));
+    }
+
+    /**
+     * Renders the post-registration welcome page.
+     * @param context the context value
+     * @param templateRenderer the renderer value
+     * @param userSessionService the user session service value
+     */
+    private static void renderWelcome(Context context, TemplateRenderer templateRenderer, UserSessionService userSessionService) {
+        Optional<UserEntity> currentUser = userSessionService.authenticate(context);
+        if (currentUser.isEmpty()) {
+            context.redirect("/");
+            return;
+        }
+
+        Map<String, Object> model = publicModel(context, "me", userSessionService);
+        model.put("currentUser", userView(currentUser.get()));
+        model.put("welcomeRooms", List.of(
+                Map.of("id", 0, "label", "Sunset Lounge"),
+                Map.of("id", 1, "label", "Neon Loft"),
+                Map.of("id", 2, "label", "Rooftop Club"),
+                Map.of("id", 3, "label", "Cinema Suite"),
+                Map.of("id", 4, "label", "Arcade Den"),
+                Map.of("id", 5, "label", "Pool Deck")
+        ));
+        context.html(templateRenderer.render("welcome", model));
+    }
+
+    /**
+     * Renders the Lisbon-style register page.
+     * @param context the context value
+     * @param templateRenderer the renderer value
+     * @param userSessionService the user session service value
+     */
+    private static void renderRegister(Context context, TemplateRenderer templateRenderer, UserSessionService userSessionService) {
+        if (userSessionService.authenticate(context).isPresent()) {
+            context.redirect("/me");
+            return;
+        }
+
+        int referral = parseInt(valueOrEmpty(context.queryParam("referral")), parseInt(context.sessionAttribute("registerReferral"), 0));
+        if (referral > 0) {
+            context.sessionAttribute("registerReferral", String.valueOf(referral));
+        }
+
+        Map<String, Object> model = publicModel(context, "community", userSessionService);
+        model.put("referral", referral);
+        model.put("randomNum", System.currentTimeMillis() % 10000);
+        model.put("randomFemaleFigure1", "hr-100-42.hd-180-1.ch-210-66.lg-270-82.sh-290-91");
+        model.put("randomFemaleFigure2", "hr-100-61.hd-600-1.ch-255-62.lg-280-82.sh-300-64");
+        model.put("randomFemaleFigure3", "hr-515-45.hd-600-2.ch-255-92.lg-720-82.sh-730-64");
+        model.put("randomMaleFigure1", "hr-100-61.hd-180-2.ch-210-92.lg-270-82.sh-290-64");
+        model.put("randomMaleFigure2", "hr-165-42.hd-190-1.ch-255-66.lg-280-82.sh-305-64");
+        model.put("randomMaleFigure3", "hr-828-61.hd-180-1.ch-210-66.lg-270-82.sh-290-91");
+        model.put("registerCaptchaInvalid", Boolean.TRUE.equals(context.sessionAttribute("registerCaptchaInvalid")));
+        model.put("registerEmailInvalid", Boolean.TRUE.equals(context.sessionAttribute("registerEmailInvalid")));
+        model.put("registerUsername", valueOrEmpty(context.sessionAttribute("registerUsername")));
+        model.put("registerShowPassword", valueOrEmpty(context.sessionAttribute("registerShowPassword")));
+        model.put("registerFigure", valueOrDefault(context.sessionAttribute("registerFigure"), "hr-100-61.hd-180-2.ch-210-92.lg-270-82.sh-290-64"));
+        model.put("registerGender", valueOrDefault(context.sessionAttribute("registerGender"), "M"));
+        model.put("registerEmail", valueOrEmpty(context.sessionAttribute("registerEmail")));
+        model.put("registerDay", valueOrEmpty(context.sessionAttribute("registerDay")));
+        model.put("registerMonth", valueOrEmpty(context.sessionAttribute("registerMonth")));
+        model.put("registerYear", valueOrEmpty(context.sessionAttribute("registerYear")));
+        context.html(templateRenderer.render("register", model));
+    }
+
+    /**
+     * Handles the public register flow.
+     * @param context the context value
+     * @param userSessionService the user session service value
+     */
+    private static void handleRegister(Context context, UserSessionService userSessionService) {
+        if (userSessionService.authenticate(context).isPresent()) {
+            context.redirect("/me");
+            return;
+        }
+
+        String username = valueOrEmpty(context.formParam("bean.avatarName")).trim();
+        String password = valueOrEmpty(context.formParam("password"));
+        String retypedPassword = valueOrEmpty(context.formParam("retypedPassword"));
+        String email = valueOrEmpty(context.formParam("bean.email")).trim();
+        String day = valueOrEmpty(context.formParam("bean.day")).trim();
+        String month = valueOrEmpty(context.formParam("bean.month")).trim();
+        String year = valueOrEmpty(context.formParam("bean.year")).trim();
+        String figure = valueOrDefault(context.formParam("bean.figure"), "hr-100-61.hd-180-2.ch-210-92.lg-270-82.sh-290-64");
+        String gender = valueOrDefault(context.formParam("bean.gender"), "M");
+        String randomFigure = valueOrEmpty(context.formParam("randomFigure")).trim();
+        if (!randomFigure.isBlank() && randomFigure.contains("-")) {
+            gender = randomFigure.substring(0, 1);
+            figure = randomFigure.substring(2);
+        }
+
+        context.sessionAttribute("registerUsername", username);
+        context.sessionAttribute("registerShowPassword", password.replaceAll("(?s).", "*"));
+        context.sessionAttribute("registerFigure", figure);
+        context.sessionAttribute("registerGender", gender);
+        context.sessionAttribute("registerEmail", email);
+        context.sessionAttribute("registerDay", day);
+        context.sessionAttribute("registerMonth", month);
+        context.sessionAttribute("registerYear", year);
+        context.sessionAttribute("registerCaptchaInvalid", false);
+        context.sessionAttribute("registerEmailInvalid", false);
+
+        if (username.isBlank() || password.isBlank() || retypedPassword.isBlank() || email.isBlank()) {
+            context.redirect("/register?error=blank_fields");
+            return;
+        }
+
+        if (!password.equals(retypedPassword) || password.length() < 6) {
+            context.redirect("/register?error=bad_password");
+            return;
+        }
+
+        if (!username.matches("[A-Za-z0-9\\-=?!@:.]{2,32}") || UserDao.findByUsername(username) != null) {
+            context.redirect("/register?error=bad_username");
+            return;
+        }
+
+        if (!email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$") || UserDao.findByEmail(email) != null) {
+            context.sessionAttribute("registerEmailInvalid", true);
+            context.redirect("/register?error=bad_email");
+            return;
+        }
+
+        String captchaResponse = valueOrEmpty(context.formParam("bean.captchaResponse")).trim();
+        String expectedCaptcha = valueOrEmpty(context.sessionAttribute("registerCaptchaText"));
+        if (expectedCaptcha.isBlank() || !captchaResponse.equalsIgnoreCase(expectedCaptcha)) {
+            context.sessionAttribute("registerCaptchaInvalid", true);
+            context.redirect("/register?error=bad_captcha");
+            return;
+        }
+
+        UserDao.save(UserEntity.createRegisteredUser(username, password, figure, gender, email));
+        UserEntity createdUser = UserDao.findByUsername(username);
+        if (createdUser == null) {
+            throw new IllegalStateException("Registered user could not be loaded after insert");
+        }
+
+        UserDao.updateLogin(createdUser);
+        clearRegisterState(context);
+        userSessionService.start(context, createdUser);
+        context.redirect("/welcome");
+    }
+
+    /**
+     * Cancels the register flow.
+     * @param context the context value
+     */
+    private static void cancelRegister(Context context) {
+        clearRegisterState(context);
+        context.redirect("/");
+    }
+
+    /**
+     * Logs the current public user out.
+     * @param context the context value
+     * @param userSessionService the user session service value
+     */
+    private static void logoutUser(Context context, UserSessionService userSessionService) {
+        userSessionService.clear(context);
+        context.redirect("/");
+    }
+
+    /**
+     * Routes the client entry path.
+     * @param context the context value
+     * @param userSessionService the user session service value
+     */
+    private static void routeClientEntry(Context context, UserSessionService userSessionService) {
+        context.redirect(userSessionService.authenticate(context).isPresent() ? "/me" : "/");
+    }
+
+    /**
+     * Serves a captcha image.
+     * @param context the context value
+     */
+    private static void serveCaptcha(Context context) {
+        String captchaText = CaptchaService.generateText(6);
+        context.sessionAttribute("registerCaptchaText", captchaText);
+        context.contentType("image/png");
+        context.result(new ByteArrayInputStream(CaptchaService.renderPng(captchaText)));
+    }
+
+    /**
+     * Serves a simple avatar placeholder.
+     * @param context the context value
+     */
+    private static void serveAvatarPlaceholder(Context context) {
+        int width = "b".equalsIgnoreCase(context.queryParam("size")) ? 64 : 32;
+        int height = "b".equalsIgnoreCase(context.queryParam("size")) ? 110 : 55;
+        context.contentType("image/png");
+        context.result(new ByteArrayInputStream(CaptchaService.renderAvatarPlaceholder("Starling", width, height)));
     }
 
     /**
      * Renders the news index.
      * @param context the context value
      * @param templateRenderer the renderer value
+     * @param markdownRenderer the markdown renderer value
+     * @param userSessionService the user session service value
+     * @param newsPage the active news page value
+     * @param archiveView whether the archive view is active
      */
-    private static void renderNewsIndex(Context context, TemplateRenderer templateRenderer) {
-        Map<String, Object> model = publicModel("/news");
-        model.put("articles", CmsArticleDao.listPublished().stream().map(StarlingWebApplication::articleSummaryView).toList());
-        context.html(templateRenderer.render("layout", "news-index", model));
+    private static void renderNewsIndex(
+            Context context,
+            TemplateRenderer templateRenderer,
+            MarkdownRenderer markdownRenderer,
+            UserSessionService userSessionService,
+            String newsPage,
+            boolean archiveView
+    ) {
+        renderNewsPage(context, templateRenderer, markdownRenderer, userSessionService, newsPage, archiveView, null);
     }
 
     /**
@@ -225,17 +556,23 @@ public final class StarlingWebApplication {
      * @param context the context value
      * @param templateRenderer the renderer value
      * @param markdownRenderer the markdown renderer value
+     * @param userSessionService the user session service value
+     * @param newsPage the active news page value
      */
-    private static void renderArticleDetail(Context context, TemplateRenderer templateRenderer, MarkdownRenderer markdownRenderer) {
+    private static void renderArticleDetail(
+            Context context,
+            TemplateRenderer templateRenderer,
+            MarkdownRenderer markdownRenderer,
+            UserSessionService userSessionService,
+            String newsPage
+    ) {
         Optional<CmsArticle> article = CmsArticleDao.findPublishedBySlug(context.pathParam("slug"));
         if (article.isEmpty()) {
-            renderNotFound(context, templateRenderer, "/news");
+            renderNotFound(context, templateRenderer);
             return;
         }
 
-        Map<String, Object> model = publicModel("/news");
-        model.put("article", articleView(article.get(), markdownRenderer));
-        context.html(templateRenderer.render("layout", "news-detail", model));
+        renderNewsPage(context, templateRenderer, markdownRenderer, userSessionService, newsPage, false, article.get());
     }
 
     /**
@@ -244,28 +581,35 @@ public final class StarlingWebApplication {
      * @param templateRenderer the renderer value
      * @param markdownRenderer the markdown renderer value
      */
-    private static void renderPageDetail(Context context, TemplateRenderer templateRenderer, MarkdownRenderer markdownRenderer) {
+    private static void renderPageDetail(
+            Context context,
+            TemplateRenderer templateRenderer,
+            MarkdownRenderer markdownRenderer,
+            UserSessionService userSessionService
+    ) {
         Optional<CmsPage> page = CmsPageDao.findPublishedBySlug(context.pathParam("slug"));
         if (page.isEmpty()) {
-            renderNotFound(context, templateRenderer, context.path());
+            renderNotFound(context, templateRenderer);
             return;
         }
 
-        Map<String, Object> model = publicModel("/page/" + page.get().slug());
+        Map<String, Object> model = publicModel(context, "community", userSessionService);
         model.put("page", pageView(page.get(), markdownRenderer));
-        context.html(templateRenderer.render("layout", "page", model));
+        context.html(templateRenderer.render("page", model));
     }
 
     /**
      * Renders a 404 page.
      * @param context the context value
      * @param templateRenderer the renderer value
-     * @param currentPath the current path value
      */
-    private static void renderNotFound(Context context, TemplateRenderer templateRenderer, String currentPath) {
-        Map<String, Object> model = publicModel(currentPath);
+    private static void renderNotFound(Context context, TemplateRenderer templateRenderer) {
+        Map<String, Object> model = new HashMap<>();
+        model.put("siteTitle", "Starling");
+        model.put("site", Map.of("siteName", "Starling", "sitePath", "", "staticContentPath", ""));
+        model.put("session", Map.of("loggedIn", false, "currentPage", "community"));
         model.put("message", "That page could not be found.");
-        context.status(404).html(templateRenderer.render("layout", "not-found", model));
+        context.status(404).html(templateRenderer.render("not-found", model));
     }
 
     /**
@@ -300,8 +644,15 @@ public final class StarlingWebApplication {
      * @param context the context value
      * @param themeResourceResolver the theme resource resolver value
      */
-    private static void serveThemeAsset(Context context, ThemeResourceResolver themeResourceResolver) {
+    private static void serveThemeAsset(
+            Context context,
+            ThemeResourceResolver themeResourceResolver,
+            String assetPrefix
+    ) {
         String assetName = context.pathParam("asset");
+        if (assetPrefix != null && !assetPrefix.isBlank()) {
+            assetName = assetPrefix + "/" + assetName;
+        }
         Optional<InputStream> asset = themeResourceResolver.openAsset(assetName);
         if (asset.isEmpty()) {
             context.status(404).result("Asset not found");
@@ -312,6 +663,32 @@ public final class StarlingWebApplication {
                 .orElse("application/octet-stream");
         context.contentType(contentType);
         context.result(asset.get());
+    }
+
+    /**
+     * Handles a Lisbon-style account submit request for the public hotel user login.
+     * @param context the context value
+     * @param userSessionService the session service value
+     */
+    private static void handleLegacyAccountSubmit(Context context, UserSessionService userSessionService) {
+        String username = valueOrEmpty(context.formParam("username")).trim();
+        String password = valueOrEmpty(context.formParam("password"));
+        String page = valueOrEmpty(context.formParam("page"));
+        String rememberMe = "true".equalsIgnoreCase(context.formParam("_login_remember_me")) ? "true" : "false";
+
+        UserEntity user = UserDao.findByUsernameOrEmail(username);
+        if (user != null && user.getPassword().equals(password)) {
+            UserDao.updateLogin(user);
+            userSessionService.start(context, user);
+            context.sessionAttribute("postLoginPath", "/me");
+            context.redirect("/security_check");
+            return;
+        }
+
+        context.sessionAttribute("publicAlert", "The username or password you entered is incorrect.");
+        String encodedPage = URLEncoder.encode(page, StandardCharsets.UTF_8);
+        String encodedUsername = URLEncoder.encode(username, StandardCharsets.UTF_8);
+        context.redirect("/?page=" + encodedPage + "&username=" + encodedUsername + "&rememberme=" + rememberMe);
     }
 
     /**
@@ -648,24 +1025,144 @@ public final class StarlingWebApplication {
     }
 
     /**
+     * Renders a Lisbon-style news page.
+     * @param context the context value
+     * @param templateRenderer the template renderer value
+     * @param markdownRenderer the markdown renderer value
+     * @param userSessionService the user session service value
+     * @param newsPage the active news page value
+     * @param archiveView whether archive mode is active
+     * @param selectedArticle the selected article value, or null to pick the newest one
+     */
+    private static void renderNewsPage(
+            Context context,
+            TemplateRenderer templateRenderer,
+            MarkdownRenderer markdownRenderer,
+            UserSessionService userSessionService,
+            String newsPage,
+            boolean archiveView,
+            CmsArticle selectedArticle
+    ) {
+        List<CmsArticle> publishedArticles = CmsArticleDao.listPublished();
+        CmsArticle currentArticle = selectedArticle != null
+                ? selectedArticle
+                : (publishedArticles.isEmpty() ? null : publishedArticles.get(0));
+
+        Map<String, Object> model = publicModel(context, "community", userSessionService);
+        model.put("newsPage", newsPage);
+        model.put("monthlyView", false);
+        model.put("archiveView", archiveView);
+        model.put("urlSuffix", "");
+        model.put("currentArticle", lisbonArticleView(currentArticle, markdownRenderer));
+        model.put("months", Collections.emptyMap());
+        model.put("archives", archiveView ? archiveBuckets(publishedArticles, markdownRenderer) : Collections.emptyMap());
+        model.put("articlesToday", archiveView ? List.of() : datedBucket(publishedArticles, markdownRenderer, ArticleBucket.TODAY));
+        model.put("articlesYesterday", archiveView ? List.of() : datedBucket(publishedArticles, markdownRenderer, ArticleBucket.YESTERDAY));
+        model.put("articlesThisWeek", archiveView ? List.of() : datedBucket(publishedArticles, markdownRenderer, ArticleBucket.THIS_WEEK));
+        model.put("articlesThisMonth", archiveView ? List.of() : datedBucket(publishedArticles, markdownRenderer, ArticleBucket.THIS_MONTH));
+        model.put("articlesPastYear", archiveView ? List.of() : datedBucket(publishedArticles, markdownRenderer, ArticleBucket.PAST_YEAR));
+        context.html(templateRenderer.render("news_articles", model));
+    }
+
+    /**
      * Builds the common public model.
-     * @param currentPath the current path value
+     * @param context the context value
+     * @param currentPage the current page value
+     * @param userSessionService the user session service value
      * @return the resulting model
      */
-    private static Map<String, Object> publicModel(String currentPath) {
+    private static Map<String, Object> publicModel(Context context, String currentPage, UserSessionService userSessionService) {
         Map<String, Object> model = new HashMap<>();
-        CmsNavigationMenu mainMenu = CmsNavigationDao.ensureMainMenu();
-        List<CmsNavigationItem> menuItems = CmsNavigationDao.listItems(mainMenu.id());
+        Optional<UserEntity> currentUser = userSessionService.authenticate(context);
+
+        Map<String, Object> site = new HashMap<>();
+        site.put("siteName", "Starling");
+        site.put("sitePath", "");
+        site.put("staticContentPath", "");
+        site.put("formattedUsersOnline", "0");
+        site.put("visits", 0);
+        site.put("serverOnline", true);
+        site.put("playerName", currentUser.map(UserEntity::getUsername).orElse(""));
+
+        Map<String, Object> session = new HashMap<>();
+        session.put("loggedIn", currentUser.isPresent());
+        session.put("currentPage", currentPage);
+
+        String publicAlert = valueOrEmpty(context.sessionAttribute("publicAlert"));
+        boolean hasAlert = !publicAlert.isBlank();
+        Map<String, Object> alert = new HashMap<>();
+        alert.put("hasAlert", hasAlert);
+        alert.put("message", hasAlert ? publicAlert : "");
+        alert.put("colour", "red");
+        context.sessionAttribute("publicAlert", null);
+
+        model.put("site", site);
+        model.put("session", session);
+        model.put("alert", alert);
+        currentUser.ifPresent(user -> model.put("playerDetails", userView(user)));
         model.put("siteTitle", "Starling");
-        model.put("currentPath", currentPath);
-        model.put("menuItems", menuItems.stream().map(item -> {
-            Map<String, Object> view = new HashMap<>();
-            view.put("label", item.label());
-            view.put("href", item.href());
-            return view;
-        }).toList());
         model.put("year", Year.now().getValue());
         return model;
+    }
+
+    /**
+     * Creates a public user view model.
+     * @param user the user value
+     * @return the resulting view model
+     */
+    private static Map<String, Object> userView(UserEntity user) {
+        Map<String, Object> view = new HashMap<>();
+        view.put("id", user.getId());
+        view.put("username", user.getUsername());
+        view.put("name", user.getUsername());
+        view.put("figure", user.getFigure());
+        view.put("motto", valueOrDefault(user.getMotto(), ""));
+        view.put("email", valueOrDefault(user.getEmail(), ""));
+        view.put("credits", user.getCredits());
+        view.put("pixels", user.getPixels());
+        view.put("rankId", user.getRank());
+        view.put("lastOnline", formatFriendlyDate(user.getLastOnline()));
+        view.put("memberSince", formatFriendlyDate(user.getCreatedAt()));
+        view.put("clubActive", user.hasClubSubscription());
+        view.put("clubDays", user.hasClubSubscription()
+                ? Math.max(0, (int) ((user.getClubExpiration() - Instant.now().getEpochSecond()) / 86400))
+                : 0);
+        return view;
+    }
+
+    /**
+     * Creates an empty featured article card.
+     * @param index the display index
+     * @return the resulting placeholder article
+     */
+    private static Map<String, Object> emptyFeaturedArticle(int index) {
+        Map<String, Object> view = new HashMap<>();
+        view.put("title", "No news yet");
+        view.put("summary", "Publish a CMS article to fill this slot.");
+        view.put("date", "");
+        view.put("url", "/news");
+        view.put("image", "/web-gallery/v2/images/landing/uk_party_frontpage_image.gif");
+        view.put("index", index);
+        return view;
+    }
+
+    /**
+     * Clears transient register state.
+     * @param context the context value
+     */
+    private static void clearRegisterState(Context context) {
+        context.sessionAttribute("registerReferral", null);
+        context.sessionAttribute("registerCaptchaInvalid", null);
+        context.sessionAttribute("registerEmailInvalid", null);
+        context.sessionAttribute("registerCaptchaText", null);
+        context.sessionAttribute("registerUsername", null);
+        context.sessionAttribute("registerShowPassword", null);
+        context.sessionAttribute("registerFigure", null);
+        context.sessionAttribute("registerGender", null);
+        context.sessionAttribute("registerEmail", null);
+        context.sessionAttribute("registerDay", null);
+        context.sessionAttribute("registerMonth", null);
+        context.sessionAttribute("registerYear", null);
     }
 
     /**
@@ -705,6 +1202,40 @@ public final class StarlingWebApplication {
     }
 
     /**
+     * Creates a Lisbon article view model.
+     * @param article the article value
+     * @param markdownRenderer the markdown renderer value
+     * @return the resulting view model
+     */
+    private static Map<String, Object> lisbonArticleView(CmsArticle article, MarkdownRenderer markdownRenderer) {
+        if (article == null) {
+            Map<String, Object> placeholder = new HashMap<>();
+            placeholder.put("title", "No news");
+            placeholder.put("shortstory", "There is no news.");
+            placeholder.put("articleImage", "");
+            placeholder.put("date", formatArticleDate(null));
+            placeholder.put("escapedStory", "<p>There is no news.</p>");
+            placeholder.put("author", "Starling CMS");
+            placeholder.put("url", "no-news");
+            placeholder.put("published", true);
+            placeholder.put("categories", List.of());
+            return placeholder;
+        }
+
+        Map<String, Object> view = new HashMap<>();
+        view.put("title", article.publishedTitle());
+        view.put("shortstory", article.publishedSummary());
+        view.put("articleImage", "");
+        view.put("date", formatArticleDate(article.publishedAt()));
+        view.put("escapedStory", markdownRenderer.render(article.publishedMarkdown()));
+        view.put("author", "Starling CMS");
+        view.put("url", article.slug());
+        view.put("published", article.published());
+        view.put("categories", List.of());
+        return view;
+    }
+
+    /**
      * Creates a public article view model.
      * @param article the article value
      * @param markdownRenderer the markdown renderer value
@@ -715,6 +1246,82 @@ public final class StarlingWebApplication {
         view.put("markdown", article.publishedMarkdown());
         view.put("html", markdownRenderer.render(article.publishedMarkdown()));
         return view;
+    }
+
+    /**
+     * Creates a dated article bucket for Lisbon templates.
+     * @param articles the article list
+     * @param markdownRenderer the markdown renderer value
+     * @param bucket the bucket value
+     * @return the resulting article bucket
+     */
+    private static List<Map<String, Object>> datedBucket(
+            List<CmsArticle> articles,
+            MarkdownRenderer markdownRenderer,
+            ArticleBucket bucket
+    ) {
+        LocalDate today = LocalDate.now(ZoneId.systemDefault());
+        return articles.stream()
+                .filter(article -> article.publishedAt() != null)
+                .filter(article -> bucket.matches(today, article.publishedAt().toInstant().atZone(ZoneId.systemDefault()).toLocalDate()))
+                .map(article -> lisbonArticleView(article, markdownRenderer))
+                .toList();
+    }
+
+    /**
+     * Creates archive buckets for Lisbon templates.
+     * @param articles the article list
+     * @param markdownRenderer the markdown renderer value
+     * @return the resulting archive buckets
+     */
+    private static Map<String, List<Map<String, Object>>> archiveBuckets(
+            List<CmsArticle> articles,
+            MarkdownRenderer markdownRenderer
+    ) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM yyyy");
+        Map<String, List<Map<String, Object>>> buckets = new LinkedHashMap<>();
+
+        for (CmsArticle article : articles) {
+            if (article.publishedAt() == null) {
+                continue;
+            }
+
+            String key = article.publishedAt().toInstant().atZone(ZoneId.systemDefault()).format(formatter);
+            buckets.computeIfAbsent(key, ignored -> new java.util.ArrayList<>())
+                    .add(lisbonArticleView(article, markdownRenderer));
+        }
+
+        return buckets;
+    }
+
+    /**
+     * Formats a Lisbon-style article date.
+     * @param timestamp the timestamp value
+     * @return the resulting formatted date
+     */
+    private static String formatArticleDate(Timestamp timestamp) {
+        if (timestamp == null) {
+            return "";
+        }
+
+        return timestamp.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .format(DateTimeFormatter.ofPattern("EEE dd MMM, yyyy"));
+    }
+
+    /**
+     * Formats a friendly public date.
+     * @param timestamp the timestamp value
+     * @return the resulting friendly date
+     */
+    private static String formatFriendlyDate(Timestamp timestamp) {
+        if (timestamp == null) {
+            return "";
+        }
+
+        return timestamp.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .format(DateTimeFormatter.ofPattern("dd MMM yyyy"));
     }
 
     /**
@@ -729,7 +1336,7 @@ public final class StarlingWebApplication {
         view.put("title", article.published() ? article.publishedTitle() : article.draftTitle());
         view.put("summary", article.published() ? article.publishedSummary() : article.draftSummary());
         view.put("published", article.published());
-        view.put("publishedAt", article.publishedAt());
+        view.put("publishedAt", formatFriendlyDate(article.publishedAt()));
         view.put("createdAt", article.createdAt());
         view.put("updatedAt", article.updatedAt());
         view.put("url", "/news/" + article.slug());
@@ -892,5 +1499,40 @@ public final class StarlingWebApplication {
      */
     private static String valueOrEmpty(String value) {
         return value == null ? "" : value;
+    }
+
+    private enum ArticleBucket {
+        TODAY {
+            @Override
+            boolean matches(LocalDate today, LocalDate publishedDate) {
+                return publishedDate.equals(today);
+            }
+        },
+        YESTERDAY {
+            @Override
+            boolean matches(LocalDate today, LocalDate publishedDate) {
+                return publishedDate.equals(today.minusDays(1));
+            }
+        },
+        THIS_WEEK {
+            @Override
+            boolean matches(LocalDate today, LocalDate publishedDate) {
+                return publishedDate.isBefore(today.minusDays(1)) && !publishedDate.isBefore(today.minusDays(7));
+            }
+        },
+        THIS_MONTH {
+            @Override
+            boolean matches(LocalDate today, LocalDate publishedDate) {
+                return publishedDate.isBefore(today.minusDays(7)) && !publishedDate.isBefore(today.minusDays(30));
+            }
+        },
+        PAST_YEAR {
+            @Override
+            boolean matches(LocalDate today, LocalDate publishedDate) {
+                return publishedDate.isBefore(today.minusDays(30));
+            }
+        };
+
+        abstract boolean matches(LocalDate today, LocalDate publishedDate);
     }
 }

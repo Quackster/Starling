@@ -165,6 +165,34 @@ public class UserEntity {
     }
 
     /**
+     * Creates a new registered user entity.
+     * @param username the username value
+     * @param password the password value
+     * @param figure the figure value
+     * @param sex the sex value
+     * @param email the email value
+     * @return the resulting user
+     */
+    public static UserEntity createRegisteredUser(String username, String password, String figure, String sex, String email) {
+        UserEntity user = new UserEntity();
+        Timestamp now = Timestamp.from(Instant.now());
+
+        user.username = username;
+        user.password = password;
+        user.figure = figure;
+        user.sex = sex;
+        user.motto = "";
+        user.email = email;
+        user.credits = 50;
+        user.lastOnline = now;
+        user.createdAt = now;
+        user.updatedAt = now;
+        user.ssoTicket = "starling-sso-" + username + "-" + now.getTime();
+
+        return user;
+    }
+
+    /**
      * Returns the id.
      * @return the id
      */
@@ -220,6 +248,51 @@ public class UserEntity {
      */
     public int getFilm() { return film; }
     /**
+     * Returns the email.
+     * @return the email
+     */
+    public String getEmail() { return email; }
+    /**
+     * Returns the last online timestamp.
+     * @return the last online timestamp
+     */
+    public Timestamp getLastOnline() { return lastOnline; }
+    /**
+     * Returns the created at timestamp.
+     * @return the created at timestamp
+     */
+    public Timestamp getCreatedAt() { return createdAt; }
+    /**
+     * Returns the updated at timestamp.
+     * @return the updated at timestamp
+     */
+    public Timestamp getUpdatedAt() { return updatedAt; }
+    /**
+     * Returns the club expiration timestamp.
+     * @return the club expiration timestamp
+     */
+    public long getClubExpiration() { return clubExpiration; }
+    /**
+     * Returns the pixels amount.
+     * @return the pixels amount
+     */
+    public int getPixels() { return pixels; }
+    /**
+     * Returns the login name in Lisbon style.
+     * @return the login name
+     */
+    public String getName() { return username; }
+    /**
+     * Returns whether trading is enabled.
+     * @return whether trading is enabled
+     */
+    public boolean isTradeEnabled() { return tradeEnabled > 0; }
+    /**
+     * Returns whether club is active.
+     * @return whether club is active
+     */
+    public boolean hasClubSubscription() { return clubExpiration > Instant.now().getEpochSecond(); }
+    /**
      * Returns the sso ticket.
      * @return the sso ticket
      */
@@ -250,4 +323,14 @@ public class UserEntity {
      * @param homeRoom the home room value
      */
     public void setHomeRoom(int homeRoom) { this.homeRoom = homeRoom; }
+    /**
+     * Sets the last online timestamp.
+     * @param lastOnline the last online value
+     */
+    public void setLastOnline(Timestamp lastOnline) { this.lastOnline = lastOnline; }
+    /**
+     * Sets the updated at timestamp.
+     * @param updatedAt the updated at value
+     */
+    public void setUpdatedAt(Timestamp updatedAt) { this.updatedAt = updatedAt; }
 }

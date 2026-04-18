@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.starling.config.DatabaseConfig;
 import org.starling.storage.EntityContext;
+import org.starling.storage.dao.UserDao;
 import org.starling.web.cms.dao.CmsAdminDao;
 import org.starling.web.cms.dao.CmsArticleDao;
 import org.starling.web.cms.dao.CmsMediaDao;
@@ -60,6 +61,9 @@ class StarlingWebIntegrationTest {
         String databaseName = "starling_web_it_" + Long.toUnsignedString(Instant.now().toEpochMilli(), 36);
         this.databaseConfig = new DatabaseConfig(DB_HOST, DB_PORT, databaseName, DB_USERNAME, DB_PASSWORD, DB_PARAMS);
         this.tempRoot = Files.createTempDirectory("starling-web-it");
+        Path themeRoot = tempRoot.resolve("themes").resolve("default").resolve("public").resolve("web-gallery");
+        Files.createDirectories(themeRoot.resolve("v2/styles"));
+        Files.writeString(themeRoot.resolve("v2/styles/style.css"), "body { background: #fff; }");
         this.webConfig = new WebConfig(
                 0,
                 "test-session-secret",
@@ -113,6 +117,7 @@ class StarlingWebIntegrationTest {
     @Test
     void bootstrapSeedsAdminContentAndNavigation() {
         assertEquals(1, CmsAdminDao.count());
+        assertEquals(1, UserDao.count());
         assertTrue(CmsPageDao.findPublishedBySlug("home").isPresent());
         assertTrue(CmsArticleDao.findPublishedBySlug("welcome-to-starling").isPresent());
         assertEquals(2, CmsNavigationDao.listItems(CmsNavigationDao.ensureMainMenu().id()).size());
@@ -128,11 +133,78 @@ class StarlingWebIntegrationTest {
                 HttpRequest.newBuilder(baseUri.resolve("/news")).GET().build(),
                 HttpResponse.BodyHandlers.ofString()
         );
+        HttpResponse<String> assetResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/web-gallery/v2/styles/style.css")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
 
         assertEquals(200, homepageResponse.statusCode());
         assertEquals(200, newsIndexResponse.statusCode());
-        assertTrue(homepageResponse.body().contains("Starling-Web"));
-        assertTrue(newsIndexResponse.body().contains("News"));
+        assertEquals(200, assetResponse.statusCode());
+        assertTrue(homepageResponse.body().contains("create-habbo"));
+        assertTrue(homepageResponse.body().contains("landing-register-text"));
+        assertTrue(homepageResponse.body().contains("/web-gallery/v2/styles/style.css"));
+        assertFalse(homepageResponse.body().contains("/assets/web-gallery/"));
+        assertTrue(newsIndexResponse.body().contains("article-archive"));
+        assertTrue(newsIndexResponse.body().contains("Welcome to Starling-Web"));
+    }
+
+    @Test
+    void publicUserLoginFailurePreservesLisbonQueryParams() throws Exception {
+        HttpResponse<String> response = postForm(
+                "/account/submit",
+                Map.of(
+                        "page", "/community",
+                        "username", "unknown",
+                        "password", "wrong",
+                        "_login_remember_me", "true"
+                ),
+                Map.of()
+        );
+
+        assertEquals(200, response.statusCode());
+        assertTrue(response.uri().toString().contains("page=%2Fcommunity"));
+        assertTrue(response.uri().toString().contains("username=unknown"));
+        assertTrue(response.uri().toString().contains("rememberme=true"));
+        assertTrue(response.body().contains("The username or password you entered is incorrect."));
+    }
+
+    @Test
+    void publicUserLoginWelcomeAndMeRender() throws Exception {
+        HttpResponse<String> loginResponse = postForm(
+                "/account/submit",
+                Map.of("username", "admin", "password", "admin"),
+                Map.of()
+        );
+
+        assertEquals(200, loginResponse.statusCode());
+        assertTrue(loginResponse.uri().toString().endsWith("/me"));
+        assertTrue(loginResponse.body().contains("Member since"));
+
+        HttpResponse<String> welcomeResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/welcome")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> meResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/me")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> registerResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/register")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<byte[]> captchaResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/captcha.jpg")).GET().build(),
+                HttpResponse.BodyHandlers.ofByteArray()
+        );
+
+        assertEquals(200, welcomeResponse.statusCode());
+        assertEquals(200, meResponse.statusCode());
+        assertEquals(200, registerResponse.statusCode());
+        assertEquals(200, captchaResponse.statusCode());
+        assertTrue(registerResponse.uri().toString().endsWith("/me"));
+        assertTrue(welcomeResponse.body().contains("Choose a pre-decorated room"));
+        assertTrue(meResponse.body().contains("Hot Campaigns"));
     }
 
     @Test

@@ -2,6 +2,8 @@ package org.starling.web.cms.bootstrap;
 
 import org.starling.storage.DatabaseSupport;
 import org.starling.storage.EntityContext;
+import org.starling.storage.dao.UserDao;
+import org.starling.storage.entity.UserEntity;
 import org.starling.web.cms.auth.PasswordHasher;
 import org.starling.web.cms.dao.CmsAdminDao;
 import org.starling.web.cms.dao.CmsArticleDao;
@@ -28,10 +30,22 @@ public final class CmsBootstrap {
     public static void initialize(WebConfig config) {
         DatabaseSupport.ensureDatabase(config.database());
         EntityContext.init(config.database());
+        ensureSharedSchema();
         ensureSchema();
         ensureDirectories(config);
         ensureBootstrapAdmin(config);
+        ensureBootstrapHotelUser();
         seedDefaults();
+    }
+
+    /**
+     * Ensures shared Starling tables required by the web layer exist.
+     */
+    public static void ensureSharedSchema() {
+        EntityContext.withContext(context -> {
+            context.createTables(UserEntity.class);
+            return null;
+        });
     }
 
     /**
@@ -164,6 +178,17 @@ public final class CmsBootstrap {
         String displayName = email.contains("@") ? email.substring(0, email.indexOf('@')) : email;
         String passwordHash = PasswordHasher.hash(config.bootstrapAdminPassword());
         CmsAdminDao.create(email, displayName, passwordHash);
+    }
+
+    /**
+     * Ensures the hotel user table has a default login when empty.
+     */
+    public static void ensureBootstrapHotelUser() {
+        if (UserDao.count() > 0) {
+            return;
+        }
+
+        UserDao.save(UserEntity.createDefaultAdmin());
     }
 
     /**

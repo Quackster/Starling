@@ -3,6 +3,7 @@ package org.starling.web.render;
 import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import org.starling.web.theme.ThemeResourceResolver;
+import org.starling.web.theme.ThemeTemplateLoader;
 
 import java.io.StringWriter;
 import java.io.Writer;
@@ -20,10 +21,22 @@ public final class TemplateRenderer {
      */
     public TemplateRenderer(ThemeResourceResolver themeResourceResolver) {
         this.themeResourceResolver = themeResourceResolver;
+        ThemeTemplateLoader templateLoader = new ThemeTemplateLoader(themeResourceResolver);
         this.engine = new PebbleEngine.Builder()
+                .loader(templateLoader)
                 .autoEscaping(true)
                 .strictVariables(false)
                 .build();
+    }
+
+    /**
+     * Renders a single named template.
+     * @param templateName the template name value
+     * @param model the view model
+     * @return the resulting html
+     */
+    public String render(String templateName, Map<String, Object> model) {
+        return renderNamed(templateName, model);
     }
 
     /**
@@ -34,25 +47,25 @@ public final class TemplateRenderer {
      * @return the resulting html
      */
     public String render(String layoutTemplate, String bodyTemplate, Map<String, Object> model) {
-        String bodyHtml = renderLiteral(themeResourceResolver.readTemplate(bodyTemplate), model);
+        String bodyHtml = renderNamed(bodyTemplate, model);
         if (layoutTemplate == null || layoutTemplate.isBlank()) {
             return bodyHtml;
         }
 
         Map<String, Object> layoutModel = new HashMap<>(model);
         layoutModel.put("bodyHtml", bodyHtml);
-        return renderLiteral(themeResourceResolver.readTemplate(layoutTemplate), layoutModel);
+        return renderNamed(layoutTemplate, layoutModel);
     }
 
     /**
-     * Renders a literal Pebble template.
-     * @param templateSource the template source value
+     * Renders a named Pebble template.
+     * @param templateName the template name value
      * @param model the view model
      * @return the resulting html
      */
-    private String renderLiteral(String templateSource, Map<String, Object> model) {
+    private String renderNamed(String templateName, Map<String, Object> model) {
         try {
-            PebbleTemplate compiled = engine.getLiteralTemplate(templateSource);
+            PebbleTemplate compiled = engine.getTemplate(templateName);
             Writer writer = new StringWriter();
             compiled.evaluate(writer, model);
             String html = writer.toString();
