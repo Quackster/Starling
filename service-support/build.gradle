@@ -1,0 +1,12 @@
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    api project(':contracts')
+    api "org.apache.logging.log4j:log4j-api:${rootProject.ext.log4jVersion}"
+    implementation "org.apache.logging.log4j:log4j-core:${rootProject.ext.log4jVersion}"
+    api "io.grpc:grpc-api:${rootProject.ext.grpcVersion}"
+    implementation "io.grpc:grpc-netty-shaded:${rootProject.ext.grpcVersion}"
+    compileOnly "javax.annotation:javax.annotation-api:${rootProject.ext.javaxAnnotationVersion}"
+}

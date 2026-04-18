@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.starling.config.ServerConfig;
+import org.starling.gateway.rpc.GatewayServiceClients;
 import org.starling.game.player.Player;
 import org.starling.game.player.PlayerManager;
 import org.starling.game.room.lifecycle.RoomLifecycleService;
@@ -27,6 +28,7 @@ import org.starling.storage.dao.PublicRoomDao;
 import org.starling.storage.dao.RoomDao;
 import org.starling.storage.dao.UserDao;
 import org.starling.storage.entity.UserEntity;
+import org.starling.support.InMemoryRoomClient;
 import org.starling.support.PacketDebugStrings;
 
 import java.sql.Connection;
@@ -55,6 +57,7 @@ class RoomEntryFlowIntegrationTest {
     private static final String HOLOGRAPH_ROOM_URL = "http://wwww.vista4life.com/bf.php?p=emu";
 
     private ServerConfig config;
+    private InMemoryRoomClient roomClient;
 
     /**
      * Sets up database.
@@ -70,6 +73,8 @@ class RoomEntryFlowIntegrationTest {
         DatabaseBootstrap.ensureSchema(config);
         DatabaseBootstrap.seedDefaults();
         ensureUser("alice", "F", "Testing quit flow");
+        roomClient = new InMemoryRoomClient();
+        GatewayServiceClients.installForTests(null, roomClient, null);
     }
 
     /**
@@ -81,6 +86,7 @@ class RoomEntryFlowIntegrationTest {
         RoomRegistry.getInstance().clear();
         RoomDao.resetCurrentUsers();
         PublicRoomDao.resetCurrentUsers();
+        roomClient.clearTrackedSessions();
     }
 
     /**
@@ -90,6 +96,7 @@ class RoomEntryFlowIntegrationTest {
     @AfterAll
     void tearDownDatabase() throws Exception {
         try {
+            GatewayServiceClients.shutdown();
             EntityContext.shutdown();
         } finally {
             try (Connection connection = DriverManager.getConnection(config.adminJdbcUrl(), config.dbUsername(), config.dbPassword());
@@ -496,6 +503,7 @@ class RoomEntryFlowIntegrationTest {
         Session session = new Session(channel);
         session.setPlayer(player(username));
         PlayerManager.getInstance().register(session);
+        roomClient.track(session);
         return session;
     }
 

@@ -1,0 +1,240 @@
+syntax = "proto3";
+
+package starling.contracts;
+
+option java_multiple_files = true;
+option java_package = "org.starling.contracts";
+option java_outer_classname = "CommonContracts";
+
+enum OutcomeKind {
+  OUTCOME_KIND_UNSPECIFIED = 0;
+  OUTCOME_KIND_SUCCESS = 1;
+  OUTCOME_KIND_FAILURE = 2;
+  OUTCOME_KIND_ERROR = 3;
+}
+
+enum RoomType {
+  ROOM_TYPE_UNSPECIFIED = 0;
+  ROOM_TYPE_PRIVATE = 1;
+  ROOM_TYPE_PUBLIC = 2;
+}
+
+message Outcome {
+  OutcomeKind kind = 1;
+  string message = 2;
+}
+
+message PlayerData {
+  int32 id = 1;
+  string username = 2;
+  string figure = 3;
+  string sex = 4;
+  string motto = 5;
+  int32 rank = 6;
+  int32 selected_room_id = 7;
+  int32 home_room = 8;
+  int32 credits = 9;
+}
+
+message PlayerBootstrap {
+  PlayerData player = 1;
+  repeated string rights = 2;
+  bool sound_enabled = 3;
+  int32 sound_volume = 4;
+  int32 available_badge_count = 5;
+  int32 selected_badge_count = 6;
+  int32 possible_achievement_count = 7;
+}
+
+message NavigatorCategory {
+  int32 id = 1;
+  int32 parent_id = 2;
+  string name = 3;
+  int32 min_role_access = 4;
+  int32 min_role_set_flat_cat = 5;
+  bool flat_category = 6;
+  bool public_category = 7;
+  int32 order_id = 8;
+}
+
+message PrivateRoomListing {
+  int32 id = 1;
+  int32 category_id = 2;
+  int32 owner_id = 3;
+  string owner_name = 4;
+  string name = 5;
+  string description = 6;
+  int32 door_mode = 7;
+  string door_mode_text = 8;
+  int32 current_users = 9;
+  int32 max_users = 10;
+  int32 absolute_max_users = 11;
+  int32 show_owner_name = 12;
+  int32 allow_trading = 13;
+  int32 allow_others_move_furniture = 14;
+  int32 alert_state = 15;
+  string model_name = 16;
+  string heightmap = 17;
+  string wallpaper = 18;
+  string floor_pattern = 19;
+  string landscape = 20;
+  int32 port = 21;
+  string navigator_filter = 22;
+}
+
+message PublicRoomListing {
+  int32 id = 1;
+  int32 category_id = 2;
+  string name = 3;
+  string unit_str_id = 4;
+  string heightmap = 5;
+  int32 port = 6;
+  int32 door = 7;
+  string casts = 8;
+  int32 current_users = 9;
+  int32 max_users = 10;
+  int32 users_in_queue = 11;
+  bool visible = 12;
+  string navigator_filter = 13;
+  string description = 14;
+}
+
+message NavigatorNode {
+  NavigatorCategory category = 1;
+  int32 user_count = 2;
+  int32 capacity = 3;
+  repeated PrivateRoomListing private_rooms = 4;
+}
+
+message NavigatePage {
+  int32 hide_full = 1;
+  NavigatorNode root = 2;
+  bool synthetic_root = 3;
+  repeated NavigatorNode child_nodes = 4;
+  repeated PublicRoomListing public_rooms = 5;
+}
+
+message PrivateRoomList {
+  repeated PrivateRoomListing rooms = 1;
+}
+
+message PublicRoomList {
+  repeated PublicRoomListing rooms = 1;
+}
+
+message CategoryList {
+  repeated NavigatorCategory categories = 1;
+}
+
+message FavoriteRooms {
+  repeated PrivateRoomListing private_rooms = 1;
+  repeated PublicRoomListing public_rooms = 2;
+}
+
+message FlatCategory {
+  bool found = 1;
+  int32 room_id = 2;
+  int32 category_id = 3;
+}
+
+message PrivateRoomEnvelope {
+  bool found = 1;
+  PrivateRoomListing room = 2;
+}
+
+message PublicRoomEnvelope {
+  bool found = 1;
+  PublicRoomListing room = 2;
+}
+
+message OperationResult {
+  Outcome outcome = 1;
+  PrivateRoomListing room = 2;
+}
+
+message FriendListInit {
+  int32 friend_limit = 1;
+  int32 friend_request_limit = 2;
+  int32 messenger_open_window_limit = 3;
+  int32 category_count = 4;
+  int32 category_page = 5;
+  int32 max_search_results = 6;
+  int32 active_friend_count = 7;
+}
+
+message ParentChain {
+  bool found = 1;
+  NavigatorCategory root = 2;
+  repeated NavigatorCategory parents = 3;
+}
+
+message SpaceNodeUsers {
+  int32 node_id = 1;
+  int32 user_count = 2;
+}
+
+message RoomVisuals {
+  string marker = 1;
+  string heightmap = 2;
+  string wallpaper = 3;
+  string floor_pattern = 4;
+  string landscape = 5;
+  int32 door_x = 6;
+  int32 door_y = 7;
+  double door_z = 8;
+  int32 door_dir = 9;
+}
+
+message RoomOccupant {
+  string session_id = 1;
+  int32 player_id = 2;
+  string username = 3;
+  string figure = 4;
+  string sex = 5;
+  string motto = 6;
+  int32 x = 7;
+  int32 y = 8;
+  double z = 9;
+  bool has_next_position = 10;
+  int32 next_x = 11;
+  int32 next_y = 12;
+  double next_z = 13;
+  int32 body_rotation = 14;
+  int32 head_rotation = 15;
+}
+
+message PublicRoomItem {
+  int32 id = 1;
+  string room_model = 2;
+  string sprite = 3;
+  int32 x = 4;
+  int32 y = 5;
+  double z = 6;
+  int32 rotation = 7;
+  double top_height = 8;
+  int32 length = 9;
+  int32 width = 10;
+  string behaviour = 11;
+  string current_program = 12;
+  string teleport_to = 13;
+  string swim_to = 14;
+}
+
+message RoomSnapshot {
+  RoomType room_type = 1;
+  int32 room_id = 2;
+  int32 door_id = 3;
+  RoomVisuals visuals = 4;
+  repeated RoomOccupant occupants = 5;
+  repeated PublicRoomItem public_room_items = 6;
+  string legacy_public_room_items = 7;
+  PrivateRoomListing private_room = 8;
+  PublicRoomListing public_room = 9;
+  bool owner = 10;
+  bool controller = 11;
+}
+
+message RoomSnapshotResult {
+  Outcome outcome = 1;
+  RoomSnapshot snapshot = 2;
+}

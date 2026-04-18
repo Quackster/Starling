@@ -3,16 +3,15 @@ package org.starling;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.starling.config.ServerConfig;
-import org.starling.game.navigator.NavigatorManager;
+import org.starling.gateway.GatewayRoomStatusSyncManager;
+import org.starling.gateway.rpc.GatewayServiceClients;
 import org.starling.game.player.PlayerManager;
-import org.starling.game.room.registry.RoomRegistry;
-import org.starling.game.room.runtime.RoomTaskManager;
+import org.starling.game.room.response.RoomResponseWriter;
 import org.starling.message.MessageRouter;
 import org.starling.net.NettyServer;
 import org.starling.storage.DatabaseBootstrap;
 import org.starling.storage.EntityContext;
-import org.starling.storage.dao.PublicRoomDao;
-import org.starling.storage.dao.RoomDao;
+import org.starling.support.health.HealthHttpServer;
 
 public class StarlingServer {
 
@@ -33,27 +32,27 @@ public class StarlingServer {
         EntityContext.init(config);
         DatabaseBootstrap.ensureSchema(config);
         DatabaseBootstrap.seedDefaults();
-        RoomDao.resetCurrentUsers();
-        PublicRoomDao.resetCurrentUsers();
         PlayerManager.getInstance().clear();
-        RoomRegistry.getInstance().clear();
-        RoomTaskManager.getInstance().start();
-
-        // Load navigator categories from DB
-        NavigatorManager.getInstance().load();
-        log.info("Navigator categories loaded ({} categories)", NavigatorManager.getInstance().getCategoryCount());
+        GatewayServiceClients.init(config);
+        GatewayRoomStatusSyncManager roomSyncManager =
+                new GatewayRoomStatusSyncManager(GatewayServiceClients.room(), new RoomResponseWriter());
+        roomSyncManager.start();
 
         // Setup message router
         MessageRouter router = new MessageRouter();
         router.registerAll();
 
         // Start Netty server
+        HealthHttpServer healthServer = new HealthHttpServer("gateway", config.healthPort(), () -> true);
         NettyServer server = new NettyServer(config.serverPort(), router);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             server.shutdown();
-            RoomTaskManager.getInstance().stop();
+            healthServer.close();
+            roomSyncManager.stop();
+            GatewayServiceClients.shutdown();
             EntityContext.shutdown();
         }));
+        healthServer.start();
         server.start();
     }
 }

@@ -3,58 +3,29 @@ plugins {
     id 'application'
 }
 
-group = 'org.starling'
-version = '1.0-SNAPSHOT'
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
-}
-
-repositories {
-    mavenCentral()
-    maven { url = 'https://jitpack.io' }
-}
-
 dependencies {
-    implementation 'io.netty:netty-all:4.1.108.Final'
-    implementation 'com.github.Quackster:Entity4j:v1.0.0'
-    implementation 'org.mariadb.jdbc:mariadb-java-client:3.5.2'
-    implementation 'org.apache.logging.log4j:log4j-api:2.23.0'
-    implementation 'org.apache.logging.log4j:log4j-core:2.23.0'
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    implementation project(':contracts')
+    implementation project(':service-support')
+    implementation "io.netty:netty-all:${rootProject.ext.nettyVersion}"
+    implementation "io.grpc:grpc-netty-shaded:${rootProject.ext.grpcVersion}"
+    implementation "io.grpc:grpc-protobuf:${rootProject.ext.grpcVersion}"
+    implementation "io.grpc:grpc-stub:${rootProject.ext.grpcVersion}"
+    implementation "com.github.Quackster:Entity4j:${rootProject.ext.entity4jVersion}"
+    implementation "org.mariadb.jdbc:mariadb-java-client:${rootProject.ext.mariadbVersion}"
+    implementation "org.apache.logging.log4j:log4j-api:${rootProject.ext.log4jVersion}"
+    implementation "org.apache.logging.log4j:log4j-core:${rootProject.ext.log4jVersion}"
+    compileOnly "javax.annotation:javax.annotation-api:${rootProject.ext.javaxAnnotationVersion}"
+    testImplementation "org.junit.jupiter:junit-jupiter:${rootProject.ext.junitVersion}"
 }
 
 application {
     mainClass = 'org.starling.StarlingServer'
 }
 
-def packagedDistDir = file("${rootDir}/../dist")
-
 jar {
     manifest {
         attributes 'Main-Class': 'org.starling.StarlingServer'
     }
-}
-
-tasks.register('packageDist', Sync) {
-    dependsOn installDist
-
-    from(layout.buildDirectory.dir("install/${application.applicationName}"))
-    from('packaging/dist')
-
-    into(packagedDistDir)
-    preserve {
-        include 'logs/**'
-    }
-
-    into('config') {
-        from('src/main/resources/server.properties')
-    }
-}
-
-tasks.named('test') {
-    useJUnitPlatform()
 }
 
 tasks.register('starlingClient', JavaExec) {

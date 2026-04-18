@@ -2,26 +2,29 @@ package org.starling.message.handler;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.starling.contracts.OperationResult;
+import org.starling.contracts.OutcomeKind;
+import org.starling.contracts.PrivateRoomEnvelope;
+import org.starling.contracts.RoomExitResult;
+import org.starling.contracts.RoomSnapshot;
+import org.starling.contracts.RoomSnapshotResult;
+import org.starling.gateway.GatewayMappings;
+import org.starling.gateway.rpc.GatewayServiceClients;
 import org.starling.game.player.Player;
-import org.starling.game.room.access.RoomAccess;
-import org.starling.game.room.lifecycle.RoomLifecycleService;
 import org.starling.game.room.response.RoomResponseWriter;
-import org.starling.game.room.runtime.RoomMovementService;
 import org.starling.message.support.HandlerParsing;
 import org.starling.message.support.HandlerResponses;
 import org.starling.message.support.SessionGuards;
 import org.starling.net.codec.ClientMessage;
 import org.starling.net.session.Session;
-import org.starling.storage.dao.RoomDao;
-import org.starling.storage.entity.PublicRoomEntity;
-import org.starling.storage.entity.RoomEntity;
 
+/**
+ * Gateway-side room handlers backed by the room service.
+ */
 public final class RoomHandlers {
 
     private static final Logger log = LogManager.getLogger(RoomHandlers.class);
     private static final RoomResponseWriter responses = new RoomResponseWriter();
-    private static final RoomLifecycleService roomLifecycleService = RoomLifecycleService.getInstance();
-    private static final RoomMovementService roomMovementService = RoomMovementService.getInstance();
 
     /**
      * Creates a new RoomHandlers.
@@ -52,8 +55,8 @@ public final class RoomHandlers {
         log.debug("Room directory request: publicRoom={}, roomId={}, doorId={}", publicRoom, roomId, doorId);
 
         if (!publicRoom) {
-            RoomEntity room = RoomDao.findById(roomId);
-            if (room == null) {
+            PrivateRoomEnvelope room = GatewayServiceClients.room().getPrivateRoom(roomId);
+            if (!room.getFound()) {
                 HandlerResponses.sendError(session, "nav_prvrooms_notfound");
                 return;
             }
@@ -62,17 +65,23 @@ public final class RoomHandlers {
             return;
         }
 
-        PublicRoomEntity room = RoomAccess.findPublicRoom(roomId);
-        if (room == null) {
-            HandlerResponses.sendError(session, "Public room not found");
+        Player player = SessionGuards.requirePlayer(session, log, "public room directory");
+        if (player == null) {
             return;
         }
 
-        if (SessionGuards.requirePlayer(session, log, "public room directory") == null) {
+        RoomSnapshotResult result = GatewayServiceClients.room().enterPublicRoom(
+                session.getSessionId(),
+                GatewayMappings.toPlayerData(player),
+                roomId,
+                doorId
+        );
+        if (!snapshotSucceeded(session, result)) {
             return;
         }
-        roomLifecycleService.enterPublicRoom(session, room, doorId);
-        responses.enterPublicRoom(session, room, doorId);
+
+        GatewayMappings.applyRoomSnapshot(session, result.getSnapshot());
+        responses.enterPublicRoom(session, result.getSnapshot());
     }
 
     /**
@@ -90,32 +99,19 @@ public final class RoomHandlers {
         int roomId = HandlerParsing.parseIntOrDefault(parts.length > 0 ? parts[0] : "", 0);
         String password = parts.length > 1 ? parts[1] : "";
 
-        RoomEntity room = RoomDao.findById(roomId);
-        if (room == null) {
-            HandlerResponses.sendError(session, "nav_prvrooms_notfound");
+        OperationResult result = GatewayServiceClients.room().authorizePrivateEntry(
+                session.getSessionId(),
+                GatewayMappings.toPlayerData(player),
+                roomId,
+                password
+        );
+        if (result.getOutcome().getKind() != OutcomeKind.OUTCOME_KIND_SUCCESS) {
+            HandlerResponses.sendError(session, result.getOutcome().getMessage());
             return;
         }
 
-        boolean owner = RoomAccess.isOwner(player, room);
-        if (!owner) {
-            if (room.getDoorMode() == 1) {
-                HandlerResponses.sendError(session, "Password required");
-                return;
-            }
-            if (room.getDoorMode() == 2) {
-                if (password.isEmpty()) {
-                    HandlerResponses.sendError(session, "Password required");
-                    return;
-                }
-                if (!room.getDoorPassword().equals(password)) {
-                    HandlerResponses.sendError(session, "Incorrect flat password");
-                    return;
-                }
-            }
-        }
-
-        roomLifecycleService.authorizePrivateRoomEntry(session, room);
-        responses.allowPrivateRoomEntry(session, room);
+        session.setRoomPresence(Session.RoomPresence.pendingPrivate(roomId, result.getRoom().getModelName()));
+        responses.allowPrivateRoomEntry(session);
     }
 
     /**
@@ -130,17 +126,17 @@ public final class RoomHandlers {
         }
 
         int roomId = HandlerParsing.parseIntOrDefault(msg.readRawBody().trim(), 0);
-        RoomEntity room = RoomDao.findById(roomId);
-        if (room == null) {
-            HandlerResponses.sendError(session, "nav_prvrooms_notfound");
+        RoomSnapshotResult result = GatewayServiceClients.room().enterPrivateRoom(
+                session.getSessionId(),
+                GatewayMappings.toPlayerData(player),
+                roomId
+        );
+        if (!snapshotSucceeded(session, result)) {
             return;
         }
 
-        if (!roomLifecycleService.enterPrivateRoom(session, room)) {
-            HandlerResponses.sendError(session, "Room entry is no longer pending.");
-            return;
-        }
-        responses.enterPrivateRoom(session, player, room);
+        GatewayMappings.applyRoomSnapshot(session, result.getSnapshot());
+        responses.enterPrivateRoom(session, player, result.getSnapshot());
     }
 
     /**
@@ -149,7 +145,23 @@ public final class RoomHandlers {
      * @param msg the msg value
      */
     public static void handleQuit(Session session, ClientMessage msg) {
-        roomLifecycleService.handleQuit(session);
+        Player player = session.getPlayer();
+        Session.RoomPresence presence = session.getRoomPresence();
+        if (player == null || presence.phase() == Session.RoomPhase.NONE) {
+            return;
+        }
+
+        RoomExitResult result = GatewayServiceClients.room().quitRoom(
+                session.getSessionId(),
+                GatewayMappings.toPlayerData(player)
+        );
+        if (result.getOutcome().getKind() != OutcomeKind.OUTCOME_KIND_SUCCESS) {
+            return;
+        }
+
+        broadcastLogout(session, result);
+        session.setRoomPresence(Session.RoomPresence.none());
+        responses.sendHotelView(session);
     }
 
     /**
@@ -158,11 +170,15 @@ public final class RoomHandlers {
      * @param msg the msg value
      */
     public static void handleGetHeightmap(Session session, ClientMessage msg) {
-        Session.RoomPresence roomPresence = SessionGuards.requireActiveRoom(session, log, "room heightmap");
-        if (roomPresence == null) {
+        if (SessionGuards.requireActiveRoom(session, log, "room heightmap") == null) {
             return;
         }
-        responses.sendHeightmap(session, roomPresence);
+
+        RoomSnapshot snapshot = activeSnapshot(session, "room heightmap");
+        if (snapshot == null) {
+            return;
+        }
+        responses.sendHeightmap(session, snapshot);
     }
 
     /**
@@ -171,12 +187,16 @@ public final class RoomHandlers {
      * @param msg the msg value
      */
     public static void handleGetUsers(Session session, ClientMessage msg) {
-        Session.RoomPresence roomPresence = SessionGuards.requireActiveRoom(session, log, "room users");
         Player player = SessionGuards.requirePlayer(session, log, "room users");
-        if (roomPresence == null || player == null) {
+        if (player == null || SessionGuards.requireActiveRoom(session, log, "room users") == null) {
             return;
         }
-        responses.sendUsers(session, roomPresence);
+
+        RoomSnapshot snapshot = activeSnapshot(session, "room users");
+        if (snapshot == null) {
+            return;
+        }
+        responses.sendUsers(session, snapshot);
     }
 
     /**
@@ -185,11 +205,15 @@ public final class RoomHandlers {
      * @param msg the msg value
      */
     public static void handleGetPassiveObjects(Session session, ClientMessage msg) {
-        Session.RoomPresence roomPresence = SessionGuards.requireActiveRoom(session, log, "room objects");
-        if (roomPresence == null) {
+        if (SessionGuards.requireActiveRoom(session, log, "room objects") == null) {
             return;
         }
-        responses.sendPassiveObjects(session, roomPresence);
+
+        RoomSnapshot snapshot = activeSnapshot(session, "room objects");
+        if (snapshot == null) {
+            return;
+        }
+        responses.sendPassiveObjects(session, snapshot);
     }
 
     /**
@@ -198,11 +222,15 @@ public final class RoomHandlers {
      * @param msg the msg value
      */
     public static void handleGetItems(Session session, ClientMessage msg) {
-        Session.RoomPresence roomPresence = SessionGuards.requireActiveRoom(session, log, "room items");
-        if (roomPresence == null) {
+        if (SessionGuards.requireActiveRoom(session, log, "room items") == null) {
             return;
         }
-        responses.sendItems(session, roomPresence);
+
+        RoomSnapshot snapshot = activeSnapshot(session, "room items");
+        if (snapshot == null) {
+            return;
+        }
+        responses.sendItems(session, snapshot);
     }
 
     /**
@@ -212,12 +240,15 @@ public final class RoomHandlers {
      */
     public static void handleStatus(Session session, ClientMessage msg) {
         Player player = SessionGuards.requirePlayer(session, log, "room status");
-        Session.RoomPresence roomPresence = SessionGuards.requireActiveRoom(session, log, "room status");
-        if (player == null || roomPresence == null) {
+        if (player == null || SessionGuards.requireActiveRoom(session, log, "room status") == null) {
             return;
         }
 
-        responses.sendStatus(session, roomPresence);
+        RoomSnapshot snapshot = activeSnapshot(session, "room status");
+        if (snapshot == null) {
+            return;
+        }
+        responses.sendStatus(session, snapshot);
     }
 
     /**
@@ -226,14 +257,24 @@ public final class RoomHandlers {
      * @param msg the msg value
      */
     public static void handleWalk(Session session, ClientMessage msg) {
-        if (SessionGuards.requirePlayer(session, log, "room walk") == null
-                || SessionGuards.requireActiveRoom(session, log, "room walk") == null) {
+        Player player = SessionGuards.requirePlayer(session, log, "room walk");
+        if (player == null || SessionGuards.requireActiveRoom(session, log, "room walk") == null) {
             return;
         }
 
         int x = msg.readShort();
         int y = msg.readShort();
-        roomMovementService.walk(session, x, y);
+        RoomSnapshotResult result = GatewayServiceClients.room().walkTo(
+                session.getSessionId(),
+                GatewayMappings.toPlayerData(player),
+                x,
+                y
+        );
+        if (!snapshotSucceeded(session, result)) {
+            return;
+        }
+
+        GatewayMappings.applyRoomSnapshot(session, result.getSnapshot());
     }
 
     /**
@@ -245,7 +286,20 @@ public final class RoomHandlers {
         if (SessionGuards.requireActiveRoom(session, log, "room stop") == null) {
             return;
         }
-        roomMovementService.stopWalking(session);
+
+        RoomSnapshotResult result = GatewayServiceClients.room().stopWalking(
+                session.getSessionId(),
+                GatewayMappings.toPlayerData(session.getPlayer())
+        );
+        if (!snapshotSucceeded(session, result)) {
+            return;
+        }
+
+        GatewayMappings.applyRoomSnapshot(session, result.getSnapshot());
+        responses.broadcastStatus(
+                GatewayMappings.sessionsInRoom(result.getSnapshot().getRoomType(), result.getSnapshot().getRoomId()),
+                result.getSnapshot()
+        );
     }
 
     /**
@@ -264,5 +318,52 @@ public final class RoomHandlers {
      */
     public static void handleGetSpectatorAmount(Session session, ClientMessage msg) {
         responses.sendSpectatorAmount(session);
+    }
+
+    /**
+     * Returns the active room snapshot.
+     * @param session the session value
+     * @param scope the scope value
+     * @return the result of this operation
+     */
+    private static RoomSnapshot activeSnapshot(Session session, String scope) {
+        RoomSnapshotResult result = GatewayServiceClients.room().getRoomSnapshot(session.getSessionId());
+        if (!snapshotSucceeded(session, result)) {
+            log.debug("Unable to load {} snapshot for {}", scope, session.getRemoteAddress());
+            return null;
+        }
+        return result.getSnapshot();
+    }
+
+    /**
+     * Returns whether snapshot result succeeded.
+     * @param session the session value
+     * @param result the result value
+     * @return the result of this operation
+     */
+    private static boolean snapshotSucceeded(Session session, RoomSnapshotResult result) {
+        if (result.getOutcome().getKind() == OutcomeKind.OUTCOME_KIND_SUCCESS) {
+            return true;
+        }
+
+        HandlerResponses.sendError(session, result.getOutcome().getMessage());
+        return false;
+    }
+
+    /**
+     * Broadcasts logout to the remaining local occupants.
+     * @param leavingSession the leaving session value
+     * @param result the result value
+     */
+    private static void broadcastLogout(Session leavingSession, RoomExitResult result) {
+        if (result.getRoomId() <= 0 || result.getLeavingPlayerId() <= 0) {
+            return;
+        }
+
+        for (Session occupant : GatewayMappings.sessionsInRoom(result.getRoomType(), result.getRoomId())) {
+            if (occupant != leavingSession) {
+                responses.sendLogout(occupant, result.getLeavingPlayerId());
+            }
+        }
     }
 }

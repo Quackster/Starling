@@ -1,0 +1,22 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+dependencies {
+    implementation project(':contracts')
+    implementation project(':service-support')
+    implementation "io.grpc:grpc-netty-shaded:${rootProject.ext.grpcVersion}"
+    implementation "io.grpc:grpc-protobuf:${rootProject.ext.grpcVersion}"
+    implementation "io.grpc:grpc-stub:${rootProject.ext.grpcVersion}"
+    implementation "com.github.Quackster:Entity4j:${rootProject.ext.entity4jVersion}"
+    implementation "org.mariadb.jdbc:mariadb-java-client:${rootProject.ext.mariadbVersion}"
+    implementation "org.apache.logging.log4j:log4j-api:${rootProject.ext.log4jVersion}"
+    implementation "org.apache.logging.log4j:log4j-core:${rootProject.ext.log4jVersion}"
+    compileOnly "javax.annotation:javax.annotation-api:${rootProject.ext.javaxAnnotationVersion}"
+    testImplementation "org.junit.jupiter:junit-jupiter:${rootProject.ext.junitVersion}"
+}
+
+application {
+    mainClass = 'org.starling.identity.IdentityServiceApplication'
+}

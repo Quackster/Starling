@@ -7,6 +7,8 @@ import org.starling.net.codec.ServerMessage;
 import org.starling.net.session.Session;
 import org.starling.storage.entity.UserEntity;
 
+import java.util.List;
+
 /**
  * Sends login and initial account bootstrap packets.
  */
@@ -27,10 +29,25 @@ public final class LoginResponseWriter {
      */
     public void sendLoginSuccess(Session session, UserEntity user) {
         Player player = new Player(user);
+        sendLoginSuccess(session, player, List.of(
+                "fuse_login",
+                "fuse_buy_credits",
+                "fuse_trade",
+                "fuse_room_queue_default"
+        ));
+    }
+
+    /**
+     * Sends login success.
+     * @param session the session value
+     * @param player the player value
+     * @param rights the rights value
+     */
+    public void sendLoginSuccess(Session session, Player player, List<String> rights) {
         session.setPlayer(player);
 
         session.send(new ServerMessage(OutgoingPackets.LOGIN_OK));
-        session.send(buildUserRightsMessage());
+        session.send(buildUserRightsMessage(rights));
     }
 
     /**
@@ -96,12 +113,11 @@ public final class LoginResponseWriter {
      * Builds user rights message.
      * @return the resulting build user rights message
      */
-    private ServerMessage buildUserRightsMessage() {
-        ServerMessage rights = new ServerMessage(OutgoingPackets.USER_RIGHTS);
-        rights.writeString("fuse_login");
-        rights.writeString("fuse_buy_credits");
-        rights.writeString("fuse_trade");
-        rights.writeString("fuse_room_queue_default");
-        return rights;
+    private ServerMessage buildUserRightsMessage(List<String> rights) {
+        ServerMessage message = new ServerMessage(OutgoingPackets.USER_RIGHTS);
+        for (String value : rights) {
+            message.writeString(value);
+        }
+        return message;
     }
 }

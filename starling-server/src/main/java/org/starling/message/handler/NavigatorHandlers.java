@@ -2,38 +2,35 @@ package org.starling.message.handler;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.starling.game.navigator.NavigatorManager;
-import org.starling.game.navigator.creation.PrivateRoomFactory;
-import org.starling.game.navigator.favorite.FavoriteRoomResolver;
+import org.starling.contracts.CreateFlatRequest;
+import org.starling.contracts.FlatInfoResponse;
+import org.starling.contracts.OperationResult;
+import org.starling.contracts.OutcomeKind;
+import org.starling.contracts.ParentChain;
+import org.starling.contracts.PlayerData;
+import org.starling.contracts.SetFlatInfoRequest;
+import org.starling.contracts.SpaceNodeUsers;
+import org.starling.gateway.GatewayMappings;
+import org.starling.gateway.rpc.GatewayServiceClients;
 import org.starling.game.navigator.response.NavigatorResponseWriter;
 import org.starling.game.player.Player;
-import org.starling.game.room.access.RoomAccess;
 import org.starling.message.IncomingPackets;
 import org.starling.message.support.HandlerParsing;
 import org.starling.message.support.HandlerResponses;
 import org.starling.message.support.SessionGuards;
 import org.starling.net.codec.ClientMessage;
 import org.starling.net.session.Session;
-import org.starling.storage.dao.RoomDao;
-import org.starling.storage.dao.RoomFavoriteDao;
-import org.starling.storage.dao.RoomRightDao;
-import org.starling.storage.dao.UserDao;
-import org.starling.storage.entity.NavigatorCategoryEntity;
-import org.starling.storage.entity.RoomEntity;
 
-import java.util.List;
 import java.util.Map;
 
+/**
+ * Gateway-side navigator handlers backed by the navigator service.
+ */
 public final class NavigatorHandlers {
 
     private static final Logger log = LogManager.getLogger(NavigatorHandlers.class);
-    private static final int ROOM_TYPE_PRIVATE = 0;
-    private static final int ROOM_TYPE_PUBLIC = 1;
-    private static final int MAX_FAVORITES = 10;
     private static final String CREATE_ROOM_ERROR = "Error creating a private room";
     private static final NavigatorResponseWriter responses = new NavigatorResponseWriter();
-    private static final FavoriteRoomResolver favoriteRoomResolver = new FavoriteRoomResolver();
-    private static final PrivateRoomFactory privateRoomFactory = new PrivateRoomFactory();
 
     /**
      * Creates a new NavigatorHandlers.
@@ -45,7 +42,7 @@ public final class NavigatorHandlers {
      * Respond with FriendListInit (12) containing limits and empty lists.
      */
     public static void handleFriendListInit(Session session, ClientMessage msg) {
-        responses.sendFriendListInit(session);
+        responses.sendFriendListInit(session, GatewayServiceClients.navigator().getFriendListInit());
     }
 
     /**
@@ -58,14 +55,9 @@ public final class NavigatorHandlers {
         int categoryId = msg.readInt();
         int depth = msg.hasRemaining() ? msg.readInt() : 1;
 
-        Player player = session.getPlayer();
-        int rank = player != null ? player.getRank() : 1;
-        NavigatorCategoryEntity root = NavigatorManager.getInstance().getCategory(categoryId);
-        List<NavigatorCategoryEntity> children = NavigatorManager.getInstance().getAccessibleChildren(categoryId, rank);
-
         log.debug("Navigate: hideFull={}, categoryId={}, depth={}", hideFull, categoryId, depth);
-
-        responses.sendNavigate(session, hideFull, categoryId, root, children);
+        responses.sendNavigate(session,
+                GatewayServiceClients.navigator().getNavigatePage(hideFull, categoryId, depth, currentPlayerData(session)));
     }
 
     /**
@@ -74,11 +66,8 @@ public final class NavigatorHandlers {
      * @param msg the msg value
      */
     public static void handleGetUserFlatCats(Session session, ClientMessage msg) {
-        Player player = session.getPlayer();
-        int rank = player != null ? player.getRank() : 1;
-        List<NavigatorCategoryEntity> flatCats = NavigatorManager.getInstance().getAssignableFlatCategories(rank);
-
-        responses.sendUserFlatCategories(session, flatCats);
+        responses.sendUserFlatCategories(session,
+                GatewayServiceClients.navigator().getUserFlatCategories(currentPlayerData(session)));
     }
 
     /**
@@ -88,12 +77,12 @@ public final class NavigatorHandlers {
      */
     public static void handleGetFlatCategory(Session session, ClientMessage msg) {
         int flatId = msg.readInt();
-        RoomEntity room = RoomDao.findById(flatId);
-        if (room == null) {
+        var flatCategory = GatewayServiceClients.navigator().getFlatCategory(flatId);
+        if (!flatCategory.getFound()) {
             return;
         }
 
-        responses.sendFlatCategory(session, room);
+        responses.sendFlatCategory(session, flatCategory);
     }
 
     /**
@@ -108,8 +97,8 @@ public final class NavigatorHandlers {
             ownerName = player.getUsername();
         }
 
-        List<RoomEntity> rooms = RoomDao.findByOwner(ownerName);
-        responses.sendOwnFlats(session, ownerName, rooms);
+        responses.sendOwnFlats(session, ownerName,
+                GatewayServiceClients.navigator().getOwnFlats(ownerName, currentPlayerData(session)));
     }
 
     /**
@@ -119,8 +108,7 @@ public final class NavigatorHandlers {
      */
     public static void handleSearchFlats(Session session, ClientMessage msg) {
         String query = msg.readRawBody().trim();
-        List<RoomEntity> rooms = RoomDao.search(query);
-        responses.sendSearchResults(session, rooms);
+        responses.sendSearchResults(session, GatewayServiceClients.navigator().searchFlats(query));
     }
 
     /**
@@ -138,8 +126,8 @@ public final class NavigatorHandlers {
             msg.readBoolean();
         }
 
-        FavoriteRoomResolver.FavoriteRooms favorites = favoriteRoomResolver.resolve(player);
-        responses.sendFavoriteRooms(session, player, favorites.privateRooms(), favorites.publicRooms());
+        responses.sendFavoriteRooms(session, player,
+                GatewayServiceClients.navigator().getFavoriteRooms(currentPlayerData(session)));
     }
 
     /**
@@ -155,24 +143,9 @@ public final class NavigatorHandlers {
 
         int roomType = msg.readInt();
         int roomId = msg.readInt();
-        if (!roomExists(roomType, roomId)) {
-            HandlerResponses.sendFailure(session, IncomingPackets.ADD_FAVORITE_ROOM,
-                    roomType == ROOM_TYPE_PRIVATE ? "nav_prvrooms_notfound" : "Room not found");
-            return;
-        }
-
-        if (RoomFavoriteDao.exists(player.getId(), roomType, roomId)) {
-            HandlerResponses.sendSuccess(session, IncomingPackets.ADD_FAVORITE_ROOM);
-            return;
-        }
-
-        if (RoomFavoriteDao.countByUserId(player.getId()) >= MAX_FAVORITES) {
-            HandlerResponses.sendError(session, "nav_error_toomanyfavrooms");
-            return;
-        }
-
-        RoomFavoriteDao.addFavorite(player.getId(), roomType, roomId);
-        HandlerResponses.sendSuccess(session, IncomingPackets.ADD_FAVORITE_ROOM);
+        applyOperationResult(session,
+                IncomingPackets.ADD_FAVORITE_ROOM,
+                GatewayServiceClients.navigator().addFavoriteRoom(currentPlayerData(session), roomType, roomId));
     }
 
     /**
@@ -188,8 +161,9 @@ public final class NavigatorHandlers {
 
         int roomType = msg.readInt();
         int roomId = msg.readInt();
-        RoomFavoriteDao.removeFavorite(player.getId(), roomType, roomId);
-        HandlerResponses.sendSuccess(session, IncomingPackets.DEL_FAVORITE_ROOM);
+        applyOperationResult(session,
+                IncomingPackets.DEL_FAVORITE_ROOM,
+                GatewayServiceClients.navigator().removeFavoriteRoom(currentPlayerData(session), roomType, roomId));
     }
 
     /**
@@ -203,13 +177,13 @@ public final class NavigatorHandlers {
             return;
         }
 
-        RoomEntity room = RoomDao.findById(flatId);
-        if (room == null) {
-            HandlerResponses.sendError(session, "nav_prvrooms_notfound");
+        FlatInfoResponse response = GatewayServiceClients.navigator().getFlatInfo(flatId, currentPlayerData(session));
+        if (response.getOutcome().getKind() != OutcomeKind.OUTCOME_KIND_SUCCESS) {
+            HandlerResponses.sendError(session, response.getOutcome().getMessage());
             return;
         }
 
-        responses.sendFlatInfo(session, session.getPlayer(), room);
+        responses.sendFlatInfo(session, response);
     }
 
     /**
@@ -224,27 +198,16 @@ public final class NavigatorHandlers {
         }
 
         int roomId = HandlerParsing.parseRoomId(msg.readRawBody());
-        RoomEntity room = RoomDao.findById(roomId);
-        if (room == null) {
-            HandlerResponses.sendFailure(session, IncomingPackets.DELETEFLAT, "nav_prvrooms_notfound");
-            return;
+        OperationResult result = GatewayServiceClients.navigator().deleteFlat(currentPlayerData(session), roomId);
+        if (result.getOutcome().getKind() == OutcomeKind.OUTCOME_KIND_SUCCESS) {
+            if (player.getSelectedRoomId() == roomId) {
+                player.setSelectedRoomId(0);
+            }
+            if (player.getHomeRoom() == roomId) {
+                player.setHomeRoom(0);
+            }
         }
-        if (!RoomAccess.isOwner(player, room)) {
-            HandlerResponses.sendFailure(session, IncomingPackets.DELETEFLAT, "Only the owner can delete this room.");
-            return;
-        }
-
-        RoomFavoriteDao.deleteByPrivateRoomId(roomId);
-        RoomRightDao.deleteByRoomId(roomId);
-        UserDao.clearRoomReferences(roomId);
-        RoomDao.delete(roomId);
-        if (player.getSelectedRoomId() == roomId) {
-            player.setSelectedRoomId(0);
-        }
-        if (player.getHomeRoom() == roomId) {
-            player.setHomeRoom(0);
-        }
-        HandlerResponses.sendSuccess(session, IncomingPackets.DELETEFLAT);
+        applyOperationResult(session, IncomingPackets.DELETEFLAT, result);
     }
 
     /**
@@ -265,30 +228,15 @@ public final class NavigatorHandlers {
         }
 
         int roomId = HandlerParsing.parseIntOrDefault(parts[0], 0);
-        RoomEntity room = RoomDao.findById(roomId);
-        if (room == null) {
-            HandlerResponses.sendFailure(session, IncomingPackets.UPDATEFLAT, "nav_prvrooms_notfound");
-            return;
-        }
-        if (!RoomAccess.isOwner(player, room)) {
-            HandlerResponses.sendFailure(session, IncomingPackets.UPDATEFLAT, "Only the owner can edit this room.");
-            return;
-        }
-
-        String roomName = HandlerParsing.sanitizeRoomName(parts[1]);
-        if (roomName.isEmpty()) {
-            HandlerResponses.sendFailure(session, IncomingPackets.UPDATEFLAT, "Room name is required.");
-            return;
-        }
-
-        room.setName(roomName);
-        room.setDoorModeText(parts[2]);
-        room.setShowOwnerName(HandlerParsing.parseIntOrDefault(parts[3], room.getShowOwnerName()));
-        if (room.getDoorMode() != 2) {
-            room.setDoorPassword("");
-        }
-        RoomDao.save(room);
-        HandlerResponses.sendSuccess(session, IncomingPackets.UPDATEFLAT);
+        applyOperationResult(session,
+                IncomingPackets.UPDATEFLAT,
+                GatewayServiceClients.navigator().updateFlat(
+                        currentPlayerData(session),
+                        roomId,
+                        parts[1],
+                        parts[2],
+                        HandlerParsing.parseIntOrDefault(parts[3], 0)
+                ));
     }
 
     /**
@@ -311,41 +259,29 @@ public final class NavigatorHandlers {
 
         String roomIdToken = lines[0].replace("/", "").trim();
         int roomId = HandlerParsing.parseIntOrDefault(roomIdToken, 0);
-        RoomEntity room = RoomDao.findById(roomId);
-        if (room == null) {
-            HandlerResponses.sendFailure(session, IncomingPackets.SETFLATINFO, "nav_prvrooms_notfound");
-            return;
-        }
-        if (!RoomAccess.isOwner(player, room)) {
-            HandlerResponses.sendFailure(session, IncomingPackets.SETFLATINFO, "Only the owner can edit this room.");
-            return;
-        }
-
         Map<String, String> values = HandlerParsing.parseKeyValues(lines, 1);
+
+        SetFlatInfoRequest.Builder request = SetFlatInfoRequest.newBuilder()
+                .setPlayer(currentPlayerData(session))
+                .setRoomId(roomId);
         if (values.containsKey("description")) {
-            room.setDescription(values.get("description"));
+            request.setDescription(values.get("description")).setHasDescription(true);
         }
         if (values.containsKey("allsuperuser")) {
-            room.setAllowOthersMoveFurniture(HandlerParsing.parseIntOrDefault(values.get("allsuperuser"), room.getAllowOthersMoveFurniture()));
+            request.setAllowOthersMoveFurniture(HandlerParsing.parseIntOrDefault(values.get("allsuperuser"), 0))
+                    .setHasAllowOthersMoveFurniture(true);
         }
         if (values.containsKey("maxvisitors")) {
-            int requestedMax = HandlerParsing.parseIntOrDefault(values.get("maxvisitors"), room.getMaxUsers());
-            requestedMax = Math.max(10, Math.min(room.getAbsoluteMaxUsers(), requestedMax));
-            room.setMaxUsers(requestedMax);
+            request.setMaxVisitors(HandlerParsing.parseIntOrDefault(values.get("maxvisitors"), 0))
+                    .setHasMaxVisitors(true);
         }
-        if (room.getDoorMode() == 2 && values.containsKey("password")) {
-            String password = values.get("password");
-            if (password != null && !password.isEmpty() && password.length() < 3) {
-                HandlerResponses.sendFailure(session, IncomingPackets.SETFLATINFO, "nav_error_passwordtooshort");
-                return;
-            }
-            room.setDoorPassword(password);
-        } else if (room.getDoorMode() != 2) {
-            room.setDoorPassword("");
+        if (values.containsKey("password")) {
+            request.setPassword(values.get("password")).setHasPassword(true);
         }
 
-        RoomDao.save(room);
-        HandlerResponses.sendSuccess(session, IncomingPackets.SETFLATINFO);
+        applyOperationResult(session,
+                IncomingPackets.SETFLATINFO,
+                GatewayServiceClients.navigator().setFlatInfo(request.build()));
     }
 
     /**
@@ -365,27 +301,19 @@ public final class NavigatorHandlers {
             return;
         }
 
-        List<NavigatorCategoryEntity> assignableCategories = NavigatorManager.getInstance().getAssignableFlatCategories(player.getRank());
-        if (assignableCategories.isEmpty()) {
-            HandlerResponses.sendError(session, CREATE_ROOM_ERROR);
+        OperationResult result = GatewayServiceClients.navigator().createFlat(CreateFlatRequest.newBuilder()
+                .setPlayer(currentPlayerData(session))
+                .setRoomName(parts[2])
+                .setLayoutToken(parts[3])
+                .setDoorModeToken(parts[4])
+                .setShowOwnerName(HandlerParsing.parseIntOrDefault(parts[5], 1))
+                .build());
+        if (result.getOutcome().getKind() == OutcomeKind.OUTCOME_KIND_SUCCESS) {
+            responses.sendFlatCreated(session, result);
             return;
         }
 
-        String roomName = HandlerParsing.sanitizeRoomName(parts[2]);
-        if (roomName.isEmpty()) {
-            HandlerResponses.sendError(session, CREATE_ROOM_ERROR);
-            return;
-        }
-
-        RoomEntity persisted = RoomDao.save(privateRoomFactory.create(
-                player,
-                assignableCategories.get(0).getId(),
-                roomName,
-                parts[3],
-                parts[4],
-                HandlerParsing.parseIntOrDefault(parts[5], 1)
-        ));
-        responses.sendFlatCreated(session, persisted);
+        sendOutcome(session, IncomingPackets.CREATEFLAT, result);
     }
 
     /**
@@ -401,27 +329,9 @@ public final class NavigatorHandlers {
 
         int roomId = msg.readInt();
         int categoryId = msg.readInt();
-
-        RoomEntity room = RoomDao.findById(roomId);
-        if (room == null) {
-            HandlerResponses.sendFailure(session, IncomingPackets.SETFLATCAT, "nav_prvrooms_notfound");
-            return;
-        }
-        if (!RoomAccess.isOwner(player, room)) {
-            HandlerResponses.sendFailure(session, IncomingPackets.SETFLATCAT, "Only the owner can edit this room.");
-            return;
-        }
-
-        NavigatorCategoryEntity category = NavigatorManager.getInstance().getCategory(categoryId);
-        if (category == null || !category.isFlatCategory() || player.getRank() < category.getMinRoleAccess()
-                || player.getRank() < category.getMinRoleSetFlatCat()) {
-            HandlerResponses.sendFailure(session, IncomingPackets.SETFLATCAT, "Invalid room category.");
-            return;
-        }
-
-        room.setCategoryId(categoryId);
-        RoomDao.save(room);
-        HandlerResponses.sendSuccess(session, IncomingPackets.SETFLATCAT);
+        applyOperationResult(session,
+                IncomingPackets.SETFLATCAT,
+                GatewayServiceClients.navigator().setFlatCategory(currentPlayerData(session), roomId, categoryId));
     }
 
     /**
@@ -431,7 +341,8 @@ public final class NavigatorHandlers {
      */
     public static void handleGetSpaceNodeUsers(Session session, ClientMessage msg) {
         int nodeId = msg.readInt();
-        responses.sendSpaceNodeUsers(session, nodeId);
+        SpaceNodeUsers response = GatewayServiceClients.navigator().getSpaceNodeUsers(nodeId);
+        responses.sendSpaceNodeUsers(session, response);
     }
 
     /**
@@ -446,18 +357,9 @@ public final class NavigatorHandlers {
         }
 
         int roomId = msg.readInt();
-        RoomEntity room = RoomDao.findById(roomId);
-        if (room == null) {
-            HandlerResponses.sendFailure(session, IncomingPackets.REMOVEALLRIGHTS, "nav_prvrooms_notfound");
-            return;
-        }
-        if (!RoomAccess.isOwner(player, room)) {
-            HandlerResponses.sendFailure(session, IncomingPackets.REMOVEALLRIGHTS, "Only the owner can edit this room.");
-            return;
-        }
-
-        RoomRightDao.deleteByRoomId(roomId);
-        HandlerResponses.sendSuccess(session, IncomingPackets.REMOVEALLRIGHTS);
+        applyOperationResult(session,
+                IncomingPackets.REMOVEALLRIGHTS,
+                GatewayServiceClients.navigator().removeAllRights(currentPlayerData(session), roomId));
     }
 
     /**
@@ -467,12 +369,12 @@ public final class NavigatorHandlers {
      */
     public static void handleGetParentChain(Session session, ClientMessage msg) {
         int categoryId = msg.readInt();
-        NavigatorCategoryEntity root = NavigatorManager.getInstance().getCategory(categoryId);
-        if (root == null) {
+        ParentChain parentChain = GatewayServiceClients.navigator().getParentChain(categoryId);
+        if (!parentChain.getFound()) {
             return;
         }
 
-        responses.sendParentChain(session, root, NavigatorManager.getInstance().getParentChain(categoryId));
+        responses.sendParentChain(session, parentChain);
     }
 
     /**
@@ -481,20 +383,46 @@ public final class NavigatorHandlers {
      * @param msg the msg value
      */
     public static void handleGetRecommendedRooms(Session session, ClientMessage msg) {
-        List<RoomEntity> rooms = RoomDao.findRecommended(3);
-        responses.sendRecommendedRooms(session, session.getPlayer(), rooms);
+        responses.sendRecommendedRooms(session, session.getPlayer(),
+                GatewayServiceClients.navigator().getRecommendedRooms(3));
     }
 
     /**
-     * Rooms exists.
-     * @param roomType the room type value
-     * @param roomId the room id value
-     * @return the resulting room exists
+     * Returns current player data.
+     * @param session the session value
+     * @return the result of this operation
      */
-    private static boolean roomExists(int roomType, int roomId) {
-        if (roomType == ROOM_TYPE_PUBLIC) {
-            return RoomAccess.findPublicRoom(roomId) != null;
+    private static PlayerData currentPlayerData(Session session) {
+        return GatewayMappings.toPlayerData(session.getPlayer());
+    }
+
+    /**
+     * Applies operation result using success/failure/error packets.
+     * @param session the session value
+     * @param originatingOpcode the originating opcode value
+     * @param result the result value
+     * @return the result of this operation
+     */
+    private static boolean applyOperationResult(Session session, int originatingOpcode, OperationResult result) {
+        if (result.getOutcome().getKind() == OutcomeKind.OUTCOME_KIND_SUCCESS) {
+            HandlerResponses.sendSuccess(session, originatingOpcode);
+            return true;
         }
-        return RoomDao.findById(roomId) != null;
+        sendOutcome(session, originatingOpcode, result);
+        return false;
+    }
+
+    /**
+     * Sends operation outcome.
+     * @param session the session value
+     * @param originatingOpcode the originating opcode value
+     * @param result the result value
+     */
+    private static void sendOutcome(Session session, int originatingOpcode, OperationResult result) {
+        if (result.getOutcome().getKind() == OutcomeKind.OUTCOME_KIND_FAILURE) {
+            HandlerResponses.sendFailure(session, originatingOpcode, result.getOutcome().getMessage());
+            return;
+        }
+        HandlerResponses.sendError(session, result.getOutcome().getMessage());
     }
 }

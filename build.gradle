@@ -1,0 +1,200 @@
+plugins {
+    id 'base'
+}
+
+def deployableConfigs = [
+        'gateway'          : [configResource: 'server.properties', configEnvVar: 'STARLING_GATEWAY_CONFIG'],
+        'identity-service' : [configResource: 'identity-service.properties', configEnvVar: 'STARLING_IDENTITY_CONFIG'],
+        'room-service'     : [configResource: 'room-service.properties', configEnvVar: 'STARLING_ROOM_CONFIG'],
+        'navigator-service': [configResource: 'navigator-service.properties', configEnvVar: 'STARLING_NAVIGATOR_CONFIG']
+]
+def deployableProjects = deployableConfigs.keySet().toList()
+def packagedDeployableTasks = []
+
+ext {
+    nettyVersion = '4.1.108.Final'
+    grpcVersion = '1.64.0'
+    protobufVersion = '3.25.3'
+    protobufPluginVersion = '0.9.4'
+    mariadbVersion = '3.5.2'
+    log4jVersion = '2.23.0'
+    junitVersion = '5.10.2'
+    entity4jVersion = 'v1.0.0'
+    javaxAnnotationVersion = '1.3.2'
+}
+
+tasks.register('cleanLegacyDist', Delete) {
+    delete deployableProjects.collect { file("dist/${it}") }
+    delete file('dist/bin')
+    delete file('dist/lib')
+    delete file('dist/config')
+    delete file('dist/start.bat')
+}
+
+allprojects {
+    group = 'org.starling'
+    version = '1.0-SNAPSHOT'
+
+    repositories {
+        mavenCentral()
+        maven { url = 'https://jitpack.io' }
+    }
+}
+
+subprojects {
+    pluginManager.withPlugin('java') {
+        java {
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(17)
+            }
+        }
+
+        tasks.withType(JavaCompile).configureEach {
+            options.encoding = 'UTF-8'
+        }
+
+        tasks.withType(Test).configureEach {
+            useJUnitPlatform()
+        }
+    }
+
+    pluginManager.withPlugin('application') {
+        def deployableConfig = deployableConfigs[project.name]
+        extensions.configure(org.gradle.api.plugins.JavaApplication) {
+            applicationName = project.name
+        }
+
+        def syncTask = tasks.register('syncDistLayout', Sync) {
+            dependsOn tasks.named('installDist')
+            mustRunAfter rootProject.tasks.named('cleanLegacyDist')
+
+            from(layout.buildDirectory.dir("install/${project.name}"))
+            into(rootProject.layout.projectDirectory.dir("dist/${project.name}"))
+            preserve {
+                include 'logs/**'
+            }
+
+            if (deployableConfig != null) {
+                into('config') {
+                    from("src/main/resources/${deployableConfig.configResource}")
+                }
+            }
+        }
+
+        def launcherTask = tasks.register('writeDistLaunchers') {
+            dependsOn syncTask
+            mustRunAfter rootProject.tasks.named('cleanLegacyDist')
+
+            doLast {
+                if (deployableConfig == null) {
+                    return
+                }
+
+                File distDir = rootProject.file("dist/${project.name}")
+                File logsDir = new File(distDir, 'logs')
+                logsDir.mkdirs()
+
+                File batFile = new File(distDir, 'start.bat')
+                batFile.text = """@echo off
+setlocal
+
+set "DIST_DIR=%~dp0"
+pushd "%DIST_DIR%"
+
+if not exist "logs" mkdir "logs"
+set "${deployableConfig.configEnvVar}=%DIST_DIR%config\\${deployableConfig.configResource}"
+
+call "%DIST_DIR%bin\\${project.name}.bat" %*
+set "EXIT_CODE=%ERRORLEVEL%"
+
+popd
+exit /b %EXIT_CODE%
+"""
+
+                File shFile = new File(distDir, 'start')
+                shFile.text = """#!/usr/bin/env sh
+set -eu
+
+DIST_DIR=\$(CDPATH= cd -- "\$(dirname -- "\$0")" && pwd)
+mkdir -p "\$DIST_DIR/logs"
+export ${deployableConfig.configEnvVar}="\$DIST_DIR/config/${deployableConfig.configResource}"
+
+exec "\$DIST_DIR/bin/${project.name}" "\$@"
+"""
+                shFile.setExecutable(true)
+            }
+        }
+
+        packagedDeployableTasks << launcherTask
+    }
+}
+
+def writeRootDistFiles = tasks.register('writeRootDistFiles') {
+    dependsOn packagedDeployableTasks
+    mustRunAfter tasks.named('cleanLegacyDist')
+
+    doLast {
+        File distDir = file('dist')
+        distDir.mkdirs()
+
+        new File(distDir, 'README.txt').text = """Starling Microservice Distribution
+
+Deployables:
+- gateway
+- identity-service
+- room-service
+- navigator-service
+
+Recommended startup order:
+1. identity-service
+2. room-service
+3. navigator-service
+4. gateway
+
+Windows:
+- Run dist\\start-all.bat to launch every service in separate windows.
+- Or run each service's start.bat inside its dist folder.
+
+Unix:
+- Run dist/start-all to launch every service in the background.
+- Or run each service's start script inside its dist folder.
+"""
+
+        new File(distDir, 'start-all.bat').text = """@echo off
+setlocal
+
+set "DIST_DIR=%~dp0"
+
+start "identity-service" "%DIST_DIR%identity-service\\start.bat"
+timeout /t 1 /nobreak >NUL
+start "room-service" "%DIST_DIR%room-service\\start.bat"
+timeout /t 1 /nobreak >NUL
+start "navigator-service" "%DIST_DIR%navigator-service\\start.bat"
+timeout /t 1 /nobreak >NUL
+start "gateway" "%DIST_DIR%gateway\\start.bat"
+"""
+
+        File shFile = new File(distDir, 'start-all')
+        shFile.text = """#!/usr/bin/env sh
+set -eu
+
+DIST_DIR=\$(CDPATH= cd -- "\$(dirname -- "\$0")" && pwd)
+
+"\$DIST_DIR/identity-service/start" &
+sleep 1
+"\$DIST_DIR/room-service/start" &
+sleep 1
+"\$DIST_DIR/navigator-service/start" &
+sleep 1
+"\$DIST_DIR/gateway/start" &
+
+wait
+"""
+        shFile.setExecutable(true)
+    }
+}
+
+tasks.register('packageDist') {
+    dependsOn tasks.named('cleanLegacyDist')
+    dependsOn writeRootDistFiles
+}

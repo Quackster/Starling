@@ -2,18 +2,23 @@ package org.starling.message.handler;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.starling.contracts.AuthenticateResponse;
+import org.starling.contracts.PlayerBootstrapResponse;
+import org.starling.gateway.rpc.GatewayServiceClients;
 import org.starling.game.player.Player;
+import org.starling.game.player.PlayerManager;
 import org.starling.game.player.auth.LoginResponseWriter;
-import org.starling.game.player.auth.LoginService;
 import org.starling.message.support.SessionGuards;
 import org.starling.net.codec.ClientMessage;
 import org.starling.net.session.Session;
 
+/**
+ * Gateway-side login handlers backed by the identity service.
+ */
 public final class LoginHandlers {
 
     private static final Logger log = LogManager.getLogger(LoginHandlers.class);
     private static final LoginResponseWriter responses = new LoginResponseWriter();
-    private static final LoginService loginService = new LoginService(responses);
 
     /**
      * Creates a new LoginHandlers.
@@ -27,7 +32,9 @@ public final class LoginHandlers {
     public static void handleTryLogin(Session session, ClientMessage msg) {
         String username = msg.readString();
         String password = msg.readString();
-        loginService.tryLogin(session, username, password);
+        handleAuthentication(session,
+                GatewayServiceClients.identity().authenticatePassword(username, password),
+                username);
     }
 
     /**
@@ -36,7 +43,9 @@ public final class LoginHandlers {
      */
     public static void handleSSO(Session session, ClientMessage msg) {
         String ticket = msg.readString();
-        loginService.loginWithTicket(session, ticket);
+        handleAuthentication(session,
+                GatewayServiceClients.identity().authenticateSso(ticket),
+                ticket);
     }
 
     /**
@@ -44,7 +53,7 @@ public final class LoginHandlers {
      * Respond with UserObj (5).
      */
     public static void handleGetInfo(Session session, ClientMessage msg) {
-        Player player = SessionGuards.requirePlayer(session, log, "user info");
+        Player player = refreshPlayer(session);
         if (player == null) {
             return;
         }
@@ -56,7 +65,7 @@ public final class LoginHandlers {
      * Respond with CreditBalance (6) as raw string "credits.0".
      */
     public static void handleGetCredits(Session session, ClientMessage msg) {
-        Player player = SessionGuards.requirePlayer(session, log, "credits");
+        Player player = refreshPlayer(session);
         if (player == null) {
             return;
         }
@@ -94,5 +103,45 @@ public final class LoginHandlers {
      */
     public static void handleGetPossibleAchievements(Session session, ClientMessage msg) {
         responses.sendPossibleAchievements(session);
+    }
+
+    /**
+     * Handles authentication result.
+     * @param session the session value
+     * @param response the response value
+     * @param principal the principal value
+     */
+    private static void handleAuthentication(Session session, AuthenticateResponse response, String principal) {
+        if (!response.getAuthenticated()) {
+            responses.sendLoginFailure(session);
+            log.warn("Login failed for {}", principal);
+            return;
+        }
+
+        Player player = new Player(response.getBootstrap().getPlayer());
+        responses.sendLoginSuccess(session, player, response.getBootstrap().getRightsList());
+        PlayerManager.getInstance().register(session);
+        log.info("User logged in: {} (id={})", player.getUsername(), player.getId());
+    }
+
+    /**
+     * Refreshes player bootstrap from identity service.
+     * @param session the session value
+     * @return the result of this operation
+     */
+    private static Player refreshPlayer(Session session) {
+        Player player = SessionGuards.requirePlayer(session, log, "player refresh");
+        if (player == null) {
+            return null;
+        }
+
+        PlayerBootstrapResponse response = GatewayServiceClients.identity().getPlayerBootstrap(player.getId());
+        if (!response.getFound()) {
+            return player;
+        }
+
+        Player refreshed = new Player(response.getBootstrap().getPlayer());
+        session.setPlayer(refreshed);
+        return refreshed;
     }
 }

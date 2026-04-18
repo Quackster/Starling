@@ -1,69 +1,64 @@
 package org.starling.game.navigator.response;
 
+import org.starling.contracts.CategoryList;
+import org.starling.contracts.FavoriteRooms;
+import org.starling.contracts.FlatCategory;
+import org.starling.contracts.FlatInfoResponse;
+import org.starling.contracts.FriendListInit;
+import org.starling.contracts.NavigatePage;
+import org.starling.contracts.NavigatorNode;
+import org.starling.contracts.OperationResult;
+import org.starling.contracts.ParentChain;
+import org.starling.contracts.PlayerData;
+import org.starling.contracts.PrivateRoomList;
+import org.starling.contracts.PrivateRoomListing;
+import org.starling.contracts.PublicRoomListing;
+import org.starling.contracts.SpaceNodeUsers;
 import org.starling.game.player.Player;
-import org.starling.game.room.access.RoomAccess;
 import org.starling.message.OutgoingPackets;
 import org.starling.net.codec.ServerMessage;
 import org.starling.net.session.Session;
-import org.starling.storage.bootstrap.HolographPublicSpaceCatalog;
-import org.starling.storage.dao.PublicRoomDao;
-import org.starling.storage.dao.RoomDao;
-import org.starling.storage.entity.NavigatorCategoryEntity;
-import org.starling.storage.entity.PublicRoomEntity;
-import org.starling.storage.entity.RoomEntity;
 
 import java.util.List;
 
 /**
- * Serializes navigator responses and room listings for the classic client.
+ * Serializes navigator service responses into the classic client packets.
  */
 public final class NavigatorResponseWriter {
 
     /**
      * Sends friend list init.
      * @param session the session value
+     * @param init the init value
      */
-    public void sendFriendListInit(Session session) {
+    public void sendFriendListInit(Session session, FriendListInit init) {
         ServerMessage response = new ServerMessage(OutgoingPackets.FRIEND_LIST_INIT);
-        response.writeInt(200);
-        response.writeInt(200);
-        response.writeInt(800);
-        response.writeInt(0);
-        response.writeInt(0);
-        response.writeInt(200);
-        response.writeInt(0);
+        response.writeInt(init.getFriendLimit());
+        response.writeInt(init.getFriendRequestLimit());
+        response.writeInt(init.getMessengerOpenWindowLimit());
+        response.writeInt(init.getCategoryCount());
+        response.writeInt(init.getCategoryPage());
+        response.writeInt(init.getMaxSearchResults());
+        response.writeInt(init.getActiveFriendCount());
         session.send(response);
     }
 
     /**
-     * Sends navigate.
+     * Sends navigate page.
      * @param session the session value
-     * @param hideFull the hide full value
-     * @param categoryId the category id value
-     * @param root the root value
-     * @param children the children value
+     * @param page the page value
      */
-    public void sendNavigate(Session session, int hideFull, int categoryId, NavigatorCategoryEntity root, List<NavigatorCategoryEntity> children) {
-        boolean hideFullRooms = hideFull != 0;
+    public void sendNavigate(Session session, NavigatePage page) {
+        boolean hideFullRooms = page.getHideFull() != 0;
         ServerMessage response = new ServerMessage(OutgoingPackets.NAV_NODE_INFO);
-        response.writeInt(hideFull);
-
-        if (root != null) {
-            writeCategoryNode(response, root, hideFullRooms);
-        } else {
-            writeSyntheticRoot(response, categoryId);
-        }
-
-        for (NavigatorCategoryEntity child : children) {
+        response.writeInt(page.getHideFull());
+        writeCategoryNode(response, page.getRoot(), hideFullRooms);
+        for (NavigatorNode child : page.getChildNodesList()) {
             writeCategoryNode(response, child, hideFullRooms);
         }
-
-        if (root != null && root.isPublicCategory()) {
-            for (PublicRoomEntity publicRoom : filterPublicRooms(PublicRoomDao.findVisibleByCategoryId(root.getId()), hideFullRooms)) {
-                writePublicRoomNode(response, publicRoom);
-            }
+        for (PublicRoomListing publicRoom : page.getPublicRoomsList()) {
+            writePublicRoomNode(response, publicRoom);
         }
-
         response.writeInt(0);
         session.send(response);
     }
@@ -71,27 +66,27 @@ public final class NavigatorResponseWriter {
     /**
      * Sends user flat categories.
      * @param session the session value
-     * @param flatCats the flat cats value
+     * @param flatCategories the flat categories value
      */
-    public void sendUserFlatCategories(Session session, List<NavigatorCategoryEntity> flatCats) {
+    public void sendUserFlatCategories(Session session, CategoryList flatCategories) {
         ServerMessage response = new ServerMessage(OutgoingPackets.USER_FLAT_CATS);
-        response.writeInt(flatCats.size());
-        for (NavigatorCategoryEntity cat : flatCats) {
-            response.writeInt(cat.getId());
-            response.writeString(cat.getName());
-        }
+        response.writeInt(flatCategories.getCategoriesCount());
+        flatCategories.getCategoriesList().forEach(category -> {
+            response.writeInt(category.getId());
+            response.writeString(category.getName());
+        });
         session.send(response);
     }
 
     /**
      * Sends flat category.
      * @param session the session value
-     * @param room the room value
+     * @param flatCategory the flat category value
      */
-    public void sendFlatCategory(Session session, RoomEntity room) {
+    public void sendFlatCategory(Session session, FlatCategory flatCategory) {
         ServerMessage response = new ServerMessage(OutgoingPackets.FLAT_CATEGORY);
-        response.writeInt(room.getId());
-        response.writeInt(room.getCategoryId());
+        response.writeInt(flatCategory.getRoomId());
+        response.writeInt(flatCategory.getCategoryId());
         session.send(response);
     }
 
@@ -101,12 +96,12 @@ public final class NavigatorResponseWriter {
      * @param ownerName the owner name value
      * @param rooms the rooms value
      */
-    public void sendOwnFlats(Session session, String ownerName, List<RoomEntity> rooms) {
-        if (rooms.isEmpty()) {
-            session.send(new ServerMessage(OutgoingPackets.NO_FLATS_FOR_USER).writeString(ownerName));
+    public void sendOwnFlats(Session session, String ownerName, PrivateRoomList rooms) {
+        if (rooms.getRoomsCount() == 0) {
+            session.send(new ServerMessage(OutgoingPackets.NO_FLATS_FOR_USER).writeString(ownerName == null ? "" : ownerName));
             return;
         }
-        session.send(buildFlatResultsPacket(OutgoingPackets.FLAT_RESULTS, rooms));
+        session.send(buildFlatResultsPacket(OutgoingPackets.FLAT_RESULTS, rooms.getRoomsList()));
     }
 
     /**
@@ -114,37 +109,32 @@ public final class NavigatorResponseWriter {
      * @param session the session value
      * @param rooms the rooms value
      */
-    public void sendSearchResults(Session session, List<RoomEntity> rooms) {
-        if (rooms.isEmpty()) {
+    public void sendSearchResults(Session session, PrivateRoomList rooms) {
+        if (rooms.getRoomsCount() == 0) {
             session.send(new ServerMessage(OutgoingPackets.NO_FLATS));
             return;
         }
-        session.send(buildFlatResultsPacket(OutgoingPackets.SEARCH_FLAT_RESULTS, rooms));
+        session.send(buildFlatResultsPacket(OutgoingPackets.SEARCH_FLAT_RESULTS, rooms.getRoomsList()));
     }
 
     /**
      * Sends favorite rooms.
      * @param session the session value
-     * @param player the player value
-     * @param privateFavorites the private favorites value
-     * @param publicFavorites the public favorites value
+     * @param viewer the viewer value
+     * @param favorites the favorites value
      */
-    public void sendFavoriteRooms(Session session, Player player, List<RoomEntity> privateFavorites, List<PublicRoomEntity> publicFavorites) {
+    public void sendFavoriteRooms(Session session, Player viewer, FavoriteRooms favorites) {
         ServerMessage response = new ServerMessage(OutgoingPackets.FAVORITE_ROOM_RESULTS);
         response.writeInt(0);
         response.writeInt(2);
         response.writeInt(2);
         response.writeString("Favorite Rooms");
-        response.writeInt(totalUsers(privateFavorites) + totalPublicUsers(publicFavorites));
-        response.writeInt(totalCapacity(privateFavorites, publicFavorites));
+        response.writeInt(totalUsers(favorites.getPrivateRoomsList()) + totalPublicUsers(favorites.getPublicRoomsList()));
+        response.writeInt(totalCapacity(favorites.getPrivateRoomsList(), favorites.getPublicRoomsList()));
         response.writeInt(0);
-        response.writeInt(privateFavorites.size());
-        for (RoomEntity room : privateFavorites) {
-            writeRoomListing(response, room, player);
-        }
-        for (PublicRoomEntity room : publicFavorites) {
-            writePublicRoomNode(response, room);
-        }
+        response.writeInt(favorites.getPrivateRoomsCount());
+        favorites.getPrivateRoomsList().forEach(room -> writeRoomListing(response, room, viewer));
+        favorites.getPublicRoomsList().forEach(publicRoom -> writePublicRoomNode(response, publicRoom));
         response.writeInt(0);
         session.send(response);
     }
@@ -152,15 +142,15 @@ public final class NavigatorResponseWriter {
     /**
      * Sends flat info.
      * @param session the session value
-     * @param viewer the viewer value
-     * @param room the room value
+     * @param responseData the response data value
      */
-    public void sendFlatInfo(Session session, Player viewer, RoomEntity room) {
+    public void sendFlatInfo(Session session, FlatInfoResponse responseData) {
+        PrivateRoomListing room = responseData.getRoom();
         ServerMessage response = new ServerMessage(OutgoingPackets.FLAT_INFO);
         response.writeInt(room.getAllowOthersMoveFurniture());
         response.writeInt(room.getDoorMode());
         response.writeInt(room.getId());
-        response.writeString(RoomAccess.visibleOwnerName(viewer, room));
+        response.writeString(responseData.getVisibleOwnerName());
         response.writeString(room.getModelName());
         response.writeString(room.getName());
         response.writeString(room.getDescription());
@@ -175,39 +165,38 @@ public final class NavigatorResponseWriter {
     /**
      * Sends flat created.
      * @param session the session value
-     * @param room the room value
+     * @param result the result value
      */
-    public void sendFlatCreated(Session session, RoomEntity room) {
+    public void sendFlatCreated(Session session, OperationResult result) {
         session.send(new ServerMessage(OutgoingPackets.FLAT_CREATED)
-                .writeRaw(room.getId() + "\r" + room.getName()));
+                .writeRaw(result.getRoom().getId() + "\r" + result.getRoom().getName()));
     }
 
     /**
      * Sends space node users.
      * @param session the session value
-     * @param nodeId the node id value
+     * @param nodeUsers the node users value
      */
-    public void sendSpaceNodeUsers(Session session, int nodeId) {
+    public void sendSpaceNodeUsers(Session session, SpaceNodeUsers nodeUsers) {
         ServerMessage response = new ServerMessage(OutgoingPackets.SPACE_NODE_USERS);
-        response.writeInt(nodeId);
-        response.writeInt(0);
+        response.writeInt(nodeUsers.getNodeId());
+        response.writeInt(nodeUsers.getUserCount());
         session.send(response);
     }
 
     /**
      * Sends parent chain.
      * @param session the session value
-     * @param root the root value
-     * @param parents the parents value
+     * @param parentChain the parent chain value
      */
-    public void sendParentChain(Session session, NavigatorCategoryEntity root, List<NavigatorCategoryEntity> parents) {
+    public void sendParentChain(Session session, ParentChain parentChain) {
         ServerMessage response = new ServerMessage(OutgoingPackets.PARENT_CHAIN);
-        response.writeInt(root.getId());
-        response.writeString(root.getName());
-        for (NavigatorCategoryEntity parent : parents) {
+        response.writeInt(parentChain.getRoot().getId());
+        response.writeString(parentChain.getRoot().getName());
+        parentChain.getParentsList().forEach(parent -> {
             response.writeInt(parent.getId());
             response.writeString(parent.getName());
-        }
+        });
         response.writeInt(0);
         session.send(response);
     }
@@ -218,59 +207,44 @@ public final class NavigatorResponseWriter {
      * @param viewer the viewer value
      * @param rooms the rooms value
      */
-    public void sendRecommendedRooms(Session session, Player viewer, List<RoomEntity> rooms) {
+    public void sendRecommendedRooms(Session session, Player viewer, PrivateRoomList rooms) {
         ServerMessage response = new ServerMessage(OutgoingPackets.RECOMMENDED_ROOM_LIST);
-        response.writeInt(rooms.size());
-        for (RoomEntity room : rooms) {
-            writeRoomListing(response, room, viewer);
-        }
+        response.writeInt(rooms.getRoomsCount());
+        rooms.getRoomsList().forEach(room -> writeRoomListing(response, room, viewer));
         session.send(response);
-    }
-
-    /**
-     * Writes synthetic root.
-     * @param response the response value
-     * @param categoryId the category id value
-     */
-    private void writeSyntheticRoot(ServerMessage response, int categoryId) {
-        response.writeInt(categoryId);
-        response.writeInt(0);
-        response.writeString(categoryId == 1
-                ? HolographPublicSpaceCatalog.ROOT_PUBLIC_CATEGORY_NAME
-                : HolographPublicSpaceCatalog.ROOT_PRIVATE_CATEGORY_NAME);
-        response.writeInt(0);
-        response.writeInt(100);
-        response.writeInt(0);
     }
 
     /**
      * Writes category node.
      * @param response the response value
-     * @param category the category value
+     * @param node the node value
      * @param hideFullRooms the hide full rooms value
      */
-    private void writeCategoryNode(ServerMessage response, NavigatorCategoryEntity category, boolean hideFullRooms) {
-        if (category.isFlatCategory()) {
-            List<RoomEntity> rooms = filterRooms(RoomDao.findByCategoryId(category.getId()), hideFullRooms);
-            response.writeInt(category.getId());
+    private void writeCategoryNode(ServerMessage response, NavigatorNode node, boolean hideFullRooms) {
+        if (node.getCategory().getFlatCategory()) {
+            List<PrivateRoomListing> rooms = hideFullRooms
+                    ? node.getPrivateRoomsList().stream()
+                    .filter(room -> room.getCurrentUsers() < room.getMaxUsers())
+                    .toList()
+                    : node.getPrivateRoomsList();
+            response.writeInt(node.getCategory().getId());
             response.writeInt(2);
-            response.writeString(category.getName());
-            response.writeInt(totalUsers(rooms));
-            response.writeInt(totalCapacity(rooms));
-            response.writeInt(category.getParentId());
+            response.writeString(node.getCategory().getName());
+            response.writeInt(rooms.stream().mapToInt(PrivateRoomListing::getCurrentUsers).sum());
+            int capacity = rooms.stream().mapToInt(PrivateRoomListing::getMaxUsers).sum();
+            response.writeInt(capacity > 0 ? capacity : 100);
+            response.writeInt(node.getCategory().getParentId());
             response.writeInt(rooms.size());
-            for (RoomEntity room : rooms) {
-                writeRoomListing(response, room, null);
-            }
+            rooms.forEach(room -> writeRoomListing(response, room, null));
             return;
         }
 
-        response.writeInt(category.getId());
+        response.writeInt(node.getCategory().getId());
         response.writeInt(0);
-        response.writeString(category.getName());
-        response.writeInt(0);
-        response.writeInt(100);
-        response.writeInt(category.getParentId());
+        response.writeString(node.getCategory().getName());
+        response.writeInt(node.getUserCount());
+        response.writeInt(node.getCapacity() > 0 ? node.getCapacity() : 100);
+        response.writeInt(node.getCategory().getParentId());
     }
 
     /**
@@ -279,9 +253,9 @@ public final class NavigatorResponseWriter {
      * @param rooms the rooms value
      * @return the resulting build flat results packet
      */
-    private ServerMessage buildFlatResultsPacket(int opcode, List<RoomEntity> rooms) {
+    private ServerMessage buildFlatResultsPacket(int opcode, List<PrivateRoomListing> rooms) {
         StringBuilder payload = new StringBuilder();
-        for (RoomEntity room : rooms) {
+        for (PrivateRoomListing room : rooms) {
             payload.append(room.getId()).append('\t')
                     .append(room.getName()).append('\t')
                     .append(room.getOwnerName()).append('\t')
@@ -301,10 +275,10 @@ public final class NavigatorResponseWriter {
      * @param room the room value
      * @param viewer the viewer value
      */
-    private void writeRoomListing(ServerMessage response, RoomEntity room, Player viewer) {
+    private void writeRoomListing(ServerMessage response, PrivateRoomListing room, Player viewer) {
         response.writeInt(room.getId());
         response.writeString(room.getName());
-        response.writeString(RoomAccess.visibleOwnerName(viewer, room));
+        response.writeString(visibleOwnerName(viewer, room));
         response.writeString(room.getDoorModeText());
         response.writeInt(room.getCurrentUsers());
         response.writeInt(room.getMaxUsers());
@@ -316,7 +290,7 @@ public final class NavigatorResponseWriter {
      * @param response the response value
      * @param room the room value
      */
-    private void writePublicRoomNode(ServerMessage response, PublicRoomEntity room) {
+    private void writePublicRoomNode(ServerMessage response, PublicRoomListing room) {
         response.writeInt(room.getId());
         response.writeInt(1);
         response.writeString(room.getName());
@@ -328,73 +302,58 @@ public final class NavigatorResponseWriter {
         response.writeInt(room.getDoor());
         response.writeString(room.getCasts());
         response.writeInt(room.getUsersInQueue());
-        response.writeBoolean(room.isVisible());
+        response.writeBoolean(room.getVisible());
     }
 
     /**
-     * Filters rooms.
-     * @param rooms the rooms value
-     * @param hideFullRooms the hide full rooms value
+     * Resolves visible owner name.
+     * @param viewer the viewer value
+     * @param room the room value
      * @return the result of this operation
      */
-    private List<RoomEntity> filterRooms(List<RoomEntity> rooms, boolean hideFullRooms) {
-        return hideFullRooms
-                ? rooms.stream().filter(room -> room.getCurrentUsers() < room.getMaxUsers()).toList()
-                : rooms;
+    private String visibleOwnerName(Player viewer, PrivateRoomListing room) {
+        if (room.getShowOwnerName() != 0) {
+            return room.getOwnerName();
+        }
+        if (viewer != null && viewer.getId() == room.getOwnerId()) {
+            return room.getOwnerName();
+        }
+        if (viewer != null && viewer.getUsername().equalsIgnoreCase(room.getOwnerName())) {
+            return room.getOwnerName();
+        }
+        return "-";
     }
 
     /**
-     * Filters public rooms.
-     * @param rooms the rooms value
-     * @param hideFullRooms the hide full rooms value
-     * @return the result of this operation
-     */
-    private List<PublicRoomEntity> filterPublicRooms(List<PublicRoomEntity> rooms, boolean hideFullRooms) {
-        return hideFullRooms
-                ? rooms.stream().filter(room -> room.getCurrentUsers() < room.getMaxUsers()).toList()
-                : rooms;
-    }
-
-    /**
-     * Returns the tal users representation.
+     * Returns total users.
      * @param rooms the rooms value
      * @return the result of this operation
      */
-    private int totalUsers(List<RoomEntity> rooms) {
-        return rooms.stream().mapToInt(RoomEntity::getCurrentUsers).sum();
+    private int totalUsers(List<PrivateRoomListing> rooms) {
+        return rooms.stream().mapToInt(PrivateRoomListing::getCurrentUsers).sum();
     }
 
     /**
-     * Returns the tal public users representation.
+     * Returns total public users.
      * @param rooms the rooms value
      * @return the result of this operation
      */
-    private int totalPublicUsers(List<PublicRoomEntity> rooms) {
-        return rooms.stream().mapToInt(PublicRoomEntity::getCurrentUsers).sum();
+    private int totalPublicUsers(List<PublicRoomListing> rooms) {
+        return rooms.stream().mapToInt(PublicRoomListing::getCurrentUsers).sum();
     }
 
     /**
-     * Returns the tal capacity representation.
-     * @param rooms the rooms value
-     * @return the result of this operation
-     */
-    private int totalCapacity(List<RoomEntity> rooms) {
-        int total = rooms.stream().mapToInt(RoomEntity::getMaxUsers).sum();
-        return total > 0 ? total : 100;
-    }
-
-    /**
-     * Returns the tal capacity representation.
+     * Returns total capacity.
      * @param privateRooms the private rooms value
      * @param publicRooms the public rooms value
      * @return the result of this operation
      */
-    private int totalCapacity(List<RoomEntity> privateRooms, List<PublicRoomEntity> publicRooms) {
-        int total = totalCapacity(privateRooms);
-        if (total == 100 && privateRooms.isEmpty()) {
+    private int totalCapacity(List<PrivateRoomListing> privateRooms, List<PublicRoomListing> publicRooms) {
+        int total = privateRooms.stream().mapToInt(PrivateRoomListing::getMaxUsers).sum();
+        if (total == 0 && privateRooms.isEmpty()) {
             total = 0;
         }
-        total += publicRooms.stream().mapToInt(PublicRoomEntity::getMaxUsers).sum();
+        total += publicRooms.stream().mapToInt(PublicRoomListing::getMaxUsers).sum();
         return total > 0 ? total : 100;
     }
 }

@@ -9,6 +9,8 @@ import org.starling.crypto.HabboCipher;
 import org.starling.game.player.Player;
 import org.starling.net.codec.ServerMessage;
 
+import java.util.UUID;
+
 /**
  * Per-connection session state. Attached to the Netty Channel via an AttributeKey.
  * Holds DH key exchange state, cipher, and the logged-in Player reference.
@@ -19,6 +21,7 @@ public class Session {
     public static final AttributeKey<Session> KEY = AttributeKey.valueOf("session");
 
     private final Channel channel;
+    private final String sessionId = UUID.randomUUID().toString();
     private DiffieHellman diffieHellman;
     private HabboCipher inboundCipher;
     private HabboCipher outboundCipher;
@@ -48,6 +51,14 @@ public class Session {
      */
     public Channel getChannel() {
         return channel;
+    }
+
+    /**
+     * Returns the stable gateway session id.
+     * @return the gateway session id
+     */
+    public String getSessionId() {
+        return sessionId;
     }
 
     /** Send a server message through the Netty pipeline. */

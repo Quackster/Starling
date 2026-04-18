@@ -1,0 +1,135 @@
+syntax = "proto3";
+
+package starling.contracts;
+
+option java_multiple_files = true;
+option java_package = "org.starling.contracts";
+option java_outer_classname = "NavigatorContracts";
+
+import "common.proto";
+
+service NavigatorService {
+  rpc GetFriendListInit(GetFriendListInitRequest) returns (FriendListInit);
+  rpc GetNavigatePage(GetNavigatePageRequest) returns (NavigatePage);
+  rpc GetUserFlatCategories(GetUserFlatCategoriesRequest) returns (CategoryList);
+  rpc GetFlatCategory(GetFlatCategoryRequest) returns (FlatCategory);
+  rpc GetOwnFlats(GetOwnFlatsRequest) returns (PrivateRoomList);
+  rpc SearchFlats(SearchFlatsRequest) returns (PrivateRoomList);
+  rpc GetFavoriteRooms(GetFavoriteRoomsRequest) returns (FavoriteRooms);
+  rpc AddFavoriteRoom(AddFavoriteRoomRequest) returns (OperationResult);
+  rpc RemoveFavoriteRoom(AddFavoriteRoomRequest) returns (OperationResult);
+  rpc GetFlatInfo(GetFlatInfoRequest) returns (FlatInfoResponse);
+  rpc DeleteFlat(DeleteFlatRequest) returns (OperationResult);
+  rpc UpdateFlat(UpdateFlatRequest) returns (OperationResult);
+  rpc SetFlatInfo(SetFlatInfoRequest) returns (OperationResult);
+  rpc CreateFlat(CreateFlatRequest) returns (OperationResult);
+  rpc SetFlatCategory(SetFlatCategoryRequest) returns (OperationResult);
+  rpc GetSpaceNodeUsers(GetSpaceNodeUsersRequest) returns (SpaceNodeUsers);
+  rpc RemoveAllRights(RemoveAllRightsRequest) returns (OperationResult);
+  rpc GetParentChain(GetParentChainRequest) returns (ParentChain);
+  rpc GetRecommendedRooms(GetRecommendedRoomsRequest) returns (PrivateRoomList);
+}
+
+message GetFriendListInitRequest {}
+
+message GetNavigatePageRequest {
+  int32 hide_full = 1;
+  int32 category_id = 2;
+  int32 depth = 3;
+  PlayerData player = 4;
+}
+
+message GetUserFlatCategoriesRequest {
+  PlayerData player = 1;
+}
+
+message GetFlatCategoryRequest {
+  int32 flat_id = 1;
+}
+
+message GetOwnFlatsRequest {
+  string owner_name = 1;
+  PlayerData player = 2;
+}
+
+message SearchFlatsRequest {
+  string query = 1;
+}
+
+message GetFavoriteRoomsRequest {
+  PlayerData player = 1;
+}
+
+message AddFavoriteRoomRequest {
+  PlayerData player = 1;
+  int32 room_type = 2;
+  int32 room_id = 3;
+}
+
+message GetFlatInfoRequest {
+  int32 flat_id = 1;
+  PlayerData player = 2;
+}
+
+message FlatInfoResponse {
+  Outcome outcome = 1;
+  PrivateRoomListing room = 2;
+  string visible_owner_name = 3;
+}
+
+message DeleteFlatRequest {
+  PlayerData player = 1;
+  int32 room_id = 2;
+}
+
+message UpdateFlatRequest {
+  PlayerData player = 1;
+  int32 room_id = 2;
+  string room_name = 3;
+  string door_mode_token = 4;
+  int32 show_owner_name = 5;
+}
+
+message SetFlatInfoRequest {
+  PlayerData player = 1;
+  int32 room_id = 2;
+  string description = 3;
+  int32 allow_others_move_furniture = 4;
+  int32 max_visitors = 5;
+  string password = 6;
+  bool has_description = 7;
+  bool has_allow_others_move_furniture = 8;
+  bool has_max_visitors = 9;
+  bool has_password = 10;
+}
+
+message CreateFlatRequest {
+  PlayerData player = 1;
+  string room_name = 2;
+  string layout_token = 3;
+  string door_mode_token = 4;
+  int32 show_owner_name = 5;
+}
+
+message SetFlatCategoryRequest {
+  PlayerData player = 1;
+  int32 room_id = 2;
+  int32 category_id = 3;
+}
+
+message GetSpaceNodeUsersRequest {
+  int32 node_id = 1;
+}
+
+message RemoveAllRightsRequest {
+  PlayerData player = 1;
+  int32 room_id = 2;
+}
+
+message GetParentChainRequest {
+  int32 category_id = 1;
+}
+
+message GetRecommendedRoomsRequest {
+  int32 limit = 1;
+}

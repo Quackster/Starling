@@ -1,0 +1,166 @@
+syntax = "proto3";
+
+package starling.contracts;
+
+option java_multiple_files = true;
+option java_package = "org.starling.contracts";
+option java_outer_classname = "RoomContracts";
+
+import "common.proto";
+
+service RoomService {
+  rpc AuthorizePrivateEntry(AuthorizePrivateEntryRequest) returns (OperationResult);
+  rpc EnterPrivateRoom(EnterPrivateRoomRequest) returns (RoomSnapshotResult);
+  rpc EnterPublicRoom(EnterPublicRoomRequest) returns (RoomSnapshotResult);
+  rpc GetRoomSnapshot(GetRoomSnapshotRequest) returns (RoomSnapshotResult);
+  rpc WalkTo(WalkToRequest) returns (RoomSnapshotResult);
+  rpc StopWalking(SessionRequest) returns (RoomSnapshotResult);
+  rpc QuitRoom(SessionRequest) returns (RoomExitResult);
+  rpc DisconnectSession(SessionRequest) returns (RoomExitResult);
+  rpc GetFlatCategory(RoomIdRequest) returns (FlatCategory);
+  rpc GetPrivateRoom(RoomIdRequest) returns (PrivateRoomEnvelope);
+  rpc ListRoomsByCategory(ListRoomsByCategoryRequest) returns (PrivateRoomList);
+  rpc ListRoomsByOwner(ListRoomsByOwnerRequest) returns (PrivateRoomList);
+  rpc SearchRooms(SearchRoomsRequest) returns (PrivateRoomList);
+  rpc ListFavoriteRooms(ListFavoriteRoomsRequest) returns (FavoriteRooms);
+  rpc AddFavoriteRoom(FavoriteRoomMutationRequest) returns (OperationResult);
+  rpc RemoveFavoriteRoom(FavoriteRoomMutationRequest) returns (OperationResult);
+  rpc CreatePrivateRoom(CreatePrivateRoomRequest) returns (OperationResult);
+  rpc UpdatePrivateRoom(UpdatePrivateRoomRequest) returns (OperationResult);
+  rpc SetPrivateRoomInfo(SetPrivateRoomInfoRequest) returns (OperationResult);
+  rpc SetPrivateRoomCategory(SetPrivateRoomCategoryRequest) returns (OperationResult);
+  rpc DeletePrivateRoom(DeletePrivateRoomRequest) returns (OperationResult);
+  rpc RemoveAllRights(RoomRemoveAllRightsRequest) returns (OperationResult);
+  rpc GetRecommendedRooms(RoomGetRecommendedRoomsRequest) returns (PrivateRoomList);
+  rpc GetPublicRoomsByCategory(GetPublicRoomsByCategoryRequest) returns (PublicRoomList);
+  rpc GetPublicRoomByIdOrPort(PublicRoomLookupRequest) returns (PublicRoomEnvelope);
+}
+
+message SessionRequest {
+  string session_id = 1;
+  PlayerData player = 2;
+}
+
+message RoomIdRequest {
+  int32 room_id = 1;
+}
+
+message GetRoomSnapshotRequest {
+  string session_id = 1;
+}
+
+message ListRoomsByCategoryRequest {
+  int32 category_id = 1;
+}
+
+message ListRoomsByOwnerRequest {
+  string owner_name = 1;
+}
+
+message SearchRoomsRequest {
+  string query = 1;
+}
+
+message RoomGetRecommendedRoomsRequest {
+  int32 limit = 1;
+}
+
+message ListFavoriteRoomsRequest {
+  PlayerData player = 1;
+}
+
+message FavoriteRoomMutationRequest {
+  PlayerData player = 1;
+  int32 room_type = 2;
+  int32 room_id = 3;
+}
+
+message CreatePrivateRoomRequest {
+  PlayerData player = 1;
+  int32 category_id = 2;
+  string room_name = 3;
+  string layout_token = 4;
+  string door_mode_token = 5;
+  int32 show_owner_name = 6;
+}
+
+message UpdatePrivateRoomRequest {
+  PlayerData player = 1;
+  int32 room_id = 2;
+  string room_name = 3;
+  string door_mode_token = 4;
+  int32 show_owner_name = 5;
+}
+
+message SetPrivateRoomInfoRequest {
+  PlayerData player = 1;
+  int32 room_id = 2;
+  string description = 3;
+  int32 allow_others_move_furniture = 4;
+  int32 max_visitors = 5;
+  string password = 6;
+  bool has_description = 7;
+  bool has_allow_others_move_furniture = 8;
+  bool has_max_visitors = 9;
+  bool has_password = 10;
+}
+
+message SetPrivateRoomCategoryRequest {
+  PlayerData player = 1;
+  int32 room_id = 2;
+  int32 category_id = 3;
+}
+
+message DeletePrivateRoomRequest {
+  PlayerData player = 1;
+  int32 room_id = 2;
+}
+
+message RoomRemoveAllRightsRequest {
+  PlayerData player = 1;
+  int32 room_id = 2;
+}
+
+message GetPublicRoomsByCategoryRequest {
+  int32 category_id = 1;
+  bool visible_only = 2;
+}
+
+message PublicRoomLookupRequest {
+  int32 room_id_or_port = 1;
+}
+
+message AuthorizePrivateEntryRequest {
+  string session_id = 1;
+  PlayerData player = 2;
+  int32 room_id = 3;
+  string password = 4;
+}
+
+message EnterPrivateRoomRequest {
+  string session_id = 1;
+  PlayerData player = 2;
+  int32 room_id = 3;
+}
+
+message EnterPublicRoomRequest {
+  string session_id = 1;
+  PlayerData player = 2;
+  int32 room_id_or_port = 3;
+  int32 door_id = 4;
+}
+
+message WalkToRequest {
+  string session_id = 1;
+  PlayerData player = 2;
+  int32 x = 3;
+  int32 y = 4;
+}
+
+message RoomExitResult {
+  Outcome outcome = 1;
+  RoomSnapshot snapshot = 2;
+  int32 leaving_player_id = 3;
+  RoomType room_type = 4;
+  int32 room_id = 5;
+}

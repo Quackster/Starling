@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package starling.contracts;
+
+option java_multiple_files = true;
+option java_package = "org.starling.contracts";
+option java_outer_classname = "IdentityContracts";
+
+import "common.proto";
+
+service IdentityService {
+  rpc AuthenticatePassword(AuthenticatePasswordRequest) returns (AuthenticateResponse);
+  rpc AuthenticateSso(AuthenticateSsoRequest) returns (AuthenticateResponse);
+  rpc GetPlayerBootstrap(GetPlayerBootstrapRequest) returns (PlayerBootstrapResponse);
+}
+
+message AuthenticatePasswordRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message AuthenticateSsoRequest {
+  string ticket = 1;
+}
+
+message AuthenticateResponse {
+  bool authenticated = 1;
+  string failure_message = 2;
+  PlayerBootstrap bootstrap = 3;
+}
+
+message GetPlayerBootstrapRequest {
+  int32 player_id = 1;
+}
+
+message PlayerBootstrapResponse {
+  bool found = 1;
+  PlayerBootstrap bootstrap = 2;
+}

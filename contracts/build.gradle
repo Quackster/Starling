@@ -1,0 +1,43 @@
+plugins {
+    id 'java-library'
+    id 'com.google.protobuf' version '0.9.4'
+}
+
+dependencies {
+    api "io.grpc:grpc-protobuf:${rootProject.ext.grpcVersion}"
+    api "io.grpc:grpc-stub:${rootProject.ext.grpcVersion}"
+    implementation "io.grpc:grpc-api:${rootProject.ext.grpcVersion}"
+    implementation "com.google.protobuf:protobuf-java:${rootProject.ext.protobufVersion}"
+    compileOnly "javax.annotation:javax.annotation-api:${rootProject.ext.javaxAnnotationVersion}"
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:${rootProject.ext.protobufVersion}"
+    }
+    plugins {
+        grpc {
+            artifact = "io.grpc:protoc-gen-grpc-java:${rootProject.ext.grpcVersion}"
+        }
+    }
+    generateProtoTasks {
+        all().configureEach {
+            plugins {
+                grpc {}
+            }
+        }
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir "$buildDir/generated/source/proto/main/java"
+            srcDir "$buildDir/generated/source/proto/main/grpc"
+        }
+    }
+}
+
+tasks.named('compileJava') {
+    dependsOn tasks.named('generateProto')
+}

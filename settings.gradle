@@ -1,0 +1,10 @@
+rootProject.name = 'starling'
+
+include 'contracts'
+include 'service-support'
+include 'gateway'
+include 'identity-service'
+include 'room-service'
+include 'navigator-service'
+
+project(':gateway').projectDir = file('starling-server')
