@@ -2,6 +2,8 @@
 
 Starling is a Java 17 server for a Habbo-style r26 protocol implementation. It listens on a TCP socket, performs the legacy handshake and crypto negotiation, loads navigator and room state from MariaDB, seeds the schema on startup, and exposes a small client probe for validating the handshake flow.
 
+**Most of this has been almost entirely written by AI as a demonstration**
+
 ## Requirements
 
 - JDK 17 or newer
