@@ -15,6 +15,7 @@ out/
 *.jar
 *.war
 *.ear
+!gradle/wrapper/gradle-wrapper.jar
 
 # Generated artifacts
 dist/

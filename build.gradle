@@ -29,7 +29,7 @@ application {
     mainClass = 'org.starling.StarlingServer'
 }
 
-def packagedDistDir = file("${rootDir}/../dist")
+def packagedDistDir = file("${rootDir}/dist")
 
 jar {
     manifest {
