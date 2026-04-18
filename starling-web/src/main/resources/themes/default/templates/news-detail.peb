@@ -1,0 +1,9 @@
+<section class="page-header">
+    <h1>{{ article.title }}</h1>
+    <p>{{ article.summary }}</p>
+    <span class="muted">{{ article.publishedAt }}</span>
+</section>
+
+<article class="panel formatted-copy">
+    {{ article.html | raw }}
+</article>

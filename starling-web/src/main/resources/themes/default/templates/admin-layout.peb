@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ siteTitle }}</title>
+    <link rel="stylesheet" href="/assets/admin.css">
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.14.0/dist/cdn.min.js"></script>
+</head>
+<body class="admin-shell">
+    <header class="admin-header">
+        <div class="admin-header__inner">
+            <a class="admin-brand" href="/admin">Starling CMS</a>
+            <nav class="admin-nav">
+                <a class="admin-nav__link" href="/">View Site</a>
+                {% if currentAdminName %}
+                    <a class="admin-nav__link{% if currentPath == '/admin' %} is-active{% endif %}" href="/admin">Dashboard</a>
+                    <a class="admin-nav__link{% if currentPath == '/admin/pages' %} is-active{% endif %}" href="/admin/pages">Pages</a>
+                    <a class="admin-nav__link{% if currentPath == '/admin/articles' %} is-active{% endif %}" href="/admin/articles">News</a>
+                    <a class="admin-nav__link{% if currentPath == '/admin/menus' %} is-active{% endif %}" href="/admin/menus">Menus</a>
+                    <a class="admin-nav__link{% if currentPath == '/admin/media' %} is-active{% endif %}" href="/admin/media">Media</a>
+                    <span class="admin-nav__label">{{ currentAdminName }}</span>
+                    <form method="post" action="/admin/logout">
+                        <button class="admin-nav__button" type="submit">Logout</button>
+                    </form>
+                {% else %}
+                    <a class="admin-nav__link" href="/admin/login">Login</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <main class="admin-main">
+        {% if notice %}
+            <div class="flash flash--success" x-data="{ open: true }" x-show="open">
+                <span>{{ notice }}</span>
+                <button type="button" @click="open = false">Dismiss</button>
+            </div>
+        {% endif %}
+        {% if error %}
+            <div class="flash flash--error">{{ error }}</div>
+        {% endif %}
+        {{ bodyHtml | raw }}
+    </main>
+</body>
+</html>

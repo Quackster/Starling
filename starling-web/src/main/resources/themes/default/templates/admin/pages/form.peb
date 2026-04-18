@@ -1,0 +1,47 @@
+<section class="admin-toolbar">
+    <div>
+        <h1>{% if isNew %}New Page{% else %}Edit Page{% endif %}</h1>
+        <p>Drafts stay private until you publish them.</p>
+    </div>
+    <a class="button-secondary" href="/admin/pages">Back to Pages</a>
+</section>
+
+<section class="editor-grid">
+    <form id="content-form" class="admin-card stack-form" method="post" action="{% if isNew %}/admin/pages{% else %}/admin/pages/{{ page.id }}{% endif %}">
+        <label>
+            <span>Title</span>
+            <input type="text" name="title" value="{{ page.draftTitle }}" required>
+        </label>
+        <label>
+            <span>Slug</span>
+            <input type="text" name="slug" value="{{ page.slug }}">
+        </label>
+        <label>
+            <span>Template</span>
+            <input type="text" name="templateName" value="{{ page.templateName }}">
+        </label>
+        <label>
+            <span>Summary</span>
+            <textarea name="summary" rows="3">{{ page.draftSummary }}</textarea>
+        </label>
+        <label>
+            <span>Markdown</span>
+            <textarea name="markdown" rows="16">{{ page.draftMarkdown }}</textarea>
+        </label>
+        <div class="button-row">
+            <button type="submit" class="button-primary">Save Draft</button>
+            {% if not isNew %}
+                <button type="button" class="button-secondary" hx-post="/admin/pages/{{ page.id }}/publish">Publish</button>
+                <button type="button" class="button-secondary" hx-post="/admin/pages/{{ page.id }}/unpublish">Unpublish</button>
+            {% endif %}
+            <button type="button" class="button-secondary" hx-post="/admin/pages/preview" hx-include="#content-form" hx-target="#markdown-preview">Preview</button>
+        </div>
+    </form>
+
+    <aside class="admin-card">
+        <h2>Preview</h2>
+        <div id="markdown-preview" class="formatted-copy preview-shell">
+            <p>Use the preview button to render the current markdown draft.</p>
+        </div>
+    </aside>
+</section>

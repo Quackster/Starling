@@ -1,0 +1,43 @@
+<section class="admin-toolbar">
+    <div>
+        <h1>{% if isNew %}New Article{% else %}Edit Article{% endif %}</h1>
+        <p>News is published at `/news/:slug` with a retro-compatible `/articles/:slug` alias.</p>
+    </div>
+    <a class="button-secondary" href="/admin/articles">Back to News</a>
+</section>
+
+<section class="editor-grid">
+    <form id="content-form" class="admin-card stack-form" method="post" action="{% if isNew %}/admin/articles{% else %}/admin/articles/{{ article.id }}{% endif %}">
+        <label>
+            <span>Title</span>
+            <input type="text" name="title" value="{{ article.draftTitle }}" required>
+        </label>
+        <label>
+            <span>Slug</span>
+            <input type="text" name="slug" value="{{ article.slug }}">
+        </label>
+        <label>
+            <span>Summary</span>
+            <textarea name="summary" rows="3">{{ article.draftSummary }}</textarea>
+        </label>
+        <label>
+            <span>Markdown</span>
+            <textarea name="markdown" rows="16">{{ article.draftMarkdown }}</textarea>
+        </label>
+        <div class="button-row">
+            <button type="submit" class="button-primary">Save Draft</button>
+            {% if not isNew %}
+                <button type="button" class="button-secondary" hx-post="/admin/articles/{{ article.id }}/publish">Publish</button>
+                <button type="button" class="button-secondary" hx-post="/admin/articles/{{ article.id }}/unpublish">Unpublish</button>
+            {% endif %}
+            <button type="button" class="button-secondary" hx-post="/admin/articles/preview" hx-include="#content-form" hx-target="#markdown-preview">Preview</button>
+        </div>
+    </form>
+
+    <aside class="admin-card">
+        <h2>Preview</h2>
+        <div id="markdown-preview" class="formatted-copy preview-shell">
+            <p>Use the preview button to render the current markdown draft.</p>
+        </div>
+    </aside>
+</section>

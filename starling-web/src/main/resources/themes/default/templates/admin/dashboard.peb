@@ -1,0 +1,23 @@
+<section class="admin-card">
+    <h1>Dashboard</h1>
+    <p>Starling-Web is live with separate CMS auth, draft/publish workflows, and theme overrides.</p>
+</section>
+
+<section class="stat-grid">
+    <article class="stat-card">
+        <span class="stat-card__label">Pages</span>
+        <strong>{{ pageCount }}</strong>
+    </article>
+    <article class="stat-card">
+        <span class="stat-card__label">News</span>
+        <strong>{{ articleCount }}</strong>
+    </article>
+    <article class="stat-card">
+        <span class="stat-card__label">Menus</span>
+        <strong>{{ menuCount }}</strong>
+    </article>
+    <article class="stat-card">
+        <span class="stat-card__label">Media</span>
+        <strong>{{ mediaCount }}</strong>
+    </article>
+</section>

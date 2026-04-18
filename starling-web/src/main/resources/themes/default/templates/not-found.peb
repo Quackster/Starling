@@ -1,0 +1,8 @@
+<section class="page-header">
+    <h1>Page not found</h1>
+    <p>{{ message }}</p>
+</section>
+
+<div class="panel">
+    <a class="button-link" href="/">Back to the front page</a>
+</div>

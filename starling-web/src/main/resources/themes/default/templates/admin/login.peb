@@ -1,0 +1,15 @@
+<section class="admin-card admin-card--narrow">
+    <h1>Admin Login</h1>
+    <p>Use your CMS admin account to manage public content.</p>
+    <form method="post" action="/admin/login" class="stack-form">
+        <label>
+            <span>Email</span>
+            <input type="email" name="email" value="{{ email }}" required>
+        </label>
+        <label>
+            <span>Password</span>
+            <input type="password" name="password" required>
+        </label>
+        <button type="submit" class="button-primary">Sign in</button>
+    </form>
+</section>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ siteTitle }}</title>
+    <link rel="stylesheet" href="/assets/public-site.css">
+</head>
+<body class="site-shell">
+    <header class="site-header">
+        <div class="site-header__inner">
+            <a class="site-logo" href="/">
+                <img src="/assets/logo.png" alt="Starling">
+            </a>
+            <nav class="site-nav">
+                {% for item in menuItems %}
+                    <a class="site-nav__link{% if currentPath == item.href %} is-active{% endif %}" href="{{ item.href }}">{{ item.label }}</a>
+                {% endfor %}
+                <a class="site-nav__link site-nav__link--admin" href="/admin/login">CMS</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="site-main">
+        {{ bodyHtml | raw }}
+    </main>
+
+    <footer class="site-footer">
+        <div class="site-footer__inner">
+            <img src="/assets/smallhotel.png" alt="" class="site-footer__hotel">
+            <p>Starling CMS theme inspired by classic Habbo-era layouts.</p>
+            <p>&copy; {{ year }} Starling</p>
+        </div>
+    </footer>
+</body>
+</html>

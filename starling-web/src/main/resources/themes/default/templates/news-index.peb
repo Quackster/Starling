@@ -1,0 +1,20 @@
+<section class="page-header">
+    <h1>News</h1>
+    <p>The latest public updates published from Starling-Web.</p>
+</section>
+
+<section class="panel">
+    {% if articles %}
+        <div class="news-list">
+            {% for article in articles %}
+                <article class="news-card">
+                    <h2><a href="{{ article.url }}">{{ article.title }}</a></h2>
+                    <p>{{ article.summary }}</p>
+                    <span class="muted">{{ article.publishedAt }}</span>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No published articles yet.</p>
+    {% endif %}
+</section>

@@ -1,0 +1,42 @@
+<section class="hero-card">
+    <div class="hero-card__copy">
+        <span class="hero-card__eyebrow">Starling-Web</span>
+        {% if homePage %}
+            <h1>{{ homePage.title }}</h1>
+            <p class="hero-card__summary">{{ homePage.summary }}</p>
+            <div class="formatted-copy">
+                {{ homePage.html | raw }}
+            </div>
+        {% else %}
+            <h1>Retro hotel, modern CMS.</h1>
+            <p class="hero-card__summary">Publish pages, news, menus, and media from one modular Starling app.</p>
+        {% endif %}
+    </div>
+    <div class="hero-card__art">
+        <img src="/assets/htlview_us.png" alt="Hotel view">
+    </div>
+</section>
+
+<section class="content-grid">
+    <article class="panel">
+        <h2>Latest News</h2>
+        {% if articles %}
+            <div class="news-list">
+                {% for article in articles %}
+                    <a class="news-card" href="{{ article.url }}">
+                        <h3>{{ article.title }}</h3>
+                        <p>{{ article.summary }}</p>
+                    </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p>No published news yet.</p>
+        {% endif %}
+    </article>
+
+    <aside class="panel panel--accent">
+        <h2>Admin Shortcuts</h2>
+        <p>The CMS back office lives at <a href="/admin/login">/admin</a>.</p>
+        <p>Draft content stays private until you publish it.</p>
+    </aside>
+</section>

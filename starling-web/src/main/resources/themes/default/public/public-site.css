@@ -1,0 +1,203 @@
+body.site-shell {
+    margin: 0;
+    font-family: Verdana, Geneva, sans-serif;
+    background: linear-gradient(180deg, #89c9ee 0%, #d8f0ff 30%, #f6f1e5 100%);
+    color: #2f2f2f;
+}
+
+.site-header {
+    background: #0b6395 url('/assets/orange_thing.png') right 12px top 14px no-repeat;
+    border-bottom: 4px solid #f7941d;
+    box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.site-header__inner,
+.site-footer__inner,
+.site-main {
+    width: min(1100px, calc(100% - 32px));
+    margin: 0 auto;
+}
+
+.site-header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 18px 0;
+}
+
+.site-logo img {
+    max-width: 180px;
+    display: block;
+}
+
+.site-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.site-nav__link {
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.site-nav__link.is-active,
+.site-nav__link:hover {
+    background: #fff;
+    color: #0b6395;
+}
+
+.site-nav__link--admin {
+    background: #f7941d;
+    color: #251505;
+}
+
+.site-main {
+    padding: 28px 0 40px;
+}
+
+.hero-card,
+.panel {
+    background: rgba(255, 255, 255, 0.92);
+    border: 3px solid #6db3db;
+    border-radius: 20px;
+    box-shadow: 0 12px 25px rgba(26, 73, 103, 0.18);
+}
+
+.hero-card {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 28px;
+    padding: 28px;
+    margin-bottom: 26px;
+}
+
+.hero-card__eyebrow {
+    display: inline-block;
+    margin-bottom: 10px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #f6d36c;
+    color: #5f3f00;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.hero-card__copy h1,
+.page-header h1 {
+    margin: 0 0 12px;
+    color: #135378;
+    font-size: clamp(32px, 6vw, 48px);
+    line-height: 1.05;
+}
+
+.hero-card__summary,
+.page-header p {
+    font-size: 18px;
+    line-height: 1.6;
+    color: #3a5765;
+}
+
+.hero-card__art img {
+    width: 100%;
+    display: block;
+}
+
+.content-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 24px;
+}
+
+.panel {
+    padding: 24px;
+}
+
+.panel--accent {
+    background: linear-gradient(180deg, #fff8d9 0%, #fff0b8 100%);
+}
+
+.page-header {
+    margin-bottom: 20px;
+}
+
+.news-list {
+    display: grid;
+    gap: 14px;
+}
+
+.news-card {
+    display: block;
+    padding: 18px;
+    border-radius: 16px;
+    border: 2px solid #c6e6f7;
+    background: #f6fbff;
+    color: inherit;
+    text-decoration: none;
+}
+
+.news-card:hover {
+    border-color: #7fbce0;
+    transform: translateY(-2px);
+}
+
+.formatted-copy {
+    line-height: 1.7;
+}
+
+.formatted-copy h2,
+.formatted-copy h3 {
+    color: #135378;
+}
+
+.muted {
+    color: #6d8591;
+    font-size: 14px;
+}
+
+.button-link {
+    display: inline-block;
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: #f7941d;
+    color: #221100;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.site-footer {
+    padding: 0 0 30px;
+}
+
+.site-footer__inner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 24px;
+    background: rgba(16, 75, 110, 0.92);
+    border-radius: 18px;
+    color: #eff8fe;
+}
+
+.site-footer__hotel {
+    width: 70px;
+    flex: 0 0 auto;
+}
+
+@media (max-width: 860px) {
+    .hero-card,
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .site-header__inner {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

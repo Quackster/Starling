@@ -1,0 +1,34 @@
+<section class="admin-toolbar">
+    <div>
+        <h1>News</h1>
+        <p>Publish hotel updates and front-page articles.</p>
+    </div>
+    <a class="button-primary" href="/admin/articles/new">New Article</a>
+</section>
+
+<section class="admin-card">
+    <table class="data-table">
+        <thead>
+        <tr>
+            <th>Title</th>
+            <th>Slug</th>
+            <th>Status</th>
+            <th>Updated</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for article in articles %}
+            <tr>
+                <td><a href="/admin/articles/{{ article.id }}/edit">{{ article.title }}</a></td>
+                <td>{{ article.slug }}</td>
+                <td>{% if article.published %}Published{% else %}Draft{% endif %}</td>
+                <td>{{ article.updatedAt }}</td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="4">No news articles yet.</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</section>
