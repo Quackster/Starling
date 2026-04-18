@@ -129,6 +129,10 @@ class StarlingWebIntegrationTest {
                 HttpRequest.newBuilder(baseUri.resolve("/")).GET().build(),
                 HttpResponse.BodyHandlers.ofString()
         );
+        HttpResponse<String> communityResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/community")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
         HttpResponse<String> newsIndexResponse = client.send(
                 HttpRequest.newBuilder(baseUri.resolve("/news")).GET().build(),
                 HttpResponse.BodyHandlers.ofString()
@@ -137,16 +141,31 @@ class StarlingWebIntegrationTest {
                 HttpRequest.newBuilder(baseUri.resolve("/web-gallery/v2/styles/style.css")).GET().build(),
                 HttpResponse.BodyHandlers.ofString()
         );
+        HttpResponse<String> disclaimerResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/papers/disclaimer")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> privacyResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/papers/privacy")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
 
         assertEquals(200, homepageResponse.statusCode());
+        assertEquals(200, communityResponse.statusCode());
         assertEquals(200, newsIndexResponse.statusCode());
         assertEquals(200, assetResponse.statusCode());
+        assertEquals(200, disclaimerResponse.statusCode());
+        assertEquals(200, privacyResponse.statusCode());
         assertTrue(homepageResponse.body().contains("create-habbo"));
         assertTrue(homepageResponse.body().contains("landing-register-text"));
         assertTrue(homepageResponse.body().contains("/web-gallery/v2/styles/style.css"));
         assertFalse(homepageResponse.body().contains("/assets/web-gallery/"));
+        assertTrue(communityResponse.body().contains("Random Habbos"));
+        assertTrue(communityResponse.body().contains("Reccomended Rooms"));
         assertTrue(newsIndexResponse.body().contains("article-archive"));
         assertTrue(newsIndexResponse.body().contains("Welcome to Starling-Web"));
+        assertTrue(disclaimerResponse.body().contains("Terms of Service"));
+        assertTrue(privacyResponse.body().contains("Privacy Policy"));
     }
 
     @Test
@@ -204,7 +223,8 @@ class StarlingWebIntegrationTest {
         assertEquals(200, captchaResponse.statusCode());
         assertTrue(registerResponse.uri().toString().endsWith("/me"));
         assertTrue(welcomeResponse.body().contains("Choose a pre-decorated room"));
-        assertTrue(meResponse.body().contains("Hot Campaigns"));
+        assertTrue(meResponse.body().contains("Groups"));
+        assertTrue(meResponse.body().contains("Reccomended Rooms"));
     }
 
     @Test

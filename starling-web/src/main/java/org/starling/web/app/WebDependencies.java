@@ -11,6 +11,7 @@ import org.starling.web.theme.ThemeResourceResolver;
 import org.starling.web.user.UserSessionService;
 import org.starling.web.view.AdminPageModelFactory;
 import org.starling.web.view.CmsViewModelFactory;
+import org.starling.web.view.PublicFeatureContentFactory;
 import org.starling.web.view.PublicPageModelFactory;
 import org.starling.web.view.UserViewModelFactory;
 
@@ -25,6 +26,7 @@ public record WebDependencies(
         NavigationService navigationService,
         MediaAssetService mediaAssetService,
         PublicPageModelFactory publicPageModelFactory,
+        PublicFeatureContentFactory publicFeatureContentFactory,
         AdminPageModelFactory adminPageModelFactory,
         CmsViewModelFactory cmsViewModelFactory,
         UserViewModelFactory userViewModelFactory

@@ -6,6 +6,7 @@ import org.starling.web.render.TemplateRenderer;
 import org.starling.web.service.ArticleService;
 import org.starling.web.user.UserSessionService;
 import org.starling.web.view.CmsViewModelFactory;
+import org.starling.web.view.PublicFeatureContentFactory;
 import org.starling.web.view.PublicPageModelFactory;
 import org.starling.web.view.UserViewModelFactory;
 
@@ -19,6 +20,7 @@ public final class MeController {
     private final UserSessionService userSessionService;
     private final ArticleService articleService;
     private final PublicPageModelFactory publicPageModelFactory;
+    private final PublicFeatureContentFactory publicFeatureContentFactory;
     private final UserViewModelFactory userViewModelFactory;
     private final CmsViewModelFactory cmsViewModelFactory;
 
@@ -28,6 +30,7 @@ public final class MeController {
      * @param userSessionService the user session service
      * @param articleService the article service
      * @param publicPageModelFactory the public page model factory
+     * @param publicFeatureContentFactory the public feature content factory
      * @param userViewModelFactory the user view model factory
      * @param cmsViewModelFactory the CMS view model factory
      */
@@ -36,6 +39,7 @@ public final class MeController {
             UserSessionService userSessionService,
             ArticleService articleService,
             PublicPageModelFactory publicPageModelFactory,
+            PublicFeatureContentFactory publicFeatureContentFactory,
             UserViewModelFactory userViewModelFactory,
             CmsViewModelFactory cmsViewModelFactory
     ) {
@@ -43,6 +47,7 @@ public final class MeController {
         this.userSessionService = userSessionService;
         this.articleService = articleService;
         this.publicPageModelFactory = publicPageModelFactory;
+        this.publicFeatureContentFactory = publicFeatureContentFactory;
         this.userViewModelFactory = userViewModelFactory;
         this.cmsViewModelFactory = cmsViewModelFactory;
     }
@@ -70,12 +75,10 @@ public final class MeController {
         }
 
         model.put("currentUser", userViewModelFactory.create(currentUser.get()));
-        model.put("onlineFriends", List.of("RetroGuide", "PixelPilot", "Newsie"));
-        model.put("recommendedGroups", List.of(
-                Map.of("name", "Starling Builders", "badge", "b0514Xs09114s05013s05014"),
-                Map.of("name", "Rare Traders", "badge", "b04124s09113s05013s05014")
-        ));
-        model.put("tagCloud", List.of("cms", "retro", "hotel"));
+        model.put("onlineFriends", publicFeatureContentFactory.onlineFriends());
+        model.put("recommendedGroups", publicFeatureContentFactory.recommendedGroups());
+        model.put("recommendedRooms", publicFeatureContentFactory.recommendedRooms());
+        model.put("tagCloud", publicFeatureContentFactory.tagCloud());
         context.html(templateRenderer.render("me", model));
     }
 

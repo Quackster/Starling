@@ -1,35 +1,45 @@
 package org.starling.web.route;
 
 import io.javalin.Javalin;
+import org.starling.web.publicsite.CommunityController;
 import org.starling.web.publicsite.HomepageController;
 import org.starling.web.publicsite.MeController;
 import org.starling.web.publicsite.NewsController;
 import org.starling.web.publicsite.PageController;
+import org.starling.web.publicsite.PolicyController;
 
 public final class PublicRoutes {
 
     private final HomepageController homepageController;
+    private final CommunityController communityController;
     private final MeController meController;
     private final NewsController newsController;
     private final PageController pageController;
+    private final PolicyController policyController;
 
     /**
      * Creates a new PublicRoutes registrar.
      * @param homepageController the homepage controller
+     * @param communityController the community controller
      * @param meController the me controller
      * @param newsController the news controller
      * @param pageController the page controller
+     * @param policyController the policy controller
      */
     public PublicRoutes(
             HomepageController homepageController,
+            CommunityController communityController,
             MeController meController,
             NewsController newsController,
-            PageController pageController
+            PageController pageController,
+            PolicyController policyController
     ) {
         this.homepageController = homepageController;
+        this.communityController = communityController;
         this.meController = meController;
         this.newsController = newsController;
         this.pageController = pageController;
+        this.policyController = policyController;
     }
 
     /**
@@ -43,7 +53,7 @@ public final class PublicRoutes {
         app.get("/me", meController::me);
         app.get("/welcome", meController::welcome);
 
-        app.get("/community", context -> newsController.index(context, "news", false));
+        app.get("/community", communityController::community);
         app.get("/news", context -> newsController.index(context, "news", false));
         app.get("/articles", context -> newsController.index(context, "news", false));
         app.get("/articles/archive", context -> newsController.index(context, "news", true));
@@ -61,7 +71,7 @@ public final class PublicRoutes {
         app.get("/games", context -> context.redirect("/news"));
         app.get("/credits", context -> context.redirect("/news"));
         app.get("/tag", context -> context.redirect("/news"));
-        app.get("/papers/disclaimer", context -> context.redirect("/"));
-        app.get("/papers/privacy", context -> context.redirect("/"));
+        app.get("/papers/disclaimer", policyController::disclaimer);
+        app.get("/papers/privacy", policyController::privacy);
     }
 }

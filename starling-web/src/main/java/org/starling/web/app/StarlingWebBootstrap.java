@@ -16,10 +16,12 @@ import org.starling.web.cms.auth.SignedSessionService;
 import org.starling.web.cms.bootstrap.CmsBootstrap;
 import org.starling.web.cms.media.MediaStorageService;
 import org.starling.web.config.WebConfig;
+import org.starling.web.publicsite.CommunityController;
 import org.starling.web.publicsite.HomepageController;
 import org.starling.web.publicsite.MeController;
 import org.starling.web.publicsite.NewsController;
 import org.starling.web.publicsite.PageController;
+import org.starling.web.publicsite.PolicyController;
 import org.starling.web.render.MarkdownRenderer;
 import org.starling.web.render.TemplateRenderer;
 import org.starling.web.route.AdminRoutes;
@@ -34,6 +36,7 @@ import org.starling.web.theme.ThemeResourceResolver;
 import org.starling.web.user.UserSessionService;
 import org.starling.web.view.AdminPageModelFactory;
 import org.starling.web.view.CmsViewModelFactory;
+import org.starling.web.view.PublicFeatureContentFactory;
 import org.starling.web.view.PublicPageModelFactory;
 import org.starling.web.view.UserViewModelFactory;
 
@@ -74,6 +77,7 @@ public final class StarlingWebBootstrap {
         NavigationService navigationService = new NavigationService();
         UserViewModelFactory userViewModelFactory = new UserViewModelFactory();
         PublicPageModelFactory publicPageModelFactory = new PublicPageModelFactory(userSessionService, userViewModelFactory);
+        PublicFeatureContentFactory publicFeatureContentFactory = new PublicFeatureContentFactory(userViewModelFactory);
         AdminPageModelFactory adminPageModelFactory = new AdminPageModelFactory();
         CmsViewModelFactory cmsViewModelFactory = new CmsViewModelFactory(markdownRenderer);
 
@@ -88,6 +92,7 @@ public final class StarlingWebBootstrap {
                 navigationService,
                 mediaAssetService,
                 publicPageModelFactory,
+                publicFeatureContentFactory,
                 adminPageModelFactory,
                 cmsViewModelFactory,
                 userViewModelFactory
@@ -102,11 +107,20 @@ public final class StarlingWebBootstrap {
                 dependencies.publicPageModelFactory(),
                 dependencies.cmsViewModelFactory()
         );
+        CommunityController communityController = new CommunityController(
+                dependencies.templateRenderer(),
+                dependencies.articleService(),
+                dependencies.userSessionService(),
+                dependencies.publicPageModelFactory(),
+                dependencies.publicFeatureContentFactory(),
+                dependencies.cmsViewModelFactory()
+        );
         MeController meController = new MeController(
                 dependencies.templateRenderer(),
                 dependencies.userSessionService(),
                 dependencies.articleService(),
                 dependencies.publicPageModelFactory(),
+                dependencies.publicFeatureContentFactory(),
                 dependencies.userViewModelFactory(),
                 dependencies.cmsViewModelFactory()
         );
@@ -121,6 +135,10 @@ public final class StarlingWebBootstrap {
                 dependencies.pageService(),
                 dependencies.publicPageModelFactory(),
                 dependencies.cmsViewModelFactory()
+        );
+        PolicyController policyController = new PolicyController(
+                dependencies.templateRenderer(),
+                dependencies.publicPageModelFactory()
         );
         AccountController accountController = new AccountController(
                 dependencies.templateRenderer(),
@@ -179,7 +197,14 @@ public final class StarlingWebBootstrap {
                 dependencies.cmsViewModelFactory()
         );
 
-        new PublicRoutes(homepageController, meController, newsController, pageController).register(app);
+        new PublicRoutes(
+                homepageController,
+                communityController,
+                meController,
+                newsController,
+                pageController,
+                policyController
+        ).register(app);
         new AuthRoutes(accountController, registrationController, adminAuthController, adminRouteGuard).register(app);
         new AssetRoutes(assetController).register(app);
         new AdminRoutes(
