@@ -8,6 +8,10 @@ Starling is a Java 17 server for a Habbo-style r26 protocol implementation. It l
 - MariaDB on `127.0.0.1:3306` or equivalent connection details supplied through config or environment variables
 - Network access to Maven Central and JitPack for the first dependency resolution
 
+## Screenshots
+
+<img width="1577" height="1291" alt="image" src="https://github.com/user-attachments/assets/528a3d9b-b536-483e-9062-8b160a09548b" />
+
 ## Project Layout
 
 - `src/main/java` server and client sources
