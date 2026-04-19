@@ -110,6 +110,82 @@ public final class DatabaseSupport {
     }
 
     /**
+     * Ensures a table exists.
+     * @param connection the connection value
+     * @param tableName the table name value
+     * @param createTableSql the create table sql value
+     */
+    public static void ensureTable(Connection connection, String tableName, String createTableSql) {
+        if (tableExists(connection, tableName)) {
+            return;
+        }
+
+        try (Statement statement = connection.createStatement()) {
+            statement.executeUpdate(createTableSql);
+            log.info("Ensured table '{}' exists", tableName);
+        } catch (Exception e) {
+            log.error("Failed to create table '{}': {}", tableName, e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Ensures a column exists.
+     * @param connection the connection value
+     * @param tableName the table name value
+     * @param columnName the column name value
+     * @param columnDefinition the sql column definition
+     * @param afterColumn the column that should precede the added column
+     */
+    public static void ensureColumn(Connection connection, String tableName, String columnName, String columnDefinition, String afterColumn) {
+        if (columnExists(connection, tableName, columnName)) {
+            return;
+        }
+
+        String addColumnSql = "ALTER TABLE `"
+                + escapeIdentifier(tableName)
+                + "` ADD COLUMN `"
+                + escapeIdentifier(columnName)
+                + "` "
+                + columnDefinition
+                + (afterColumn == null || afterColumn.isBlank()
+                ? ""
+                : " AFTER `" + escapeIdentifier(afterColumn) + "`");
+
+        try (Statement statement = connection.createStatement()) {
+            statement.executeUpdate(addColumnSql);
+            log.info("Ensured column '{}.{}' exists", tableName, columnName);
+        } catch (Exception e) {
+            log.error("Failed to add column '{}.{}': {}", tableName, columnName, e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Modifies a column.
+     * @param connection the connection value
+     * @param tableName the table name value
+     * @param columnName the column name value
+     * @param columnDefinition the sql column definition
+     */
+    public static void modifyColumn(Connection connection, String tableName, String columnName, String columnDefinition) {
+        String modifyColumnSql = "ALTER TABLE `"
+                + escapeIdentifier(tableName)
+                + "` MODIFY COLUMN `"
+                + escapeIdentifier(columnName)
+                + "` "
+                + columnDefinition;
+
+        try (Statement statement = connection.createStatement()) {
+            statement.executeUpdate(modifyColumnSql);
+            log.info("Modified column '{}.{}'", tableName, columnName);
+        } catch (Exception e) {
+            log.error("Failed to modify column '{}.{}': {}", tableName, columnName, e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
      * Escapes an identifier for use in raw SQL.
      * @param identifier the identifier value
      * @return the escaped identifier
@@ -132,6 +208,42 @@ public final class DatabaseSupport {
             return false;
         } catch (Exception e) {
             log.error("Failed to inspect indexes for '{}': {}", tableName, e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static boolean tableExists(Connection connection, String tableName) {
+        try {
+            DatabaseMetaData metadata = connection.getMetaData();
+            try (ResultSet tables = metadata.getTables(connection.getCatalog(), null, tableName, new String[]{"TABLE"})) {
+                while (tables.next()) {
+                    String existingTableName = tables.getString("TABLE_NAME");
+                    if (existingTableName != null && existingTableName.equalsIgnoreCase(tableName)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            log.error("Failed to inspect table '{}': {}", tableName, e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static boolean columnExists(Connection connection, String tableName, String columnName) {
+        try {
+            DatabaseMetaData metadata = connection.getMetaData();
+            try (ResultSet columns = metadata.getColumns(connection.getCatalog(), null, tableName, columnName)) {
+                while (columns.next()) {
+                    String existingColumnName = columns.getString("COLUMN_NAME");
+                    if (existingColumnName != null && existingColumnName.equalsIgnoreCase(columnName)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            log.error("Failed to inspect column '{}.{}': {}", tableName, columnName, e.getMessage(), e);
             throw new RuntimeException(e);
         }
     }

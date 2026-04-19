@@ -36,7 +36,6 @@ import org.starling.web.util.Slugifier;
 import java.nio.file.Files;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.sql.Statement;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -68,7 +67,7 @@ public final class CmsBootstrap {
      */
     public static void ensureSharedSchema() {
         EntityContext.withContext(context -> {
-            try (Statement statement = context.conn().createStatement()) {
+            try {
                 context.createTables(
                         UserEntity.class,
                         RoomEntity.class,
@@ -78,6 +77,23 @@ public final class CmsBootstrap {
                         RecommendedItemEntity.class,
                         UserReferralEntity.class
                 );
+                DatabaseSupport.ensureColumn(context.conn(), "groups_details", "alias", "VARCHAR(80) NOT NULL DEFAULT ''", "id");
+                DatabaseSupport.ensureColumn(context.conn(), "groups_details", "badge", "VARCHAR(64) NOT NULL DEFAULT ''", "name");
+                DatabaseSupport.ensureColumn(context.conn(), "groups_details", "description", "TEXT NOT NULL", "badge");
+                DatabaseSupport.ensureColumn(context.conn(), "groups_details", "ownerid", "INT NOT NULL DEFAULT 0", "description");
+                DatabaseSupport.ensureColumn(context.conn(), "groups_details", "roomid", "INT NOT NULL DEFAULT 0", "ownerid");
+                DatabaseSupport.ensureColumn(context.conn(), "groups_details", "created_at", "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP", "roomid");
+                DatabaseSupport.ensureColumn(context.conn(), "groups_details", "updated_at", "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP", "created_at");
+                DatabaseSupport.ensureColumn(context.conn(), "groups_memberships", "member_rank", "INT NOT NULL DEFAULT 0", "groupid");
+                DatabaseSupport.ensureColumn(context.conn(), "groups_memberships", "is_current", "INT NOT NULL DEFAULT 0", "member_rank");
+                DatabaseSupport.ensureColumn(context.conn(), "groups_memberships", "is_pending", "INT NOT NULL DEFAULT 0", "is_current");
+                DatabaseSupport.ensureColumn(context.conn(), "groups_memberships", "created_at", "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP", "is_pending");
+                DatabaseSupport.ensureColumn(context.conn(), "tags", "type", "VARCHAR(16) NOT NULL DEFAULT 'user'", "tag");
+                DatabaseSupport.ensureColumn(context.conn(), "tags", "created_at", "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP", "type");
+                DatabaseSupport.ensureColumn(context.conn(), "recommended", "sponsored", "INT NOT NULL DEFAULT 0", "rec_id");
+                DatabaseSupport.ensureColumn(context.conn(), "recommended", "created_at", "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP", "sponsored");
+                DatabaseSupport.ensureColumn(context.conn(), "user_referrals", "reward_credits", "INT NOT NULL DEFAULT 0", "inviter_userid");
+                DatabaseSupport.ensureColumn(context.conn(), "user_referrals", "created_at", "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP", "reward_credits");
                 DatabaseSupport.ensureUniqueIndex(context.conn(), "groups_details", "uk_groups_details_alias", "alias");
                 DatabaseSupport.ensureUniqueIndex(context.conn(), "groups_memberships", "uk_groups_memberships_user_group", "userid", "groupid");
                 DatabaseSupport.ensureIndex(context.conn(), "groups_memberships", "idx_groups_memberships_group", false, "groupid");
@@ -86,23 +102,6 @@ public final class CmsBootstrap {
                 DatabaseSupport.ensureUniqueIndex(context.conn(), "user_referrals", "uk_user_referrals_invited_user", "invited_userid");
                 DatabaseSupport.ensureIndex(context.conn(), "user_referrals", "idx_user_referrals_inviter_user", false, "inviter_userid");
                 SharedSchemaSupport.ensureMessengerSchema(context);
-                statement.executeUpdate("ALTER TABLE groups_details ADD COLUMN IF NOT EXISTS alias VARCHAR(80) NOT NULL DEFAULT '' AFTER id");
-                statement.executeUpdate("ALTER TABLE groups_details ADD COLUMN IF NOT EXISTS badge VARCHAR(64) NOT NULL DEFAULT '' AFTER name");
-                statement.executeUpdate("ALTER TABLE groups_details ADD COLUMN IF NOT EXISTS description TEXT NOT NULL AFTER badge");
-                statement.executeUpdate("ALTER TABLE groups_details ADD COLUMN IF NOT EXISTS ownerid INT NOT NULL DEFAULT 0 AFTER description");
-                statement.executeUpdate("ALTER TABLE groups_details ADD COLUMN IF NOT EXISTS roomid INT NOT NULL DEFAULT 0 AFTER ownerid");
-                statement.executeUpdate("ALTER TABLE groups_details ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER roomid");
-                statement.executeUpdate("ALTER TABLE groups_details ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER created_at");
-                statement.executeUpdate("ALTER TABLE groups_memberships ADD COLUMN IF NOT EXISTS member_rank INT NOT NULL DEFAULT 0 AFTER groupid");
-                statement.executeUpdate("ALTER TABLE groups_memberships ADD COLUMN IF NOT EXISTS is_current INT NOT NULL DEFAULT 0 AFTER member_rank");
-                statement.executeUpdate("ALTER TABLE groups_memberships ADD COLUMN IF NOT EXISTS is_pending INT NOT NULL DEFAULT 0 AFTER is_current");
-                statement.executeUpdate("ALTER TABLE groups_memberships ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER is_pending");
-                statement.executeUpdate("ALTER TABLE tags ADD COLUMN IF NOT EXISTS type VARCHAR(16) NOT NULL DEFAULT 'user' AFTER tag");
-                statement.executeUpdate("ALTER TABLE tags ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER type");
-                statement.executeUpdate("ALTER TABLE recommended ADD COLUMN IF NOT EXISTS sponsored INT NOT NULL DEFAULT 0 AFTER rec_id");
-                statement.executeUpdate("ALTER TABLE recommended ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER sponsored");
-                statement.executeUpdate("ALTER TABLE user_referrals ADD COLUMN IF NOT EXISTS reward_credits INT NOT NULL DEFAULT 0 AFTER inviter_userid");
-                statement.executeUpdate("ALTER TABLE user_referrals ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER reward_credits");
                 normalizeSharedData(context);
                 return null;
             } catch (Exception e) {
@@ -116,7 +115,7 @@ public final class CmsBootstrap {
      */
     public static void ensureSchema() {
         EntityContext.withContext(context -> {
-            try (Statement statement = context.conn().createStatement()) {
+            try {
                 context.createTables(
                         CmsAdminUserEntity.class,
                         CmsPageEntity.class,

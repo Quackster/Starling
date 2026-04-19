@@ -18,8 +18,6 @@ import org.starling.storage.entity.RoomModelEntity;
 import org.starling.storage.entity.RoomRightEntity;
 import org.starling.storage.entity.UserEntity;
 
-import java.sql.Statement;
-
 public final class DatabaseBootstrap {
 
     private static final Logger log = LogManager.getLogger(DatabaseBootstrap.class);
@@ -42,8 +40,7 @@ public final class DatabaseBootstrap {
      * @param config the config value
      */
     public static void ensureSchema(ServerConfig config) {
-        try (DbContext context = EntityContext.openContext();
-             Statement statement = context.conn().createStatement()) {
+        try (DbContext context = EntityContext.openContext()) {
             context.createTables(
                     UserEntity.class,
                     NavigatorCategoryEntity.class,
@@ -52,8 +49,8 @@ public final class DatabaseBootstrap {
                     RoomFavoriteEntity.class,
                     RoomRightEntity.class
             );
-            statement.executeUpdate("""
-                    CREATE TABLE IF NOT EXISTS room_models (
+            DatabaseSupport.ensureTable(context.conn(), "room_models", """
+                    CREATE TABLE `room_models` (
                         model_name VARCHAR(64) NOT NULL,
                         is_public INT NOT NULL DEFAULT 0,
                         door_x INT NOT NULL DEFAULT 0,
@@ -65,17 +62,17 @@ public final class DatabaseBootstrap {
                         wallpaper VARCHAR(32) NOT NULL DEFAULT '',
                         floor_pattern VARCHAR(32) NOT NULL DEFAULT '',
                         landscape VARCHAR(32) NOT NULL DEFAULT '',
-                        PRIMARY KEY (model_name),
-                        KEY idx_room_models_public (is_public)
+                        PRIMARY KEY (model_name)
                     ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
                     """);
-            statement.executeUpdate("ALTER TABLE room_models ADD COLUMN IF NOT EXISTS door_x INT NOT NULL DEFAULT 0 AFTER is_public");
-            statement.executeUpdate("ALTER TABLE room_models ADD COLUMN IF NOT EXISTS door_y INT NOT NULL DEFAULT 0 AFTER door_x");
-            statement.executeUpdate("ALTER TABLE room_models ADD COLUMN IF NOT EXISTS door_z DOUBLE NOT NULL DEFAULT 0 AFTER door_y");
-            statement.executeUpdate("ALTER TABLE room_models ADD COLUMN IF NOT EXISTS door_dir INT NOT NULL DEFAULT 2 AFTER door_z");
-            statement.executeUpdate("ALTER TABLE room_models ADD COLUMN IF NOT EXISTS public_room_items TEXT NULL AFTER heightmap");
-            statement.executeUpdate("""
-                    CREATE TABLE IF NOT EXISTS public_room_items (
+            DatabaseSupport.ensureIndex(context.conn(), "room_models", "idx_room_models_public", false, "is_public");
+            DatabaseSupport.ensureColumn(context.conn(), "room_models", "door_x", "INT NOT NULL DEFAULT 0", "is_public");
+            DatabaseSupport.ensureColumn(context.conn(), "room_models", "door_y", "INT NOT NULL DEFAULT 0", "door_x");
+            DatabaseSupport.ensureColumn(context.conn(), "room_models", "door_z", "DOUBLE NOT NULL DEFAULT 0", "door_y");
+            DatabaseSupport.ensureColumn(context.conn(), "room_models", "door_dir", "INT NOT NULL DEFAULT 2", "door_z");
+            DatabaseSupport.ensureColumn(context.conn(), "room_models", "public_room_items", "TEXT NULL", "heightmap");
+            DatabaseSupport.ensureTable(context.conn(), "public_room_items", """
+                    CREATE TABLE `public_room_items` (
                         id INT NOT NULL,
                         room_model VARCHAR(64) NOT NULL,
                         sprite VARCHAR(255) NOT NULL DEFAULT '',
@@ -90,32 +87,32 @@ public final class DatabaseBootstrap {
                         current_program VARCHAR(255) NOT NULL DEFAULT '',
                         teleport_to VARCHAR(50) NULL,
                         swim_to VARCHAR(50) NULL,
-                        PRIMARY KEY (id),
-                        KEY idx_public_room_items_model (room_model)
+                        PRIMARY KEY (id)
                     ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
                     """);
-            statement.executeUpdate("ALTER TABLE public_room_items ADD COLUMN IF NOT EXISTS room_model VARCHAR(64) NOT NULL DEFAULT '' AFTER id");
-            statement.executeUpdate("ALTER TABLE public_room_items ADD COLUMN IF NOT EXISTS sprite VARCHAR(255) NOT NULL DEFAULT '' AFTER room_model");
-            statement.executeUpdate("ALTER TABLE public_room_items ADD COLUMN IF NOT EXISTS x INT NOT NULL DEFAULT 0 AFTER sprite");
-            statement.executeUpdate("ALTER TABLE public_room_items ADD COLUMN IF NOT EXISTS y INT NOT NULL DEFAULT 0 AFTER x");
-            statement.executeUpdate("ALTER TABLE public_room_items ADD COLUMN IF NOT EXISTS z DOUBLE NOT NULL DEFAULT 0 AFTER y");
-            statement.executeUpdate("ALTER TABLE public_room_items ADD COLUMN IF NOT EXISTS rotation INT NOT NULL DEFAULT 0 AFTER z");
-            statement.executeUpdate("ALTER TABLE public_room_items ADD COLUMN IF NOT EXISTS top_height DOUBLE NOT NULL DEFAULT 1 AFTER rotation");
-            statement.executeUpdate("ALTER TABLE public_room_items ADD COLUMN IF NOT EXISTS length INT NOT NULL DEFAULT 1 AFTER top_height");
-            statement.executeUpdate("ALTER TABLE public_room_items ADD COLUMN IF NOT EXISTS width INT NOT NULL DEFAULT 1 AFTER length");
-            statement.executeUpdate("ALTER TABLE public_room_items ADD COLUMN IF NOT EXISTS behaviour VARCHAR(255) NOT NULL DEFAULT '' AFTER width");
-            statement.executeUpdate("ALTER TABLE public_room_items ADD COLUMN IF NOT EXISTS current_program VARCHAR(255) NOT NULL DEFAULT '' AFTER behaviour");
-            statement.executeUpdate("ALTER TABLE public_room_items ADD COLUMN IF NOT EXISTS teleport_to VARCHAR(50) NULL AFTER current_program");
-            statement.executeUpdate("ALTER TABLE public_room_items ADD COLUMN IF NOT EXISTS swim_to VARCHAR(50) NULL AFTER teleport_to");
-            statement.executeUpdate("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS owner_id INT NULL AFTER category_id");
-            statement.executeUpdate("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS model_name VARCHAR(64) NULL AFTER description");
-            statement.executeUpdate("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS heightmap TEXT NULL AFTER model_name");
-            statement.executeUpdate("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS wallpaper VARCHAR(32) NULL AFTER heightmap");
-            statement.executeUpdate("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS floor_pattern VARCHAR(32) NULL AFTER wallpaper");
-            statement.executeUpdate("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS landscape VARCHAR(32) NULL AFTER floor_pattern");
-            statement.executeUpdate("ALTER TABLE rooms ADD COLUMN IF NOT EXISTS door_password VARCHAR(64) NULL AFTER door_mode");
-            statement.executeUpdate("""
-                    CREATE TABLE IF NOT EXISTS public_rooms (
+            DatabaseSupport.ensureIndex(context.conn(), "public_room_items", "idx_public_room_items_model", false, "room_model");
+            DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "room_model", "VARCHAR(64) NOT NULL DEFAULT ''", "id");
+            DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "sprite", "VARCHAR(255) NOT NULL DEFAULT ''", "room_model");
+            DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "x", "INT NOT NULL DEFAULT 0", "sprite");
+            DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "y", "INT NOT NULL DEFAULT 0", "x");
+            DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "z", "DOUBLE NOT NULL DEFAULT 0", "y");
+            DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "rotation", "INT NOT NULL DEFAULT 0", "z");
+            DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "top_height", "DOUBLE NOT NULL DEFAULT 1", "rotation");
+            DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "length", "INT NOT NULL DEFAULT 1", "top_height");
+            DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "width", "INT NOT NULL DEFAULT 1", "length");
+            DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "behaviour", "VARCHAR(255) NOT NULL DEFAULT ''", "width");
+            DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "current_program", "VARCHAR(255) NOT NULL DEFAULT ''", "behaviour");
+            DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "teleport_to", "VARCHAR(50) NULL", "current_program");
+            DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "swim_to", "VARCHAR(50) NULL", "teleport_to");
+            DatabaseSupport.ensureColumn(context.conn(), "rooms", "owner_id", "INT NULL", "category_id");
+            DatabaseSupport.ensureColumn(context.conn(), "rooms", "model_name", "VARCHAR(64) NULL", "description");
+            DatabaseSupport.ensureColumn(context.conn(), "rooms", "heightmap", "TEXT NULL", "model_name");
+            DatabaseSupport.ensureColumn(context.conn(), "rooms", "wallpaper", "VARCHAR(32) NULL", "heightmap");
+            DatabaseSupport.ensureColumn(context.conn(), "rooms", "floor_pattern", "VARCHAR(32) NULL", "wallpaper");
+            DatabaseSupport.ensureColumn(context.conn(), "rooms", "landscape", "VARCHAR(32) NULL", "floor_pattern");
+            DatabaseSupport.ensureColumn(context.conn(), "rooms", "door_password", "VARCHAR(64) NULL", "door_mode");
+            DatabaseSupport.ensureTable(context.conn(), "public_rooms", """
+                    CREATE TABLE `public_rooms` (
                         id INT NOT NULL AUTO_INCREMENT,
                         category_id INT NOT NULL,
                         name VARCHAR(100) NOT NULL,
@@ -130,18 +127,20 @@ public final class DatabaseBootstrap {
                         is_visible INT NOT NULL DEFAULT 1,
                         navigator_filter VARCHAR(64) NOT NULL DEFAULT '',
                         description VARCHAR(255) NOT NULL DEFAULT '',
-                        PRIMARY KEY (id),
-                        KEY idx_public_rooms_category (category_id)
+                        PRIMARY KEY (id)
                     ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
                     """);
+            DatabaseSupport.ensureIndex(context.conn(), "public_rooms", "idx_public_rooms_category", false, "category_id");
             DatabaseSupport.ensureUniqueIndex(context.conn(), "room_favorites", "uk_room_favorites_user_type_room", "user_id", "room_type", "room_id");
             DatabaseSupport.ensureIndex(context.conn(), "room_favorites", "idx_room_favorites_user", false, "user_id");
-            statement.executeUpdate("ALTER TABLE room_favorites MODIFY COLUMN room_type INT NOT NULL DEFAULT 0");
+            DatabaseSupport.modifyColumn(context.conn(), "room_favorites", "room_type", "INT NOT NULL DEFAULT 0");
             DatabaseSupport.ensureUniqueIndex(context.conn(), "room_rights", "uk_room_rights_room_user", "room_id", "user_id");
             DatabaseSupport.ensureIndex(context.conn(), "room_rights", "idx_room_rights_room", false, "room_id");
+            DatabaseSupport.ensureColumn(context.conn(), "recommended", "sponsored", "INT NOT NULL DEFAULT 0", "rec_id");
+            DatabaseSupport.ensureColumn(context.conn(), "recommended", "created_at", "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP", "sponsored");
             DatabaseSupport.ensureIndex(context.conn(), "recommended", "idx_recommended_type", false, "type", "sponsored");
             SharedSchemaSupport.ensureMessengerSchema(context);
-            statement.executeUpdate("ALTER TABLE public_rooms ADD COLUMN IF NOT EXISTS heightmap TEXT NULL AFTER unit_str_id");
+            DatabaseSupport.ensureColumn(context.conn(), "public_rooms", "heightmap", "TEXT NULL", "unit_str_id");
             normalizeSharedData(context);
             log.info("Ensured navigator schema extensions exist");
         } catch (Exception e) {
