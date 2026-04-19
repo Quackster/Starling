@@ -4,7 +4,7 @@
             <div id="topstories">
             {% for story in promoStories %}
                 <div class="topstory" style="background-image: url({{ story.image }}){% if loop.index > 1 %}; display: none{% endif %}">
-                    {% if loop.first %}
+                    {% if loop.first and showNewsPromoRss %}
                     <h4>Latest news <a href="{{ site.sitePath }}/articles/rss.xml"><img src="{{ site.webGalleryPath }}/v2/images/holo/feed-icon.gif" alt="" border="0"/></a></h4>
                     {% else %}
                     <h4>Latest news</h4>

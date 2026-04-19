@@ -96,6 +96,7 @@ public final class MeController {
         model.put("hotCampaigns", hotCampaignService.listVisible());
         model.put("promoStories", promoStories.subList(0, 2));
         model.put("promoHeadlines", promoStories.subList(2, 4));
+        model.put("showNewsPromoRss", true);
         List<String> myTags = publicTagService.currentUserTags(context, currentUser.get());
         model.put("myTags", myTags);
         model.put("tagCount", myTags.size());

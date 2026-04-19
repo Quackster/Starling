@@ -65,11 +65,11 @@ public final class CommunityController {
         Map<String, Object> model = publicPageModelFactory.create(context, "community", "community");
         Optional<UserEntity> currentUser = userSessionService.authenticate(context);
         List<Map<String, Object>> promoStories = new ArrayList<>(articleService.listPublished().stream()
-                .limit(5)
+                .limit(4)
                 .map(cmsViewModelFactory::newsPromoArticle)
                 .toList());
 
-        while (promoStories.size() < 5) {
+        while (promoStories.size() < 4) {
             promoStories.add(cmsViewModelFactory.emptyNewsPromoArticle());
         }
 
@@ -89,6 +89,7 @@ public final class CommunityController {
         model.put("activeMembers", communityWidgetsFactory.activeMembers(currentUser));
         model.put("promoStories", promoStories.subList(0, 2));
         model.put("promoHeadlines", promoStories.subList(2, 4));
+        model.put("showNewsPromoRss", false);
         model.put("tagCloud", publicTagService.tagCloud(context, currentUser));
         model.put("pageLayout", publicPageLayoutRenderer.render("community", model));
         context.html(templateRenderer.render("community", model));

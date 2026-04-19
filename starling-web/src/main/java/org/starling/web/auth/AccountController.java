@@ -88,7 +88,7 @@ public final class AccountController {
         UserEntity user = UserDao.findByUsernameOrEmail(request.username());
         if (user != null && user.getPassword().equals(request.password())) {
             UserDao.updateLogin(user);
-            userSessionService.start(context, user);
+            userSessionService.start(context, user, request.rememberMe());
             context.sessionAttribute("postLoginPath", "/me");
             context.redirect("/security_check");
             return;

@@ -20,6 +20,23 @@ import java.util.Map;
 
 public final class CmsViewModelFactory {
 
+    private static final String TOP_STORY_IMAGE_BASE = "https://sandbox.h4bbo.net/c_images/Top_Story_Images/";
+    private static final Map<String, String> TOP_STORY_IMAGES = Map.of(
+            "welcome-to-starling", "buildhotel.png",
+            "build-hotel-weekend", "Rel22_tstory_wide_300x187.gif",
+            "library-lounge-now-open", "Topstory_LIBRARY.png",
+            "dragon-quest-launch", "dragon_TP_1.gif",
+            "neon-dj-takeover", "Neon_TS_DJ_300x187_v1.gif"
+    );
+    private static final List<String> TOP_STORY_FALLBACKS = List.of(
+            "buildhotel.png",
+            "Topstory_LIBRARY.png",
+            "dragon_TP_1.gif",
+            "Neon_TS_DJ_300x187_v1.gif",
+            "TS_SUMMER_Party_Music_Dancing.gif",
+            "Rel22_tstory_wide_300x187.gif"
+    );
+
     private final MarkdownRenderer markdownRenderer;
     private final SiteBranding siteBranding;
 
@@ -79,7 +96,7 @@ public final class CmsViewModelFactory {
         view.put("summary", article.publishedSummary());
         view.put("url", "/articles/" + article.slug());
         view.put("date", formatFriendlyDate(article.publishedAt()));
-        view.put("image", siteBranding.webGalleryAsset("v2/images/landing/uk_party_frontpage_image.gif"));
+        view.put("image", topStoryImageUrl(article));
         return view;
     }
 
@@ -93,7 +110,7 @@ public final class CmsViewModelFactory {
                 "summary", "Publish a CMS article to fill this slot.",
                 "url", "/articles",
                 "date", "",
-                "image", siteBranding.webGalleryAsset("v2/images/landing/uk_party_frontpage_image.gif")
+                "image", TOP_STORY_IMAGE_BASE + TOP_STORY_FALLBACKS.get(0)
         );
     }
 
@@ -132,7 +149,7 @@ public final class CmsViewModelFactory {
         Map<String, Object> view = new HashMap<>();
         view.put("title", article.publishedTitle());
         view.put("shortstory", article.publishedSummary());
-        view.put("articleImage", "");
+        view.put("articleImage", topStoryImageUrl(article));
         view.put("date", formatArticleDate(article.publishedAt()));
         view.put("escapedStory", markdownRenderer.render(article.publishedMarkdown()));
         view.put("author", siteBranding.cmsTitle());
@@ -339,6 +356,15 @@ public final class CmsViewModelFactory {
         return timestamp.toInstant()
                 .atZone(ZoneId.systemDefault())
                 .format(DateTimeFormatter.ofPattern("dd MMM yyyy"));
+    }
+
+    private String topStoryImageUrl(CmsArticle article) {
+        String fileName = TOP_STORY_IMAGES.get(article.slug());
+        if (fileName == null) {
+            int fallbackIndex = Math.floorMod(article.slug().hashCode(), TOP_STORY_FALLBACKS.size());
+            fileName = TOP_STORY_FALLBACKS.get(fallbackIndex);
+        }
+        return TOP_STORY_IMAGE_BASE + fileName;
     }
 
     public enum ArticleBucket {

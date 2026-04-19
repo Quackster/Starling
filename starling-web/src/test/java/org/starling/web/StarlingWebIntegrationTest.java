@@ -22,6 +22,7 @@ import io.javalin.Javalin;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.net.HttpCookie;
 import java.io.ByteArrayOutputStream;
 import java.net.CookieManager;
 import java.net.URI;
@@ -42,6 +43,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -387,6 +389,54 @@ class StarlingWebIntegrationTest {
     }
 
     @Test
+    void publicUserSessionCookieUsesOpaqueHashAndRememberMeControlsPersistence() throws Exception {
+        CookieManager transientCookieManager = new CookieManager();
+        HttpClient transientClient = HttpClient.newBuilder()
+                .cookieHandler(transientCookieManager)
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .build();
+
+        HttpResponse<String> transientLoginResponse = postForm(
+                transientClient,
+                "/account/submit",
+                Map.of("username", "admin", "password", "admin"),
+                Map.of()
+        );
+
+        assertEquals(200, transientLoginResponse.statusCode());
+        HttpCookie transientCookie = findCookie(transientCookieManager, "starling_user_session");
+        assertNotNull(transientCookie);
+        assertEquals(-1, transientCookie.getMaxAge());
+
+        String[] transientParts = transientCookie.getValue().split("\\|");
+        assertEquals(3, transientParts.length);
+        assertTrue(transientParts[0].matches("[0-9a-f]{64}"));
+        assertFalse(transientCookie.getValue().startsWith("1|"));
+
+        CookieManager rememberCookieManager = new CookieManager();
+        HttpClient rememberClient = HttpClient.newBuilder()
+                .cookieHandler(rememberCookieManager)
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .build();
+
+        HttpResponse<String> rememberedLoginResponse = postForm(
+                rememberClient,
+                "/account/submit",
+                Map.of("username", "admin", "password", "admin", "_login_remember_me", "true"),
+                Map.of()
+        );
+
+        assertEquals(200, rememberedLoginResponse.statusCode());
+        HttpCookie rememberedCookie = findCookie(rememberCookieManager, "starling_user_session");
+        assertNotNull(rememberedCookie);
+        assertTrue(rememberedCookie.getMaxAge() > 0);
+
+        String[] rememberedParts = rememberedCookie.getValue().split("\\|");
+        assertEquals(3, rememberedParts.length);
+        assertTrue(rememberedParts[0].matches("[0-9a-f]{64}"));
+    }
+
+    @Test
     void minimailComposeDeleteAndRestoreFlowWorks() throws Exception {
         HttpResponse<String> loginResponse = postForm(
                 "/account/submit",
@@ -719,6 +769,13 @@ class StarlingWebIntegrationTest {
         }
 
         return httpClient.send(builder.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    private HttpCookie findCookie(CookieManager cookieManager, String name) {
+        return cookieManager.getCookieStore().getCookies().stream()
+                .filter(cookie -> name.equals(cookie.getName()))
+                .findFirst()
+                .orElse(null);
     }
 
     private byte[] tinyPng() throws Exception {
