@@ -4,9 +4,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.oldskooler.entity4j.DbContext;
 import org.starling.game.room.layout.RoomLayoutRegistry;
+import org.starling.storage.entity.UserEntity;
 
 import java.sql.PreparedStatement;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public final class GuestRoomSeedRegistrar implements DatabaseSeedRegistrar {
 
@@ -24,6 +27,15 @@ public final class GuestRoomSeedRegistrar implements DatabaseSeedRegistrar {
      */
     @Override
     public void seed(DbContext context) {
+        Map<String, Integer> ownerIds = new HashMap<>();
+        for (RoomSeed room : DEFAULT_ROOMS) {
+            ownerIds.computeIfAbsent(room.ownerName(), ownerName -> context.from(UserEntity.class)
+                    .filter(filter -> filter.equals(UserEntity::getUsername, ownerName))
+                    .first()
+                    .map(UserEntity::getId)
+                    .orElseThrow(() -> new IllegalStateException("Guest room owner not found: " + ownerName)));
+        }
+
         String sql = """
                 INSERT INTO rooms (
                     id,
@@ -48,7 +60,7 @@ public final class GuestRoomSeedRegistrar implements DatabaseSeedRegistrar {
                     alert_state,
                     navigator_filter,
                     port
-                ) VALUES (?, ?, (SELECT id FROM users WHERE username = ? LIMIT 1), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE
                     category_id = VALUES(category_id),
                     owner_id = VALUES(owner_id),
@@ -77,7 +89,7 @@ public final class GuestRoomSeedRegistrar implements DatabaseSeedRegistrar {
             for (RoomSeed room : DEFAULT_ROOMS) {
                 statement.setInt(1, room.id());
                 statement.setInt(2, room.categoryId());
-                statement.setString(3, room.ownerName());
+                statement.setInt(3, ownerIds.get(room.ownerName()));
                 statement.setString(4, room.ownerName());
                 statement.setString(5, room.name());
                 statement.setString(6, room.description());
