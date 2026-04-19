@@ -44,6 +44,7 @@ import org.starling.web.feature.me.mail.MinimailSessionState;
 import org.starling.web.feature.me.mail.MinimailViewFactory;
 import org.starling.web.feature.me.mail.MinimailWriteService;
 import org.starling.web.feature.me.page.MePageController;
+import org.starling.web.feature.me.page.MePlaceholderController;
 import org.starling.web.feature.policy.page.PolicyController;
 import org.starling.web.feature.shared.page.PublicPageModelFactory;
 import org.starling.web.feature.shared.page.layout.PublicPageLayoutConfig;
@@ -189,6 +190,10 @@ public final class StarlingWebBootstrap {
                 dependencies.newsPromoContentFactory(),
                 dependencies.minimailSessionState()
         );
+        MePlaceholderController mePlaceholderController = new MePlaceholderController(
+                dependencies.templateRenderer(),
+                dependencies.publicPageModelFactory()
+        );
         MinimailController minimailController = new MinimailController(
                 dependencies.meAccess(),
                 dependencies.minimailWriteService(),
@@ -295,6 +300,7 @@ public final class StarlingWebBootstrap {
                 homepageController,
                 communityController,
                 mePageController,
+                mePlaceholderController,
                 minimailController,
                 legacyMinimailController,
                 newsController,

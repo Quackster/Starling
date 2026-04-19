@@ -27,9 +27,11 @@
             <div id="motto-container" class="clearfix">
                 <strong>{{ currentUser.name }}:</strong>
                 <div>
-                    <span title="Click to enter your motto/ status">{% if currentUser.motto != "" %}{{ currentUser.motto }}{% else %}Click here to enter your motto{% endif %}</span>
+                    <span title="Click to enter your motto/ status">{% if currentUser.motto != "" %}{{ currentUser.motto }}{% else %}Click to enter your motto/ status{% endif %}</span>
+                    <p style="display: none"><input type="text" length="30" name="motto" value="" /></p>
                 </div>
             </div>
+            <div id="motto-links" style="display: none"><a href="#" id="motto-cancel">Cancel</a></div>
         </div>
 
         <ul id="link-bar" class="clearfix">
@@ -48,6 +50,17 @@
 
         <div id="habbo-feed">
             <ul id="feed-items">
+                {% if hasBirthday %}
+                <li id="feed-birthday">
+                    <div>Happy birthday, {{ currentUser.name }}! You're celebrating your {{ birthdayAge }}{{ birthdayPrefix }} year.</div>
+                </li>
+                {% endif %}
+                {% if showMessengerPlaceholder %}
+                <li id="feed-notification">
+                    <a href="{{ site.sitePath }}{{ messengerPlaceholderHref }}">Messenger</a>:
+                    {{ messengerPlaceholderText }}
+                </li>
+                {% endif %}
                 <li class="small" id="feed-friends">
                     You have {{ onlineFriends | length }} friends online
                     <span>
@@ -56,6 +69,12 @@
                     {% endfor %}
                     </span>
                 </li>
+                {% if showGuidesPlaceholder %}
+                <li class="small" id="feed-guides">
+                    <a href="{{ site.sitePath }}{{ guidesPlaceholderHref }}">Habbo Guides</a>:
+                    {{ guidesPlaceholderText }}
+                </li>
+                {% endif %}
                 <li class="small" id="feed-lastlogin">
                     Last signed in:
                     {{ currentUser.lastOnline }}
@@ -70,3 +89,14 @@
         <p class="last"></p>
     </div>
 </div>
+
+<script type="text/javascript">
+    HabboView.add(function() {
+        if (typeof L10N !== "undefined") {
+            L10N.put("personal_info.motto_editor.spamming", "Don\'t spam me, bro!");
+        }
+        if (typeof PersonalInfo !== "undefined") {
+            PersonalInfo.init("");
+        }
+    });
+</script>

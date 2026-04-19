@@ -9,6 +9,7 @@ import org.starling.web.feature.home.page.HomepageController;
 import org.starling.web.feature.me.mail.LegacyMinimailController;
 import org.starling.web.feature.me.mail.MinimailController;
 import org.starling.web.feature.me.page.MePageController;
+import org.starling.web.feature.me.page.MePlaceholderController;
 import org.starling.web.feature.policy.page.PolicyController;
 import org.starling.web.feature.tag.page.TagController;
 
@@ -17,6 +18,7 @@ public final class PublicRoutes {
     private final HomepageController homepageController;
     private final CommunityController communityController;
     private final MePageController mePageController;
+    private final MePlaceholderController mePlaceholderController;
     private final MinimailController minimailController;
     private final LegacyMinimailController legacyMinimailController;
     private final NewsController newsController;
@@ -30,6 +32,7 @@ public final class PublicRoutes {
      * @param homepageController the homepage controller
      * @param communityController the community controller
      * @param mePageController the /me page controller
+     * @param mePlaceholderController the unfinished /me feature pages
      * @param minimailController the modern minimail controller
      * @param legacyMinimailController the legacy minimail controller
      * @param newsController the news controller
@@ -42,6 +45,7 @@ public final class PublicRoutes {
             HomepageController homepageController,
             CommunityController communityController,
             MePageController mePageController,
+            MePlaceholderController mePlaceholderController,
             MinimailController minimailController,
             LegacyMinimailController legacyMinimailController,
             NewsController newsController,
@@ -53,6 +57,7 @@ public final class PublicRoutes {
         this.homepageController = homepageController;
         this.communityController = communityController;
         this.mePageController = mePageController;
+        this.mePlaceholderController = mePlaceholderController;
         this.minimailController = minimailController;
         this.legacyMinimailController = legacyMinimailController;
         this.newsController = newsController;
@@ -72,6 +77,9 @@ public final class PublicRoutes {
         app.get("/home", homepageController::homepage);
         app.get("/me", mePageController::me);
         app.get("/welcome", mePageController::welcome);
+        app.get("/me/friends", mePlaceholderController::messenger);
+        app.get("/guides", mePlaceholderController::guides);
+        app.get("/groups/officialhabboguides", mePlaceholderController::guides);
         app.post("/me/minimail/compose", minimailController::composeMessage);
         app.post("/me/minimail/{messageId}/reply", minimailController::replyToMessage);
         app.post("/me/minimail/{messageId}/delete", minimailController::deleteMessage);

@@ -63,6 +63,12 @@ sub:
       selectedKeys: [club]
       visibleWhenLoggedIn: true
       visibleWhenLoggedOut: false
+    - key: guides
+      label: Habbo Guides
+      href: /guides
+      selectedKeys: [guides]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: false
   community:
     - key: community-home
       label: Community

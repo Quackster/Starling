@@ -89,7 +89,7 @@ public final class MePageController {
 
         Map<String, Object> model = publicPageModelFactory.create(context, "me", "me");
         model.put("currentUser", userViewModelFactory.create(currentUser.get()));
-        model.put("onlineFriends", mePageContentFactory.onlineFriends());
+        model.putAll(mePageContentFactory.personalInfo(currentUser.get()));
         model.put("hotCampaigns", hotCampaignService.listVisible());
         model.put("promoStories", promoStories.subList(0, 2));
         model.put("promoHeadlines", promoStories.subList(2, 4));

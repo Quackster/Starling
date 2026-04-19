@@ -494,7 +494,42 @@ class StarlingWebIntegrationTest {
         assertTrue(meResponse.body().contains("new MiniMail({"));
         assertTrue(meResponse.body().contains("id=\"my-tags-list\""));
         assertTrue(meResponse.body().contains("class=\"tag-remove-link\""));
+        assertTrue(meResponse.body().contains("id=\"motto-links\""));
+        assertTrue(meResponse.body().contains("id=\"feed-notification\""));
+        assertTrue(meResponse.body().contains("Friend requests and web messenger are coming soon."));
+        assertTrue(meResponse.body().contains("Habbo Guides"));
         assertFalse(meResponse.body().contains("Reccomended Rooms"));
+    }
+
+    @Test
+    void mePlaceholderPagesMirrorLisbonNavigationWithoutBrokenLinks() throws Exception {
+        HttpResponse<String> loginResponse = postForm(
+                "/account/submit",
+                Map.of("username", "admin", "password", "admin"),
+                Map.of()
+        );
+        assertEquals(200, loginResponse.statusCode());
+
+        HttpResponse<String> messengerResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/me/friends")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> guidesResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/guides")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> guidesAliasResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/groups/officialhabboguides")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertEquals(200, messengerResponse.statusCode());
+        assertEquals(200, guidesResponse.statusCode());
+        assertEquals(200, guidesAliasResponse.statusCode());
+        assertTrue(messengerResponse.body().contains("<h2>Messenger</h2>"));
+        assertTrue(messengerResponse.body().contains("MiniMail is already live on your"));
+        assertTrue(guidesResponse.body().contains("<h2>Habbo Guides</h2>"));
+        assertTrue(guidesAliasResponse.body().contains("classic Lisbon navigation intact"));
     }
 
     @Test
