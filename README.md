@@ -115,12 +115,46 @@ Create packaged runtimes for both applications:
 .\gradlew.bat packageDist
 ```
 
+Simple packaged build command:
+
+```powershell
+cd C:\SourceControl\Starling
+.\gradlew.bat packageDist
+```
+
 That produces:
 
 - `starling-server/dist/`
 - `starling-web/dist/`
 
 ## Run
+
+### Packaged Dist Runtimes
+
+Build the packaged `/dist/` folders from the repo root:
+
+```powershell
+cd C:\SourceControl\Starling
+.\gradlew.bat packageDist
+```
+
+Run the website from its packaged folder:
+
+```powershell
+cd C:\SourceControl\Starling\starling-web\dist
+.\bin\starling-web.bat
+```
+
+Run the game server from its packaged folder:
+
+```powershell
+cd C:\SourceControl\Starling\starling-server\dist
+.\bin\starling-server.bat
+```
+
+If you want to start both, launch the server in one terminal and the website in another.
+
+### Gradle Run Tasks
 
 Run the game server from the repo root:
 
