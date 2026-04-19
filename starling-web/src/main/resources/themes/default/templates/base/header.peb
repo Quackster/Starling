@@ -95,7 +95,7 @@
        <div id="subnavi">
 			<div id="subnavi-user">
 				<ul>
-					<li id="myfriends"><a href="{{ site.sitePath }}/me/friends"><span>My Friends</span></a><span class="r"></span></li>
+					<li id="myfriends"><a href="#"><span>My Friends</span></a><span class="r"></span></li>
 					<li id="mygroups"><a href="#"><span>My Groups</span></a><span class="r"></span></li>
 					<li id="myrooms"><a href="#"><span>My Rooms</span></a><span class="r"></span></li>
 				</ul>

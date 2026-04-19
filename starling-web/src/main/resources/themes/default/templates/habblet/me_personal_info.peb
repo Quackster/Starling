@@ -55,20 +55,21 @@
                     <div>Happy birthday, {{ currentUser.name }}! You're celebrating your {{ birthdayAge }}{{ birthdayPrefix }} year.</div>
                 </li>
                 {% endif %}
-                {% if showMessengerPlaceholder %}
+                {% if feedFriendRequests > 0 %}
                 <li id="feed-notification">
-                    <a href="{{ site.sitePath }}{{ messengerPlaceholderHref }}">Messenger</a>:
-                    {{ messengerPlaceholderText }}
+                    You have <a href="{{ site.sitePath }}/client" onclick="HabboClient.openOrFocus(this); return false;">{{ feedFriendRequests }} friend requests</a> waiting
                 </li>
                 {% endif %}
+                {% if (feedFriendsOnline | length) > 0 %}
                 <li class="small" id="feed-friends">
-                    You have {{ onlineFriends | length }} friends online
+                    You have {{ feedFriendsOnline | length }} friends online
                     <span>
-                    {% for friend in onlineFriends %}
-                        <a href="{{ site.sitePath }}/home/{{ friend }}">{{ friend }}</a>{% if not loop.last %}, {% endif %}
+                    {% for friend in feedFriendsOnline %}
+                        <a href="{{ site.sitePath }}/home/{{ friend.username }}">{{ friend.username }}</a>{% if not loop.last %}, {% endif %}
                     {% endfor %}
                     </span>
                 </li>
+                {% endif %}
                 {% if showGuidesPlaceholder %}
                 <li class="small" id="feed-guides">
                     <a href="{{ site.sitePath }}{{ guidesPlaceholderHref }}">Habbo Guides</a>:

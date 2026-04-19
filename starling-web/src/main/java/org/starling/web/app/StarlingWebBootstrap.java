@@ -46,6 +46,7 @@ import org.starling.web.feature.me.mail.MinimailViewFactory;
 import org.starling.web.feature.me.mail.MinimailWriteService;
 import org.starling.web.feature.me.page.MePageController;
 import org.starling.web.feature.me.page.MePlaceholderController;
+import org.starling.web.feature.me.quickmenu.QuickmenuController;
 import org.starling.web.feature.me.referral.ReferralHabbletController;
 import org.starling.web.feature.me.referral.ReferralService;
 import org.starling.web.feature.policy.page.PolicyController;
@@ -201,6 +202,11 @@ public final class StarlingWebBootstrap {
                 dependencies.templateRenderer(),
                 dependencies.publicPageModelFactory()
         );
+        QuickmenuController quickmenuController = new QuickmenuController(
+                dependencies.templateRenderer(),
+                dependencies.meAccess(),
+                dependencies.siteBranding()
+        );
         MinimailController minimailController = new MinimailController(
                 dependencies.meAccess(),
                 dependencies.minimailWriteService(),
@@ -319,6 +325,7 @@ public final class StarlingWebBootstrap {
                 communityController,
                 mePageController,
                 mePlaceholderController,
+                quickmenuController,
                 minimailController,
                 legacyMinimailController,
                 newsController,

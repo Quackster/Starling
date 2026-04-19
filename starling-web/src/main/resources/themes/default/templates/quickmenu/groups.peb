@@ -1,0 +1,24 @@
+<ul id="quickmenu-groups">
+{% if groups|length > 0 %}
+{% for group in groups %}
+    <li class="{% if loop.index is even %}odd{% else %}even{% endif %}">
+        {% if group.roomId > 0 %}
+        <a href="{{ site.sitePath }}/client?forwardId=2&amp;roomId={{ group.roomId }}" onclick="HabboClient.roomForward(this, '{{ group.roomId }}', 'private'); return false;" target="client" class="group-room" title=""></a>
+        {% endif %}
+        {% if group.owned %}
+        <div class="owned-group" title="Owner"></div>
+        {% endif %}
+        {% if group.admin %}
+        <div class="admin-group" title="Administrator"></div>
+        {% endif %}
+        {% if group.favourite %}
+        <div class="favourite-group" title="Favorite"></div>
+        {% endif %}
+        <a href="{{ group.url }}">{{ group.name }}</a>
+    </li>
+{% endfor %}
+{% else %}
+    <li class="odd">You don't belong to any groups yet</li>
+{% endif %}
+</ul>
+<p class="create-group"><a href="#" onclick="GroupPurchase.open(); return false;">Create a group</a></p>

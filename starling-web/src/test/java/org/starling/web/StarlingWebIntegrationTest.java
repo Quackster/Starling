@@ -516,7 +516,9 @@ class StarlingWebIntegrationTest {
         assertTrue(meResponse.body().contains("class=\"tag-remove-link\""));
         assertTrue(meResponse.body().contains("id=\"motto-links\""));
         assertTrue(meResponse.body().contains("id=\"feed-notification\""));
-        assertTrue(meResponse.body().contains("Friend requests and web messenger are coming soon."));
+        assertTrue(meResponse.body().contains("friend requests</a> waiting"));
+        assertTrue(meResponse.body().contains("RetroGuide"));
+        assertTrue(meResponse.body().contains("PixelPilot"));
         assertTrue(meResponse.body().contains("Habbo Guides"));
         assertTrue(meResponse.body().contains("Get invite link"));
         assertTrue(meResponse.body().contains("/groups/welcome-crew"));
@@ -581,7 +583,7 @@ class StarlingWebIntegrationTest {
     }
 
     @Test
-    void mePlaceholderPagesMirrorLisbonNavigationWithoutBrokenLinks() throws Exception {
+    void quickmenuEndpointsAndGuidesPlaceholderMirrorLisbonNavigation() throws Exception {
         HttpResponse<String> loginResponse = postForm(
                 "/account/submit",
                 Map.of("username", "admin", "password", "admin"),
@@ -591,6 +593,18 @@ class StarlingWebIntegrationTest {
 
         HttpResponse<String> messengerResponse = client.send(
                 HttpRequest.newBuilder(baseUri.resolve("/me/friends")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> quickFriendsResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/quickmenu/friends_all")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> quickGroupsResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/quickmenu/groups")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> quickRoomsResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/quickmenu/rooms")).GET().build(),
                 HttpResponse.BodyHandlers.ofString()
         );
         HttpResponse<String> guidesResponse = client.send(
@@ -603,10 +617,22 @@ class StarlingWebIntegrationTest {
         );
 
         assertEquals(200, messengerResponse.statusCode());
+        assertEquals(200, quickFriendsResponse.statusCode());
+        assertEquals(200, quickGroupsResponse.statusCode());
+        assertEquals(200, quickRoomsResponse.statusCode());
         assertEquals(200, guidesResponse.statusCode());
         assertEquals(200, guidesAliasResponse.statusCode());
         assertTrue(messengerResponse.body().contains("<h2>Messenger</h2>"));
         assertTrue(messengerResponse.body().contains("MiniMail is already live on your"));
+        assertTrue(quickFriendsResponse.body().contains("id=\"online-friends\""));
+        assertTrue(quickFriendsResponse.body().contains("RetroGuide"));
+        assertTrue(quickFriendsResponse.body().contains("Newsie"));
+        assertTrue(quickGroupsResponse.body().contains("id=\"quickmenu-groups\""));
+        assertTrue(quickGroupsResponse.body().contains("Welcome Crew"));
+        assertTrue(quickGroupsResponse.body().contains("Create a group"));
+        assertTrue(quickRoomsResponse.body().contains("id=\"quickmenu-rooms\""));
+        assertTrue(quickRoomsResponse.body().contains("Welcome Lounge"));
+        assertTrue(quickRoomsResponse.body().contains("Create a new room"));
         assertTrue(guidesResponse.body().contains("<h2>Habbo Guides</h2>"));
         assertTrue(guidesAliasResponse.body().contains("classic Lisbon navigation intact"));
     }

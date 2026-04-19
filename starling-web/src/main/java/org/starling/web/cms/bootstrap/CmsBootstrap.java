@@ -23,10 +23,13 @@ import org.starling.web.cms.page.CmsPageDao;
 import org.starling.web.cms.page.CmsPageDraft;
 import org.starling.web.config.WebConfig;
 import org.starling.web.feature.me.campaign.HotCampaignDao;
+import org.starling.web.feature.me.friends.WebMessengerDao;
 import org.starling.web.feature.me.mail.MinimailDao;
 import org.starling.web.util.Slugifier;
 
 import java.nio.file.Files;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.sql.Statement;
 import java.util.HashSet;
 import java.util.List;
@@ -131,6 +134,53 @@ public final class CmsBootstrap {
                             PRIMARY KEY (id),
                             UNIQUE KEY uk_user_referrals_invited_user (invited_userid),
                             KEY idx_user_referrals_inviter_user (inviter_userid)
+                        ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+                        """);
+                statement.executeUpdate("""
+                        CREATE TABLE IF NOT EXISTS messenger_friends (
+                            id INT NOT NULL AUTO_INCREMENT,
+                            from_id INT NOT NULL,
+                            to_id INT NOT NULL,
+                            category_id INT NOT NULL DEFAULT 0,
+                            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                            PRIMARY KEY (id),
+                            UNIQUE KEY uk_messenger_friends_from_to (from_id, to_id),
+                            KEY idx_messenger_friends_to (to_id),
+                            KEY idx_messenger_friends_from (from_id)
+                        ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+                        """);
+                statement.executeUpdate("""
+                        CREATE TABLE IF NOT EXISTS messenger_requests (
+                            id INT NOT NULL AUTO_INCREMENT,
+                            to_id INT NOT NULL,
+                            from_id INT NOT NULL,
+                            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                            PRIMARY KEY (id),
+                            UNIQUE KEY uk_messenger_requests_to_from (to_id, from_id),
+                            KEY idx_messenger_requests_to (to_id),
+                            KEY idx_messenger_requests_from (from_id)
+                        ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+                        """);
+                statement.executeUpdate("""
+                        CREATE TABLE IF NOT EXISTS messenger_messages (
+                            id INT NOT NULL AUTO_INCREMENT,
+                            receiver_id INT NOT NULL,
+                            sender_id INT NOT NULL,
+                            unread INT NOT NULL DEFAULT 1,
+                            body TEXT NOT NULL,
+                            date BIGINT NOT NULL DEFAULT 0,
+                            PRIMARY KEY (id),
+                            KEY idx_messenger_messages_receiver_unread (receiver_id, unread),
+                            KEY idx_messenger_messages_sender (sender_id)
+                        ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+                        """);
+                statement.executeUpdate("""
+                        CREATE TABLE IF NOT EXISTS messenger_categories (
+                            id INT NOT NULL AUTO_INCREMENT,
+                            user_id INT NOT NULL,
+                            name VARCHAR(64) NOT NULL,
+                            PRIMARY KEY (id),
+                            KEY idx_messenger_categories_user (user_id)
                         ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
                         """);
                 statement.executeUpdate("ALTER TABLE groups_details ADD COLUMN IF NOT EXISTS alias VARCHAR(80) NOT NULL DEFAULT '' AFTER id");
@@ -321,6 +371,7 @@ public final class CmsBootstrap {
         ));
         seedBootstrapArticles();
         seedBootstrapMinimail();
+        seedBootstrapMessenger();
     }
 
     private static List<RoomEntity> seedBootstrapRooms(UserEntity bootstrapUser) {
@@ -562,6 +613,75 @@ public final class CmsBootstrap {
                 Minimail is now available from your /me page, so you can keep in touch without leaving the hotel site.
                 """
         );
+    }
+
+    private static void seedBootstrapMessenger() {
+        UserEntity bootstrapUser = UserDao.findByUsername("admin");
+        if (bootstrapUser == null) {
+            return;
+        }
+
+        if (WebMessengerDao.listFriends(bootstrapUser.getId()).isEmpty()) {
+            UserEntity retroGuide = ensureBootstrapMessengerUser(
+                    "RetroGuide",
+                    "Always around if you need a hand.",
+                    true,
+                    5
+            );
+            UserEntity pixelPilot = ensureBootstrapMessengerUser(
+                    "PixelPilot",
+                    "Lobby lurker and room hopper.",
+                    true,
+                    45
+            );
+            UserEntity newsie = ensureBootstrapMessengerUser(
+                    "Newsie",
+                    "Posting the latest hotel buzz.",
+                    false,
+                    7200
+            );
+
+            WebMessengerDao.ensureFriendship(bootstrapUser.getId(), retroGuide.getId());
+            WebMessengerDao.ensureFriendship(bootstrapUser.getId(), pixelPilot.getId());
+            WebMessengerDao.ensureFriendship(bootstrapUser.getId(), newsie.getId());
+        }
+
+        if (WebMessengerDao.countRequests(bootstrapUser.getId()) == 0) {
+            UserEntity requester = ensureBootstrapMessengerUser(
+                    "LobbyScout",
+                    "Let's hang out in the Welcome Lounge.",
+                    false,
+                    300
+            );
+            WebMessengerDao.ensureRequest(bootstrapUser.getId(), requester.getId());
+        }
+    }
+
+    private static UserEntity ensureBootstrapMessengerUser(String username, String motto, boolean online, long secondsAgo) {
+        UserEntity user = UserDao.findByUsername(username);
+        if (user != null) {
+            return user;
+        }
+
+        UserEntity created = UserEntity.createRegisteredUser(
+                username,
+                "Password1",
+                "hr-100-61.hd-180-2.ch-210-92.lg-270-82.sh-290-64",
+                "M",
+                username.toLowerCase() + "@example.com"
+        );
+        Instant lastOnline = Instant.now().minusSeconds(Math.max(0L, secondsAgo));
+        created.setLastOnline(Timestamp.from(lastOnline));
+        created.setIsOnline(online ? 1 : 0);
+        created.setUpdatedAt(Timestamp.from(lastOnline));
+        UserDao.save(created);
+
+        UserEntity persisted = UserDao.findByUsername(username);
+        if (persisted == null) {
+            throw new IllegalStateException("Failed to create bootstrap messenger user " + username);
+        }
+
+        return persisted;
     }
 
     private record RoomSeed(String name, String description, int currentUsers) {

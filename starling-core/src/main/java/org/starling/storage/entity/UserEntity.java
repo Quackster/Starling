@@ -342,6 +342,11 @@ public class UserEntity {
      * @return the home room
      */
     public int getHomeRoom() { return homeRoom; }
+    /**
+     * Returns the favourite group id.
+     * @return the favourite group id
+     */
+    public int getFavouriteGroup() { return favouriteGroup; }
 
     /**
      * Sets the selected room id.

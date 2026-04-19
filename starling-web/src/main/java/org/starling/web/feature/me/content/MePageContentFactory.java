@@ -1,6 +1,8 @@
 package org.starling.web.feature.me.content;
 
 import org.starling.storage.entity.UserEntity;
+import org.starling.web.feature.me.friends.WebMessengerDao;
+import org.starling.web.feature.me.friends.WebMessengerFriend;
 
 import java.time.LocalDate;
 import java.time.Period;
@@ -10,14 +12,6 @@ import java.util.List;
 import java.util.Map;
 
 public final class MePageContentFactory {
-
-    /**
-     * Returns the placeholder online friends list.
-     * @return the online friends
-     */
-    public List<String> onlineFriends() {
-        return List.of("RetroGuide", "PixelPilot", "Newsie");
-    }
 
     /**
      * Builds the personal-info widget state for the /me page.
@@ -35,14 +29,19 @@ public final class MePageContentFactory {
                 && joinDate.getMonth() == today.getMonth()
                 && joinDate.getDayOfMonth() == today.getDayOfMonth();
         int birthdayAge = hasBirthday ? Period.between(joinDate, today).getYears() : 0;
+        List<Map<String, Object>> visibleOnlineFriends = WebMessengerDao.listFriends(user.getId()).stream()
+                .filter(WebMessengerFriend::visibleOnline)
+                .map(friend -> Map.<String, Object>of(
+                        "userId", friend.userId(),
+                        "username", friend.username()
+                ))
+                .toList();
 
-        model.put("onlineFriends", onlineFriends());
+        model.put("feedFriendRequests", WebMessengerDao.countRequests(user.getId()));
+        model.put("feedFriendsOnline", visibleOnlineFriends);
         model.put("hasBirthday", hasBirthday);
         model.put("birthdayAge", birthdayAge);
         model.put("birthdayPrefix", ordinalSuffix(birthdayAge));
-        model.put("showMessengerPlaceholder", true);
-        model.put("messengerPlaceholderHref", "/me/friends");
-        model.put("messengerPlaceholderText", "Friend requests and web messenger are coming soon.");
         model.put("showGuidesPlaceholder", true);
         model.put("guidesPlaceholderHref", "/guides");
         model.put("guidesPlaceholderText", "Habbo Guides are coming soon.");

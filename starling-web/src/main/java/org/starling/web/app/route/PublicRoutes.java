@@ -11,6 +11,7 @@ import org.starling.web.feature.me.mail.LegacyMinimailController;
 import org.starling.web.feature.me.mail.MinimailController;
 import org.starling.web.feature.me.page.MePageController;
 import org.starling.web.feature.me.page.MePlaceholderController;
+import org.starling.web.feature.me.quickmenu.QuickmenuController;
 import org.starling.web.feature.policy.page.PolicyController;
 import org.starling.web.feature.tag.page.TagController;
 
@@ -20,6 +21,7 @@ public final class PublicRoutes {
     private final CommunityController communityController;
     private final MePageController mePageController;
     private final MePlaceholderController mePlaceholderController;
+    private final QuickmenuController quickmenuController;
     private final MinimailController minimailController;
     private final LegacyMinimailController legacyMinimailController;
     private final NewsController newsController;
@@ -35,6 +37,7 @@ public final class PublicRoutes {
      * @param communityController the community controller
      * @param mePageController the /me page controller
      * @param mePlaceholderController the unfinished /me feature pages
+     * @param quickmenuController the signed-in quick menu controller
      * @param minimailController the modern minimail controller
      * @param legacyMinimailController the legacy minimail controller
      * @param newsController the news controller
@@ -49,6 +52,7 @@ public final class PublicRoutes {
             CommunityController communityController,
             MePageController mePageController,
             MePlaceholderController mePlaceholderController,
+            QuickmenuController quickmenuController,
             MinimailController minimailController,
             LegacyMinimailController legacyMinimailController,
             NewsController newsController,
@@ -62,6 +66,7 @@ public final class PublicRoutes {
         this.communityController = communityController;
         this.mePageController = mePageController;
         this.mePlaceholderController = mePlaceholderController;
+        this.quickmenuController = quickmenuController;
         this.minimailController = minimailController;
         this.legacyMinimailController = legacyMinimailController;
         this.newsController = newsController;
@@ -83,6 +88,9 @@ public final class PublicRoutes {
         app.get("/me", mePageController::me);
         app.get("/welcome", mePageController::welcome);
         app.get("/me/friends", mePlaceholderController::messenger);
+        app.get("/quickmenu/friends_all", quickmenuController::friends);
+        app.get("/quickmenu/groups", quickmenuController::groups);
+        app.get("/quickmenu/rooms", quickmenuController::rooms);
         app.get("/guides", mePlaceholderController::guides);
         app.get("/groups/officialhabboguides", mePlaceholderController::guides);
         app.get("/groups/{alias}", groupController::detail);
