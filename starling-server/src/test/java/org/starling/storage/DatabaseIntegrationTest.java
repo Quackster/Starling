@@ -14,19 +14,19 @@ import org.starling.storage.dao.RoomModelDao;
 import org.starling.storage.dao.RoomRightDao;
 import org.starling.storage.dao.UserDao;
 import org.starling.storage.entity.NavigatorCategoryEntity;
+import org.starling.storage.entity.PublicRoomItemEntity;
 import org.starling.storage.entity.PublicRoomEntity;
 import org.starling.storage.entity.RoomEntity;
 import org.starling.storage.entity.RoomFavoriteEntity;
 import org.starling.storage.entity.RoomModelEntity;
+import org.starling.storage.entity.RoomRightEntity;
 import org.starling.storage.entity.UserEntity;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -174,26 +174,26 @@ class DatabaseIntegrationTest {
      */
     @Test
     void bootstrapIsIdempotent() throws Exception {
-        int categoryCount = countRows("rooms_categories", null);
-        int roomModelCount = countRows("room_models", null);
-        int guestRoomCount = countRows("rooms", null);
-        int publicRoomCount = countRows("public_rooms", null);
-        int publicRoomItemCount = countRows("public_room_items", null);
+        int categoryCount = countRows(NavigatorCategoryEntity.class);
+        int roomModelCount = countRows(RoomModelEntity.class);
+        int guestRoomCount = countRows(RoomEntity.class);
+        int publicRoomCount = countRows(PublicRoomEntity.class);
+        int publicRoomItemCount = countRows(PublicRoomItemEntity.class);
 
         DatabaseBootstrap.ensureSchema(config);
         DatabaseBootstrap.seedDefaults();
 
-        assertEquals(1, countRows("users", "username = 'admin'"));
+        assertEquals(1, countAdminUsers());
         assertEquals(35, categoryCount);
         assertTrue(roomModelCount >= 100);
         assertEquals(4, guestRoomCount);
         assertEquals(87, publicRoomCount);
         assertTrue(publicRoomItemCount >= 3465);
-        assertEquals(categoryCount, countRows("rooms_categories", null));
-        assertEquals(roomModelCount, countRows("room_models", null));
-        assertEquals(guestRoomCount, countRows("rooms", null));
-        assertEquals(publicRoomCount, countRows("public_rooms", null));
-        assertEquals(publicRoomItemCount, countRows("public_room_items", null));
+        assertEquals(categoryCount, countRows(NavigatorCategoryEntity.class));
+        assertEquals(roomModelCount, countRows(RoomModelEntity.class));
+        assertEquals(guestRoomCount, countRows(RoomEntity.class));
+        assertEquals(publicRoomCount, countRows(PublicRoomEntity.class));
+        assertEquals(publicRoomItemCount, countRows(PublicRoomItemEntity.class));
     }
 
     /**
@@ -306,9 +306,9 @@ class DatabaseIntegrationTest {
         assertFalse(RoomFavoriteDao.exists(admin.getId(), 1, 101));
 
         insertRoomRight(room.getId(), admin.getId());
-        assertEquals(1, countRows("room_rights", "room_id = " + room.getId()));
+        assertEquals(1, countRoomRights(room.getId()));
         RoomRightDao.deleteByRoomId(room.getId());
-        assertEquals(0, countRows("room_rights", "room_id = " + room.getId()));
+        assertEquals(0, countRoomRights(room.getId()));
 
         RoomDao.delete(room.getId());
     }
@@ -333,14 +333,20 @@ class DatabaseIntegrationTest {
      * @return the result of this operation
      * @throws Exception if the operation fails
      */
-    private int countRows(String tableName, String whereClause) throws Exception {
-        String sql = "SELECT COUNT(*) FROM " + tableName + (whereClause == null || whereClause.isBlank() ? "" : " WHERE " + whereClause);
-        try (Connection connection = DriverManager.getConnection(config.jdbcUrl(), config.dbUsername(), config.dbPassword());
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(sql)) {
-            resultSet.next();
-            return resultSet.getInt(1);
-        }
+    private <T> int countRows(Class<T> entityClass) {
+        return EntityContext.withContext(context -> Math.toIntExact(context.from(entityClass).count()));
+    }
+
+    private int countAdminUsers() {
+        return EntityContext.withContext(context -> Math.toIntExact(context.from(UserEntity.class)
+                .filter(filter -> filter.equals(UserEntity::getUsername, "admin"))
+                .count()));
+    }
+
+    private int countRoomRights(int roomId) {
+        return EntityContext.withContext(context -> Math.toIntExact(context.from(RoomRightEntity.class)
+                .filter(filter -> filter.equals(RoomRightEntity::getRoomId, roomId))
+                .count()));
     }
 
     /**
@@ -349,17 +355,13 @@ class DatabaseIntegrationTest {
      * @throws Exception if the operation fails
      */
     private List<String> distinctPublicItemModels() throws Exception {
-        try (Connection connection = DriverManager.getConnection(config.jdbcUrl(), config.dbUsername(), config.dbPassword());
-             Statement statement = connection.createStatement();
-             ResultSet resultSet = statement.executeQuery(
-                     "SELECT DISTINCT room_model FROM public_room_items ORDER BY room_model"
-             )) {
-            List<String> models = new ArrayList<>();
-            while (resultSet.next()) {
-                models.add(resultSet.getString(1));
-            }
-            return models;
-        }
+        return EntityContext.withContext(context -> context.from(PublicRoomItemEntity.class)
+                .orderBy(order -> order.col(PublicRoomItemEntity::getRoomModel).asc())
+                .toList()
+                .stream()
+                .map(PublicRoomItemEntity::getRoomModel)
+                .distinct()
+                .toList());
     }
 
     /**
@@ -369,13 +371,12 @@ class DatabaseIntegrationTest {
      * @throws Exception if the operation fails
      */
     private void insertRoomRight(int roomId, int userId) throws Exception {
-        try (Connection connection = DriverManager.getConnection(config.jdbcUrl(), config.dbUsername(), config.dbPassword());
-             PreparedStatement statement = connection.prepareStatement(
-                     "INSERT INTO room_rights (room_id, user_id) VALUES (?, ?)"
-             )) {
-            statement.setInt(1, roomId);
-            statement.setInt(2, userId);
-            statement.executeUpdate();
-        }
+        EntityContext.inTransaction(context -> {
+            RoomRightEntity entity = new RoomRightEntity();
+            entity.setRoomId(roomId);
+            entity.setUserId(userId);
+            context.insert(entity);
+            return null;
+        });
     }
 }

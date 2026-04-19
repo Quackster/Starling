@@ -31,7 +31,6 @@ import org.starling.support.PacketDebugStrings;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -521,65 +520,14 @@ class RoomEntryFlowIntegrationTest {
             return;
         }
 
-        try (Connection connection = DriverManager.getConnection(config.jdbcUrl(), config.dbUsername(), config.dbPassword());
-             PreparedStatement statement = connection.prepareStatement("""
-                     INSERT INTO users (
-                         username,
-                         password,
-                         figure,
-                         pool_figure,
-                         sex,
-                         motto,
-                         email,
-                         credits,
-                         pixels,
-                         tickets,
-                         film,
-                         rank,
-                         last_online,
-                         is_online,
-                         created_at,
-                         updated_at,
-                         sso_ticket,
-                         machine_id,
-                         club_subscribed,
-                         club_expiration,
-                         club_gift_due,
-                         allow_stalking,
-                         allow_friend_requests,
-                         online_status_visible,
-                         profile_visible,
-                         wordfilter_enabled,
-                         trade_enabled,
-                         trade_ban_expiration,
-                         sound_enabled,
-                         selected_room_id,
-                         tutorial_finished,
-                         daily_coins_enabled,
-                         daily_respect_points,
-                         respect_points,
-                         respect_day,
-                         respect_given,
-                         totem_effect_expiry,
-                         favourite_group,
-                         home_room,
-                         has_flash_warning
-                     ) VALUES (
-                         ?, ?, ?, '', ?, ?, ?, 50, 0, 0, 0, 1,
-                         CURRENT_TIMESTAMP, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP,
-                         ?, ?, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 3, 0, '', 0, 0, 0, 0, 1
-                     )
-                     """)) {
-            statement.setString(1, username);
-            statement.setString(2, username);
-            statement.setString(3, "hd-180-1.ch-210-66.lg-270-82.sh-290-91.hr-828-61");
-            statement.setString(4, sex);
-            statement.setString(5, motto);
-            statement.setString(6, username + "@starling.local");
-            statement.setString(7, username + "-ticket");
-            statement.setString(8, username + "-machine");
-            statement.executeUpdate();
-        }
+        UserEntity user = UserEntity.createRegisteredUser(
+                username,
+                username,
+                "hd-180-1.ch-210-66.lg-270-82.sh-290-91.hr-828-61",
+                sex,
+                username + "@starling.local"
+        );
+        UserDao.save(user);
     }
 
     /**
