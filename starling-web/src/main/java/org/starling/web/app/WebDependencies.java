@@ -4,10 +4,6 @@ import org.starling.web.app.asset.AvatarImagingService;
 import org.starling.web.cms.auth.SignedSessionService;
 import org.starling.web.cms.article.ArticleService;
 import org.starling.web.cms.article.ArticleViewFactory;
-import org.starling.web.cms.media.MediaAssetService;
-import org.starling.web.cms.media.MediaViewFactory;
-import org.starling.web.cms.navigation.NavigationService;
-import org.starling.web.cms.navigation.NavigationViewFactory;
 import org.starling.web.cms.page.PageService;
 import org.starling.web.cms.page.PageViewFactory;
 import org.starling.web.feature.community.view.CommunityWidgetsFactory;
@@ -50,8 +46,6 @@ public record WebDependencies(
         MinimailViewFactory minimailViewFactory,
         MinimailSessionState minimailSessionState,
         LegacyMinimailJsonEncoder legacyMinimailJsonEncoder,
-        NavigationService navigationService,
-        MediaAssetService mediaAssetService,
         UserTagService userTagService,
         TagDirectoryService tagDirectoryService,
         CommunityWidgetsFactory communityWidgetsFactory,
@@ -65,8 +59,6 @@ public record WebDependencies(
         AdminPageModelFactory adminPageModelFactory,
         ArticleViewFactory articleViewFactory,
         PageViewFactory pageViewFactory,
-        NavigationViewFactory navigationViewFactory,
-        MediaViewFactory mediaViewFactory,
         UserViewModelFactory userViewModelFactory
 ) {
 }

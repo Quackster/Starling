@@ -9,7 +9,7 @@
             </div>
         {% else %}
             <h1>Retro hotel, modern CMS.</h1>
-            <p class="hero-card__summary">Publish pages, news, menus, and media from one modular retro hotel app.</p>
+            <p class="hero-card__summary">Publish pages and news from one modular retro hotel app.</p>
         {% endif %}
     </div>
     <div class="hero-card__art">

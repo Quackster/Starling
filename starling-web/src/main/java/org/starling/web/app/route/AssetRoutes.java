@@ -16,11 +16,10 @@ public final class AssetRoutes {
     }
 
     /**
-     * Registers asset and media routes.
+     * Registers public asset routes.
      * @param app the Javalin app
      */
     public void register(Javalin app) {
-        app.get("/media/{id}/{filename}", assetController::media);
         app.get("/web-gallery/<asset>", assetController::webGalleryAsset);
         app.get("/assets/<asset>", assetController::themeAsset);
         app.get("/captcha.jpg", assetController::captcha);

@@ -2,8 +2,6 @@ package org.starling.web.app.asset;
 
 import io.javalin.http.Context;
 import org.starling.web.request.RequestValues;
-import org.starling.web.cms.media.CmsMediaAsset;
-import org.starling.web.cms.media.MediaAssetService;
 import org.starling.web.site.SiteBranding;
 import org.starling.web.theme.ThemeResourceResolver;
 import org.starling.web.user.CaptchaService;
@@ -11,60 +9,28 @@ import org.starling.web.user.CaptchaService;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URLConnection;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Optional;
 
 public final class AssetController {
 
     private final ThemeResourceResolver themeResourceResolver;
-    private final MediaAssetService mediaAssetService;
     private final SiteBranding siteBranding;
     private final AvatarImagingService avatarImagingService;
 
     /**
      * Creates a new AssetController.
      * @param themeResourceResolver the theme resource resolver
-     * @param mediaAssetService the media asset service
      * @param siteBranding the site branding
      * @param avatarImagingService the avatar imaging service
      */
     public AssetController(
             ThemeResourceResolver themeResourceResolver,
-            MediaAssetService mediaAssetService,
             SiteBranding siteBranding,
             AvatarImagingService avatarImagingService
     ) {
         this.themeResourceResolver = themeResourceResolver;
-        this.mediaAssetService = mediaAssetService;
         this.siteBranding = siteBranding;
         this.avatarImagingService = avatarImagingService;
-    }
-
-    /**
-     * Serves a stored media asset.
-     * @param context the request context
-     */
-    public void media(Context context) {
-        int assetId = Integer.parseInt(context.pathParam("id"));
-        Optional<CmsMediaAsset> asset = mediaAssetService.findById(assetId);
-        if (asset.isEmpty()) {
-            context.status(404).result("Media not found");
-            return;
-        }
-
-        Path path = mediaAssetService.resolve(asset.get());
-        if (!Files.exists(path)) {
-            context.status(404).result("Media file missing");
-            return;
-        }
-
-        try {
-            context.contentType(asset.get().mimeType());
-            context.result(Files.newInputStream(path));
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to stream media asset", e);
-        }
     }
 
     /**

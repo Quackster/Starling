@@ -10,8 +10,6 @@ import org.starling.storage.EntityContext;
 import org.starling.storage.dao.UserDao;
 import org.starling.web.cms.admin.CmsAdminDao;
 import org.starling.web.cms.article.CmsArticleDao;
-import org.starling.web.cms.media.CmsMediaDao;
-import org.starling.web.cms.navigation.CmsNavigationDao;
 import org.starling.web.cms.page.CmsPageDao;
 import org.starling.web.config.WebConfig;
 import org.starling.web.feature.me.campaign.HotCampaignDao;
@@ -24,7 +22,6 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.net.HttpCookie;
-import java.io.ByteArrayOutputStream;
 import java.net.CookieManager;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -133,11 +130,10 @@ class StarlingWebIntegrationTest {
     void bootstrapSeedsAdminContentAndNavigation() {
         assertEquals(1, CmsAdminDao.count());
         assertEquals(1, UserDao.count());
-        assertTrue(HotCampaignDao.count() >= 3);
+        assertTrue(HotCampaignDao.count() >= 2);
         assertTrue(MinimailDao.count() >= 1);
         assertTrue(CmsPageDao.findPublishedBySlug("home").isPresent());
         assertTrue(CmsArticleDao.findPublishedBySlug("welcome-to-starling").isPresent());
-        assertEquals(2, CmsNavigationDao.listItems(CmsNavigationDao.ensureMainMenu().id()).size());
     }
 
     @Test
@@ -881,23 +877,30 @@ class StarlingWebIntegrationTest {
     }
 
     @Test
-    void mediaUploadsCaptureMetadata() throws Exception {
+    void adminNoLongerExposesCmsMediaOrNavigationScreens() throws Exception {
         login();
 
-        byte[] png = tinyPng();
-        String boundary = "----StarlingBoundary" + UUID.randomUUID();
-        HttpRequest request = HttpRequest.newBuilder(baseUri.resolve("/admin/media/upload"))
-                .header("Content-Type", "multipart/form-data; boundary=" + boundary)
-                .POST(HttpRequest.BodyPublishers.ofByteArray(multipartBody(boundary, png)))
-                .build();
+        HttpResponse<String> dashboardResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/admin")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> mediaResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/admin/media")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> menusResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/admin/menus")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
 
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-        assertEquals(200, response.statusCode());
-        assertFalse(CmsMediaDao.listAll().isEmpty());
-        assertEquals("hero.png", CmsMediaDao.listAll().get(0).fileName());
-        assertEquals(2, CmsMediaDao.listAll().get(0).width());
-        assertEquals(2, CmsMediaDao.listAll().get(0).height());
+        assertEquals(200, dashboardResponse.statusCode());
+        assertEquals(404, mediaResponse.statusCode());
+        assertEquals(404, menusResponse.statusCode());
+        assertTrue(dashboardResponse.body().contains(">Pages</a>"));
+        assertTrue(dashboardResponse.body().contains(">News</a>"));
+        assertFalse(dashboardResponse.body().contains(">Menus</a>"));
+        assertFalse(dashboardResponse.body().contains(">Media</a>"));
+        assertTrue(dashboardResponse.body().contains("web-navigation.yaml"));
     }
 
     private HttpClient newClient() {
@@ -951,38 +954,4 @@ class StarlingWebIntegrationTest {
                 .orElse(null);
     }
 
-    private byte[] tinyPng() throws Exception {
-        BufferedImage image = new BufferedImage(2, 2, BufferedImage.TYPE_INT_ARGB);
-        image.setRGB(0, 0, 0xFF11445F);
-        image.setRGB(1, 0, 0xFFF7941D);
-        image.setRGB(0, 1, 0xFF89C9EE);
-        image.setRGB(1, 1, 0xFFFFFFFF);
-
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ImageIO.write(image, "png", outputStream);
-        return outputStream.toByteArray();
-    }
-
-    private byte[] multipartBody(String boundary, byte[] fileBytes) {
-        String lineBreak = "\r\n";
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-
-        try {
-            outputStream.write(("--" + boundary + lineBreak).getBytes(StandardCharsets.UTF_8));
-            outputStream.write(("Content-Disposition: form-data; name=\"altText\"" + lineBreak + lineBreak).getBytes(StandardCharsets.UTF_8));
-            outputStream.write(("Tiny hero image" + lineBreak).getBytes(StandardCharsets.UTF_8));
-
-            outputStream.write(("--" + boundary + lineBreak).getBytes(StandardCharsets.UTF_8));
-            outputStream.write((
-                    "Content-Disposition: form-data; name=\"file\"; filename=\"hero.png\"" + lineBreak +
-                    "Content-Type: image/png" + lineBreak + lineBreak
-            ).getBytes(StandardCharsets.UTF_8));
-            outputStream.write(fileBytes);
-            outputStream.write(lineBreak.getBytes(StandardCharsets.UTF_8));
-            outputStream.write(("--" + boundary + "--" + lineBreak).getBytes(StandardCharsets.UTF_8));
-            return outputStream.toByteArray();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to build multipart request body", e);
-        }
-    }
 }

@@ -9,7 +9,6 @@ import org.starling.web.cms.auth.PasswordHasher;
 import org.starling.web.cms.article.CmsArticle;
 import org.starling.web.cms.article.CmsArticleDao;
 import org.starling.web.cms.article.CmsArticleDraft;
-import org.starling.web.cms.navigation.CmsNavigationDao;
 import org.starling.web.cms.page.CmsPageDao;
 import org.starling.web.cms.page.CmsPageDraft;
 import org.starling.web.config.WebConfig;
@@ -112,45 +111,6 @@ public final class CmsBootstrap {
                         ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
                         """);
                 statement.executeUpdate("""
-                        CREATE TABLE IF NOT EXISTS cms_navigation_menus (
-                            id INT NOT NULL AUTO_INCREMENT,
-                            menu_key VARCHAR(120) NOT NULL,
-                            name VARCHAR(160) NOT NULL,
-                            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                            PRIMARY KEY (id),
-                            UNIQUE KEY uk_cms_navigation_menus_key (menu_key)
-                        ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
-                        """);
-                statement.executeUpdate("""
-                        CREATE TABLE IF NOT EXISTS cms_navigation_items (
-                            id INT NOT NULL AUTO_INCREMENT,
-                            menu_id INT NOT NULL,
-                            label VARCHAR(160) NOT NULL,
-                            href VARCHAR(255) NOT NULL,
-                            sort_order INT NOT NULL DEFAULT 0,
-                            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                            PRIMARY KEY (id),
-                            KEY idx_cms_navigation_items_menu (menu_id)
-                        ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
-                        """);
-                statement.executeUpdate("""
-                        CREATE TABLE IF NOT EXISTS cms_media_assets (
-                            id INT NOT NULL AUTO_INCREMENT,
-                            file_name VARCHAR(255) NOT NULL,
-                            relative_path VARCHAR(255) NOT NULL,
-                            mime_type VARCHAR(160) NOT NULL,
-                            size_bytes BIGINT NOT NULL,
-                            width INT NULL,
-                            height INT NULL,
-                            alt_text VARCHAR(255) NOT NULL DEFAULT '',
-                            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                            PRIMARY KEY (id)
-                        ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
-                        """);
-                statement.executeUpdate("""
                         CREATE TABLE IF NOT EXISTS campaigns (
                             id INT NOT NULL AUTO_INCREMENT,
                             url VARCHAR(255) NOT NULL,
@@ -231,7 +191,6 @@ public final class CmsBootstrap {
      * Seeds default cms content.
      */
     public static void seedDefaults() {
-        CmsNavigationDao.ensureMainMenu();
         seedHotCampaigns();
         CmsPageDao.seedDefault(new CmsPageDraft(
                 "home",
@@ -241,9 +200,9 @@ public final class CmsBootstrap {
                 """
                 ## Retro hotel, modern workflow
 
-                Starling-Web ships with draft and publish flows for pages, news, menus, and media.
+                Starling-Web ships with draft and publish flows for pages and news.
 
-                Use the admin area to shape the public site while the hotel server keeps evolving independently.
+                Use the admin area to shape the public site while navigation stays configurable from YAML.
                 """
         ));
         seedBootstrapArticles();
@@ -264,7 +223,7 @@ public final class CmsBootstrap {
                         """
                         The new CMS is now online.
 
-                        You can manage **pages**, **news**, **menus**, and **media** from the back office at `/admin`.
+                        You can manage **pages** and **news** from the back office at `/admin`.
                         """
                 ),
                 new CmsArticleDraft(

@@ -6,8 +6,6 @@ import org.starling.web.admin.auth.AdminAuthController;
 import org.starling.web.admin.auth.AdminRouteGuard;
 import org.starling.web.admin.article.AdminArticlesController;
 import org.starling.web.admin.dashboard.AdminDashboardController;
-import org.starling.web.admin.media.AdminMediaController;
-import org.starling.web.admin.navigation.AdminMenusController;
 import org.starling.web.admin.page.AdminPagesController;
 import org.starling.web.admin.preview.AdminPreviewController;
 import org.starling.web.app.asset.AssetController;
@@ -21,11 +19,6 @@ import org.starling.web.cms.article.ArticleService;
 import org.starling.web.cms.article.ArticleViewFactory;
 import org.starling.web.cms.auth.SignedSessionService;
 import org.starling.web.cms.bootstrap.CmsBootstrap;
-import org.starling.web.cms.media.MediaAssetService;
-import org.starling.web.cms.media.MediaViewFactory;
-import org.starling.web.cms.media.MediaStorageService;
-import org.starling.web.cms.navigation.NavigationService;
-import org.starling.web.cms.navigation.NavigationViewFactory;
 import org.starling.web.cms.page.PageService;
 import org.starling.web.cms.page.PageViewFactory;
 import org.starling.web.config.WebConfig;
@@ -103,7 +96,6 @@ public final class StarlingWebBootstrap {
         MarkdownRenderer markdownRenderer = new MarkdownRenderer();
         SignedSessionService signedSessionService = new SignedSessionService(config.sessionSecret());
         UserSessionService userSessionService = new UserSessionService(config.sessionSecret());
-        MediaAssetService mediaAssetService = new MediaAssetService(new MediaStorageService(config));
         PageService pageService = new PageService();
         ArticleService articleService = new ArticleService();
         HotCampaignService hotCampaignService = new HotCampaignService();
@@ -112,7 +104,6 @@ public final class StarlingWebBootstrap {
         MinimailViewFactory minimailViewFactory = new MinimailViewFactory(siteBranding, minimailRecipientService);
         MinimailSessionState minimailSessionState = new MinimailSessionState();
         LegacyMinimailJsonEncoder legacyMinimailJsonEncoder = new LegacyMinimailJsonEncoder();
-        NavigationService navigationService = new NavigationService();
         UserTagService userTagService = new UserTagService();
         TagDirectoryService tagDirectoryService = new TagDirectoryService(userTagService);
         UserViewModelFactory userViewModelFactory = new UserViewModelFactory();
@@ -131,8 +122,6 @@ public final class StarlingWebBootstrap {
         AdminPageModelFactory adminPageModelFactory = new AdminPageModelFactory(siteBranding);
         ArticleViewFactory articleViewFactory = new ArticleViewFactory(markdownRenderer, siteBranding);
         PageViewFactory pageViewFactory = new PageViewFactory(markdownRenderer);
-        NavigationViewFactory navigationViewFactory = new NavigationViewFactory();
-        MediaViewFactory mediaViewFactory = new MediaViewFactory();
         NewsPromoContentFactory newsPromoContentFactory = new NewsPromoContentFactory(articleService, articleViewFactory);
         MePageContentFactory mePageContentFactory = new MePageContentFactory();
         MeAccess meAccess = new MeAccess(userSessionService);
@@ -153,8 +142,6 @@ public final class StarlingWebBootstrap {
                 minimailViewFactory,
                 minimailSessionState,
                 legacyMinimailJsonEncoder,
-                navigationService,
-                mediaAssetService,
                 userTagService,
                 tagDirectoryService,
                 communityWidgetsFactory,
@@ -168,8 +155,6 @@ public final class StarlingWebBootstrap {
                 adminPageModelFactory,
                 articleViewFactory,
                 pageViewFactory,
-                navigationViewFactory,
-                mediaViewFactory,
                 userViewModelFactory
         );
     }
@@ -274,7 +259,6 @@ public final class StarlingWebBootstrap {
         );
         AssetController assetController = new AssetController(
                 dependencies.themeResourceResolver(),
-                dependencies.mediaAssetService(),
                 dependencies.siteBranding(),
                 dependencies.avatarImagingService()
         );
@@ -288,9 +272,7 @@ public final class StarlingWebBootstrap {
                 dependencies.templateRenderer(),
                 dependencies.adminPageModelFactory(),
                 dependencies.pageService(),
-                dependencies.articleService(),
-                dependencies.mediaAssetService(),
-                dependencies.navigationService()
+                dependencies.articleService()
         );
         AdminPagesController adminPagesController = new AdminPagesController(
                 dependencies.templateRenderer(),
@@ -307,18 +289,6 @@ public final class StarlingWebBootstrap {
         AdminPreviewController adminPreviewController = new AdminPreviewController(
                 dependencies.templateRenderer(),
                 dependencies.markdownRenderer()
-        );
-        AdminMenusController adminMenusController = new AdminMenusController(
-                dependencies.templateRenderer(),
-                dependencies.adminPageModelFactory(),
-                dependencies.navigationService(),
-                dependencies.navigationViewFactory()
-        );
-        AdminMediaController adminMediaController = new AdminMediaController(
-                dependencies.templateRenderer(),
-                dependencies.adminPageModelFactory(),
-                dependencies.mediaAssetService(),
-                dependencies.mediaViewFactory()
         );
 
         new PublicRoutes(
@@ -341,8 +311,6 @@ public final class StarlingWebBootstrap {
                 adminDashboardController,
                 adminPagesController,
                 adminArticlesController,
-                adminMenusController,
-                adminMediaController,
                 adminPreviewController
         ).register(app);
     }
