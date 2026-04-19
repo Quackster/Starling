@@ -13,4 +13,12 @@
         <span class="stat-card__label">News</span>
         <strong>{{ articleCount }}</strong>
     </article>
+    <article class="stat-card">
+        <span class="stat-card__label">Campaigns</span>
+        <strong>{{ campaignCount }}</strong>
+    </article>
+    <article class="stat-card">
+        <span class="stat-card__label">Users</span>
+        <strong>{{ userCount }}</strong>
+    </article>
 </section>

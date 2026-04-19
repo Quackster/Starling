@@ -1,0 +1,48 @@
+<section class="admin-toolbar">
+    <div>
+        <h1>{% if isNew %}New Campaign{% else %}Edit Campaign{% endif %}</h1>
+        <p>Campaigns power the promotional cards shown to signed-in users.</p>
+    </div>
+    <a class="button-secondary" href="/admin/campaigns">Back to Campaigns</a>
+</section>
+
+<section class="editor-grid">
+    <form class="admin-card stack-form" method="post" action="{% if isNew %}/admin/campaigns{% else %}/admin/campaigns/{{ campaign.id }}{% endif %}">
+        <label>
+            <span>Name</span>
+            <input type="text" name="name" value="{{ campaign.name }}" required>
+        </label>
+        <label>
+            <span>Target URL</span>
+            <input type="text" name="url" value="{{ campaign.url }}" required>
+        </label>
+        <label>
+            <span>Image Path</span>
+            <input type="text" name="imagePath" value="{{ campaign.imagePath }}" required>
+        </label>
+        <label>
+            <span>Description</span>
+            <textarea name="description" rows="6">{{ campaign.description }}</textarea>
+        </label>
+        <label>
+            <span>Sort Order</span>
+            <input type="number" name="sortOrder" value="{{ campaign.sortOrder }}" min="0">
+        </label>
+        <label class="checkbox-row">
+            <input type="checkbox" name="visible" value="true"{% if campaign.visible %} checked{% endif %}>
+            <span>Show this campaign on the site</span>
+        </label>
+        <div class="button-row">
+            <button type="submit" class="button-primary">Save Campaign</button>
+            {% if not isNew %}
+                <button type="submit" class="button-danger" formaction="/admin/campaigns/{{ campaign.id }}/delete" formnovalidate>Delete</button>
+            {% endif %}
+        </div>
+    </form>
+
+    <aside class="admin-card info-card">
+        <h2>Notes</h2>
+        <p>Use lower sort orders to pin campaigns closer to the top of the list.</p>
+        <p>Hidden campaigns stay in the database but stop rendering on the <code>/me</code> page.</p>
+    </aside>
+</section>

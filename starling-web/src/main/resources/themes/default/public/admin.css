@@ -101,7 +101,7 @@ body.admin-shell {
 }
 
 .admin-toolbar,
-.editor-shell {
+.editor-grid {
     display: grid;
     gap: 1rem;
     margin-bottom: 1.5rem;
@@ -161,7 +161,11 @@ body.admin-shell {
 }
 
 .button-primary,
+.button-secondary,
+.button-danger,
 button.button-primary,
+.stack-form .button-secondary,
+.stack-form .button-danger,
 .stack-form button,
 .stack-form input[type="submit"] {
     display: inline-flex;
@@ -176,6 +180,17 @@ button.button-primary,
     font-weight: 700;
     padding: 0.8rem 1.1rem;
     text-decoration: none;
+}
+
+.button-secondary {
+    border: 1px solid rgba(111, 60, 10, 0.16);
+    background: rgba(141, 79, 18, 0.08);
+    color: var(--admin-accent-strong);
+}
+
+.button-danger {
+    background: linear-gradient(180deg, #bc4a36 0%, #8f2f22 100%);
+    color: #fff;
 }
 
 .stack-form {
@@ -206,9 +221,29 @@ button.button-primary,
     resize: vertical;
 }
 
-.editor-shell {
+.editor-grid {
     grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
     align-items: start;
+}
+
+.button-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+}
+
+.checkbox-row input {
+    width: auto;
+}
+
+.info-card p {
+    margin: 0 0 0.75rem;
 }
 
 .data-table {

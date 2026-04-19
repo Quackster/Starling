@@ -16,6 +16,7 @@ import org.starling.web.cms.article.CmsArticleDao;
 import org.starling.web.cms.page.CmsPageDao;
 import org.starling.web.config.WebConfig;
 import org.starling.web.feature.me.friends.WebMessengerDao;
+import org.starling.web.feature.me.campaign.HotCampaign;
 import org.starling.web.feature.me.campaign.HotCampaignDao;
 import org.starling.web.feature.me.mail.MailboxLabel;
 import org.starling.web.feature.me.mail.MinimailDao;
@@ -1070,6 +1071,98 @@ class StarlingWebIntegrationTest {
     }
 
     @Test
+    void adminCanManageCampaigns() throws Exception {
+        login();
+
+        String token = UUID.randomUUID().toString().substring(0, 8);
+        HttpResponse<String> saveResponse = postForm(
+                "/admin/campaigns",
+                Map.of(
+                        "name", "Promo " + token,
+                        "url", "/community?promo=" + token,
+                        "imagePath", "/c_images/" + token + ".png",
+                        "description", "Campaign " + token,
+                        "visible", "true",
+                        "sortOrder", "9"
+                ),
+                Map.of()
+        );
+        assertEquals(200, saveResponse.statusCode());
+
+        HotCampaign createdCampaign = HotCampaignDao.listAll().stream()
+                .filter(campaign -> campaign.name().equals("Promo " + token))
+                .findFirst()
+                .orElseThrow();
+
+        HttpResponse<String> updateResponse = postForm(
+                "/admin/campaigns/" + createdCampaign.id(),
+                Map.of(
+                        "name", "Promo " + token + " Updated",
+                        "url", "/community?promo=" + token + "&v=2",
+                        "imagePath", "/c_images/" + token + "-2.png",
+                        "description", "Updated campaign " + token,
+                        "sortOrder", "3"
+                ),
+                Map.of()
+        );
+        assertEquals(200, updateResponse.statusCode());
+
+        HotCampaign updatedCampaign = HotCampaignDao.require(createdCampaign.id());
+        assertEquals("Promo " + token + " Updated", updatedCampaign.name());
+        assertFalse(updatedCampaign.visible());
+        assertEquals(3, updatedCampaign.sortOrder());
+
+        HttpResponse<String> campaignsResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/admin/campaigns")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertEquals(200, campaignsResponse.statusCode());
+        assertTrue(campaignsResponse.body().contains("Promo " + token + " Updated"));
+    }
+
+    @Test
+    void adminCanManageUsersWithoutRemovingLastAdmin() throws Exception {
+        login();
+
+        String username = "stafftarget" + UUID.randomUUID().toString().substring(0, 6);
+        UserDao.save(UserEntity.createRegisteredUser(
+                username,
+                "Password1",
+                "hr-100-61.hd-180-2.ch-210-92.lg-270-82.sh-290-64",
+                "F",
+                username + "@example.com"
+        ));
+        UserEntity targetUser = UserDao.findByUsername(username);
+        assertNotNull(targetUser);
+
+        UserEntity bootstrapAdmin = UserDao.findByUsername("admin");
+        assertNotNull(bootstrapAdmin);
+        HttpResponse<String> guardResponse = postForm(
+                "/admin/users/" + bootstrapAdmin.getId(),
+                Map.of("rank", "7", "cmsRole", "user"),
+                Map.of()
+        );
+        assertEquals(200, guardResponse.statusCode());
+        assertTrue(guardResponse.uri().toString().contains("error=At%20least%20one%20admin%20user%20must%20remain"));
+
+        UserEntity preservedAdmin = UserDao.findByUsername("admin");
+        assertNotNull(preservedAdmin);
+        assertTrue(preservedAdmin.isAdmin());
+
+        HttpResponse<String> updateResponse = postForm(
+                "/admin/users/" + targetUser.getId(),
+                Map.of("rank", "6", "cmsRole", "admin"),
+                Map.of()
+        );
+        assertEquals(200, updateResponse.statusCode());
+
+        UserEntity promotedUser = UserDao.findById(targetUser.getId());
+        assertNotNull(promotedUser);
+        assertEquals(6, promotedUser.getRank());
+        assertTrue(promotedUser.isAdmin());
+    }
+
+    @Test
     void loginPreviewPublishAndAliasRoutesWork() throws Exception {
         login();
 
@@ -1178,6 +1271,8 @@ class StarlingWebIntegrationTest {
         assertEquals(404, menusResponse.statusCode());
         assertTrue(dashboardResponse.body().contains(">Pages</a>"));
         assertTrue(dashboardResponse.body().contains(">News</a>"));
+        assertTrue(dashboardResponse.body().contains(">Campaigns</a>"));
+        assertTrue(dashboardResponse.body().contains(">Users</a>"));
         assertFalse(dashboardResponse.body().contains(">Menus</a>"));
         assertFalse(dashboardResponse.body().contains(">Media</a>"));
         assertTrue(dashboardResponse.body().contains("web-navigation.yaml"));
@@ -1192,12 +1287,12 @@ class StarlingWebIntegrationTest {
 
     private void login() throws Exception {
         HttpResponse<String> response = postForm(
-                "/admin/login",
-                Map.of("email", "admin", "password", "admin"),
+                "/account/submit",
+                Map.of("username", "admin", "password", "admin"),
                 Map.of()
         );
         assertEquals(200, response.statusCode());
-        assertTrue(response.body().contains("Dashboard"));
+        assertTrue(response.uri().toString().endsWith("/me"));
     }
 
     private HttpResponse<String> postForm(String path, Map<String, String> form, Map<String, String> headers) throws Exception {

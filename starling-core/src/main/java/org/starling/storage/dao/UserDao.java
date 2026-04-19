@@ -16,6 +16,16 @@ public class UserDao {
     }
 
     /**
+     * Counts admin users.
+     * @return the admin user count
+     */
+    public static long countAdmins() {
+        return EntityContext.withContext(context -> context.from(UserEntity.class)
+                .filter(filter -> filter.equals(UserEntity::getCmsRole, "admin"))
+                .count());
+    }
+
+    /**
      * Finds by id.
      * @param id the id value
      * @return the resulting user

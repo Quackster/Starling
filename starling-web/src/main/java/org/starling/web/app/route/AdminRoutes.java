@@ -3,9 +3,11 @@ package org.starling.web.app.route;
 import io.javalin.Javalin;
 import org.starling.web.admin.auth.AdminRouteGuard;
 import org.starling.web.admin.article.AdminArticlesController;
+import org.starling.web.admin.campaign.AdminCampaignsController;
 import org.starling.web.admin.dashboard.AdminDashboardController;
 import org.starling.web.admin.page.AdminPagesController;
 import org.starling.web.admin.preview.AdminPreviewController;
+import org.starling.web.admin.user.AdminUsersController;
 
 public final class AdminRoutes {
 
@@ -13,6 +15,8 @@ public final class AdminRoutes {
     private final AdminDashboardController adminDashboardController;
     private final AdminPagesController adminPagesController;
     private final AdminArticlesController adminArticlesController;
+    private final AdminCampaignsController adminCampaignsController;
+    private final AdminUsersController adminUsersController;
     private final AdminPreviewController adminPreviewController;
 
     /**
@@ -21,6 +25,8 @@ public final class AdminRoutes {
      * @param adminDashboardController the dashboard controller
      * @param adminPagesController the pages controller
      * @param adminArticlesController the articles controller
+     * @param adminCampaignsController the campaigns controller
+     * @param adminUsersController the users controller
      * @param adminPreviewController the markdown preview controller
      */
     public AdminRoutes(
@@ -28,12 +34,16 @@ public final class AdminRoutes {
             AdminDashboardController adminDashboardController,
             AdminPagesController adminPagesController,
             AdminArticlesController adminArticlesController,
+            AdminCampaignsController adminCampaignsController,
+            AdminUsersController adminUsersController,
             AdminPreviewController adminPreviewController
     ) {
         this.adminRouteGuard = adminRouteGuard;
         this.adminDashboardController = adminDashboardController;
         this.adminPagesController = adminPagesController;
         this.adminArticlesController = adminArticlesController;
+        this.adminCampaignsController = adminCampaignsController;
+        this.adminUsersController = adminUsersController;
         this.adminPreviewController = adminPreviewController;
     }
 
@@ -61,5 +71,16 @@ public final class AdminRoutes {
         app.post("/admin/articles/{id}", adminRouteGuard.protect(adminArticlesController::update));
         app.post("/admin/articles/{id}/publish", adminRouteGuard.protect(adminArticlesController::publish));
         app.post("/admin/articles/{id}/unpublish", adminRouteGuard.protect(adminArticlesController::unpublish));
+
+        app.get("/admin/campaigns", adminRouteGuard.protect(adminCampaignsController::index));
+        app.get("/admin/campaigns/new", adminRouteGuard.protect(adminCampaignsController::newCampaign));
+        app.get("/admin/campaigns/{id}/edit", adminRouteGuard.protect(adminCampaignsController::edit));
+        app.post("/admin/campaigns", adminRouteGuard.protect(adminCampaignsController::create));
+        app.post("/admin/campaigns/{id}", adminRouteGuard.protect(adminCampaignsController::update));
+        app.post("/admin/campaigns/{id}/delete", adminRouteGuard.protect(adminCampaignsController::delete));
+
+        app.get("/admin/users", adminRouteGuard.protect(adminUsersController::index));
+        app.get("/admin/users/{id}/edit", adminRouteGuard.protect(adminUsersController::edit));
+        app.post("/admin/users/{id}", adminRouteGuard.protect(adminUsersController::update));
     }
 }

@@ -1,0 +1,50 @@
+<section class="admin-toolbar">
+    <div>
+        <h1>Edit User</h1>
+        <p>Manage housekeeping access separately from in-game rank.</p>
+    </div>
+    <a class="button-secondary" href="/admin/users">Back to Users</a>
+</section>
+
+<section class="editor-grid">
+    <form class="admin-card stack-form" method="post" action="/admin/users/{{ user.id }}">
+        <label>
+            <span>Username</span>
+            <input type="text" value="{{ user.username }}" disabled>
+        </label>
+        <label>
+            <span>Email</span>
+            <input type="text" value="{{ user.email }}" disabled>
+        </label>
+        <label>
+            <span>Motto</span>
+            <input type="text" value="{{ user.motto }}" disabled>
+        </label>
+        <label>
+            <span>Rank</span>
+            <select name="rank">
+                {% for rank in [1, 2, 3, 4, 5, 6, 7] %}
+                    <option value="{{ rank }}"{% if user.rank == rank %} selected{% endif %}>Rank {{ rank }}{% if rank == 7 %} (God Mode){% endif %}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            <span>Housekeeping Role</span>
+            <select name="cmsRole">
+                <option value="user"{% if user.cmsRole == 'user' %} selected{% endif %}>User</option>
+                <option value="admin"{% if user.cmsRole == 'admin' %} selected{% endif %}>Admin</option>
+            </select>
+        </label>
+        <div class="button-row">
+            <button type="submit" class="button-primary">Save User</button>
+        </div>
+    </form>
+
+    <aside class="admin-card info-card">
+        <h2>Summary</h2>
+        <p><strong>Figure:</strong> {{ user.figure }}</p>
+        <p><strong>Credits:</strong> {{ user.credits }}</p>
+        <p><strong>Last Online:</strong> {{ user.lastOnline }}</p>
+        <p>Rank 7 is reserved for god mode and will get every configured permission in the next housekeeping step.</p>
+    </aside>
+</section>

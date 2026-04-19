@@ -18,6 +18,8 @@
                     <a class="admin-nav__link{% if currentPath == '/admin' %} is-active{% endif %}" href="/admin">Dashboard</a>
                     <a class="admin-nav__link{% if currentPath == '/admin/pages' %} is-active{% endif %}" href="/admin/pages">Pages</a>
                     <a class="admin-nav__link{% if currentPath == '/admin/articles' %} is-active{% endif %}" href="/admin/articles">News</a>
+                    <a class="admin-nav__link{% if currentPath == '/admin/campaigns' %} is-active{% endif %}" href="/admin/campaigns">Campaigns</a>
+                    <a class="admin-nav__link{% if currentPath == '/admin/users' %} is-active{% endif %}" href="/admin/users">Users</a>
                     <span class="admin-nav__label">{{ currentAdminName }}</span>
                     <form method="post" action="/admin/logout">
                         <button class="admin-nav__button" type="submit">Logout</button>

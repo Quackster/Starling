@@ -5,9 +5,11 @@ import org.starling.web.admin.AdminPageModelFactory;
 import org.starling.web.admin.auth.AdminAuthController;
 import org.starling.web.admin.auth.AdminRouteGuard;
 import org.starling.web.admin.article.AdminArticlesController;
+import org.starling.web.admin.campaign.AdminCampaignsController;
 import org.starling.web.admin.dashboard.AdminDashboardController;
 import org.starling.web.admin.page.AdminPagesController;
 import org.starling.web.admin.preview.AdminPreviewController;
+import org.starling.web.admin.user.AdminUsersController;
 import org.starling.web.app.asset.AssetController;
 import org.starling.web.app.asset.AvatarImagingService;
 import org.starling.web.app.route.AdminRoutes;
@@ -312,6 +314,14 @@ public final class StarlingWebBootstrap {
                 dependencies.articleService(),
                 dependencies.articleViewFactory()
         );
+        AdminCampaignsController adminCampaignsController = new AdminCampaignsController(
+                dependencies.templateRenderer(),
+                dependencies.adminPageModelFactory()
+        );
+        AdminUsersController adminUsersController = new AdminUsersController(
+                dependencies.templateRenderer(),
+                dependencies.adminPageModelFactory()
+        );
         AdminPreviewController adminPreviewController = new AdminPreviewController(
                 dependencies.templateRenderer(),
                 dependencies.markdownRenderer()
@@ -340,6 +350,8 @@ public final class StarlingWebBootstrap {
                 adminDashboardController,
                 adminPagesController,
                 adminArticlesController,
+                adminCampaignsController,
+                adminUsersController,
                 adminPreviewController
         ).register(app);
     }

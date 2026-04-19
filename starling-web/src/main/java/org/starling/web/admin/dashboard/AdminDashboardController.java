@@ -1,9 +1,11 @@
 package org.starling.web.admin.dashboard;
 
 import io.javalin.http.Context;
+import org.starling.storage.dao.UserDao;
 import org.starling.web.admin.AdminPageModelFactory;
 import org.starling.web.cms.article.ArticleService;
 import org.starling.web.cms.page.PageService;
+import org.starling.web.feature.me.campaign.HotCampaignDao;
 import org.starling.web.render.TemplateRenderer;
 
 import java.util.Map;
@@ -42,6 +44,8 @@ public final class AdminDashboardController {
         Map<String, Object> model = adminPageModelFactory.create(context, "/admin");
         model.put("pageCount", pageService.count());
         model.put("articleCount", articleService.count());
+        model.put("campaignCount", HotCampaignDao.count());
+        model.put("userCount", UserDao.count());
         context.html(templateRenderer.render("admin-layout", "admin/dashboard", model));
     }
 }

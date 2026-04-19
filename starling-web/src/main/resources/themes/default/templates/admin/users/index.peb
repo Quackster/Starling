@@ -1,0 +1,35 @@
+<section class="admin-toolbar">
+    <div>
+        <h1>Users</h1>
+        <p>Update hotel user ranks and who can access housekeeping.</p>
+    </div>
+</section>
+
+<section class="admin-card">
+    <table class="data-table">
+        <thead>
+        <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>Rank</th>
+            <th>Role</th>
+            <th>Last Online</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for user in users %}
+            <tr>
+                <td><a href="/admin/users/{{ user.id }}/edit">{{ user.username }}</a></td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.rank }}</td>
+                <td>{{ user.cmsRole }}</td>
+                <td>{{ user.lastOnline }}</td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="5">No users found.</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</section>

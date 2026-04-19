@@ -1,0 +1,34 @@
+<section class="admin-toolbar">
+    <div>
+        <h1>Campaigns</h1>
+        <p>Manage the hot campaigns shown on the <code>/me</code> page.</p>
+    </div>
+    <a class="button-primary" href="/admin/campaigns/new">New Campaign</a>
+</section>
+
+<section class="admin-card">
+    <table class="data-table">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>URL</th>
+            <th>Visible</th>
+            <th>Sort</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for campaign in campaigns %}
+            <tr>
+                <td><a href="/admin/campaigns/{{ campaign.id }}/edit">{{ campaign.name }}</a></td>
+                <td>{{ campaign.url }}</td>
+                <td>{% if campaign.visible %}Visible{% else %}Hidden{% endif %}</td>
+                <td>{{ campaign.sortOrder }}</td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="4">No campaigns yet.</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</section>
