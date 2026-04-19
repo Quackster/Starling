@@ -57,7 +57,7 @@ public final class DatabaseSupport {
         )) {
             SqlDialect dialect = resolveDialect(connection);
             if (!databaseExists(connection, config.dbName())) {
-                executeStatements(connection, List.of(buildCreateDatabaseSql(dialect, config.dbName())));
+                executeStatement(connection, dialect, new CreateDatabaseStatement(config.dbName()));
             }
             log.info("Ensured database '{}' exists", config.dbName());
         } catch (Exception e) {
@@ -83,7 +83,7 @@ public final class DatabaseSupport {
         )) {
             SqlDialect dialect = resolveDialect(connection);
             if (databaseExists(connection, config.dbName())) {
-                executeStatements(connection, List.of(buildDropDatabaseSql(dialect, config.dbName())));
+                executeStatement(connection, dialect, new DropDatabaseStatement(config.dbName()));
             }
             log.info("Dropped database '{}' if it existed", config.dbName());
         } catch (Exception e) {
@@ -106,14 +106,8 @@ public final class DatabaseSupport {
         }
 
         SqlDialect dialect = resolveDialect(connection);
-        String createIndexSql = "CREATE "
-                + (unique ? "UNIQUE " : "")
-                + "INDEX " + quoteIdentifier(dialect, indexName)
-                + " ON " + quoteIdentifier(dialect, tableName)
-                + " (" + joinQuotedIdentifiers(dialect, columns) + ")";
-
-        try (Statement statement = connection.createStatement()) {
-            statement.executeUpdate(createIndexSql);
+        try {
+            executeStatement(connection, dialect, new CreateIndexStatement(tableName, indexName, unique, List.of(columns)));
             log.info("Ensured index '{}' exists on '{}'", indexName, tableName);
         } catch (Exception e) {
             log.error("Failed to create index '{}' on '{}': {}", indexName, tableName, e.getMessage(), e);
@@ -132,16 +126,16 @@ public final class DatabaseSupport {
         ensureIndex(connection, tableName, indexName, true, columns);
     }
 
-    private static void ensureTable(Connection connection, String tableName, String createTableSql) {
-        if (tableExists(connection, tableName)) {
+    private static void ensureTable(Connection connection, SqlDialect dialect, TableDefinition tableDefinition) {
+        if (tableExists(connection, tableDefinition.tableName)) {
             return;
         }
 
-        try (Statement statement = connection.createStatement()) {
-            statement.executeUpdate(createTableSql);
-            log.info("Ensured table '{}' exists", tableName);
+        try {
+            executeStatement(connection, dialect, new CreateTableStatement(tableDefinition));
+            log.info("Ensured table '{}' exists", tableDefinition.tableName);
         } catch (Exception e) {
-            log.error("Failed to create table '{}': {}", tableName, e.getMessage(), e);
+            log.error("Failed to create table '{}': {}", tableDefinition.tableName, e.getMessage(), e);
             throw new RuntimeException(e);
         }
     }
@@ -153,7 +147,7 @@ public final class DatabaseSupport {
      */
     public static void ensureTable(Connection connection, TableDefinition tableDefinition) {
         SqlDialect dialect = resolveDialect(connection);
-        ensureTable(connection, tableDefinition.tableName, tableDefinition.toCreateTableSql(dialect));
+        ensureTable(connection, dialect, tableDefinition);
     }
 
     /**
@@ -169,16 +163,8 @@ public final class DatabaseSupport {
         }
 
         SqlDialect dialect = resolveDialect(connection);
-        String addColumnSql = "ALTER TABLE "
-                + quoteIdentifier(dialect, tableName)
-                + " ADD COLUMN "
-                + columnDefinition.toSql(dialect)
-                + (supportsColumnOrdering(dialect) && afterColumn != null && !afterColumn.isBlank()
-                ? " AFTER " + quoteIdentifier(dialect, afterColumn)
-                : "");
-
-        try (Statement statement = connection.createStatement()) {
-            statement.executeUpdate(addColumnSql);
+        try {
+            executeStatement(connection, dialect, new AddColumnStatement(tableName, columnDefinition, afterColumn));
             log.info("Ensured column '{}.{}' exists", tableName, columnDefinition.columnName);
         } catch (Exception e) {
             log.error("Failed to add column '{}.{}': {}", tableName, columnDefinition.columnName, e.getMessage(), e);
@@ -194,10 +180,10 @@ public final class DatabaseSupport {
      */
     public static void modifyColumn(Connection connection, String tableName, ColumnDefinition columnDefinition) {
         SqlDialect dialect = resolveDialect(connection);
-        List<String> statements = buildModifyColumnSql(dialect, tableName, columnDefinition);
+        List<DdlStatement> statements = buildModifyColumnStatements(dialect, tableName, columnDefinition);
 
         try {
-            executeStatements(connection, statements);
+            executeStatements(connection, dialect, statements);
             log.info("Modified column '{}.{}'", tableName, columnDefinition.columnName);
         } catch (Exception e) {
             log.error("Failed to modify column '{}.{}': {}", tableName, columnDefinition.columnName, e.getMessage(), e);
@@ -324,32 +310,23 @@ public final class DatabaseSupport {
         }
     }
 
-    private static void executeStatements(Connection connection, List<String> sqlStatements) throws Exception {
+    private static void executeStatement(Connection connection, SqlDialect dialect, DdlStatement ddlStatement) throws Exception {
+        executeStatements(connection, dialect, List.of(ddlStatement));
+    }
+
+    private static void executeStatements(Connection connection, SqlDialect dialect, List<? extends DdlStatement> ddlStatements) throws Exception {
         try (Statement statement = connection.createStatement()) {
-            for (String sql : sqlStatements) {
-                statement.executeUpdate(sql);
+            for (DdlStatement ddlStatement : ddlStatements) {
+                statement.executeUpdate(ddlStatement.toSql(dialect));
             }
         }
     }
 
-    private static String buildCreateDatabaseSql(SqlDialect dialect, String databaseName) {
-        StringBuilder sql = new StringBuilder("CREATE DATABASE ").append(quoteIdentifier(dialect, databaseName));
-        if (dialect instanceof MySqlDialect) {
-            sql.append(" CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-        }
-        return sql.toString();
-    }
-
-    private static String buildDropDatabaseSql(SqlDialect dialect, String databaseName) {
-        return "DROP DATABASE " + quoteIdentifier(dialect, databaseName);
-    }
-
-    private static List<String> buildModifyColumnSql(SqlDialect dialect, String tableName, ColumnDefinition columnDefinition) {
-        String quotedTable = quoteIdentifier(dialect, tableName);
-        String quotedColumn = quoteIdentifier(dialect, columnDefinition.columnName);
+    private static List<DdlStatement> buildModifyColumnStatements(SqlDialect dialect, String tableName, ColumnDefinition columnDefinition) {
+        String columnName = columnDefinition.columnName;
 
         if (dialect instanceof MySqlDialect) {
-            return List.of("ALTER TABLE " + quotedTable + " MODIFY COLUMN " + columnDefinition.toSql(dialect));
+            return List.of(new ModifyMySqlColumnStatement(tableName, columnDefinition));
         }
 
         if (dialect instanceof SqliteDialect) {
@@ -357,45 +334,30 @@ public final class DatabaseSupport {
         }
 
         if (dialect instanceof PostgresDialect) {
-            List<String> statements = new ArrayList<>();
-            statements.add("ALTER TABLE " + quotedTable + " ALTER COLUMN " + quotedColumn
-                    + " TYPE " + normalizeType(dialect, columnDefinition.type, false));
-            statements.add(buildDefaultClause(dialect, quotedTable, quotedColumn, columnDefinition));
-            statements.add("ALTER TABLE " + quotedTable + " ALTER COLUMN " + quotedColumn
-                    + (columnDefinition.nullable ? " DROP NOT NULL" : " SET NOT NULL"));
+            List<DdlStatement> statements = new ArrayList<>();
+            statements.add(new AlterColumnTypeStatement(tableName, columnName, columnDefinition.type));
+            statements.add(new AlterColumnDefaultStatement(tableName, columnName, columnDefinition));
+            statements.add(new AlterColumnNullabilityStatement(tableName, columnName, columnDefinition.nullable));
             if (columnDefinition.autoIncrement && isIntegerType(columnDefinition.type)) {
-                statements.add("ALTER TABLE " + quotedTable + " ALTER COLUMN " + quotedColumn + " ADD GENERATED BY DEFAULT AS IDENTITY");
+                statements.add(new AddGeneratedIdentityStatement(tableName, columnName));
             }
             return statements;
         }
 
         if (dialect instanceof SqlServerDialect) {
-            List<String> statements = new ArrayList<>();
-            statements.add("ALTER TABLE " + quotedTable + " ALTER COLUMN " + quotedColumn + " "
-                    + normalizeType(dialect, columnDefinition.type, false)
-                    + (columnDefinition.nullable ? " NULL" : " NOT NULL"));
+            List<DdlStatement> statements = new ArrayList<>();
+            statements.add(new AlterSqlServerColumnStatement(tableName, columnDefinition));
             if (columnDefinition.defaultExpression != null || columnDefinition.defaultValue != null) {
-                statements.add("ALTER TABLE " + quotedTable + " ADD DEFAULT "
-                        + formatDefaultClauseValue(columnDefinition) + " FOR " + quotedColumn);
+                statements.add(new AddSqlServerDefaultStatement(tableName, columnName, columnDefinition));
             }
             return statements;
         }
 
         return List.of(
-                "ALTER TABLE " + quotedTable + " ALTER COLUMN " + quotedColumn + " TYPE "
-                        + normalizeType(dialect, columnDefinition.type, false),
-                buildDefaultClause(dialect, quotedTable, quotedColumn, columnDefinition),
-                "ALTER TABLE " + quotedTable + " ALTER COLUMN " + quotedColumn
-                        + (columnDefinition.nullable ? " DROP NOT NULL" : " SET NOT NULL")
+                new AlterColumnTypeStatement(tableName, columnName, columnDefinition.type),
+                new AlterColumnDefaultStatement(tableName, columnName, columnDefinition),
+                new AlterColumnNullabilityStatement(tableName, columnName, columnDefinition.nullable)
         );
-    }
-
-    private static String buildDefaultClause(SqlDialect dialect, String quotedTable, String quotedColumn, ColumnDefinition columnDefinition) {
-        if (columnDefinition.defaultExpression != null || columnDefinition.defaultValue != null) {
-            return "ALTER TABLE " + quotedTable + " ALTER COLUMN " + quotedColumn + " SET DEFAULT "
-                    + formatDefaultClauseValue(columnDefinition);
-        }
-        return "ALTER TABLE " + quotedTable + " ALTER COLUMN " + quotedColumn + " DROP DEFAULT";
     }
 
     private static String formatDefaultClauseValue(ColumnDefinition columnDefinition) {
@@ -483,6 +445,148 @@ public final class DatabaseSupport {
         return Arrays.stream(identifiers)
                 .map(dialect::q)
                 .collect(Collectors.joining(", "));
+    }
+
+    /**
+     * Internal ddl statement.
+     */
+    private interface DdlStatement {
+
+        /**
+         * Returns the resulting sql.
+         * @param dialect the dialect value
+         * @return the resulting sql
+         */
+        String toSql(SqlDialect dialect);
+    }
+
+    private record CreateDatabaseStatement(String databaseName) implements DdlStatement {
+
+        @Override
+        public String toSql(SqlDialect dialect) {
+            StringBuilder sql = new StringBuilder("CREATE DATABASE ").append(quoteIdentifier(dialect, databaseName));
+            if (dialect instanceof MySqlDialect) {
+                sql.append(" CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+            }
+            return sql.toString();
+        }
+    }
+
+    private record DropDatabaseStatement(String databaseName) implements DdlStatement {
+
+        @Override
+        public String toSql(SqlDialect dialect) {
+            return "DROP DATABASE " + quoteIdentifier(dialect, databaseName);
+        }
+    }
+
+    private record CreateIndexStatement(String tableName, String indexName, boolean unique, List<String> columns) implements DdlStatement {
+
+        @Override
+        public String toSql(SqlDialect dialect) {
+            return "CREATE "
+                    + (unique ? "UNIQUE " : "")
+                    + "INDEX " + quoteIdentifier(dialect, indexName)
+                    + " ON " + quoteIdentifier(dialect, tableName)
+                    + " (" + joinQuotedIdentifiers(dialect, columns.toArray(new String[0])) + ")";
+        }
+    }
+
+    private record CreateTableStatement(TableDefinition tableDefinition) implements DdlStatement {
+
+        @Override
+        public String toSql(SqlDialect dialect) {
+            return tableDefinition.toCreateTableSql(dialect);
+        }
+    }
+
+    private record AddColumnStatement(String tableName, ColumnDefinition columnDefinition, String afterColumn) implements DdlStatement {
+
+        @Override
+        public String toSql(SqlDialect dialect) {
+            return "ALTER TABLE "
+                    + quoteIdentifier(dialect, tableName)
+                    + " ADD COLUMN "
+                    + columnDefinition.toSql(dialect)
+                    + (supportsColumnOrdering(dialect) && afterColumn != null && !afterColumn.isBlank()
+                    ? " AFTER " + quoteIdentifier(dialect, afterColumn)
+                    : "");
+        }
+    }
+
+    private record ModifyMySqlColumnStatement(String tableName, ColumnDefinition columnDefinition) implements DdlStatement {
+
+        @Override
+        public String toSql(SqlDialect dialect) {
+            return "ALTER TABLE " + quoteIdentifier(dialect, tableName)
+                    + " MODIFY COLUMN " + columnDefinition.toSql(dialect);
+        }
+    }
+
+    private record AlterColumnTypeStatement(String tableName, String columnName, String type) implements DdlStatement {
+
+        @Override
+        public String toSql(SqlDialect dialect) {
+            return "ALTER TABLE " + quoteIdentifier(dialect, tableName)
+                    + " ALTER COLUMN " + quoteIdentifier(dialect, columnName)
+                    + " TYPE " + normalizeType(dialect, type, false);
+        }
+    }
+
+    private record AlterColumnDefaultStatement(String tableName, String columnName, ColumnDefinition columnDefinition) implements DdlStatement {
+
+        @Override
+        public String toSql(SqlDialect dialect) {
+            if (columnDefinition.defaultExpression != null || columnDefinition.defaultValue != null) {
+                return "ALTER TABLE " + quoteIdentifier(dialect, tableName)
+                        + " ALTER COLUMN " + quoteIdentifier(dialect, columnName)
+                        + " SET DEFAULT " + formatDefaultClauseValue(columnDefinition);
+            }
+            return "ALTER TABLE " + quoteIdentifier(dialect, tableName)
+                    + " ALTER COLUMN " + quoteIdentifier(dialect, columnName)
+                    + " DROP DEFAULT";
+        }
+    }
+
+    private record AlterColumnNullabilityStatement(String tableName, String columnName, boolean nullable) implements DdlStatement {
+
+        @Override
+        public String toSql(SqlDialect dialect) {
+            return "ALTER TABLE " + quoteIdentifier(dialect, tableName)
+                    + " ALTER COLUMN " + quoteIdentifier(dialect, columnName)
+                    + (nullable ? " DROP NOT NULL" : " SET NOT NULL");
+        }
+    }
+
+    private record AddGeneratedIdentityStatement(String tableName, String columnName) implements DdlStatement {
+
+        @Override
+        public String toSql(SqlDialect dialect) {
+            return "ALTER TABLE " + quoteIdentifier(dialect, tableName)
+                    + " ALTER COLUMN " + quoteIdentifier(dialect, columnName)
+                    + " ADD GENERATED BY DEFAULT AS IDENTITY";
+        }
+    }
+
+    private record AlterSqlServerColumnStatement(String tableName, ColumnDefinition columnDefinition) implements DdlStatement {
+
+        @Override
+        public String toSql(SqlDialect dialect) {
+            return "ALTER TABLE " + quoteIdentifier(dialect, tableName)
+                    + " ALTER COLUMN " + quoteIdentifier(dialect, columnDefinition.columnName)
+                    + " " + normalizeType(dialect, columnDefinition.type, false)
+                    + (columnDefinition.nullable ? " NULL" : " NOT NULL");
+        }
+    }
+
+    private record AddSqlServerDefaultStatement(String tableName, String columnName, ColumnDefinition columnDefinition) implements DdlStatement {
+
+        @Override
+        public String toSql(SqlDialect dialect) {
+            return "ALTER TABLE " + quoteIdentifier(dialect, tableName)
+                    + " ADD DEFAULT " + formatDefaultClauseValue(columnDefinition)
+                    + " FOR " + quoteIdentifier(dialect, columnName);
+        }
     }
 
     /**
