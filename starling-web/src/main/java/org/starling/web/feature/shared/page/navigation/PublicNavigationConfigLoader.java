@@ -101,7 +101,8 @@ public final class PublicNavigationConfigLoader {
                     valueAsString(values.get("cssId")),
                     valueAsString(values.get("cssClass")),
                     valueAsInt(values.get("minimumRank"), 0),
-                    valueAsBoolean(values.get("requiresAdminRole"), false)
+                    valueAsBoolean(values.get("requiresAdminRole"), false),
+                    valueAsString(values.get("requiredPermission"))
             ));
         }
         return links;

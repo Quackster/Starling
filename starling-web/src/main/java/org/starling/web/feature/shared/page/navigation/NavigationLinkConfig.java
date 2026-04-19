@@ -12,6 +12,7 @@ public record NavigationLinkConfig(
         String cssId,
         String cssClass,
         int minimumRank,
-        boolean requiresAdminRole
+        boolean requiresAdminRole,
+        String requiredPermission
 ) {
 }

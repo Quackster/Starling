@@ -16,10 +16,11 @@
                 <a class="admin-nav__link" href="/">View Site</a>
                 {% if currentAdminName %}
                     <a class="admin-nav__link{% if currentPath == '/admin' %} is-active{% endif %}" href="/admin">Dashboard</a>
-                    <a class="admin-nav__link{% if currentPath == '/admin/pages' %} is-active{% endif %}" href="/admin/pages">Pages</a>
-                    <a class="admin-nav__link{% if currentPath == '/admin/articles' %} is-active{% endif %}" href="/admin/articles">News</a>
-                    <a class="admin-nav__link{% if currentPath == '/admin/campaigns' %} is-active{% endif %}" href="/admin/campaigns">Campaigns</a>
-                    <a class="admin-nav__link{% if currentPath == '/admin/users' %} is-active{% endif %}" href="/admin/users">Users</a>
+                    {% if canManagePages %}<a class="admin-nav__link{% if currentPath == '/admin/pages' %} is-active{% endif %}" href="/admin/pages">Pages</a>{% endif %}
+                    {% if canManageArticles %}<a class="admin-nav__link{% if currentPath == '/admin/articles' %} is-active{% endif %}" href="/admin/articles">News</a>{% endif %}
+                    {% if canManageCampaigns %}<a class="admin-nav__link{% if currentPath == '/admin/campaigns' %} is-active{% endif %}" href="/admin/campaigns">Campaigns</a>{% endif %}
+                    {% if canManageUsers %}<a class="admin-nav__link{% if currentPath == '/admin/users' %} is-active{% endif %}" href="/admin/users">Users</a>{% endif %}
+                    {% if canManagePermissions %}<a class="admin-nav__link{% if currentPath == '/admin/permissions' %} is-active{% endif %}" href="/admin/permissions">Permissions</a>{% endif %}
                     <span class="admin-nav__label">{{ currentAdminName }}</span>
                     <form method="post" action="/admin/logout">
                         <button class="admin-nav__button" type="submit">Logout</button>

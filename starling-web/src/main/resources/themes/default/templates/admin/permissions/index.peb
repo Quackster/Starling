@@ -1,0 +1,51 @@
+<section class="admin-toolbar">
+    <div>
+        <h1>Permissions</h1>
+        <p>Configure housekeeping access and in-game fuse rights for ranks 1 through 7. Rank 7 is always god mode.</p>
+    </div>
+</section>
+
+<form class="stack-form" method="post" action="/admin/permissions">
+    {% for category in categories %}
+        <section class="admin-card">
+            <h2>{{ category.name }}</h2>
+            <table class="data-table permissions-table">
+                <thead>
+                <tr>
+                    <th>Permission</th>
+                    {% for rank in ranks %}
+                        <th>Rank {{ rank }}{% if rank == 7 %}<br><small>God Mode</small>{% endif %}</th>
+                    {% endfor %}
+                </tr>
+                </thead>
+                <tbody>
+                {% for permission in category.permissions %}
+                    <tr>
+                        <td>
+                            <div class="permission-meta">
+                                <strong>{{ permission.label }}</strong>
+                                <span>{{ permission.description }}</span>
+                            </div>
+                        </td>
+                        {% for cell in permission.cells %}
+                            <td>
+                                <label class="permission-cell">
+                                    {% if cell.editable %}
+                                        <input type="checkbox" name="{{ cell.fieldName }}"{% if cell.checked %} checked{% endif %}>
+                                    {% else %}
+                                        <span class="permission-cell__badge">Always On</span>
+                                    {% endif %}
+                                </label>
+                            </td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    {% endfor %}
+
+    <div class="button-row">
+        <button type="submit" class="button-primary">Save Permissions</button>
+    </div>
+</form>

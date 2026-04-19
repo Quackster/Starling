@@ -62,6 +62,7 @@ public final class DatabaseBootstrap {
             DatabaseSupport.ensureColumn(context.conn(), "recommended", column("created_at", "TIMESTAMP").notNull().defaultExpression("CURRENT_TIMESTAMP"), "sponsored");
             DatabaseSupport.ensureIndex(context.conn(), "recommended", "idx_recommended_type", false, "type", "sponsored");
             SharedSchemaSupport.ensureMessengerSchema(context);
+            SharedSchemaSupport.ensureRankPermissionSchema(context);
             normalizeSharedData(context);
             log.info("Ensured navigator schema extensions exist");
         } catch (Exception e) {

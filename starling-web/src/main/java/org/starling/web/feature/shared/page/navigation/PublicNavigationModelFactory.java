@@ -1,5 +1,6 @@
 package org.starling.web.feature.shared.page.navigation;
 
+import org.starling.permission.RankPermissionService;
 import org.starling.storage.entity.UserEntity;
 import org.starling.web.site.SiteBranding;
 
@@ -8,20 +9,28 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public final class PublicNavigationModelFactory {
 
     private final PublicNavigationConfig config;
     private final SiteBranding siteBranding;
+    private final RankPermissionService rankPermissionService;
 
     /**
      * Creates a new PublicNavigationModelFactory.
      * @param config the public navigation config
      * @param siteBranding the site branding
+     * @param rankPermissionService the rank permission service
      */
-    public PublicNavigationModelFactory(PublicNavigationConfig config, SiteBranding siteBranding) {
+    public PublicNavigationModelFactory(
+            PublicNavigationConfig config,
+            SiteBranding siteBranding,
+            RankPermissionService rankPermissionService
+    ) {
         this.config = config;
         this.siteBranding = siteBranding;
+        this.rankPermissionService = rankPermissionService;
     }
 
     /**
@@ -34,10 +43,13 @@ public final class PublicNavigationModelFactory {
     public Map<String, Object> create(String currentMainPage, String currentSubPage, Optional<UserEntity> currentUser) {
         boolean loggedIn = currentUser.isPresent();
         int rankId = currentUser.map(UserEntity::getRank).orElse(0);
+        Set<String> permissionKeys = currentUser.isPresent()
+                ? rankPermissionService.permissionKeysForRank(currentUser.get().getRank())
+                : Set.of();
 
         Map<String, Object> navigation = new LinkedHashMap<>();
-        navigation.put("mainLinks", linkModels(config.mainLinks(), currentMainPage, loggedIn, rankId, currentUser));
-        navigation.put("subLinks", linkModels(config.subLinksByPage().getOrDefault(currentSubPage, List.of()), currentSubPage, loggedIn, rankId, currentUser));
+        navigation.put("mainLinks", linkModels(config.mainLinks(), currentMainPage, loggedIn, rankId, currentUser, permissionKeys));
+        navigation.put("subLinks", linkModels(config.subLinksByPage().getOrDefault(currentSubPage, List.of()), currentSubPage, loggedIn, rankId, currentUser, permissionKeys));
         navigation.put("guestHotelButton", buttonModel(config.guestHotelButton(), loggedIn, currentUser));
         navigation.put("userHotelButton", buttonModel(config.userHotelButton(), loggedIn, currentUser));
         navigation.put("hasSubLinks", !((List<?>) navigation.get("subLinks")).isEmpty());
@@ -49,7 +61,8 @@ public final class PublicNavigationModelFactory {
             String currentKey,
             boolean loggedIn,
             int rankId,
-            Optional<UserEntity> currentUser
+            Optional<UserEntity> currentUser,
+            Set<String> permissionKeys
     ) {
         List<Map<String, Object>> visibleLinks = new ArrayList<>();
 
@@ -61,6 +74,9 @@ public final class PublicNavigationModelFactory {
                 continue;
             }
             if (link.requiresAdminRole() && currentUser.map(UserEntity::isAdmin).orElse(false) == false) {
+                continue;
+            }
+            if (!link.requiredPermission().isBlank() && !permissionKeys.contains(link.requiredPermission())) {
                 continue;
             }
 

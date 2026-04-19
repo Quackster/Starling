@@ -1,5 +1,6 @@
 package org.starling.web.app;
 
+import org.starling.permission.RankPermissionService;
 import org.starling.web.app.asset.AvatarImagingService;
 import org.starling.web.cms.article.ArticleService;
 import org.starling.web.cms.article.ArticleViewFactory;
@@ -33,6 +34,7 @@ import org.starling.web.user.view.UserViewModelFactory;
 public record WebDependencies(
         TemplateRenderer templateRenderer,
         MarkdownRenderer markdownRenderer,
+        RankPermissionService rankPermissionService,
         UserSessionService userSessionService,
         SiteBranding siteBranding,
         ThemeResourceResolver themeResourceResolver,

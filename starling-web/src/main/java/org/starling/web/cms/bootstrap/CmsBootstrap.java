@@ -105,6 +105,7 @@ public final class CmsBootstrap {
                 DatabaseSupport.ensureIndex(context.conn(), "user_referrals", "idx_user_referrals_inviter_user", false, "inviter_userid");
                 DatabaseSupport.ensureColumn(context.conn(), "users", column("cms_role", "VARCHAR(32)").notNull().defaultValue("user"), "rank");
                 SharedSchemaSupport.ensureMessengerSchema(context);
+                SharedSchemaSupport.ensureRankPermissionSchema(context);
                 normalizeSharedData(context);
                 return null;
             } catch (Exception e) {

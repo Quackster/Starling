@@ -1,6 +1,7 @@
 package org.starling.web.app;
 
 import io.javalin.Javalin;
+import org.starling.permission.RankPermissionService;
 import org.starling.web.admin.AdminPageModelFactory;
 import org.starling.web.admin.auth.AdminAuthController;
 import org.starling.web.admin.auth.AdminRouteGuard;
@@ -8,6 +9,7 @@ import org.starling.web.admin.article.AdminArticlesController;
 import org.starling.web.admin.campaign.AdminCampaignsController;
 import org.starling.web.admin.dashboard.AdminDashboardController;
 import org.starling.web.admin.page.AdminPagesController;
+import org.starling.web.admin.permission.AdminPermissionsController;
 import org.starling.web.admin.preview.AdminPreviewController;
 import org.starling.web.admin.user.AdminUsersController;
 import org.starling.web.app.asset.AssetController;
@@ -100,6 +102,7 @@ public final class StarlingWebBootstrap {
         AvatarImagingService avatarImagingService = new AvatarImagingService();
         TemplateRenderer templateRenderer = new TemplateRenderer(themeResourceResolver);
         MarkdownRenderer markdownRenderer = new MarkdownRenderer();
+        RankPermissionService rankPermissionService = new RankPermissionService();
         UserSessionService userSessionService = new UserSessionService(config.sessionSecret());
         PageService pageService = new PageService();
         ArticleService articleService = new ArticleService();
@@ -117,7 +120,11 @@ public final class StarlingWebBootstrap {
         CreditsPageContentFactory creditsPageContentFactory = new CreditsPageContentFactory();
         PublicNavigationConfig publicNavigationConfig = new PublicNavigationConfigLoader().load();
         PublicPageLayoutConfig publicPageLayoutConfig = new PublicPageLayoutConfigLoader().load();
-        PublicNavigationModelFactory publicNavigationModelFactory = new PublicNavigationModelFactory(publicNavigationConfig, siteBranding);
+        PublicNavigationModelFactory publicNavigationModelFactory = new PublicNavigationModelFactory(
+                publicNavigationConfig,
+                siteBranding,
+                rankPermissionService
+        );
         PublicPageLayoutRenderer publicPageLayoutRenderer = new PublicPageLayoutRenderer(templateRenderer, publicPageLayoutConfig);
         PublicPageModelFactory publicPageModelFactory = new PublicPageModelFactory(
                 userSessionService,
@@ -125,7 +132,7 @@ public final class StarlingWebBootstrap {
                 siteBranding,
                 publicNavigationModelFactory
         );
-        AdminPageModelFactory adminPageModelFactory = new AdminPageModelFactory(siteBranding);
+        AdminPageModelFactory adminPageModelFactory = new AdminPageModelFactory(siteBranding, rankPermissionService);
         ArticleViewFactory articleViewFactory = new ArticleViewFactory(markdownRenderer, siteBranding);
         PageViewFactory pageViewFactory = new PageViewFactory(markdownRenderer);
         NewsPromoContentFactory newsPromoContentFactory = new NewsPromoContentFactory(articleService, articleViewFactory);
@@ -135,6 +142,7 @@ public final class StarlingWebBootstrap {
         return new WebDependencies(
                 templateRenderer,
                 markdownRenderer,
+                rankPermissionService,
                 userSessionService,
                 siteBranding,
                 themeResourceResolver,
@@ -290,7 +298,10 @@ public final class StarlingWebBootstrap {
                 dependencies.siteBranding(),
                 dependencies.avatarImagingService()
         );
-        AdminRouteGuard adminRouteGuard = new AdminRouteGuard(dependencies.userSessionService());
+        AdminRouteGuard adminRouteGuard = new AdminRouteGuard(
+                dependencies.userSessionService(),
+                dependencies.rankPermissionService()
+        );
         AdminAuthController adminAuthController = new AdminAuthController(
                 dependencies.templateRenderer(),
                 dependencies.userSessionService(),
@@ -322,6 +333,11 @@ public final class StarlingWebBootstrap {
                 dependencies.templateRenderer(),
                 dependencies.adminPageModelFactory()
         );
+        AdminPermissionsController adminPermissionsController = new AdminPermissionsController(
+                dependencies.templateRenderer(),
+                dependencies.adminPageModelFactory(),
+                dependencies.rankPermissionService()
+        );
         AdminPreviewController adminPreviewController = new AdminPreviewController(
                 dependencies.templateRenderer(),
                 dependencies.markdownRenderer()
@@ -352,6 +368,7 @@ public final class StarlingWebBootstrap {
                 adminArticlesController,
                 adminCampaignsController,
                 adminUsersController,
+                adminPermissionsController,
                 adminPreviewController
         ).register(app);
     }

@@ -6,9 +6,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.starling.config.DatabaseConfig;
+import org.starling.permission.RankPermissionKeys;
 import org.starling.storage.EntityContext;
 import org.starling.storage.DatabaseSupport;
 import org.starling.storage.dao.PublicTagDao;
+import org.starling.storage.dao.RankPermissionDao;
 import org.starling.storage.dao.UserDao;
 import org.starling.storage.entity.UserEntity;
 import org.starling.web.cms.admin.CmsAdminDao;
@@ -1163,6 +1165,75 @@ class StarlingWebIntegrationTest {
     }
 
     @Test
+    void adminCanSaveRankPermissionsAndStaffAccessFollowsTheMatrix() throws Exception {
+        login();
+
+        String username = "matrixstaff" + UUID.randomUUID().toString().substring(0, 6);
+        UserEntity staffUser = UserEntity.createRegisteredUser(
+                username,
+                "Password1",
+                "hr-100-61.hd-180-2.ch-210-92.lg-270-82.sh-290-64",
+                "M",
+                username + "@example.com"
+        );
+        staffUser.setRank(6);
+        staffUser.setCmsRole("admin");
+        UserDao.save(staffUser);
+
+        HttpResponse<String> saveResponse = postForm(
+                "/admin/permissions",
+                Map.ofEntries(
+                        Map.entry("perm_6_housekeeping_access", "on"),
+                        Map.entry("perm_6_housekeeping_pages", "on"),
+                        Map.entry("perm_6_housekeeping_articles", "on"),
+                        Map.entry("perm_6_fuse_login", "on"),
+                        Map.entry("perm_6_fuse_buy_credits", "on"),
+                        Map.entry("perm_6_fuse_trade", "on"),
+                        Map.entry("perm_6_fuse_room_queue_default", "on"),
+                        Map.entry("perm_6_fuse_alert", "on"),
+                        Map.entry("perm_6_fuse_room_kick", "on"),
+                        Map.entry("perm_6_fuse_room_ban", "on"),
+                        Map.entry("perm_6_fuse_enter_any_room", "on"),
+                        Map.entry("perm_6_fuse_pick_up_any_furni", "on"),
+                        Map.entry("perm_6_fuse_ignore_room_rights", "on")
+                ),
+                Map.of()
+        );
+        assertEquals(200, saveResponse.statusCode());
+        assertTrue(RankPermissionDao.isEnabled(6, RankPermissionKeys.HOUSEKEEPING_ACCESS));
+        assertFalse(RankPermissionDao.isEnabled(6, RankPermissionKeys.HOUSEKEEPING_CAMPAIGNS));
+
+        HttpClient staffClient = newClient();
+        HttpResponse<String> staffLoginResponse = postForm(
+                staffClient,
+                "/account/submit",
+                Map.of("username", username, "password", "Password1"),
+                Map.of()
+        );
+        assertEquals(200, staffLoginResponse.statusCode());
+
+        HttpResponse<String> dashboardResponse = staffClient.send(
+                HttpRequest.newBuilder(baseUri.resolve("/admin")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> campaignsResponse = staffClient.send(
+                HttpRequest.newBuilder(baseUri.resolve("/admin/campaigns")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> communityResponse = staffClient.send(
+                HttpRequest.newBuilder(baseUri.resolve("/community")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertEquals(200, dashboardResponse.statusCode());
+        assertEquals(403, campaignsResponse.statusCode());
+        assertTrue(communityResponse.body().contains("href=\"/admin\""));
+        assertFalse(dashboardResponse.body().contains(">Campaigns</a>"));
+        assertFalse(dashboardResponse.body().contains(">Users</a>"));
+        assertFalse(dashboardResponse.body().contains(">Permissions</a>"));
+    }
+
+    @Test
     void loginPreviewPublishAndAliasRoutesWork() throws Exception {
         login();
 
@@ -1273,6 +1344,7 @@ class StarlingWebIntegrationTest {
         assertTrue(dashboardResponse.body().contains(">News</a>"));
         assertTrue(dashboardResponse.body().contains(">Campaigns</a>"));
         assertTrue(dashboardResponse.body().contains(">Users</a>"));
+        assertTrue(dashboardResponse.body().contains(">Permissions</a>"));
         assertFalse(dashboardResponse.body().contains(">Menus</a>"));
         assertFalse(dashboardResponse.body().contains(">Media</a>"));
         assertTrue(dashboardResponse.body().contains("web-navigation.yaml"));

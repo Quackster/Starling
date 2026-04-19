@@ -36,6 +36,7 @@ main:
     visibleWhenLoggedIn: true
     visibleWhenLoggedOut: false
     requiresAdminRole: true
+    requiredPermission: housekeeping.access
 
 sub:
   me:

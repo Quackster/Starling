@@ -1,5 +1,6 @@
 package org.starling.game.player.auth;
 
+import org.starling.permission.RankPermissionService;
 import org.starling.game.player.Player;
 import org.starling.message.OutgoingPackets;
 import org.starling.message.support.HandlerResponses;
@@ -11,6 +12,8 @@ import org.starling.storage.entity.UserEntity;
  * Sends login and initial account bootstrap packets.
  */
 public final class LoginResponseWriter {
+
+    private final RankPermissionService rankPermissionService = new RankPermissionService();
 
     /**
      * Sends login failure.
@@ -30,7 +33,7 @@ public final class LoginResponseWriter {
         session.setPlayer(player);
 
         session.send(new ServerMessage(OutgoingPackets.LOGIN_OK));
-        session.send(buildUserRightsMessage());
+        session.send(buildUserRightsMessage(player));
     }
 
     /**
@@ -96,12 +99,11 @@ public final class LoginResponseWriter {
      * Builds user rights message.
      * @return the resulting build user rights message
      */
-    private ServerMessage buildUserRightsMessage() {
+    private ServerMessage buildUserRightsMessage(Player player) {
         ServerMessage rights = new ServerMessage(OutgoingPackets.USER_RIGHTS);
-        rights.writeString("fuse_login");
-        rights.writeString("fuse_buy_credits");
-        rights.writeString("fuse_trade");
-        rights.writeString("fuse_room_queue_default");
+        for (String permissionKey : rankPermissionService.fuseRightsForRank(player.getRank())) {
+            rights.writeString(permissionKey);
+        }
         return rights;
     }
 }
