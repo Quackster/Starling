@@ -4,17 +4,17 @@ import org.starling.storage.DatabaseSupport;
 import org.starling.storage.EntityContext;
 import org.starling.storage.dao.UserDao;
 import org.starling.storage.entity.UserEntity;
+import org.starling.web.cms.admin.CmsAdminDao;
 import org.starling.web.cms.auth.PasswordHasher;
-import org.starling.web.cms.dao.CmsAdminDao;
-import org.starling.web.cms.dao.CmsArticleDao;
-import org.starling.web.cms.dao.CmsNavigationDao;
-import org.starling.web.cms.dao.CmsPageDao;
-import org.starling.web.cms.model.CmsArticle;
-import org.starling.web.cms.model.CmsArticleDraft;
-import org.starling.web.cms.model.CmsPageDraft;
+import org.starling.web.cms.article.CmsArticle;
+import org.starling.web.cms.article.CmsArticleDao;
+import org.starling.web.cms.article.CmsArticleDraft;
+import org.starling.web.cms.navigation.CmsNavigationDao;
+import org.starling.web.cms.page.CmsPageDao;
+import org.starling.web.cms.page.CmsPageDraft;
 import org.starling.web.config.WebConfig;
-import org.starling.web.me.HotCampaignDao;
-import org.starling.web.me.MinimailDao;
+import org.starling.web.feature.me.campaign.HotCampaignDao;
+import org.starling.web.feature.me.mail.MinimailDao;
 
 import java.nio.file.Files;
 import java.sql.Statement;
@@ -335,24 +335,17 @@ public final class CmsBootstrap {
 
         HotCampaignDao.create(
                 "/community",
-                "/web-gallery/images/hot_campaigns/welcome.svg",
+                "http://localhost/c_images/hot_campaign_images_gb/payment_promo.png",
                 "Welcome Lounge",
                 "Take a tour of the community spaces and see what Starling is building next.",
                 0
         );
         HotCampaignDao.create(
                 "/news",
-                "/web-gallery/images/hot_campaigns/news.svg",
+                "http://localhost/c_images/hot_campaign_images_gb/uk_newsletter_160x70.gif",
                 "Read The Headlines",
                 "Catch up on the latest announcements, staff updates, and community highlights.",
                 1
-        );
-        HotCampaignDao.create(
-                "/welcome",
-                "/web-gallery/images/hot_campaigns/start.svg",
-                "Start Strong",
-                "Jump into the welcome flow, pick your first room, and get comfortable in the hotel.",
-                2
         );
     }
 

@@ -1,9 +1,9 @@
-package org.starling.web.publicsite;
+package org.starling.web.feature.policy.page;
 
 import io.javalin.http.Context;
+import org.starling.web.feature.shared.page.PublicPageModelFactory;
 import org.starling.web.render.TemplateRenderer;
 import org.starling.web.site.SiteBranding;
-import org.starling.web.view.PublicPageModelFactory;
 
 import java.util.Map;
 

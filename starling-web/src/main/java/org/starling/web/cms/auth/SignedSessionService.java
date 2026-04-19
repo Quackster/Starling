@@ -1,8 +1,8 @@
 package org.starling.web.cms.auth;
 
 import io.javalin.http.Context;
-import org.starling.web.cms.dao.CmsAdminDao;
-import org.starling.web.cms.model.CmsAdminUser;
+import org.starling.web.cms.admin.CmsAdminDao;
+import org.starling.web.cms.admin.CmsAdminUser;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;

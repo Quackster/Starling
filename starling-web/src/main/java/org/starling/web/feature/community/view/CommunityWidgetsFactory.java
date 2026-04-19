@@ -1,6 +1,7 @@
-package org.starling.web.view;
+package org.starling.web.feature.community.view;
 
 import org.starling.storage.entity.UserEntity;
+import org.starling.web.user.view.UserViewModelFactory;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;

@@ -1,61 +1,74 @@
 package org.starling.web.app;
 
 import io.javalin.Javalin;
-import org.starling.web.admin.AdminArticlesController;
-import org.starling.web.admin.AdminDashboardController;
-import org.starling.web.admin.AdminMediaController;
-import org.starling.web.admin.AdminMenusController;
-import org.starling.web.admin.AdminPagesController;
-import org.starling.web.admin.AdminPreviewController;
-import org.starling.web.asset.AssetController;
-import org.starling.web.auth.AccountController;
-import org.starling.web.auth.AdminAuthController;
-import org.starling.web.auth.AdminRouteGuard;
-import org.starling.web.auth.RegistrationController;
+import org.starling.web.admin.AdminPageModelFactory;
+import org.starling.web.admin.auth.AdminAuthController;
+import org.starling.web.admin.auth.AdminRouteGuard;
+import org.starling.web.admin.article.AdminArticlesController;
+import org.starling.web.admin.dashboard.AdminDashboardController;
+import org.starling.web.admin.media.AdminMediaController;
+import org.starling.web.admin.navigation.AdminMenusController;
+import org.starling.web.admin.page.AdminPagesController;
+import org.starling.web.admin.preview.AdminPreviewController;
+import org.starling.web.app.asset.AssetController;
+import org.starling.web.app.asset.AvatarImagingService;
+import org.starling.web.app.route.AdminRoutes;
+import org.starling.web.app.route.AssetRoutes;
+import org.starling.web.app.route.AuthRoutes;
+import org.starling.web.app.route.PublicRoutes;
+import org.starling.web.app.route.WidgetRoutes;
+import org.starling.web.cms.article.ArticleService;
+import org.starling.web.cms.article.ArticleViewFactory;
 import org.starling.web.cms.auth.SignedSessionService;
 import org.starling.web.cms.bootstrap.CmsBootstrap;
+import org.starling.web.cms.media.MediaAssetService;
+import org.starling.web.cms.media.MediaViewFactory;
 import org.starling.web.cms.media.MediaStorageService;
+import org.starling.web.cms.navigation.NavigationService;
+import org.starling.web.cms.navigation.NavigationViewFactory;
+import org.starling.web.cms.page.PageService;
+import org.starling.web.cms.page.PageViewFactory;
 import org.starling.web.config.WebConfig;
-import org.starling.web.layout.PublicPageLayoutConfig;
-import org.starling.web.layout.PublicPageLayoutConfigLoader;
-import org.starling.web.layout.PublicPageLayoutRenderer;
-import org.starling.web.navigation.PublicNavigationConfig;
-import org.starling.web.navigation.PublicNavigationConfigLoader;
-import org.starling.web.navigation.PublicNavigationModelFactory;
-import org.starling.web.publicsite.CommunityController;
-import org.starling.web.publicsite.CreditsController;
-import org.starling.web.publicsite.CreditsHabbletController;
-import org.starling.web.publicsite.HomepageController;
-import org.starling.web.publicsite.MeController;
-import org.starling.web.publicsite.NewsController;
-import org.starling.web.publicsite.PageController;
-import org.starling.web.publicsite.PolicyController;
-import org.starling.web.publicsite.TagController;
-import org.starling.web.publicsite.TagHabbletController;
+import org.starling.web.feature.account.page.AccountController;
+import org.starling.web.feature.account.page.RegistrationController;
+import org.starling.web.feature.community.page.CommunityController;
+import org.starling.web.feature.community.page.NewsController;
+import org.starling.web.feature.community.view.CommunityWidgetsFactory;
+import org.starling.web.feature.community.view.NewsPromoContentFactory;
+import org.starling.web.feature.content.page.PageController;
+import org.starling.web.feature.credits.page.CreditsController;
+import org.starling.web.feature.credits.view.CreditsPageContentFactory;
+import org.starling.web.feature.credits.widget.CreditsHabbletController;
+import org.starling.web.feature.home.page.HomepageController;
+import org.starling.web.feature.me.MeAccess;
+import org.starling.web.feature.me.campaign.HotCampaignService;
+import org.starling.web.feature.me.content.MePageContentFactory;
+import org.starling.web.feature.me.mail.LegacyMinimailController;
+import org.starling.web.feature.me.mail.LegacyMinimailJsonEncoder;
+import org.starling.web.feature.me.mail.MinimailController;
+import org.starling.web.feature.me.mail.MinimailRecipientService;
+import org.starling.web.feature.me.mail.MinimailSessionState;
+import org.starling.web.feature.me.mail.MinimailViewFactory;
+import org.starling.web.feature.me.mail.MinimailWriteService;
+import org.starling.web.feature.me.page.MePageController;
+import org.starling.web.feature.policy.page.PolicyController;
+import org.starling.web.feature.shared.page.PublicPageModelFactory;
+import org.starling.web.feature.shared.page.layout.PublicPageLayoutConfig;
+import org.starling.web.feature.shared.page.layout.PublicPageLayoutConfigLoader;
+import org.starling.web.feature.shared.page.layout.PublicPageLayoutRenderer;
+import org.starling.web.feature.shared.page.navigation.PublicNavigationConfig;
+import org.starling.web.feature.shared.page.navigation.PublicNavigationConfigLoader;
+import org.starling.web.feature.shared.page.navigation.PublicNavigationModelFactory;
+import org.starling.web.feature.tag.page.TagController;
+import org.starling.web.feature.tag.service.TagDirectoryService;
+import org.starling.web.feature.tag.service.UserTagService;
+import org.starling.web.feature.tag.widget.TagHabbletController;
 import org.starling.web.render.MarkdownRenderer;
 import org.starling.web.render.TemplateRenderer;
-import org.starling.web.route.AdminRoutes;
-import org.starling.web.route.AssetRoutes;
-import org.starling.web.route.AuthRoutes;
-import org.starling.web.route.PublicRoutes;
-import org.starling.web.route.WidgetRoutes;
-import org.starling.web.service.ArticleService;
-import org.starling.web.service.HotCampaignService;
-import org.starling.web.service.MediaAssetService;
-import org.starling.web.service.MinimailService;
-import org.starling.web.service.NavigationService;
-import org.starling.web.service.PageService;
-import org.starling.web.service.PublicTagService;
 import org.starling.web.site.SiteBranding;
 import org.starling.web.theme.ThemeResourceResolver;
 import org.starling.web.user.UserSessionService;
-import org.starling.web.view.AdminPageModelFactory;
-import org.starling.web.view.CommunityWidgetsFactory;
-import org.starling.web.view.CmsViewModelFactory;
-import org.starling.web.view.CreditsPageContentFactory;
-import org.starling.web.view.PublicFeatureContentFactory;
-import org.starling.web.view.PublicPageModelFactory;
-import org.starling.web.view.UserViewModelFactory;
+import org.starling.web.user.view.UserViewModelFactory;
 
 public final class StarlingWebBootstrap {
 
@@ -85,6 +98,7 @@ public final class StarlingWebBootstrap {
     private WebDependencies createDependencies() {
         SiteBranding siteBranding = new SiteBranding(config.siteName(), config.webGalleryPath());
         ThemeResourceResolver themeResourceResolver = new ThemeResourceResolver(config);
+        AvatarImagingService avatarImagingService = new AvatarImagingService();
         TemplateRenderer templateRenderer = new TemplateRenderer(themeResourceResolver);
         MarkdownRenderer markdownRenderer = new MarkdownRenderer();
         SignedSessionService signedSessionService = new SignedSessionService(config.sessionSecret());
@@ -93,9 +107,14 @@ public final class StarlingWebBootstrap {
         PageService pageService = new PageService();
         ArticleService articleService = new ArticleService();
         HotCampaignService hotCampaignService = new HotCampaignService();
-        MinimailService minimailService = new MinimailService(siteBranding);
+        MinimailRecipientService minimailRecipientService = new MinimailRecipientService();
+        MinimailWriteService minimailWriteService = new MinimailWriteService(minimailRecipientService);
+        MinimailViewFactory minimailViewFactory = new MinimailViewFactory(siteBranding, minimailRecipientService);
+        MinimailSessionState minimailSessionState = new MinimailSessionState();
+        LegacyMinimailJsonEncoder legacyMinimailJsonEncoder = new LegacyMinimailJsonEncoder();
         NavigationService navigationService = new NavigationService();
-        PublicTagService publicTagService = new PublicTagService();
+        UserTagService userTagService = new UserTagService();
+        TagDirectoryService tagDirectoryService = new TagDirectoryService(userTagService);
         UserViewModelFactory userViewModelFactory = new UserViewModelFactory();
         CommunityWidgetsFactory communityWidgetsFactory = new CommunityWidgetsFactory(userViewModelFactory);
         CreditsPageContentFactory creditsPageContentFactory = new CreditsPageContentFactory();
@@ -109,9 +128,14 @@ public final class StarlingWebBootstrap {
                 siteBranding,
                 publicNavigationModelFactory
         );
-        PublicFeatureContentFactory publicFeatureContentFactory = new PublicFeatureContentFactory(userViewModelFactory, siteBranding);
         AdminPageModelFactory adminPageModelFactory = new AdminPageModelFactory(siteBranding);
-        CmsViewModelFactory cmsViewModelFactory = new CmsViewModelFactory(markdownRenderer, siteBranding);
+        ArticleViewFactory articleViewFactory = new ArticleViewFactory(markdownRenderer, siteBranding);
+        PageViewFactory pageViewFactory = new PageViewFactory(markdownRenderer);
+        NavigationViewFactory navigationViewFactory = new NavigationViewFactory();
+        MediaViewFactory mediaViewFactory = new MediaViewFactory();
+        NewsPromoContentFactory newsPromoContentFactory = new NewsPromoContentFactory(articleService, articleViewFactory);
+        MePageContentFactory mePageContentFactory = new MePageContentFactory();
+        MeAccess meAccess = new MeAccess(userSessionService);
 
         return new WebDependencies(
                 templateRenderer,
@@ -120,21 +144,32 @@ public final class StarlingWebBootstrap {
                 userSessionService,
                 siteBranding,
                 themeResourceResolver,
+                avatarImagingService,
                 pageService,
                 articleService,
                 hotCampaignService,
-                minimailService,
+                minimailRecipientService,
+                minimailWriteService,
+                minimailViewFactory,
+                minimailSessionState,
+                legacyMinimailJsonEncoder,
                 navigationService,
                 mediaAssetService,
-                publicTagService,
+                userTagService,
+                tagDirectoryService,
                 communityWidgetsFactory,
+                newsPromoContentFactory,
                 creditsPageContentFactory,
                 publicNavigationModelFactory,
                 publicPageLayoutRenderer,
                 publicPageModelFactory,
-                publicFeatureContentFactory,
+                mePageContentFactory,
+                meAccess,
                 adminPageModelFactory,
-                cmsViewModelFactory,
+                articleViewFactory,
+                pageViewFactory,
+                navigationViewFactory,
+                mediaViewFactory,
                 userViewModelFactory
         );
     }
@@ -145,43 +180,55 @@ public final class StarlingWebBootstrap {
                 dependencies.userSessionService(),
                 dependencies.pageService(),
                 dependencies.publicPageModelFactory(),
-                dependencies.cmsViewModelFactory()
+                dependencies.pageViewFactory()
         );
         CommunityController communityController = new CommunityController(
                 dependencies.templateRenderer(),
-                dependencies.articleService(),
                 dependencies.userSessionService(),
                 dependencies.publicPageModelFactory(),
                 dependencies.communityWidgetsFactory(),
-                dependencies.publicTagService(),
-                dependencies.publicPageLayoutRenderer(),
-                dependencies.cmsViewModelFactory()
+                dependencies.tagDirectoryService(),
+                dependencies.newsPromoContentFactory(),
+                dependencies.publicPageLayoutRenderer()
         );
-        MeController meController = new MeController(
+        MePageController mePageController = new MePageController(
                 dependencies.templateRenderer(),
-                dependencies.userSessionService(),
-                dependencies.articleService(),
+                dependencies.meAccess(),
                 dependencies.hotCampaignService(),
-                dependencies.minimailService(),
-                dependencies.publicTagService(),
+                dependencies.minimailViewFactory(),
+                dependencies.userTagService(),
                 dependencies.publicPageLayoutRenderer(),
                 dependencies.publicPageModelFactory(),
-                dependencies.publicFeatureContentFactory(),
+                dependencies.mePageContentFactory(),
                 dependencies.userViewModelFactory(),
-                dependencies.cmsViewModelFactory()
+                dependencies.newsPromoContentFactory(),
+                dependencies.minimailSessionState()
+        );
+        MinimailController minimailController = new MinimailController(
+                dependencies.meAccess(),
+                dependencies.minimailWriteService(),
+                dependencies.minimailSessionState()
+        );
+        LegacyMinimailController legacyMinimailController = new LegacyMinimailController(
+                dependencies.templateRenderer(),
+                dependencies.meAccess(),
+                dependencies.minimailViewFactory(),
+                dependencies.minimailWriteService(),
+                dependencies.minimailRecipientService(),
+                dependencies.legacyMinimailJsonEncoder()
         );
         NewsController newsController = new NewsController(
                 dependencies.templateRenderer(),
                 dependencies.articleService(),
                 dependencies.publicPageLayoutRenderer(),
                 dependencies.publicPageModelFactory(),
-                dependencies.cmsViewModelFactory()
+                dependencies.articleViewFactory()
         );
         PageController pageController = new PageController(
                 dependencies.templateRenderer(),
                 dependencies.pageService(),
                 dependencies.publicPageModelFactory(),
-                dependencies.cmsViewModelFactory()
+                dependencies.pageViewFactory()
         );
         PolicyController policyController = new PolicyController(
                 dependencies.templateRenderer(),
@@ -200,12 +247,14 @@ public final class StarlingWebBootstrap {
                 dependencies.userSessionService(),
                 dependencies.publicPageLayoutRenderer(),
                 dependencies.publicPageModelFactory(),
-                dependencies.publicTagService()
+                dependencies.tagDirectoryService(),
+                dependencies.userTagService()
         );
         TagHabbletController tagHabbletController = new TagHabbletController(
                 dependencies.templateRenderer(),
                 dependencies.userSessionService(),
-                dependencies.publicTagService(),
+                dependencies.tagDirectoryService(),
+                dependencies.userTagService(),
                 dependencies.siteBranding()
         );
         CreditsHabbletController creditsHabbletController = new CreditsHabbletController(
@@ -226,7 +275,8 @@ public final class StarlingWebBootstrap {
         AssetController assetController = new AssetController(
                 dependencies.themeResourceResolver(),
                 dependencies.mediaAssetService(),
-                dependencies.siteBranding()
+                dependencies.siteBranding(),
+                dependencies.avatarImagingService()
         );
         AdminRouteGuard adminRouteGuard = new AdminRouteGuard(dependencies.signedSessionService());
         AdminAuthController adminAuthController = new AdminAuthController(
@@ -246,13 +296,13 @@ public final class StarlingWebBootstrap {
                 dependencies.templateRenderer(),
                 dependencies.adminPageModelFactory(),
                 dependencies.pageService(),
-                dependencies.cmsViewModelFactory()
+                dependencies.pageViewFactory()
         );
         AdminArticlesController adminArticlesController = new AdminArticlesController(
                 dependencies.templateRenderer(),
                 dependencies.adminPageModelFactory(),
                 dependencies.articleService(),
-                dependencies.cmsViewModelFactory()
+                dependencies.articleViewFactory()
         );
         AdminPreviewController adminPreviewController = new AdminPreviewController(
                 dependencies.templateRenderer(),
@@ -262,19 +312,21 @@ public final class StarlingWebBootstrap {
                 dependencies.templateRenderer(),
                 dependencies.adminPageModelFactory(),
                 dependencies.navigationService(),
-                dependencies.cmsViewModelFactory()
+                dependencies.navigationViewFactory()
         );
         AdminMediaController adminMediaController = new AdminMediaController(
                 dependencies.templateRenderer(),
                 dependencies.adminPageModelFactory(),
                 dependencies.mediaAssetService(),
-                dependencies.cmsViewModelFactory()
+                dependencies.mediaViewFactory()
         );
 
         new PublicRoutes(
                 homepageController,
                 communityController,
-                meController,
+                mePageController,
+                minimailController,
+                legacyMinimailController,
                 newsController,
                 pageController,
                 policyController,

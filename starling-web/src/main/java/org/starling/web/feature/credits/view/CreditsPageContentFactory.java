@@ -1,4 +1,4 @@
-package org.starling.web.view;
+package org.starling.web.feature.credits.view;
 
 import org.starling.storage.entity.UserEntity;
 

@@ -1,10 +1,10 @@
-package org.starling.web.publicsite;
+package org.starling.web.feature.content.page;
 
 import io.javalin.http.Context;
+import org.starling.web.cms.page.PageService;
+import org.starling.web.cms.page.PageViewFactory;
+import org.starling.web.feature.shared.page.PublicPageModelFactory;
 import org.starling.web.render.TemplateRenderer;
-import org.starling.web.service.PageService;
-import org.starling.web.view.CmsViewModelFactory;
-import org.starling.web.view.PublicPageModelFactory;
 
 import java.util.Map;
 
@@ -13,25 +13,25 @@ public final class PageController {
     private final TemplateRenderer templateRenderer;
     private final PageService pageService;
     private final PublicPageModelFactory publicPageModelFactory;
-    private final CmsViewModelFactory cmsViewModelFactory;
+    private final PageViewFactory pageViewFactory;
 
     /**
      * Creates a new PageController.
      * @param templateRenderer the template renderer
      * @param pageService the page service
      * @param publicPageModelFactory the public page model factory
-     * @param cmsViewModelFactory the CMS view model factory
+     * @param pageViewFactory the page view factory
      */
     public PageController(
             TemplateRenderer templateRenderer,
             PageService pageService,
             PublicPageModelFactory publicPageModelFactory,
-            CmsViewModelFactory cmsViewModelFactory
+            PageViewFactory pageViewFactory
     ) {
         this.templateRenderer = templateRenderer;
         this.pageService = pageService;
         this.publicPageModelFactory = publicPageModelFactory;
-        this.cmsViewModelFactory = cmsViewModelFactory;
+        this.pageViewFactory = pageViewFactory;
     }
 
     /**
@@ -46,7 +46,7 @@ public final class PageController {
         }
 
         Map<String, Object> model = publicPageModelFactory.create(context, "community");
-        model.put("page", cmsViewModelFactory.page(page.get()));
+        model.put("page", pageViewFactory.page(page.get()));
         context.html(templateRenderer.render("page", model));
     }
 }

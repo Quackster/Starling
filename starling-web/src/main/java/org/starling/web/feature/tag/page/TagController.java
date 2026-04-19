@@ -1,13 +1,14 @@
-package org.starling.web.publicsite;
+package org.starling.web.feature.tag.page;
 
 import io.javalin.http.Context;
 import org.starling.storage.entity.UserEntity;
-import org.starling.web.layout.PublicPageLayoutRenderer;
+import org.starling.web.feature.shared.page.PublicPageModelFactory;
+import org.starling.web.feature.shared.page.layout.PublicPageLayoutRenderer;
+import org.starling.web.feature.tag.service.TagDirectoryService;
+import org.starling.web.feature.tag.service.UserTagService;
 import org.starling.web.render.TemplateRenderer;
 import org.starling.web.request.RequestValues;
-import org.starling.web.service.PublicTagService;
 import org.starling.web.user.UserSessionService;
-import org.starling.web.view.PublicPageModelFactory;
 
 import java.util.Map;
 import java.util.Optional;
@@ -18,27 +19,31 @@ public final class TagController {
     private final UserSessionService userSessionService;
     private final PublicPageLayoutRenderer publicPageLayoutRenderer;
     private final PublicPageModelFactory publicPageModelFactory;
-    private final PublicTagService publicTagService;
+    private final TagDirectoryService tagDirectoryService;
+    private final UserTagService userTagService;
 
     /**
      * Creates a new TagController.
      * @param templateRenderer the template renderer
      * @param userSessionService the user session service
      * @param publicPageModelFactory the public page model factory
-     * @param publicTagService the public tag service
+     * @param tagDirectoryService the public tag directory service
+     * @param userTagService the current-user tag service
      */
     public TagController(
             TemplateRenderer templateRenderer,
             UserSessionService userSessionService,
             PublicPageLayoutRenderer publicPageLayoutRenderer,
             PublicPageModelFactory publicPageModelFactory,
-            PublicTagService publicTagService
+            TagDirectoryService tagDirectoryService,
+            UserTagService userTagService
     ) {
         this.templateRenderer = templateRenderer;
         this.userSessionService = userSessionService;
         this.publicPageLayoutRenderer = publicPageLayoutRenderer;
         this.publicPageModelFactory = publicPageModelFactory;
-        this.publicTagService = publicTagService;
+        this.tagDirectoryService = tagDirectoryService;
+        this.userTagService = userTagService;
     }
 
     /**
@@ -68,8 +73,8 @@ public final class TagController {
     private void render(Context context, String requestedTag) {
         Optional<UserEntity> currentUser = userSessionService.authenticate(context);
         Map<String, Object> model = publicPageModelFactory.create(context, "community", "tags");
-        model.put("tagQuestion", publicTagService.tagQuestion());
-        model.put("tagSearch", publicTagService.search(
+        model.put("tagQuestion", userTagService.tagQuestion());
+        model.put("tagSearch", tagDirectoryService.search(
                 context,
                 currentUser,
                 requestedTag,

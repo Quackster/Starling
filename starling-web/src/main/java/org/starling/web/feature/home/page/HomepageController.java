@@ -1,11 +1,11 @@
-package org.starling.web.publicsite;
+package org.starling.web.feature.home.page;
 
 import io.javalin.http.Context;
+import org.starling.web.cms.page.PageService;
+import org.starling.web.cms.page.PageViewFactory;
+import org.starling.web.feature.shared.page.PublicPageModelFactory;
 import org.starling.web.render.TemplateRenderer;
-import org.starling.web.service.PageService;
 import org.starling.web.user.UserSessionService;
-import org.starling.web.view.CmsViewModelFactory;
-import org.starling.web.view.PublicPageModelFactory;
 
 import java.util.Collections;
 import java.util.Map;
@@ -16,7 +16,7 @@ public final class HomepageController {
     private final UserSessionService userSessionService;
     private final PageService pageService;
     private final PublicPageModelFactory publicPageModelFactory;
-    private final CmsViewModelFactory cmsViewModelFactory;
+    private final PageViewFactory pageViewFactory;
 
     /**
      * Creates a new HomepageController.
@@ -24,20 +24,20 @@ public final class HomepageController {
      * @param userSessionService the public user session service
      * @param pageService the page service
      * @param publicPageModelFactory the public page model factory
-     * @param cmsViewModelFactory the CMS view model factory
+     * @param pageViewFactory the page view factory
      */
     public HomepageController(
             TemplateRenderer templateRenderer,
             UserSessionService userSessionService,
             PageService pageService,
             PublicPageModelFactory publicPageModelFactory,
-            CmsViewModelFactory cmsViewModelFactory
+            PageViewFactory pageViewFactory
     ) {
         this.templateRenderer = templateRenderer;
         this.userSessionService = userSessionService;
         this.pageService = pageService;
         this.publicPageModelFactory = publicPageModelFactory;
-        this.cmsViewModelFactory = cmsViewModelFactory;
+        this.pageViewFactory = pageViewFactory;
     }
 
     /**
@@ -51,7 +51,7 @@ public final class HomepageController {
         }
 
         Map<String, Object> model = publicPageModelFactory.create(context, "community");
-        model.put("homePage", pageService.findHomepage().map(cmsViewModelFactory::page).orElse(null));
+        model.put("homePage", pageService.findHomepage().map(pageViewFactory::page).orElse(null));
         model.put("tagCloud", Collections.emptyMap());
         model.put("rememberMe", "true".equalsIgnoreCase(context.queryParam("rememberme")));
         model.put("username", valueOrEmpty(context.queryParam("username")));

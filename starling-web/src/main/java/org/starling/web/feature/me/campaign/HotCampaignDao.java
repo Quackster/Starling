@@ -1,4 +1,4 @@
-package org.starling.web.me;
+package org.starling.web.feature.me.campaign;
 
 import org.starling.storage.EntityContext;
 

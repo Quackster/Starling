@@ -8,20 +8,21 @@ import org.junit.jupiter.api.TestInstance;
 import org.starling.config.DatabaseConfig;
 import org.starling.storage.EntityContext;
 import org.starling.storage.dao.UserDao;
-import org.starling.web.cms.dao.CmsAdminDao;
-import org.starling.web.cms.dao.CmsArticleDao;
-import org.starling.web.cms.dao.CmsMediaDao;
-import org.starling.web.cms.dao.CmsNavigationDao;
-import org.starling.web.cms.dao.CmsPageDao;
+import org.starling.web.cms.admin.CmsAdminDao;
+import org.starling.web.cms.article.CmsArticleDao;
+import org.starling.web.cms.media.CmsMediaDao;
+import org.starling.web.cms.navigation.CmsNavigationDao;
+import org.starling.web.cms.page.CmsPageDao;
 import org.starling.web.config.WebConfig;
-import org.starling.web.me.HotCampaignDao;
-import org.starling.web.me.MailboxLabel;
-import org.starling.web.me.MinimailDao;
+import org.starling.web.feature.me.campaign.HotCampaignDao;
+import org.starling.web.feature.me.mail.MailboxLabel;
+import org.starling.web.feature.me.mail.MinimailDao;
 
 import io.javalin.Javalin;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.net.HttpCookie;
 import java.io.ByteArrayOutputStream;
 import java.net.CookieManager;
@@ -44,6 +45,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -240,6 +242,39 @@ class StarlingWebIntegrationTest {
         assertTrue(tagDetailResponse.body().contains("/tag/retro"));
         assertTrue(voucherResponse.body().contains("Please sign in to see your purse."));
         assertTrue(badgeResponse.body().length > 0);
+    }
+
+    @Test
+    void avatarImagingEndpointRendersFigureSpecificPngs() throws Exception {
+        HttpResponse<byte[]> firstAvatarResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve(
+                        "/habbo-imaging/avatarimage?figure=hr-100-61.hd-180-2.ch-210-92.lg-270-82.sh-290-64&size=b&direction=3&head_direction=3&gesture=sml&frame=1"
+                )).GET().build(),
+                HttpResponse.BodyHandlers.ofByteArray()
+        );
+        HttpResponse<byte[]> secondAvatarResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve(
+                        "/habbo-imaging/avatarimage?figure=hr-515-45.hd-600-2.ch-255-92.lg-720-82.sh-730-64&size=b&direction=3&head_direction=3&gesture=sml&frame=1"
+                )).GET().build(),
+                HttpResponse.BodyHandlers.ofByteArray()
+        );
+
+        BufferedImage firstAvatar = ImageIO.read(new ByteArrayInputStream(firstAvatarResponse.body()));
+        BufferedImage secondAvatar = ImageIO.read(new ByteArrayInputStream(secondAvatarResponse.body()));
+
+        assertEquals(200, firstAvatarResponse.statusCode());
+        assertEquals(200, secondAvatarResponse.statusCode());
+        assertEquals("image/png", firstAvatarResponse.headers().firstValue("Content-Type").orElse(""));
+        assertEquals("image/png", secondAvatarResponse.headers().firstValue("Content-Type").orElse(""));
+        assertNotNull(firstAvatar);
+        assertNotNull(secondAvatar);
+        assertEquals(64, firstAvatar.getWidth());
+        assertEquals(110, firstAvatar.getHeight());
+        assertEquals(64, secondAvatar.getWidth());
+        assertEquals(110, secondAvatar.getHeight());
+        assertTrue(firstAvatarResponse.body().length > 0);
+        assertTrue(secondAvatarResponse.body().length > 0);
+        assertNotEquals(java.util.Arrays.hashCode(firstAvatarResponse.body()), java.util.Arrays.hashCode(secondAvatarResponse.body()));
     }
 
     @Test
@@ -543,13 +578,20 @@ class StarlingWebIntegrationTest {
                 .id();
 
         HttpResponse<String> loadMessageResponse = client.send(
-                HttpRequest.newBuilder(baseUri.resolve("/minimail/loadMessage?key=3&messageId=" + messageId + "&label=inbox")).GET().build(),
+                HttpRequest.newBuilder(baseUri.resolve("/minimail/loadMessage?messageId=" + messageId + "&label=inbox")).GET().build(),
                 HttpResponse.BodyHandlers.ofString()
         );
         assertEquals(200, loadMessageResponse.statusCode());
         assertTrue(loadMessageResponse.body().contains("<b>Subject:</b> Ajax minimail"));
         assertTrue(loadMessageResponse.body().contains("class=\"reply-controls\""));
         assertTrue(loadMessageResponse.body().contains("class=\"new-button reply\""));
+
+        HttpResponse<String> legacyKeyLoadMessageResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/minimail/loadMessage?key=3&messageId=" + messageId + "&label=inbox")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertEquals(200, legacyKeyLoadMessageResponse.statusCode());
+        assertTrue(legacyKeyLoadMessageResponse.body().contains("<b>Subject:</b> Ajax minimail"));
 
         HttpResponse<String> previewResponse = postForm(
                 "/minimail/preview",
@@ -581,7 +623,7 @@ class StarlingWebIntegrationTest {
         assertTrue(deleteResponse.headers().firstValue("X-JSON").orElse("").contains("moved to the trash"));
 
         HttpResponse<String> trashResponse = postForm(
-                "/minimail/loadMessage?key=1",
+                "/minimail/loadMessages",
                 Map.of("label", "trash"),
                 Map.of()
         );

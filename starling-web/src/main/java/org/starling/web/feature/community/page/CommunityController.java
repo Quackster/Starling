@@ -1,17 +1,15 @@
-package org.starling.web.publicsite;
+package org.starling.web.feature.community.page;
 
 import io.javalin.http.Context;
 import org.starling.storage.entity.UserEntity;
-import org.starling.web.layout.PublicPageLayoutRenderer;
+import org.starling.web.feature.community.view.CommunityWidgetsFactory;
+import org.starling.web.feature.community.view.NewsPromoContentFactory;
+import org.starling.web.feature.shared.page.PublicPageModelFactory;
+import org.starling.web.feature.shared.page.layout.PublicPageLayoutRenderer;
+import org.starling.web.feature.tag.service.TagDirectoryService;
 import org.starling.web.render.TemplateRenderer;
-import org.starling.web.service.ArticleService;
-import org.starling.web.service.PublicTagService;
 import org.starling.web.user.UserSessionService;
-import org.starling.web.view.CommunityWidgetsFactory;
-import org.starling.web.view.CmsViewModelFactory;
-import org.starling.web.view.PublicPageModelFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -19,42 +17,38 @@ import java.util.Optional;
 public final class CommunityController {
 
     private final TemplateRenderer templateRenderer;
-    private final ArticleService articleService;
     private final UserSessionService userSessionService;
     private final PublicPageModelFactory publicPageModelFactory;
     private final CommunityWidgetsFactory communityWidgetsFactory;
-    private final PublicTagService publicTagService;
+    private final TagDirectoryService tagDirectoryService;
+    private final NewsPromoContentFactory newsPromoContentFactory;
     private final PublicPageLayoutRenderer publicPageLayoutRenderer;
-    private final CmsViewModelFactory cmsViewModelFactory;
 
     /**
      * Creates a new CommunityController.
      * @param templateRenderer the template renderer
-     * @param articleService the article service
      * @param userSessionService the user session service
      * @param publicPageModelFactory the public page model factory
      * @param communityWidgetsFactory the community widgets factory
-     * @param publicTagService the public tag service
-     * @param cmsViewModelFactory the CMS view model factory
+     * @param tagDirectoryService the public tag directory service
+     * @param newsPromoContentFactory the news promo content factory
      */
     public CommunityController(
             TemplateRenderer templateRenderer,
-            ArticleService articleService,
             UserSessionService userSessionService,
             PublicPageModelFactory publicPageModelFactory,
             CommunityWidgetsFactory communityWidgetsFactory,
-            PublicTagService publicTagService,
-            PublicPageLayoutRenderer publicPageLayoutRenderer,
-            CmsViewModelFactory cmsViewModelFactory
+            TagDirectoryService tagDirectoryService,
+            NewsPromoContentFactory newsPromoContentFactory,
+            PublicPageLayoutRenderer publicPageLayoutRenderer
     ) {
         this.templateRenderer = templateRenderer;
-        this.articleService = articleService;
         this.userSessionService = userSessionService;
         this.publicPageModelFactory = publicPageModelFactory;
         this.communityWidgetsFactory = communityWidgetsFactory;
-        this.publicTagService = publicTagService;
+        this.tagDirectoryService = tagDirectoryService;
+        this.newsPromoContentFactory = newsPromoContentFactory;
         this.publicPageLayoutRenderer = publicPageLayoutRenderer;
-        this.cmsViewModelFactory = cmsViewModelFactory;
     }
 
     /**
@@ -64,14 +58,7 @@ public final class CommunityController {
     public void community(Context context) {
         Map<String, Object> model = publicPageModelFactory.create(context, "community", "community");
         Optional<UserEntity> currentUser = userSessionService.authenticate(context);
-        List<Map<String, Object>> promoStories = new ArrayList<>(articleService.listPublished().stream()
-                .limit(4)
-                .map(cmsViewModelFactory::newsPromoArticle)
-                .toList());
-
-        while (promoStories.size() < 4) {
-            promoStories.add(cmsViewModelFactory.emptyNewsPromoArticle());
-        }
+        List<Map<String, Object>> promoStories = newsPromoContentFactory.list(4);
 
         List<Map<String, Object>> topRatedRooms = communityWidgetsFactory.topRatedRooms();
         List<Map<String, Object>> recommendedRooms = communityWidgetsFactory.recommendedRooms();
@@ -90,7 +77,7 @@ public final class CommunityController {
         model.put("promoStories", promoStories.subList(0, 2));
         model.put("promoHeadlines", promoStories.subList(2, 4));
         model.put("showNewsPromoRss", false);
-        model.put("tagCloud", publicTagService.tagCloud(context, currentUser));
+        model.put("tagCloud", tagDirectoryService.tagCloud(context, currentUser));
         model.put("pageLayout", publicPageLayoutRenderer.render("community", model));
         context.html(templateRenderer.render("community", model));
     }

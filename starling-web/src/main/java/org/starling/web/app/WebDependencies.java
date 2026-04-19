@@ -1,27 +1,38 @@
 package org.starling.web.app;
 
+import org.starling.web.app.asset.AvatarImagingService;
 import org.starling.web.cms.auth.SignedSessionService;
-import org.starling.web.layout.PublicPageLayoutRenderer;
-import org.starling.web.navigation.PublicNavigationModelFactory;
+import org.starling.web.cms.article.ArticleService;
+import org.starling.web.cms.article.ArticleViewFactory;
+import org.starling.web.cms.media.MediaAssetService;
+import org.starling.web.cms.media.MediaViewFactory;
+import org.starling.web.cms.navigation.NavigationService;
+import org.starling.web.cms.navigation.NavigationViewFactory;
+import org.starling.web.cms.page.PageService;
+import org.starling.web.cms.page.PageViewFactory;
+import org.starling.web.feature.community.view.CommunityWidgetsFactory;
+import org.starling.web.feature.community.view.NewsPromoContentFactory;
+import org.starling.web.feature.credits.view.CreditsPageContentFactory;
+import org.starling.web.feature.me.MeAccess;
+import org.starling.web.feature.me.campaign.HotCampaignService;
+import org.starling.web.feature.me.content.MePageContentFactory;
+import org.starling.web.feature.me.mail.LegacyMinimailJsonEncoder;
+import org.starling.web.feature.me.mail.MinimailRecipientService;
+import org.starling.web.feature.me.mail.MinimailSessionState;
+import org.starling.web.feature.me.mail.MinimailViewFactory;
+import org.starling.web.feature.me.mail.MinimailWriteService;
+import org.starling.web.feature.shared.page.PublicPageModelFactory;
+import org.starling.web.feature.shared.page.layout.PublicPageLayoutRenderer;
+import org.starling.web.feature.shared.page.navigation.PublicNavigationModelFactory;
+import org.starling.web.feature.tag.service.TagDirectoryService;
+import org.starling.web.feature.tag.service.UserTagService;
 import org.starling.web.render.MarkdownRenderer;
 import org.starling.web.render.TemplateRenderer;
-import org.starling.web.service.ArticleService;
-import org.starling.web.service.HotCampaignService;
-import org.starling.web.service.MediaAssetService;
-import org.starling.web.service.MinimailService;
-import org.starling.web.service.NavigationService;
-import org.starling.web.service.PageService;
-import org.starling.web.service.PublicTagService;
 import org.starling.web.site.SiteBranding;
 import org.starling.web.theme.ThemeResourceResolver;
 import org.starling.web.user.UserSessionService;
-import org.starling.web.view.AdminPageModelFactory;
-import org.starling.web.view.CommunityWidgetsFactory;
-import org.starling.web.view.CmsViewModelFactory;
-import org.starling.web.view.CreditsPageContentFactory;
-import org.starling.web.view.PublicFeatureContentFactory;
-import org.starling.web.view.PublicPageModelFactory;
-import org.starling.web.view.UserViewModelFactory;
+import org.starling.web.admin.AdminPageModelFactory;
+import org.starling.web.user.view.UserViewModelFactory;
 
 public record WebDependencies(
         TemplateRenderer templateRenderer,
@@ -30,21 +41,32 @@ public record WebDependencies(
         UserSessionService userSessionService,
         SiteBranding siteBranding,
         ThemeResourceResolver themeResourceResolver,
+        AvatarImagingService avatarImagingService,
         PageService pageService,
         ArticleService articleService,
         HotCampaignService hotCampaignService,
-        MinimailService minimailService,
+        MinimailRecipientService minimailRecipientService,
+        MinimailWriteService minimailWriteService,
+        MinimailViewFactory minimailViewFactory,
+        MinimailSessionState minimailSessionState,
+        LegacyMinimailJsonEncoder legacyMinimailJsonEncoder,
         NavigationService navigationService,
         MediaAssetService mediaAssetService,
-        PublicTagService publicTagService,
+        UserTagService userTagService,
+        TagDirectoryService tagDirectoryService,
         CommunityWidgetsFactory communityWidgetsFactory,
+        NewsPromoContentFactory newsPromoContentFactory,
         CreditsPageContentFactory creditsPageContentFactory,
         PublicNavigationModelFactory publicNavigationModelFactory,
         PublicPageLayoutRenderer publicPageLayoutRenderer,
         PublicPageModelFactory publicPageModelFactory,
-        PublicFeatureContentFactory publicFeatureContentFactory,
+        MePageContentFactory mePageContentFactory,
+        MeAccess meAccess,
         AdminPageModelFactory adminPageModelFactory,
-        CmsViewModelFactory cmsViewModelFactory,
+        ArticleViewFactory articleViewFactory,
+        PageViewFactory pageViewFactory,
+        NavigationViewFactory navigationViewFactory,
+        MediaViewFactory mediaViewFactory,
         UserViewModelFactory userViewModelFactory
 ) {
 }

@@ -1,10 +1,11 @@
-package org.starling.web.publicsite;
+package org.starling.web.feature.tag.widget;
 
 import io.javalin.http.Context;
 import org.starling.storage.entity.UserEntity;
+import org.starling.web.feature.tag.service.TagDirectoryService;
+import org.starling.web.feature.tag.service.UserTagService;
 import org.starling.web.render.TemplateRenderer;
 import org.starling.web.request.RequestValues;
-import org.starling.web.service.PublicTagService;
 import org.starling.web.site.SiteBranding;
 import org.starling.web.user.UserSessionService;
 
@@ -17,24 +18,28 @@ public final class TagHabbletController {
 
     private final TemplateRenderer templateRenderer;
     private final UserSessionService userSessionService;
-    private final PublicTagService publicTagService;
+    private final TagDirectoryService tagDirectoryService;
+    private final UserTagService userTagService;
     private final SiteBranding siteBranding;
 
     /**
      * Creates a new TagHabbletController.
      * @param templateRenderer the template renderer
      * @param userSessionService the user session service
-     * @param publicTagService the public tag service
+     * @param tagDirectoryService the public tag directory service
+     * @param userTagService the current-user tag service
      */
     public TagHabbletController(
             TemplateRenderer templateRenderer,
             UserSessionService userSessionService,
-            PublicTagService publicTagService,
+            TagDirectoryService tagDirectoryService,
+            UserTagService userTagService,
             SiteBranding siteBranding
     ) {
         this.templateRenderer = templateRenderer;
         this.userSessionService = userSessionService;
-        this.publicTagService = publicTagService;
+        this.tagDirectoryService = tagDirectoryService;
+        this.userTagService = userTagService;
         this.siteBranding = siteBranding;
     }
 
@@ -45,7 +50,7 @@ public final class TagHabbletController {
     public void tagSearch(Context context) {
         Optional<UserEntity> currentUser = userSessionService.authenticate(context);
         Map<String, Object> model = new LinkedHashMap<>();
-        model.put("tagSearch", publicTagService.search(
+        model.put("tagSearch", tagDirectoryService.search(
                 context,
                 currentUser,
                 context.formParam("tag"),
@@ -62,7 +67,7 @@ public final class TagHabbletController {
     public void tagFight(Context context) {
         Map<String, Object> model = Map.of(
                 "site", Map.of("webGalleryPath", siteBranding.webGalleryPath()),
-                "fight", publicTagService.tagFight(
+                "fight", tagDirectoryService.tagFight(
                         context,
                         userSessionService.authenticate(context),
                         context.formParam("tag1"),
@@ -83,7 +88,7 @@ public final class TagHabbletController {
             return;
         }
 
-        Map<String, Object> model = Map.of("match", publicTagService.tagMatch(context, currentUser.get(), context.formParam("friendName")));
+        Map<String, Object> model = Map.of("match", tagDirectoryService.tagMatch(context, currentUser.get(), context.formParam("friendName")));
         context.html(templateRenderer.render("habblet/tag_match_result", model));
     }
 
@@ -98,7 +103,7 @@ public final class TagHabbletController {
             return;
         }
 
-        context.result(publicTagService.addTag(context, currentUser.get(), context.formParam("tagName")));
+        context.result(userTagService.addTag(context, currentUser.get(), context.formParam("tagName")));
     }
 
     /**
@@ -112,7 +117,7 @@ public final class TagHabbletController {
             return;
         }
 
-        publicTagService.removeTag(context, currentUser.get(), context.formParam("tagName"));
+        userTagService.removeTag(context, currentUser.get(), context.formParam("tagName"));
         context.result("valid");
     }
 
@@ -127,12 +132,12 @@ public final class TagHabbletController {
             return;
         }
 
-        List<String> myTags = publicTagService.currentUserTags(context, currentUser.get());
+        List<String> myTags = userTagService.currentUserTags(context, currentUser.get());
         Map<String, Object> model = new LinkedHashMap<>();
         model.put("site", Map.of("sitePath", siteBranding.sitePath()));
         model.put("myTags", myTags);
         model.put("tagCount", myTags.size());
-        model.put("tagQuestion", publicTagService.tagQuestion());
+        model.put("tagQuestion", userTagService.tagQuestion());
         context.html(templateRenderer.render("habblet/me_tags_list", model));
     }
 }

@@ -1,8 +1,6 @@
 package org.starling.web.cms.media;
 
 import io.javalin.http.UploadedFile;
-import org.starling.web.cms.dao.CmsMediaDao;
-import org.starling.web.cms.model.CmsMediaAsset;
 import org.starling.web.config.WebConfig;
 import org.starling.web.util.Slugifier;
 

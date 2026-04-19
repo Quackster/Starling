@@ -106,173 +106,280 @@ body { behavior: url({{ site.webGalleryPath }}/js/csshover.htc); }
 		<div id="content">
 			{% include "base/frontpage_header.peb" %}
 			<div id="process-content">
-	        	<div id="column1" class="column">
+	        <div id="column1" class="column">
 			<div class="habblet-container ">
 	    <form method="post" action="{{ site.sitePath }}/register" id="registerform" autocomplete="off">
-			{% if referral > 0 %}<input type="hidden" name="referral" id="register-referrer" value="{{ referral }}" />{% endif %}
 			<input type="hidden" name="bean.figure" id="register-figure" value="{{ registerFigure }}" />
 			<input type="hidden" name="bean.gender" id="register-gender" value="{{ registerGender }}" />
 			<input type="hidden" name="bean.editorState" id="register-editor-state" value="" />
-	        <div id="register-column-right" >
-            <div id="register-section-2">
-                <div class="rounded rounded-blue">
-                    <h2 class="heading"><span class="numbering white">2.</span>CHOOSE YOUR NAME</h2>
-
-                    <fieldset id="register-fieldset-name">
-	                    {% if registerUsername != "" %}
-	                    <div class="register-label white">{{ site.siteName }} name</div>
-	                    <div class="register-input">{{ registerUsername }}</div>
-	                    {% else %}
-	                    <div class="register-label white">{{ site.siteName }} name</div>
-		                <input type="text" name="bean.avatarName" id="register-name" class="register-text" value="" size="25" />
-		                <span id="register-name-check-container" style="display:none">
-		                    <a class="new-button search-icon" href="#" id="register-name-check"><b><span></span></b><i></i></a>
-		                </span>
-	                    {% endif %}
-                    </fieldset>
-                </div>
+			{% if registerReferral != "" %}<input type="hidden" name="referral" id="register-referrer" value="{{ registerReferral }}" />{% endif %}
+			{% if registerInviterName != "" %}
+			<div id="inviter-info">
+                <p>Your friend {{ registerInviterName }} is waiting for you!</p>
+                <img alt="{{ registerInviterName }}" title="{{ registerInviterName }}" src="{{ site.sitePath }}/habbo-imaging/avatarimage?figure={{ registerInviterFigure }}&size=b&direction=4&head_direction=4&crr=0&gesture=sml&frame=1" />
             </div>
+			{% endif %}
+			{% if not registerCaptchaInvalid %}
+	        <div id="register-column-left">
+                <div id="register-section-2">
+                    <div class="rounded rounded-blue">
+                        <h2 class="heading"><span class="numbering white">2.</span>CHOOSE YOUR NAME</h2>
 
-            <div id="register-section-3">
-                <div id="registration-overlay"></div>
-	            <div class="cbb clearfix gray">
-    	            <h2 class="title heading"><span class="numbering white">3.</span>Your Details</h2>
-    		        <div class="box-content">
-
-                        <fieldset id="register-fieldset-password">
-	                        <div class="register-label"><label for="register-password">My password will be:</label></div>
-	                        {% if registerShowPassword != "" %}
-	                        <div class="register-input">{{ registerShowPassword }}</div>
-	                        {% else %}
-	                        <div class="register-label"><input type="password" name="password" id="register-password" class="register-text" size="25" value="" /></div>
-	                        <div class="register-label"><label for="register-password2">Confirm password</label></div>
-	                        <div class="register-label"><input type="password" name="retypedPassword" id="register-password2" class="register-text" size="25" value="" /></div>
-	                        {% endif %}
+                        <fieldset id="register-fieldset-name">
+                            <div class="register-label white">{{ site.siteName }} name</div>
+                            <input type="text" name="bean.avatarName" id="register-name" class="register-text" value="{{ registerUsername }}" size="25" />
+                            <span id="register-name-check-container" style="display:none">
+                                <a class="new-button search-icon" href="#" id="register-name-check"><b><span></span></b><i></i></a>
+                            </span>
                         </fieldset>
-
-                        <fieldset>
-	                        <div class="register-label"><label>I was born on:</label></div>
-	                        {% if registerDay != "" %}
-	                        <div class="register-input">{{ registerDay }}/{{ registerMonth }}/{{ registerYear }}</div>
-	                        {% else %}
-	                        <div id="register-birthday">
-	                            <select name="bean.day" id="bean_day" class="dateselector">
-	                                <option value="">Day</option>
-	                                {% for dayOption in 1..31 %}
-	                                <option value="{{ dayOption }}">{{ dayOption }}</option>
-	                                {% endfor %}
-	                            </select>
-	                            <select name="bean.month" id="bean_month" class="dateselector">
-	                                <option value="">Month</option>
-	                                <option value="1">January</option>
-	                                <option value="2">February</option>
-	                                <option value="3">March</option>
-	                                <option value="4">April</option>
-	                                <option value="5">May</option>
-	                                <option value="6">June</option>
-	                                <option value="7">July</option>
-	                                <option value="8">August</option>
-	                                <option value="9">September</option>
-	                                <option value="10">October</option>
-	                                <option value="11">November</option>
-	                                <option value="12">December</option>
-	                            </select>
-	                            <select name="bean.year" id="bean_year" class="dateselector">
-	                                <option value="">Year</option>
-	                                {% for yearOption in 1900..2025 %}
-	                                <option value="{{ yearOption }}">{{ yearOption }}</option>
-	                                {% endfor %}
-	                            </select>
-	                        </div>
-	                        {% endif %}
-                        </fieldset>
-
-                        <fieldset>
-	                        <div class="register-label"><label for="register-email">And my email address is:</label></div>
-	                        {% if registerEmail != "" %}
-	                        <div class="register-input">{{ registerEmail }}</div>
-	                        {% else %}
-	                        <div class="register-label"><input type="text" name="bean.email" id="register-email" class="register-text" value="" size="25" maxlength="48" /></div>
-	                        <div class="register-label"><label for="register-email2">Retype your email address</label></div>
-	                        <div class="register-label"><input type="text" name="bean.retypedEmail" id="register-email2" class="register-text" value="" size="25" maxlength="48" /></div>
-	                        {% endif %}
-	                        {% if registerEmailInvalid %}
-	                        <div id="email-error-box"><div class="register-error"><div class="rounded rounded-red">The email entered is already used by someone else.</div></div></div>
-	                        {% endif %}
-                        </fieldset>
-
-	                    <div id="register-marketing-box">
-		                    <input type="checkbox" name="bean.marketing" id="bean_marketing" value="true" checked="checked" />
-		                    <label for="bean_marketing">Yes, please send me {{ site.siteName }} updates, including the newsletter!</label>
-	                    </div>
-
-                        <fieldset id="register-fieldset-captcha">
-                            <div class="register-label"><img id="captcha" src="{{ site.sitePath }}/captcha.jpg?t={{ randomNum }}&register=1" alt="" width="200" height="60" /></div>
-                            <div class="register-label" id="captcha-reload">
-                                <img src="{{ site.webGalleryPath }}/v2/images/shared_icons/reload_icon.gif" width="15" height="15"/>
-                                <a href="#" onclick="document.getElementById('captcha').src='{{ site.sitePath }}/captcha.jpg?t=' + new Date().getTime() + '&register=1'; return false;">I can't read the code! Please give me another one.</a>
-                            </div>
-                            {% if registerCaptchaInvalid %}
-                            <div id="captcha-error-box"><div class="register-error"><div class="rounded rounded-red">The code that you filled in isn't right, please try again.</div></div></div>
-                            {% endif %}
-                            <div class="register-label"><label for="register-captcha">Type in the security code shown in the image above</label></div>
-                            <div id="captcha_response"><input type="text" name="bean.captchaResponse" id="recaptcha_response_field" class="register-text{% if registerCaptchaInvalid %} error{% endif %}" value="" size="25" /></div>
-                        </fieldset>
-
-                        <fieldset id="register-fieldset-terms">
-                            <div class="rounded rounded-darkgray" id="register-terms">
-	                            <div id="register-terms-content">
-	                                <p><a href="{{ site.sitePath }}/papers/disclaimer" target="_blank" id="register-terms-link">Terms of Service</a></p>
-                                    <p class="last">
-                                        <input type="checkbox" name="bean.termsOfServiceSelection" id="register-terms-check" value="true" checked="checked" />
-                                        <label for="register-terms-check">By clicking on continue, I confirm that I have read and accept the Terms of Use and Privacy Policy.</label>
-                                    </p>
+                        <div id="name-error-box">
+                            {% if registerNameError != "" %}
+                            <div class="register-error">
+                                <div class="rounded rounded-red">
+                                    <div id="name-error-content">{{ registerNameError }}</div>
                                 </div>
                             </div>
-                        </fieldset>
-		            </div>
-	            </div>
-	        </div>
-        </div>
-        <div id="register-column-left">
-
-            <div id="register-avatar-editor-title">
-                <h2 class="heading"><span class="numbering white">1.</span>Create Your {{ site.siteName }}</h2>
-            </div>
-
-            <div id="register-avatar-editor">
-<p><b>You don't have Flash installed. This is why we can only show you a selection of pre-generated {{ site.pluralName }}. If you install Flash, you'll be able to choose from the hundreds of different options!</b></p>
-                <h3>Girls</h3>
-                <div class="register-avatars clearfix">
-	                <div class="register-avatar" style="background-image: url({{ site.sitePath }}/habbo-imaging/avatarimage?figure={{ randomFemaleFigure1 }}&size=b&direction=4&head_direction=4&crr=0&gesture=sml&frame=1)">
-	                    <input type="radio" name="randomFigure" value="F-{{ randomFemaleFigure1 }}" checked="checked" />
-	                </div>
-	                <div class="register-avatar" style="background-image: url({{ site.sitePath }}/habbo-imaging/avatarimage?figure={{ randomFemaleFigure2 }}&size=b&direction=4&head_direction=4&crr=0&gesture=sml&frame=1)">
-	                    <input type="radio" name="randomFigure" value="F-{{ randomFemaleFigure2 }}" />
-	                </div>
-	                <div class="register-avatar" style="background-image: url({{ site.sitePath }}/habbo-imaging/avatarimage?figure={{ randomFemaleFigure3 }}&size=b&direction=4&head_direction=4&crr=0&gesture=sml&frame=1)">
-	                    <input type="radio" name="randomFigure" value="F-{{ randomFemaleFigure3 }}" />
-	                </div>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
-                <h3>Boys</h3>
-                <div class="register-avatars clearfix">
-	                <div class="register-avatar" style="background-image: url({{ site.sitePath }}/habbo-imaging/avatarimage?figure={{ randomMaleFigure1 }}&size=b&direction=4&head_direction=4&crr=0&gesture=sml&frame=1)">
-	                    <input type="radio" name="randomFigure" value="M-{{ randomMaleFigure1 }}" />
-	                </div>
-	                <div class="register-avatar" style="background-image: url({{ site.sitePath }}/habbo-imaging/avatarimage?figure={{ randomMaleFigure2 }}&size=b&direction=4&head_direction=4&crr=0&gesture=sml&frame=1)">
-	                    <input type="radio" name="randomFigure" value="M-{{ randomMaleFigure2 }}" />
-	                </div>
-	                <div class="register-avatar" style="background-image: url({{ site.sitePath }}/habbo-imaging/avatarimage?figure={{ randomMaleFigure3 }}&size=b&direction=4&head_direction=4&crr=0&gesture=sml&frame=1)">
-	                    <input type="radio" name="randomFigure" value="M-{{ randomMaleFigure3 }}" />
-	                </div>
-	            </div>
-                <p>If you dislike the {{ site.siteName }} above, you may change it later via the account settings page</p>
-            </div>
 
-            <div id="register-buttons">
-                <input type="submit" value="Continue" class="continue" id="register-button-continue" />
-                <a href="{{ site.sitePath }}/register/cancel" class="cancel">Exit registration</a>
+                <div id="register-section-3">
+                    <div id="registration-overlay"></div>
+                    <div class="cbb clearfix gray">
+                        <h2 class="title heading"><span class="numbering white">3.</span>Your Details</h2>
+                        <div class="box-content">
+                            {% if registerPasswordError != "" %}
+                            <div class="register-error">
+                                <div class="rounded rounded-red">
+                                    <div id="password-error-content"><div>{{ registerPasswordError }}</div></div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <fieldset id="register-fieldset-password">
+                                <div class="register-label"><label for="register-password">My password will be:</label></div>
+                                <div class="register-label"><input type="password" name="password" id="register-password" class="register-text" size="25" value="" /></div>
+                                <div class="register-label"><label for="register-password2">Confirm password</label></div>
+                                <div class="register-label"><input type="password" name="retypedPassword" id="register-password2" class="register-text" size="25" value="" /></div>
+                            </fieldset>
+                            <div id="password-error-box"></div>
+
+                            {% if registerBirthdayError != "" %}
+                            <div class="register-error">
+                                <div class="rounded rounded-red">
+                                    <div id="birthday-error-content"><div>{{ registerBirthdayError }}</div></div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <fieldset>
+                                <div class="register-label"><label>I was born on:</label></div>
+                                <div id="register-birthday">
+                                    <select name="bean.day" id="bean_day" class="dateselector">
+                                        <option value="">Day</option>
+                                        {% for dayOption in 1..31 %}
+                                        <option value="{{ dayOption }}"{% if registerDayInt == dayOption %} selected="selected"{% endif %}>{{ dayOption }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <select name="bean.month" id="bean_month" class="dateselector">
+                                        <option value="">Month</option>
+                                        <option value="1"{% if registerMonthInt == 1 %} selected="selected"{% endif %}>January</option>
+                                        <option value="2"{% if registerMonthInt == 2 %} selected="selected"{% endif %}>February</option>
+                                        <option value="3"{% if registerMonthInt == 3 %} selected="selected"{% endif %}>March</option>
+                                        <option value="4"{% if registerMonthInt == 4 %} selected="selected"{% endif %}>April</option>
+                                        <option value="5"{% if registerMonthInt == 5 %} selected="selected"{% endif %}>May</option>
+                                        <option value="6"{% if registerMonthInt == 6 %} selected="selected"{% endif %}>June</option>
+                                        <option value="7"{% if registerMonthInt == 7 %} selected="selected"{% endif %}>July</option>
+                                        <option value="8"{% if registerMonthInt == 8 %} selected="selected"{% endif %}>August</option>
+                                        <option value="9"{% if registerMonthInt == 9 %} selected="selected"{% endif %}>September</option>
+                                        <option value="10"{% if registerMonthInt == 10 %} selected="selected"{% endif %}>October</option>
+                                        <option value="11"{% if registerMonthInt == 11 %} selected="selected"{% endif %}>November</option>
+                                        <option value="12"{% if registerMonthInt == 12 %} selected="selected"{% endif %}>December</option>
+                                    </select>
+                                    <select name="bean.year" id="bean_year" class="dateselector">
+                                        <option value="">Year</option>
+                                        {% for yearOption in registerYearOptions %}
+                                        <option value="{{ yearOption }}"{% if registerYearInt == yearOption %} selected="selected"{% endif %}>{{ yearOption }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </fieldset>
+
+                            <div id="email-error-box">
+                                {% if registerEmailError != "" %}
+                                <div class="register-error">
+                                    <div class="rounded rounded-red">
+                                        <div id="email-error-content"><div>{{ registerEmailError }}</div></div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <fieldset>
+                                <div class="register-label"><label for="register-email">And my email address is:</label></div>
+                                <div class="register-label"><input type="text" name="bean.email" id="register-email" class="register-text" value="{{ registerEmail }}" size="25" maxlength="48" /></div>
+                                <div class="register-label"><label for="register-email2">Retype your email address</label></div>
+                                <div class="register-label"><input type="text" name="bean.retypedEmail" id="register-email2" class="register-text" value="" size="25" maxlength="48" /></div>
+                            </fieldset>
+
+                            <div id="register-marketing-box">
+                                <input type="checkbox" name="bean.marketing" id="bean_marketing" value="true" checked="checked" />
+                                <label for="bean_marketing">Yes, please send me {{ site.siteName }} updates, including the newsletter!</label>
+                            </div>
+
+                            <fieldset id="register-fieldset-captcha">
+                                <noscript>
+                                    <div class="register-label"><img src="{{ site.sitePath }}/captcha.jpg" alt="" width="200" height="60" /></div>
+                                    <div class="register-label"><label for="register-captcha">Type in the security code shown in the image above</label></div>
+                                    <div id="captcha_response"><input type="text" name="bean.captchaResponse" id="recaptcha_response_field" class="register-text" value="" size="25" /></div>
+                                </noscript>
+                            </fieldset>
+
+                            <div id="terms-error-box">
+                                {% if registerTermsError != "" %}
+                                <div class="register-error">
+                                    <div class="rounded rounded-red">{{ registerTermsError }}</div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <fieldset id="register-fieldset-terms">
+                                <div class="rounded rounded-darkgray" id="register-terms">
+                                    <div id="register-terms-content">
+                                        <p><a href="{{ site.sitePath }}/papers/disclaimer" target="_blank" id="register-terms-link">Terms of Service</a></p>
+                                        <p class="last">
+                                            <input type="checkbox" name="bean.termsOfServiceSelection" id="register-terms-check" value="true" />
+                                            <label for="register-terms-check">By clicking on continue, I confirm that I have read and accept the Terms of Use and Privacy Policy.</label>
+                                        </p>
+                                    </div>
+                                </div>
+                            </fieldset>
+                        </div>
+                    </div>
+                    <div id="form-validation-error-box"{% if registerFormError == "" %} style="display:none"{% endif %}>
+                        <div class="register-error">
+                            <div class="rounded rounded-red">{{ registerFormError }}</div>
+                        </div>
+                    </div>
+                </div>
             </div>
+			{% else %}
+            <div id="register-column-left">
+                <div id="register-section-2">
+                    <div class="rounded rounded-blue">
+                        <h2 class="heading"><span class="numbering white">2.</span>CHOOSE YOUR NAME</h2>
+
+                        <fieldset id="register-fieldset-name">
+                            <div class="register-label white">{{ site.siteName }} name</div>
+                            <div class="register-input">{{ registerUsername }}</div>
+                        </fieldset>
+                    </div>
+                </div>
+
+                <div id="register-section-3">
+                    <div id="registration-overlay"></div>
+                    <div class="cbb clearfix gray">
+                        <h2 class="title heading"><span class="numbering white">3.</span>Your Details</h2>
+                        <div class="box-content">
+                            <fieldset id="register-fieldset-password">
+                                <div class="register-label"><label for="register-password">My password will be:</label></div>
+                                <div class="register-input">*******</div>
+                            </fieldset>
+
+                            <fieldset>
+                                <div class="register-label"><label>I was born on:</label></div>
+                                <div class="register-input">{{ registerMonth }}/{{ registerDay }}/{{ registerYear }}</div>
+                            </fieldset>
+
+                            <div id="email-error-box"></div>
+
+                            <fieldset>
+                                <div class="register-label"><label for="register-email">And my email address is:</label></div>
+                                <div class="register-input">{{ registerEmail }}</div>
+                            </fieldset>
+
+                            <div id="register-marketing-box">
+                                <input type="checkbox" name="bean.marketing" id="bean_marketing" value="true" checked="checked" />
+                                <label for="bean_marketing">Yes, please send me {{ site.siteName }} updates, including the newsletter!</label>
+                            </div>
+
+                            <fieldset id="register-fieldset-captcha">
+                                <div class="register-label"><img id="captcha" src="{{ site.sitePath }}/captcha.jpg?t={{ randomNum }}&register=1" alt="" width="200" height="60" /></div>
+                                <div class="register-label" id="captcha-reload">
+                                    <img src="{{ site.webGalleryPath }}/v2/images/shared_icons/reload_icon.gif" width="15" height="15"/>
+                                    <a href="#" onclick="document.getElementById('captcha').src='{{ site.sitePath }}/captcha.jpg?t=' + new Date().getTime() + '&register=1'; return false;">I can't read the code! Please give me another one.</a>
+                                </div>
+
+                                <div id="captcha-error-box">
+                                    <div class="register-error">
+                                        <div class="rounded rounded-red">The code that you filled in isn't right, please try again.</div>
+                                    </div>
+                                </div>
+                                <div class="register-label"><label for="register-captcha">Type in the security code shown in the image above</label></div>
+                                <div id="captcha_response"><input type="text" name="bean.captchaResponse" id="recaptcha_response_field" class="register-text error" value="" size="25" /></div>
+                            </fieldset>
+
+                            <div id="terms-error-box"></div>
+                            <fieldset id="register-fieldset-terms">
+                                <div class="rounded rounded-darkgray" id="register-terms">
+                                    <div id="register-terms-content">
+                                        <p><a href="{{ site.sitePath }}/papers/disclaimer" target="_blank" id="register-terms-link">Terms of Service</a></p>
+                                        <p class="last">
+                                            <input type="checkbox" name="bean.termsOfServiceSelection" id="register-terms-check" value="true" checked="checked" />
+                                            <label for="register-terms-check">By clicking on continue, I confirm that I have read and accept the Terms of Use and Privacy Policy.</label>
+                                        </p>
+                                    </div>
+                                </div>
+                            </fieldset>
+                        </div>
+                    </div>
+                    <div id="form-validation-error-box" style="display:none">
+                        <div class="register-error">
+                            <div class="rounded rounded-red">There was a problem with your registration details.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+			{% endif %}
+            <div id="register-column-right">
+                <div id="register-avatar-editor-title">
+                    <h2 class="heading"><span class="numbering white">1.</span>Create Your {{ site.siteName }}</h2>
+                </div>
+
+                <div id="avatar-error-box"></div>
+                <div id="register-avatar-editor">
+                    <p><b>You don't have Flash installed. This is why we can only show you a selection of pre-generated {{ site.pluralName }}. If you install Flash, you'll be able to choose from the hundreds of different options!</b></p>
+                    <h3>Girls</h3>
+                    <div class="register-avatars clearfix">
+                        <div class="register-avatar" style="background-image: url({{ site.sitePath }}/habbo-imaging/avatarimage?figure={{ randomFemaleFigure1 }}&size=b&direction=4&head_direction=4&crr=0&gesture=sml&frame=1)">
+                            <input type="radio" name="randomFigure" value="F-{{ randomFemaleFigure1 }}" />
+                        </div>
+                        <div class="register-avatar" style="background-image: url({{ site.sitePath }}/habbo-imaging/avatarimage?figure={{ randomFemaleFigure2 }}&size=b&direction=4&head_direction=4&crr=0&gesture=sml&frame=1)">
+                            <input type="radio" name="randomFigure" value="F-{{ randomFemaleFigure2 }}" />
+                        </div>
+                        <div class="register-avatar" style="background-image: url({{ site.sitePath }}/habbo-imaging/avatarimage?figure={{ randomFemaleFigure3 }}&size=b&direction=4&head_direction=4&crr=0&gesture=sml&frame=1)">
+                            <input type="radio" name="randomFigure" value="F-{{ randomFemaleFigure3 }}" />
+                        </div>
+                    </div>
+                    <h3>Boys</h3>
+                    <div class="register-avatars clearfix">
+                        <div class="register-avatar" style="background-image: url({{ site.sitePath }}/habbo-imaging/avatarimage?figure={{ randomMaleFigure1 }}&size=b&direction=4&head_direction=4&crr=0&gesture=sml&frame=1)">
+                            <input type="radio" name="randomFigure" value="M-{{ randomMaleFigure1 }}" />
+                        </div>
+                        <div class="register-avatar" style="background-image: url({{ site.sitePath }}/habbo-imaging/avatarimage?figure={{ randomMaleFigure2 }}&size=b&direction=4&head_direction=4&crr=0&gesture=sml&frame=1)">
+                            <input type="radio" name="randomFigure" value="M-{{ randomMaleFigure2 }}" />
+                        </div>
+                        <div class="register-avatar" style="background-image: url({{ site.sitePath }}/habbo-imaging/avatarimage?figure={{ randomMaleFigure3 }}&size=b&direction=4&head_direction=4&crr=0&gesture=sml&frame=1)">
+                            <input type="radio" name="randomFigure" value="M-{{ randomMaleFigure3 }}" />
+                        </div>
+                    </div>
+                    <p>If you dislike the {{ site.siteName }} above, you may change it later via the account settings page</p>
+                </div>
+
+                <div id="register-buttons">
+                    <input type="submit" value="Continue" class="continue" id="register-button-continue" />
+                    <a href="{{ site.sitePath }}/register/cancel" class="cancel">Exit registration</a>
+                </div>
 	    </div>
     </form>
 				</div>

@@ -1,12 +1,12 @@
-package org.starling.web.publicsite;
+package org.starling.web.feature.credits.page;
 
 import io.javalin.http.Context;
 import org.starling.storage.entity.UserEntity;
-import org.starling.web.layout.PublicPageLayoutRenderer;
+import org.starling.web.feature.credits.view.CreditsPageContentFactory;
+import org.starling.web.feature.shared.page.PublicPageModelFactory;
+import org.starling.web.feature.shared.page.layout.PublicPageLayoutRenderer;
 import org.starling.web.render.TemplateRenderer;
 import org.starling.web.user.UserSessionService;
-import org.starling.web.view.CreditsPageContentFactory;
-import org.starling.web.view.PublicPageModelFactory;
 
 import java.util.Map;
 import java.util.Optional;

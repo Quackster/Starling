@@ -1,7 +1,4 @@
-package org.starling.web.service;
-
-import org.starling.web.me.HotCampaign;
-import org.starling.web.me.HotCampaignDao;
+package org.starling.web.feature.me.campaign;
 
 import java.util.LinkedHashMap;
 import java.util.List;

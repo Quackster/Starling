@@ -1,12 +1,12 @@
-package org.starling.web.publicsite;
+package org.starling.web.feature.community.page;
 
 import io.javalin.http.Context;
-import org.starling.web.cms.model.CmsArticle;
-import org.starling.web.layout.PublicPageLayoutRenderer;
+import org.starling.web.cms.article.ArticleService;
+import org.starling.web.cms.article.ArticleViewFactory;
+import org.starling.web.cms.article.CmsArticle;
+import org.starling.web.feature.shared.page.PublicPageModelFactory;
+import org.starling.web.feature.shared.page.layout.PublicPageLayoutRenderer;
 import org.starling.web.render.TemplateRenderer;
-import org.starling.web.service.ArticleService;
-import org.starling.web.view.CmsViewModelFactory;
-import org.starling.web.view.PublicPageModelFactory;
 
 import java.util.Collections;
 import java.util.List;
@@ -19,27 +19,27 @@ public final class NewsController {
     private final ArticleService articleService;
     private final PublicPageLayoutRenderer publicPageLayoutRenderer;
     private final PublicPageModelFactory publicPageModelFactory;
-    private final CmsViewModelFactory cmsViewModelFactory;
+    private final ArticleViewFactory articleViewFactory;
 
     /**
      * Creates a new NewsController.
      * @param templateRenderer the template renderer
      * @param articleService the article service
      * @param publicPageModelFactory the public page model factory
-     * @param cmsViewModelFactory the CMS view model factory
+     * @param articleViewFactory the article view factory
      */
     public NewsController(
             TemplateRenderer templateRenderer,
             ArticleService articleService,
             PublicPageLayoutRenderer publicPageLayoutRenderer,
             PublicPageModelFactory publicPageModelFactory,
-            CmsViewModelFactory cmsViewModelFactory
+            ArticleViewFactory articleViewFactory
     ) {
         this.templateRenderer = templateRenderer;
         this.articleService = articleService;
         this.publicPageLayoutRenderer = publicPageLayoutRenderer;
         this.publicPageModelFactory = publicPageModelFactory;
-        this.cmsViewModelFactory = cmsViewModelFactory;
+        this.articleViewFactory = articleViewFactory;
     }
 
     /**
@@ -83,14 +83,14 @@ public final class NewsController {
         model.put("monthlyView", false);
         model.put("archiveView", archiveView);
         model.put("urlSuffix", "");
-        model.put("currentArticle", cmsViewModelFactory.lisbonArticle(currentArticle));
+        model.put("currentArticle", articleViewFactory.lisbonArticle(currentArticle));
         model.put("months", Collections.emptyMap());
-        model.put("archives", archiveView ? cmsViewModelFactory.archiveBuckets(publishedArticles) : Collections.emptyMap());
-        model.put("articlesToday", archiveView ? List.of() : cmsViewModelFactory.datedBucket(publishedArticles, CmsViewModelFactory.ArticleBucket.TODAY));
-        model.put("articlesYesterday", archiveView ? List.of() : cmsViewModelFactory.datedBucket(publishedArticles, CmsViewModelFactory.ArticleBucket.YESTERDAY));
-        model.put("articlesThisWeek", archiveView ? List.of() : cmsViewModelFactory.datedBucket(publishedArticles, CmsViewModelFactory.ArticleBucket.THIS_WEEK));
-        model.put("articlesThisMonth", archiveView ? List.of() : cmsViewModelFactory.datedBucket(publishedArticles, CmsViewModelFactory.ArticleBucket.THIS_MONTH));
-        model.put("articlesPastYear", archiveView ? List.of() : cmsViewModelFactory.datedBucket(publishedArticles, CmsViewModelFactory.ArticleBucket.PAST_YEAR));
+        model.put("archives", archiveView ? articleViewFactory.archiveBuckets(publishedArticles) : Collections.emptyMap());
+        model.put("articlesToday", archiveView ? List.of() : articleViewFactory.datedBucket(publishedArticles, ArticleViewFactory.ArchiveBucket.TODAY));
+        model.put("articlesYesterday", archiveView ? List.of() : articleViewFactory.datedBucket(publishedArticles, ArticleViewFactory.ArchiveBucket.YESTERDAY));
+        model.put("articlesThisWeek", archiveView ? List.of() : articleViewFactory.datedBucket(publishedArticles, ArticleViewFactory.ArchiveBucket.THIS_WEEK));
+        model.put("articlesThisMonth", archiveView ? List.of() : articleViewFactory.datedBucket(publishedArticles, ArticleViewFactory.ArchiveBucket.THIS_MONTH));
+        model.put("articlesPastYear", archiveView ? List.of() : articleViewFactory.datedBucket(publishedArticles, ArticleViewFactory.ArchiveBucket.PAST_YEAR));
         model.put("pageLayout", publicPageLayoutRenderer.render(newsPage, model));
         context.html(templateRenderer.render("news_articles", model));
     }
