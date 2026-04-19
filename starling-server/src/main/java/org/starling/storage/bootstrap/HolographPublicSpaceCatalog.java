@@ -2,9 +2,6 @@ package org.starling.storage.bootstrap;
 
 import org.starling.game.room.layout.RoomLayoutRegistry;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -13,15 +10,19 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import static org.starling.storage.bootstrap.BootstrapSqlSupport.defaultString;
+import static org.starling.storage.bootstrap.BootstrapSqlSupport.normalize;
+import static org.starling.storage.bootstrap.BootstrapSqlSupport.parseDouble;
+import static org.starling.storage.bootstrap.BootstrapSqlSupport.parseInsertRows;
+import static org.starling.storage.bootstrap.BootstrapSqlSupport.parseInt;
+import static org.starling.storage.bootstrap.BootstrapSqlSupport.parseNullableString;
+import static org.starling.storage.bootstrap.BootstrapSqlSupport.parseString;
+import static org.starling.storage.bootstrap.BootstrapSqlSupport.readBundledSql;
 
 public final class HolographPublicSpaceCatalog {
 
     private static final String RESOURCE_PATH = "bootstrap/holograph-public-spaces.sql";
-    private static final Pattern INSERT_PATTERN_TEMPLATE = Pattern.compile(
-            "INSERT INTO `%s` .*? VALUES\\s*(.*?);",
-            Pattern.DOTALL);
     public static final String ROOT_PUBLIC_CATEGORY_NAME = "Public Spaces";
     public static final String ROOT_PRIVATE_CATEGORY_NAME = "Rooms";
     private static final String GENERIC_HALLWAY_DESCRIPTION = "Roam more of the hotel's corridors.";
@@ -153,7 +154,7 @@ public final class HolographPublicSpaceCatalog {
      * @return the resulting load catalog
      */
     private static HolographPublicSpaceCatalog loadCatalog() {
-        String sql = readBundledSql();
+        String sql = readBundledSql(HolographPublicSpaceCatalog.class, RESOURCE_PATH);
 
         List<SourceCategory> sourceCategories = parseCategories(sql);
         Map<Integer, Integer> categoryIdMap = buildCategoryIdMap(sourceCategories);
@@ -170,27 +171,12 @@ public final class HolographPublicSpaceCatalog {
     }
 
     /**
-     * Reads bundled sql.
-     * @return the resulting read bundled sql
-     */
-    private static String readBundledSql() {
-        try (InputStream input = HolographPublicSpaceCatalog.class.getClassLoader().getResourceAsStream(RESOURCE_PATH)) {
-            if (input == null) {
-                throw new IllegalStateException("Bundled Holograph bootstrap resource is missing: " + RESOURCE_PATH);
-            }
-            return new String(input.readAllBytes(), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new IllegalStateException("Failed to read bundled Holograph bootstrap resource", e);
-        }
-    }
-
-    /**
      * Parses categories.
      * @param sql the sql value
      * @return the resulting parse categories
      */
     private static List<SourceCategory> parseCategories(String sql) {
-        List<List<String>> rows = parseInsertRows(sql, "room_categories");
+        List<List<String>> rows = parseInsertRows(sql, "room_categories", RESOURCE_PATH);
         List<SourceCategory> categories = new ArrayList<>(rows.size());
         for (List<String> row : rows) {
             categories.add(new SourceCategory(
@@ -211,7 +197,7 @@ public final class HolographPublicSpaceCatalog {
      * @return the resulting parse public rooms
      */
     private static List<SourcePublicRoom> parsePublicRooms(String sql) {
-        List<List<String>> rows = parseInsertRows(sql, "rooms");
+        List<List<String>> rows = parseInsertRows(sql, "rooms", RESOURCE_PATH);
         List<SourcePublicRoom> publicRooms = new ArrayList<>();
         for (List<String> row : rows) {
             SourcePublicRoom room = new SourcePublicRoom(
@@ -242,7 +228,7 @@ public final class HolographPublicSpaceCatalog {
      * @return the resulting parse room models
      */
     private static List<SourceRoomModel> parseRoomModels(String sql) {
-        List<List<String>> rows = parseInsertRows(sql, "room_modeldata");
+        List<List<String>> rows = parseInsertRows(sql, "room_modeldata", RESOURCE_PATH);
         List<SourceRoomModel> roomModels = new ArrayList<>(rows.size());
         for (List<String> row : rows) {
             roomModels.add(new SourceRoomModel(
@@ -687,203 +673,12 @@ public final class HolographPublicSpaceCatalog {
     }
 
     /**
-     * Parses insert rows.
-     * @param sql the sql value
-     * @param tableName the table name value
-     * @return the resulting parse insert rows
-     */
-    private static List<List<String>> parseInsertRows(String sql, String tableName) {
-        Matcher matcher = Pattern.compile(
-                String.format(INSERT_PATTERN_TEMPLATE.pattern(), Pattern.quote(tableName)),
-                INSERT_PATTERN_TEMPLATE.flags())
-                .matcher(sql);
-
-        List<List<String>> rows = new ArrayList<>();
-        while (matcher.find()) {
-            rows.addAll(parseTuples(matcher.group(1)));
-        }
-        return rows;
-    }
-
-    /**
-     * Parses tuples.
-     * @param valuesBlock the values block value
-     * @return the resulting parse tuples
-     */
-    private static List<List<String>> parseTuples(String valuesBlock) {
-        List<List<String>> tuples = new ArrayList<>();
-        List<String> fields = null;
-        StringBuilder field = new StringBuilder();
-        boolean inString = false;
-        int depth = 0;
-
-        for (int index = 0; index < valuesBlock.length(); index++) {
-            char current = valuesBlock.charAt(index);
-            if (inString) {
-                if (current == '\\' && index + 1 < valuesBlock.length()) {
-                    appendDecodedEscapedCharacter(field, valuesBlock.charAt(index + 1));
-                    index++;
-                    continue;
-                }
-
-                if (current == '\'') {
-                    if (index + 1 < valuesBlock.length() && valuesBlock.charAt(index + 1) == '\'') {
-                        field.append('\'');
-                        index++;
-                    } else {
-                        inString = false;
-                    }
-                    continue;
-                }
-
-                field.append(current);
-                continue;
-            }
-
-            if (current == '\'') {
-                inString = true;
-                continue;
-            }
-
-            if (current == '(') {
-                depth++;
-                if (depth == 1) {
-                    fields = new ArrayList<>();
-                    field.setLength(0);
-                    continue;
-                }
-            }
-
-            if (current == ')') {
-                depth--;
-                if (depth == 0) {
-                    if (fields == null) {
-                        throw new IllegalStateException("Malformed SQL tuple data in " + RESOURCE_PATH);
-                    }
-                    fields.add(field.toString().trim());
-                    tuples.add(fields);
-                    field.setLength(0);
-                    continue;
-                }
-            }
-
-            if (current == ',' && depth == 1) {
-                if (fields == null) {
-                    throw new IllegalStateException("Malformed SQL tuple data in " + RESOURCE_PATH);
-                }
-                fields.add(field.toString().trim());
-                field.setLength(0);
-                continue;
-            }
-
-            if (depth >= 1) {
-                field.append(current);
-            }
-        }
-
-        return tuples;
-    }
-
-    /**
-     * Appends decoded escaped character.
-     * @param builder the builder value
-     * @param next the next value
-     */
-    private static void appendDecodedEscapedCharacter(StringBuilder builder, char next) {
-        switch (next) {
-            case 'r' -> builder.append('\r');
-            case 'n' -> builder.append('\n');
-            case 't' -> builder.append('\t');
-            case '\\' -> builder.append('\\');
-            case '\'' -> builder.append('\'');
-            default -> {
-                builder.append('\\');
-                builder.append(next);
-            }
-        }
-    }
-
-    /**
-     * Parses int.
-     * @param row the row value
-     * @param index the index value
-     * @return the resulting parse int
-     */
-    private static int parseInt(List<String> row, int index) {
-        String value = row.get(index);
-        if (value == null || value.isBlank() || value.equalsIgnoreCase("NULL")) {
-            return 0;
-        }
-        return (int) Math.round(Double.parseDouble(value));
-    }
-
-    /**
-     * Parses double.
-     * @param row the row value
-     * @param index the index value
-     * @return the resulting parse double
-     */
-    private static double parseDouble(List<String> row, int index) {
-        String value = row.get(index);
-        if (value == null || value.isBlank() || value.equalsIgnoreCase("NULL")) {
-            return 0;
-        }
-        return Double.parseDouble(value);
-    }
-
-    /**
-     * Parses string.
-     * @param row the row value
-     * @param index the index value
-     * @return the resulting parse string
-     */
-    private static String parseString(List<String> row, int index) {
-        String value = parseNullableString(row, index);
-        return value == null ? "" : value;
-    }
-
-    /**
-     * Parses nullable string.
-     * @param row the row value
-     * @param index the index value
-     * @return the resulting parse nullable string
-     */
-    private static String parseNullableString(List<String> row, int index) {
-        String value = row.get(index);
-        if (value == null || value.equalsIgnoreCase("NULL")) {
-            return null;
-        }
-        return value;
-    }
-
-    /**
-     * Defaults string.
-     * @param value the value value
-     * @return the resulting default string
-     */
-    private static String defaultString(String value) {
-        return value == null ? "" : value;
-    }
-
-    /**
      * Lookses like text key.
      * @param value the value value
      * @return the result of this operation
      */
     private static boolean looksLikeTextKey(String value) {
         return value.indexOf(' ') < 0 && value.contains("_");
-    }
-
-    /**
-     * Normalizes.
-     * @param value the value value
-     * @return the resulting normalize
-     */
-    private static String normalize(String value) {
-        if (value == null) {
-            return "";
-        }
-        return value.trim().toLowerCase(Locale.ROOT);
     }
 
     public record NavigatorCategorySeed(
