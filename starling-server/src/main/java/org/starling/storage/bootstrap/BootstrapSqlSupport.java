@@ -42,7 +42,7 @@ final class BootstrapSqlSupport {
      */
     static List<List<String>> parseInsertRows(String sql, String tableName, String resourcePath) {
         Matcher matcher = Pattern.compile(
-                "INSERT INTO `" + Pattern.quote(tableName) + "` .*? VALUES\\s*(.*?);",
+                "INSERT INTO `" + Pattern.quote(tableName) + "`(?:\\s*\\([^;]*?\\))?\\s+VALUES\\s*(.*?);",
                 Pattern.DOTALL)
                 .matcher(sql);
 

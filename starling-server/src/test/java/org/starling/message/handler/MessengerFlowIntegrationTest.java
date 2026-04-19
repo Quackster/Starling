@@ -103,7 +103,7 @@ class MessengerFlowIntegrationTest {
 
         assertEquals(List.of(packet(
                 new ServerMessage(OutgoingPackets.MESSENGER_INIT)
-                        .writeInt(100)
+                        .writeInt(player("admin").getMessenger().getFriendsLimit())
                         .writeInt(100)
                         .writeInt(600)
                         .writeInt(0)
