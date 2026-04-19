@@ -1,0 +1,27 @@
+<div id="purse-habblet">
+{% if purse.loggedIn %}
+    <form method="post" action="/credits" id="voucher-form">
+        <ul>
+            <li class="even icon-purse">
+                <div>You have:</div>
+                <span class="purse-balance-amount">{{ purse.credits }} Coins</span>
+                <div class="purse-tx"><a href="/credits/history">Transactions</a></div>
+            </li>
+            <li class="odd">
+                <div class="box-content">
+                    <div>Enter voucher code:</div>
+                    <input type="text" name="voucherCode" value="" id="purse-habblet-redeemcode-string" class="redeemcode" />
+                    <a href="#" id="purse-redeemcode-button" class="new-button purse-icon" style="float:left"><b><span></span>Redeem</b><i></i></a>
+                </div>
+            </li>
+        </ul>
+        <div id="purse-redeem-result">
+        {% if purse.resultMessage != "" %}
+            <div class="rounded rounded-red">{{ purse.resultMessage }}</div>
+        {% endif %}
+        </div>
+    </form>
+{% else %}
+    <div class="box-content">Please sign in to see your purse.</div>
+{% endif %}
+</div>

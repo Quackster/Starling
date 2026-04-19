@@ -1,0 +1,50 @@
+<div class="habblet-container ">
+    <div class="cbb clearfix activehomes ">
+        <h2 class="title">Random Habbos - Click Us!</h2>
+        <div id="homes-habblet-list-container" class="habblet-list-container">
+            <img class="active-habbo-imagemap" src="{{ site.webGalleryPath }}/v2/images/activehomes/transparent_area.gif" width="435px" height="230px" usemap="#habbomap" />
+            {% for member in activeMembers %}
+                {% set listId = loop.index - 1 %}
+                <div id="active-habbo-data-{{ listId }}" class="active-habbo-data">
+                    <div class="active-habbo-data-container">
+                        <div class="active-name {{ member.status }}">{{ member.name }}</div>
+                        Habbo created on: {{ member.createdOn }}
+                        <p class="moto">{{ member.motto }}</p>
+                    </div>
+                </div>
+                <input type="hidden" id="active-habbo-url-{{ listId }}" value="{{ member.url }}"/>
+                <input type="hidden" id="active-habbo-image-{{ listId }}" class="active-habbo-image" value="{{ site.habboImagingPath }}/avatarimage?figure={{ member.figure }}&size=b&direction=4&head_direction=4&gesture=sml" />
+            {% endfor %}
+            <div id="placeholder-container">
+                {% for index in 0..17 %}
+                <div id="active-habbo-image-placeholder-{{ index }}" class="active-habbo-image-placeholder"></div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <map id="habbomap" name="habbomap">
+            <area id="imagemap-area-0" shape="rect" coords="55,53,95,103" href="#" alt=""/>
+            <area id="imagemap-area-1" shape="rect" coords="120,53,160,103" href="#" alt=""/>
+            <area id="imagemap-area-2" shape="rect" coords="185,53,225,103" href="#" alt=""/>
+            <area id="imagemap-area-3" shape="rect" coords="250,53,290,103" href="#" alt=""/>
+            <area id="imagemap-area-4" shape="rect" coords="315,53,355,103" href="#" alt=""/>
+            <area id="imagemap-area-5" shape="rect" coords="380,53,420,103" href="#" alt=""/>
+            <area id="imagemap-area-6" shape="rect" coords="28,103,68,153" href="#" alt=""/>
+            <area id="imagemap-area-7" shape="rect" coords="93,103,133,153" href="#" alt=""/>
+            <area id="imagemap-area-8" shape="rect" coords="158,103,198,153" href="#" alt=""/>
+            <area id="imagemap-area-9" shape="rect" coords="223,103,263,153" href="#" alt=""/>
+            <area id="imagemap-area-10" shape="rect" coords="288,103,328,153" href="#" alt=""/>
+            <area id="imagemap-area-11" shape="rect" coords="353,103,393,153" href="#" alt=""/>
+            <area id="imagemap-area-12" shape="rect" coords="55,153,95,203" href="#" alt=""/>
+            <area id="imagemap-area-13" shape="rect" coords="120,153,160,203" href="#" alt=""/>
+            <area id="imagemap-area-14" shape="rect" coords="185,153,225,203" href="#" alt=""/>
+            <area id="imagemap-area-15" shape="rect" coords="250,153,290,203" href="#" alt=""/>
+            <area id="imagemap-area-16" shape="rect" coords="315,153,355,203" href="#" alt=""/>
+            <area id="imagemap-area-17" shape="rect" coords="380,153,420,203" href="#" alt=""/>
+        </map>
+        <script type="text/javascript">
+        var activeHabbosHabblet = new ActiveHabbosHabblet();
+        document.observe("dom:loaded", function() { activeHabbosHabblet.generateRandomImages(); });
+        </script>
+    </div>
+</div>

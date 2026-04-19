@@ -2,11 +2,13 @@ package org.starling.web.route;
 
 import io.javalin.Javalin;
 import org.starling.web.publicsite.CommunityController;
+import org.starling.web.publicsite.CreditsController;
 import org.starling.web.publicsite.HomepageController;
 import org.starling.web.publicsite.MeController;
 import org.starling.web.publicsite.NewsController;
 import org.starling.web.publicsite.PageController;
 import org.starling.web.publicsite.PolicyController;
+import org.starling.web.publicsite.TagController;
 
 public final class PublicRoutes {
 
@@ -16,6 +18,8 @@ public final class PublicRoutes {
     private final NewsController newsController;
     private final PageController pageController;
     private final PolicyController policyController;
+    private final CreditsController creditsController;
+    private final TagController tagController;
 
     /**
      * Creates a new PublicRoutes registrar.
@@ -25,6 +29,8 @@ public final class PublicRoutes {
      * @param newsController the news controller
      * @param pageController the page controller
      * @param policyController the policy controller
+     * @param creditsController the credits controller
+     * @param tagController the tag controller
      */
     public PublicRoutes(
             HomepageController homepageController,
@@ -32,7 +38,9 @@ public final class PublicRoutes {
             MeController meController,
             NewsController newsController,
             PageController pageController,
-            PolicyController policyController
+            PolicyController policyController,
+            CreditsController creditsController,
+            TagController tagController
     ) {
         this.homepageController = homepageController;
         this.communityController = communityController;
@@ -40,6 +48,8 @@ public final class PublicRoutes {
         this.newsController = newsController;
         this.pageController = pageController;
         this.policyController = policyController;
+        this.creditsController = creditsController;
+        this.tagController = tagController;
     }
 
     /**
@@ -52,6 +62,11 @@ public final class PublicRoutes {
         app.get("/home", homepageController::homepage);
         app.get("/me", meController::me);
         app.get("/welcome", meController::welcome);
+        app.post("/me/minimail/compose", meController::composeMessage);
+        app.post("/me/minimail/{messageId}/reply", meController::replyToMessage);
+        app.post("/me/minimail/{messageId}/delete", meController::deleteMessage);
+        app.post("/me/minimail/{messageId}/restore", meController::restoreMessage);
+        app.post("/me/minimail/trash/empty", meController::emptyTrash);
 
         app.get("/community", communityController::community);
         app.get("/news", context -> newsController.index(context, "news", false));
@@ -67,10 +82,16 @@ public final class PublicRoutes {
         app.get("/community/fansites/{slug}", context -> newsController.detail(context, "fansites"));
         app.get("/page/{slug}", pageController::detail);
 
+        app.get("/credits", creditsController::credits);
+        app.get("/credits/pixels", creditsController::pixels);
+        app.get("/credits/club", context -> context.redirect("/credits"));
+        app.get("/credits/collectables", context -> context.redirect("/credits"));
+        app.get("/tag", tagController::index);
+        app.get("/tag/search", tagController::search);
+        app.get("/tag/{tag}", tagController::detail);
+
         app.get("/home/{username}", context -> context.redirect("/me"));
         app.get("/games", context -> context.redirect("/news"));
-        app.get("/credits", context -> context.redirect("/news"));
-        app.get("/tag", context -> context.redirect("/news"));
         app.get("/papers/disclaimer", policyController::disclaimer);
         app.get("/papers/privacy", policyController::privacy);
     }

@@ -4,11 +4,13 @@ import io.javalin.http.Context;
 import org.starling.storage.entity.UserEntity;
 import org.starling.web.render.TemplateRenderer;
 import org.starling.web.service.ArticleService;
+import org.starling.web.service.PublicTagService;
 import org.starling.web.user.UserSessionService;
+import org.starling.web.view.CommunityWidgetsFactory;
 import org.starling.web.view.CmsViewModelFactory;
-import org.starling.web.view.PublicFeatureContentFactory;
 import org.starling.web.view.PublicPageModelFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -19,7 +21,8 @@ public final class CommunityController {
     private final ArticleService articleService;
     private final UserSessionService userSessionService;
     private final PublicPageModelFactory publicPageModelFactory;
-    private final PublicFeatureContentFactory publicFeatureContentFactory;
+    private final CommunityWidgetsFactory communityWidgetsFactory;
+    private final PublicTagService publicTagService;
     private final CmsViewModelFactory cmsViewModelFactory;
 
     /**
@@ -28,7 +31,8 @@ public final class CommunityController {
      * @param articleService the article service
      * @param userSessionService the user session service
      * @param publicPageModelFactory the public page model factory
-     * @param publicFeatureContentFactory the public feature content factory
+     * @param communityWidgetsFactory the community widgets factory
+     * @param publicTagService the public tag service
      * @param cmsViewModelFactory the CMS view model factory
      */
     public CommunityController(
@@ -36,14 +40,16 @@ public final class CommunityController {
             ArticleService articleService,
             UserSessionService userSessionService,
             PublicPageModelFactory publicPageModelFactory,
-            PublicFeatureContentFactory publicFeatureContentFactory,
+            CommunityWidgetsFactory communityWidgetsFactory,
+            PublicTagService publicTagService,
             CmsViewModelFactory cmsViewModelFactory
     ) {
         this.templateRenderer = templateRenderer;
         this.articleService = articleService;
         this.userSessionService = userSessionService;
         this.publicPageModelFactory = publicPageModelFactory;
-        this.publicFeatureContentFactory = publicFeatureContentFactory;
+        this.communityWidgetsFactory = communityWidgetsFactory;
+        this.publicTagService = publicTagService;
         this.cmsViewModelFactory = cmsViewModelFactory;
     }
 
@@ -54,16 +60,32 @@ public final class CommunityController {
     public void community(Context context) {
         Map<String, Object> model = publicPageModelFactory.create(context, "community", "community");
         Optional<UserEntity> currentUser = userSessionService.authenticate(context);
-        List<Map<String, Object>> articles = articleService.listPublished().stream()
-                .limit(4)
-                .map(cmsViewModelFactory::articleSummary)
-                .toList();
+        List<Map<String, Object>> promoStories = new ArrayList<>(articleService.listPublished().stream()
+                .limit(5)
+                .map(cmsViewModelFactory::newsPromoArticle)
+                .toList());
 
-        model.put("topStory", articles.isEmpty() ? cmsViewModelFactory.emptyFeaturedArticle(1) : articles.get(0));
-        model.put("headlineStories", articles.size() > 1 ? articles.subList(1, articles.size()) : List.of());
-        model.put("recommendedRooms", publicFeatureContentFactory.recommendedRooms());
-        model.put("activeMembers", publicFeatureContentFactory.activeMembers(currentUser));
-        model.put("tagCloud", publicFeatureContentFactory.tagCloud());
+        while (promoStories.size() < 5) {
+            promoStories.add(cmsViewModelFactory.emptyNewsPromoArticle());
+        }
+
+        List<Map<String, Object>> topRatedRooms = communityWidgetsFactory.topRatedRooms();
+        List<Map<String, Object>> recommendedRooms = communityWidgetsFactory.recommendedRooms();
+        List<Map<String, Object>> hotGroups = communityWidgetsFactory.hotGroups();
+        List<Map<String, Object>> recentTopics = communityWidgetsFactory.recentTopics();
+
+        model.put("topRatedRooms", topRatedRooms.subList(0, Math.min(5, topRatedRooms.size())));
+        model.put("topRatedRoomsMore", topRatedRooms.size() > 5 ? topRatedRooms.subList(5, topRatedRooms.size()) : List.of());
+        model.put("recommendedRooms", recommendedRooms.subList(0, Math.min(5, recommendedRooms.size())));
+        model.put("recommendedRoomsMore", recommendedRooms.size() > 5 ? recommendedRooms.subList(5, recommendedRooms.size()) : List.of());
+        model.put("hotGroups", hotGroups.subList(0, Math.min(10, hotGroups.size())));
+        model.put("hotGroupsMore", hotGroups.size() > 10 ? hotGroups.subList(10, hotGroups.size()) : List.of());
+        model.put("recentTopics", recentTopics.subList(0, Math.min(10, recentTopics.size())));
+        model.put("recentTopicsMore", recentTopics.size() > 10 ? recentTopics.subList(10, recentTopics.size()) : List.of());
+        model.put("activeMembers", communityWidgetsFactory.activeMembers(currentUser));
+        model.put("promoStories", promoStories.subList(0, 3));
+        model.put("promoHeadlines", promoStories.subList(3, 5));
+        model.put("tagCloud", publicTagService.tagCloud(context, currentUser));
         context.html(templateRenderer.render("community", model));
     }
 }

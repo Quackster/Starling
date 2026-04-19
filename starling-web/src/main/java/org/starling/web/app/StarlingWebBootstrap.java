@@ -20,27 +20,36 @@ import org.starling.web.navigation.PublicNavigationConfig;
 import org.starling.web.navigation.PublicNavigationConfigLoader;
 import org.starling.web.navigation.PublicNavigationModelFactory;
 import org.starling.web.publicsite.CommunityController;
+import org.starling.web.publicsite.CreditsController;
+import org.starling.web.publicsite.CreditsHabbletController;
 import org.starling.web.publicsite.HomepageController;
 import org.starling.web.publicsite.MeController;
 import org.starling.web.publicsite.NewsController;
 import org.starling.web.publicsite.PageController;
 import org.starling.web.publicsite.PolicyController;
+import org.starling.web.publicsite.TagController;
+import org.starling.web.publicsite.TagHabbletController;
 import org.starling.web.render.MarkdownRenderer;
 import org.starling.web.render.TemplateRenderer;
 import org.starling.web.route.AdminRoutes;
 import org.starling.web.route.AssetRoutes;
 import org.starling.web.route.AuthRoutes;
 import org.starling.web.route.PublicRoutes;
+import org.starling.web.route.WidgetRoutes;
 import org.starling.web.service.ArticleService;
 import org.starling.web.service.HotCampaignService;
 import org.starling.web.service.MediaAssetService;
+import org.starling.web.service.MinimailService;
 import org.starling.web.service.NavigationService;
 import org.starling.web.service.PageService;
+import org.starling.web.service.PublicTagService;
 import org.starling.web.site.SiteBranding;
 import org.starling.web.theme.ThemeResourceResolver;
 import org.starling.web.user.UserSessionService;
 import org.starling.web.view.AdminPageModelFactory;
+import org.starling.web.view.CommunityWidgetsFactory;
 import org.starling.web.view.CmsViewModelFactory;
+import org.starling.web.view.CreditsPageContentFactory;
 import org.starling.web.view.PublicFeatureContentFactory;
 import org.starling.web.view.PublicPageModelFactory;
 import org.starling.web.view.UserViewModelFactory;
@@ -81,8 +90,12 @@ public final class StarlingWebBootstrap {
         PageService pageService = new PageService();
         ArticleService articleService = new ArticleService();
         HotCampaignService hotCampaignService = new HotCampaignService();
+        MinimailService minimailService = new MinimailService(siteBranding);
         NavigationService navigationService = new NavigationService();
+        PublicTagService publicTagService = new PublicTagService();
         UserViewModelFactory userViewModelFactory = new UserViewModelFactory();
+        CommunityWidgetsFactory communityWidgetsFactory = new CommunityWidgetsFactory(userViewModelFactory);
+        CreditsPageContentFactory creditsPageContentFactory = new CreditsPageContentFactory();
         PublicNavigationConfig publicNavigationConfig = new PublicNavigationConfigLoader().load();
         PublicNavigationModelFactory publicNavigationModelFactory = new PublicNavigationModelFactory(publicNavigationConfig, siteBranding);
         PublicPageModelFactory publicPageModelFactory = new PublicPageModelFactory(
@@ -105,8 +118,12 @@ public final class StarlingWebBootstrap {
                 pageService,
                 articleService,
                 hotCampaignService,
+                minimailService,
                 navigationService,
                 mediaAssetService,
+                publicTagService,
+                communityWidgetsFactory,
+                creditsPageContentFactory,
                 publicNavigationModelFactory,
                 publicPageModelFactory,
                 publicFeatureContentFactory,
@@ -129,7 +146,8 @@ public final class StarlingWebBootstrap {
                 dependencies.articleService(),
                 dependencies.userSessionService(),
                 dependencies.publicPageModelFactory(),
-                dependencies.publicFeatureContentFactory(),
+                dependencies.communityWidgetsFactory(),
+                dependencies.publicTagService(),
                 dependencies.cmsViewModelFactory()
         );
         MeController meController = new MeController(
@@ -137,6 +155,7 @@ public final class StarlingWebBootstrap {
                 dependencies.userSessionService(),
                 dependencies.articleService(),
                 dependencies.hotCampaignService(),
+                dependencies.minimailService(),
                 dependencies.publicPageModelFactory(),
                 dependencies.publicFeatureContentFactory(),
                 dependencies.userViewModelFactory(),
@@ -158,6 +177,29 @@ public final class StarlingWebBootstrap {
                 dependencies.templateRenderer(),
                 dependencies.publicPageModelFactory(),
                 dependencies.siteBranding()
+        );
+        CreditsController creditsController = new CreditsController(
+                dependencies.templateRenderer(),
+                dependencies.userSessionService(),
+                dependencies.publicPageModelFactory(),
+                dependencies.creditsPageContentFactory()
+        );
+        TagController tagController = new TagController(
+                dependencies.templateRenderer(),
+                dependencies.userSessionService(),
+                dependencies.publicPageModelFactory(),
+                dependencies.publicTagService()
+        );
+        TagHabbletController tagHabbletController = new TagHabbletController(
+                dependencies.templateRenderer(),
+                dependencies.userSessionService(),
+                dependencies.publicTagService(),
+                dependencies.siteBranding()
+        );
+        CreditsHabbletController creditsHabbletController = new CreditsHabbletController(
+                dependencies.templateRenderer(),
+                dependencies.userSessionService(),
+                dependencies.creditsPageContentFactory()
         );
         AccountController accountController = new AccountController(
                 dependencies.templateRenderer(),
@@ -223,8 +265,11 @@ public final class StarlingWebBootstrap {
                 meController,
                 newsController,
                 pageController,
-                policyController
+                policyController,
+                creditsController,
+                tagController
         ).register(app);
+        new WidgetRoutes(tagHabbletController, creditsHabbletController).register(app);
         new AuthRoutes(accountController, registrationController, adminAuthController, adminRouteGuard).register(app);
         new AssetRoutes(assetController).register(app);
         new AdminRoutes(

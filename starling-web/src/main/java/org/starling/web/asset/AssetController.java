@@ -100,6 +100,17 @@ public final class AssetController {
         context.result(new ByteArrayInputStream(CaptchaService.renderAvatarPlaceholder(siteBranding.siteName(), width, height)));
     }
 
+    /**
+     * Serves a badge placeholder.
+     * @param context the request context
+     */
+    public void badgePlaceholder(Context context) {
+        String badgeCode = RequestValues.valueOrDefault(context.pathParam("badge"), "BG");
+        String label = badgeCode.substring(0, Math.min(2, badgeCode.length())).toUpperCase();
+        context.contentType("image/png");
+        context.result(new ByteArrayInputStream(CaptchaService.renderAvatarPlaceholder(label, 39, 39)));
+    }
+
     private void serveThemeAsset(Context context, String assetPrefix) {
         String assetName = context.pathParam("asset");
         if (assetPrefix != null && !assetPrefix.isBlank()) {

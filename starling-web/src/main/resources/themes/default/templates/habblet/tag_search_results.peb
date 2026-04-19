@@ -1,0 +1,52 @@
+<div id="tag-search-habblet-container">
+    <form name="tag_search_form" action="/tag/search" class="search-box">
+        <input type="text" name="tag" id="search_query" value="{{ tagSearch.query }}" class="search-box-query" style="float: left"/>
+        <a onclick="$(this).up('form').submit(); return false;" href="#" class="new-button search-icon" style="float: left"><b><span></span></b><i></i></a>
+    </form>
+    <p class="search-result-count">{% if tagSearch.total == 0 %}No results found.{% else %}{{ tagSearch.offset }} - {{ tagSearch.shownTo }} / {{ tagSearch.total }}{% endif %}</p>
+    {% if tagSearch.showAddToMe %}
+    <p id="tag-search-add" class="clearfix"><span style="float:left">Tag yourself with:</span> <a id="tag-search-tag-add" href="#" class="new-button" style="float:left" onclick="TagHelper.addThisTagToMe('{{ tagSearch.query }}',false);return false;"><b>{{ tagSearch.query }}</b><i></i></a></p>
+    <p id="tag-search-add-result">OK</p>
+    <script type="text/javascript">
+    document.observe("dom:loaded", function() {
+        TagHelper.setTexts({
+            tagLimitText: "You have reached the tag limit.",
+            invalidTagText: "That tag isn't valid.",
+            buttonText: "OK"
+        });
+        TagHelper.init({% if playerDetails is defined %}{{ playerDetails.id }}{% else %}0{% endif %});
+    });
+    </script>
+    {% endif %}
+    <p class="search-result-divider"></p>
+
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" class="search-result">
+        <tbody>
+        {% for result in tagSearch.results %}
+            <tr class="{% if loop.index is even %}even{% else %}odd{% endif %}">
+                <td class="image" style="width:39px;">
+                    <img src="{{ result.image }}" alt="" align="left"/>
+                </td>
+                <td class="text">
+                    <a href="{{ result.url }}" class="result-title">{{ result.title }}</a><br/>
+                    <span class="result-description">{{ result.description }}</span>
+                    <ul class="tag-list">
+                    {% for tag in result.tags %}
+                        <li><a href="/tag/{{ tag }}" class="tag" style="font-size:10px">{{ tag }}</a> </li>
+                    {% endfor %}
+                    </ul>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <p class="search-result-navigation">
+    {% for link in tagSearch.pageLinks %}
+        {% if link.current %}
+            {{ link.label }}
+        {% else %}
+            <a href="{{ link.href }}">{{ link.label }}</a>
+        {% endif %}
+    {% endfor %}
+    </p>
+</div>

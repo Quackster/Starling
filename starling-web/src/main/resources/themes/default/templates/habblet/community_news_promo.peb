@@ -1,0 +1,32 @@
+<div class="habblet-container news-promo">
+    <div class="cbb clearfix notitle ">
+        <div id="newspromo">
+            <div id="topstories">
+            {% for story in promoStories %}
+                <div class="topstory" style="background-image: url({{ story.image }}){% if loop.index > 1 %}; display: none{% endif %}">
+                    <h4>Latest news</h4>
+                    <h3><a href="{{ story.url }}">{{ story.title }}</a></h3>
+                    <p class="summary">
+                    {{ story.summary }}
+                    </p>
+                    <p>
+                        <a href="{{ story.url }}">Read more</a>
+                    </p>
+                </div>
+            {% endfor %}
+            <div id="topstories-nav" style="display: none"><a href="#" class="prev">Previous</a><span>1</span> / {{ promoStories|length }}<a href="#" class="next">Next</a></div>
+            </div>
+            <ul class="widelist">
+            {% for story in promoHeadlines %}
+                <li class="{% if loop.index is even %}odd{% else %}even{% endif %}">
+                    <a href="{{ story.url }}">{{ story.title }}</a><div class="newsitem-date">{{ story.date }}</div>
+                </li>
+            {% endfor %}
+                <li class="last"><a href="{{ site.sitePath }}/articles">More news</a></li>
+            </ul>
+        </div>
+        <script type="text/javascript">
+        document.observe("dom:loaded", function() { NewsPromo.init(); });
+        </script>
+    </div>
+</div>

@@ -1,0 +1,13 @@
+<div id="fightResultCount" class="fight-result-count">
+    {{ fight.winnerText }}<br />
+    {% if fight.ending == 2 %}<b>{{ fight.tagOne }}</b>{% else %}{{ fight.tagOne }}{% endif %}
+    ({{ fight.tagOneHits }}) hits
+    <br/>
+    {% if fight.ending == 1 %}<b>{{ fight.tagTwo }}</b>{% else %}{{ fight.tagTwo }}{% endif %}
+    ({{ fight.tagTwoHits }}) hits
+</div>
+<div class="fight-image">
+    <img src="{{ site.webGalleryPath }}/images/tagfight/tagfight_end_{{ fight.ending }}.gif" alt="" name="fightanimation" id="fightanimation" />
+    <a id="tag-fight-button-new" href="#" class="new-button" onclick="TagFight.newFight(); return false;"><b>Again</b><i></i></a>
+    <a id="tag-fight-button" href="#" style="display:none" class="new-button" onclick="TagFight.init(); return false;"><b>Fight</b><i></i></a>
+</div>

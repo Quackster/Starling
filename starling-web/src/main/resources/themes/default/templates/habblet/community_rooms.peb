@@ -1,0 +1,43 @@
+<div class="habblet-container ">
+    <div class="cbb clearfix green ">
+        <div class="box-tabs-container clearfix">
+            <h2>Rooms</h2>
+            <ul class="box-tabs">
+                <li id="tab-0-0-1"><a href="#">Top Rated</a><span class="tab-spacer"></span></li>
+                <li id="tab-0-0-2" class="selected"><a href="#">Reccomended Rooms</a><span class="tab-spacer"></span></li>
+            </ul>
+        </div>
+        <div id="tab-0-0-1-content" style="display: none">
+            <div id="rooms-habblet-list-container-h120" class="recommendedrooms-lite-habblet-list-container">
+                {% include "habblet/community_room_list.peb" with { "rooms": topRatedRooms, "moreData": false } %}
+                <div id="room-more-data-h120" style="display: none">
+                    {% include "habblet/community_room_list.peb" with { "rooms": topRatedRoomsMore, "moreData": true } %}
+                </div>
+                <div class="clearfix">
+                    <a href="#" class="room-toggle-more-data" id="room-toggle-more-data-h120">Show more rooms</a>
+                </div>
+            </div>
+            <script type="text/javascript">
+            L10N.put("show.more", "Show more rooms");
+            L10N.put("show.less", "Show less rooms");
+            var roomListHabblet_h120 = new RoomListHabblet("rooms-habblet-list-container-h120", "room-toggle-more-data-h120", "room-more-data-h120");
+            </script>
+        </div>
+        <div id="tab-0-0-2-content">
+            <div id="rooms-habblet-list-container-h119" class="recommendedrooms-lite-habblet-list-container">
+                {% include "habblet/community_room_list.peb" with { "rooms": recommendedRooms, "moreData": false } %}
+                <div id="room-more-data-h119" style="display: none">
+                    {% include "habblet/community_room_list.peb" with { "rooms": recommendedRoomsMore, "moreData": true } %}
+                </div>
+                <div class="clearfix">
+                    <a href="#" class="room-toggle-more-data" id="room-toggle-more-data-h119">Show more rooms</a>
+                </div>
+            </div>
+            <script type="text/javascript">
+            L10N.put("show.more", "Show more rooms");
+            L10N.put("show.less", "Show less rooms");
+            var roomListHabblet_h119 = new RoomListHabblet("rooms-habblet-list-container-h119", "room-toggle-more-data-h119", "room-more-data-h119");
+            </script>
+        </div>
+    </div>
+</div>

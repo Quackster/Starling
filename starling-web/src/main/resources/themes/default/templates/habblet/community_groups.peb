@@ -1,0 +1,83 @@
+<div class="habblet-container ">
+    <div class="cbb clearfix blue ">
+        <div class="box-tabs-container clearfix">
+            <h2>Groups</h2>
+            <ul class="box-tabs">
+                <li id="tab-0-1-1"><a href="#">Hot Groups</a><span class="tab-spacer"></span></li>
+                <li id="tab-0-1-2" class="selected"><a href="#">Recent Topics</a><span class="tab-spacer"></span></li>
+            </ul>
+        </div>
+        <div id="tab-0-1-1-content" style="display: none">
+            <div id="hotgroups-habblet-list-container" class="habblet-list-container groups-list">
+                <ul class="habblet-list two-cols clearfix">
+                {% for group in hotGroups %}
+                    <li class="{% if loop.index is even %}even right{% else %}odd left{% endif %}" style="background-image: url({{ site.sitePath }}/habbo-imaging/badge/{{ group.badge }}.gif)">
+                        <a class="item" href="{{ group.url }}"><span class="index">{{ loop.index }}.</span> {{ group.name }}</a>
+                    </li>
+                {% endfor %}
+                </ul>
+                <div id="hotgroups-list-hidden-h122" style="display: none">
+                    <ul class="habblet-list two-cols clearfix">
+                    {% for group in hotGroupsMore %}
+                        <li class="{% if loop.index is even %}even right{% else %}odd left{% endif %}" style="background-image: url({{ site.sitePath }}/habbo-imaging/badge/{{ group.badge }}.gif)">
+                            <a class="item" href="{{ group.url }}"><span class="index">{{ hotGroups|length + loop.index }}.</span> {{ group.name }}</a>
+                        </li>
+                    {% endfor %}
+                    </ul>
+                </div>
+                <div class="clearfix">
+                    <a href="#" class="hotgroups-toggle-more-data secondary" id="hotgroups-toggle-more-data-h122">Show more groups</a>
+                </div>
+                <script type="text/javascript">
+                L10N.put("show.more.groups", "Show more groups");
+                L10N.put("show.less.groups", "Show fewer groups");
+                var hotGroupsMoreDataHelper = new MoreDataHelper("hotgroups-toggle-more-data-h122", "hotgroups-list-hidden-h122","groups");
+                </script>
+            </div>
+        </div>
+        <div id="tab-0-1-2-content">
+            <ul class="active-discussions-toplist">
+            {% for topic in recentTopics %}
+                <li class="{% if loop.index is even %}odd{% else %}even{% endif %}">
+                    <a href="{{ topic.url }}" class="topic">
+                        <span>{{ topic.title }}</span>
+                    </a>
+                    <div class="topic-info post-icon">
+                        <span class="grey">(</span>
+                        {% for page in topic.pages %}
+                            <a href="{{ topic.url }}" class="topiclist-page-link secondary">{{ page }}</a>{% if not loop.last %} {% endif %}
+                        {% endfor %}
+                        <span class="grey">)</span>
+                    </div>
+                </li>
+            {% endfor %}
+            </ul>
+            <div id="active-discussions-toplist-hidden-h121" style="display: none">
+                <ul class="active-discussions-toplist">
+                {% for topic in recentTopicsMore %}
+                    <li class="{% if loop.index is even %}odd{% else %}even{% endif %}">
+                        <a href="{{ topic.url }}" class="topic">
+                            <span>{{ topic.title }}</span>
+                        </a>
+                        <div class="topic-info post-icon">
+                            <span class="grey">(</span>
+                            {% for page in topic.pages %}
+                                <a href="{{ topic.url }}" class="topiclist-page-link secondary">{{ page }}</a>{% if not loop.last %} {% endif %}
+                            {% endfor %}
+                            <span class="grey">)</span>
+                        </div>
+                    </li>
+                {% endfor %}
+                </ul>
+            </div>
+            <div class="clearfix">
+                <a href="#" class="discussions-toggle-more-data secondary" id="discussions-toggle-more-data-h121">Show more discussions</a>
+            </div>
+            <script type="text/javascript">
+            L10N.put("show.more.discussions", "Show more discussions");
+            L10N.put("show.less.discussions", "Show fewer discussions");
+            var discussionMoreDataHelper = new MoreDataHelper("discussions-toggle-more-data-h121", "active-discussions-toplist-hidden-h121","discussions");
+            </script>
+        </div>
+    </div>
+</div>

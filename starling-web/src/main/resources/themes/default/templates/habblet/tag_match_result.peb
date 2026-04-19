@@ -1,0 +1,11 @@
+{% if match.error %}
+<div class="tag-match-error">
+    {{ match.message }}
+</div>
+{% else %}
+<div id="tag-match-value" style="display: none;">{{ match.percent }}</div>
+<div id="tag-match-value-display">{{ match.percent }} %</div>
+<div id="tag-match-slogan" style="display: none;">
+    {{ match.message }}
+</div>
+{% endif %}

@@ -25,5 +25,6 @@ public final class AssetRoutes {
         app.get("/assets/<asset>", assetController::themeAsset);
         app.get("/captcha.jpg", assetController::captcha);
         app.get("/habbo-imaging/avatarimage", assetController::avatarPlaceholder);
+        app.get("/habbo-imaging/badge/{badge}.gif", assetController::badgePlaceholder);
     }
 }

@@ -1,0 +1,12 @@
+<ul class="habblet-list{% if moreData %} room-more-data{% endif %}">
+{% for room in rooms %}
+    <li class="{% if loop.index is even %}odd{% else %}even{% endif %}">
+        <span class="clearfix enter-room-link {{ room.occupancyClass }}" title="Go to room" roomid="{{ room.roomId }}">
+	        <span class="room-enter">Enter</span>
+	        <span class="room-name">{{ room.name }}</span>
+	        <span class="room-description">{{ room.description }}</span>
+		    <span class="room-owner">Owner: <a href="{{ room.ownerUrl }}">{{ room.owner }}</a></span>
+        </span>
+    </li>
+{% endfor %}
+</ul>

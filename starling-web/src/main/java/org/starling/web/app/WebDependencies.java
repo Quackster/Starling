@@ -1,19 +1,23 @@
 package org.starling.web.app;
 
-import org.starling.web.navigation.PublicNavigationModelFactory;
 import org.starling.web.cms.auth.SignedSessionService;
+import org.starling.web.navigation.PublicNavigationModelFactory;
 import org.starling.web.render.MarkdownRenderer;
 import org.starling.web.render.TemplateRenderer;
 import org.starling.web.service.ArticleService;
 import org.starling.web.service.HotCampaignService;
 import org.starling.web.service.MediaAssetService;
+import org.starling.web.service.MinimailService;
 import org.starling.web.service.NavigationService;
 import org.starling.web.service.PageService;
+import org.starling.web.service.PublicTagService;
 import org.starling.web.site.SiteBranding;
 import org.starling.web.theme.ThemeResourceResolver;
 import org.starling.web.user.UserSessionService;
 import org.starling.web.view.AdminPageModelFactory;
+import org.starling.web.view.CommunityWidgetsFactory;
 import org.starling.web.view.CmsViewModelFactory;
+import org.starling.web.view.CreditsPageContentFactory;
 import org.starling.web.view.PublicFeatureContentFactory;
 import org.starling.web.view.PublicPageModelFactory;
 import org.starling.web.view.UserViewModelFactory;
@@ -28,8 +32,12 @@ public record WebDependencies(
         PageService pageService,
         ArticleService articleService,
         HotCampaignService hotCampaignService,
+        MinimailService minimailService,
         NavigationService navigationService,
         MediaAssetService mediaAssetService,
+        PublicTagService publicTagService,
+        CommunityWidgetsFactory communityWidgetsFactory,
+        CreditsPageContentFactory creditsPageContentFactory,
         PublicNavigationModelFactory publicNavigationModelFactory,
         PublicPageModelFactory publicPageModelFactory,
         PublicFeatureContentFactory publicFeatureContentFactory,

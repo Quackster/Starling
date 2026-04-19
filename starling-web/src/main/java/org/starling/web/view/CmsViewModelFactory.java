@@ -69,6 +69,35 @@ public final class CmsViewModelFactory {
     }
 
     /**
+     * Creates a news promo article view model.
+     * @param article the article value
+     * @return the resulting promo model
+     */
+    public Map<String, Object> newsPromoArticle(CmsArticle article) {
+        Map<String, Object> view = new LinkedHashMap<>();
+        view.put("title", article.publishedTitle());
+        view.put("summary", article.publishedSummary());
+        view.put("url", "/articles/" + article.slug());
+        view.put("date", formatFriendlyDate(article.publishedAt()));
+        view.put("image", siteBranding.webGalleryAsset("v2/images/landing/uk_party_frontpage_image.gif"));
+        return view;
+    }
+
+    /**
+     * Returns a placeholder news promo article.
+     * @return the resulting placeholder article
+     */
+    public Map<String, Object> emptyNewsPromoArticle() {
+        return Map.of(
+                "title", "No news yet",
+                "summary", "Publish a CMS article to fill this slot.",
+                "url", "/articles",
+                "date", "",
+                "image", siteBranding.webGalleryAsset("v2/images/landing/uk_party_frontpage_image.gif")
+        );
+    }
+
+    /**
      * Creates a detailed article view model.
      * @param article the article value
      * @return the resulting view model

@@ -1,0 +1,63 @@
+package org.starling.web.publicsite;
+
+import io.javalin.http.Context;
+import org.starling.storage.entity.UserEntity;
+import org.starling.web.render.TemplateRenderer;
+import org.starling.web.user.UserSessionService;
+import org.starling.web.view.CreditsPageContentFactory;
+import org.starling.web.view.PublicPageModelFactory;
+
+import java.util.Map;
+import java.util.Optional;
+
+public final class CreditsController {
+
+    private final TemplateRenderer templateRenderer;
+    private final UserSessionService userSessionService;
+    private final PublicPageModelFactory publicPageModelFactory;
+    private final CreditsPageContentFactory creditsPageContentFactory;
+
+    /**
+     * Creates a new CreditsController.
+     * @param templateRenderer the template renderer
+     * @param userSessionService the user session service
+     * @param publicPageModelFactory the public page model factory
+     * @param creditsPageContentFactory the credits page content factory
+     */
+    public CreditsController(
+            TemplateRenderer templateRenderer,
+            UserSessionService userSessionService,
+            PublicPageModelFactory publicPageModelFactory,
+            CreditsPageContentFactory creditsPageContentFactory
+    ) {
+        this.templateRenderer = templateRenderer;
+        this.userSessionService = userSessionService;
+        this.publicPageModelFactory = publicPageModelFactory;
+        this.creditsPageContentFactory = creditsPageContentFactory;
+    }
+
+    /**
+     * Renders the coins page.
+     * @param context the request context
+     */
+    public void credits(Context context) {
+        Optional<UserEntity> currentUser = userSessionService.authenticate(context);
+        Map<String, Object> model = publicPageModelFactory.create(context, "credits", "credits");
+        model.put("creditCategories", creditsPageContentFactory.creditCategories());
+        model.put("purse", creditsPageContentFactory.purse(currentUser, ""));
+        model.put("creditsInfo", creditsPageContentFactory.creditsInfo());
+        context.html(templateRenderer.render("credits", model));
+    }
+
+    /**
+     * Renders the pixels page.
+     * @param context the request context
+     */
+    public void pixels(Context context) {
+        Map<String, Object> model = publicPageModelFactory.create(context, "credits", "pixels");
+        var pixelPanels = creditsPageContentFactory.pixelPanels();
+        model.put("heroPixelPanel", pixelPanels.get(0));
+        model.put("secondaryPixelPanels", pixelPanels.subList(1, pixelPanels.size()));
+        context.html(templateRenderer.render("pixels", model));
+    }
+}
