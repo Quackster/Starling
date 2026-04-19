@@ -6,10 +6,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 final class BootstrapSqlSupport {
+
+    private static final String INSERT_INTO = "INSERT INTO `";
+    private static final String VALUES = "VALUES";
 
     /**
      * Creates a new BootstrapSqlSupport.
@@ -41,14 +42,20 @@ final class BootstrapSqlSupport {
      * @return the resulting parse insert rows
      */
     static List<List<String>> parseInsertRows(String sql, String tableName, String resourcePath) {
-        Matcher matcher = Pattern.compile(
-                "INSERT INTO `" + Pattern.quote(tableName) + "`(?:\\s*\\([^;]*?\\))?\\s+VALUES\\s*(.*?);",
-                Pattern.DOTALL)
-                .matcher(sql);
-
         List<List<String>> rows = new ArrayList<>();
-        while (matcher.find()) {
-            rows.addAll(parseTuples(matcher.group(1), resourcePath));
+        String statementPrefix = INSERT_INTO + tableName + "`";
+        int searchFrom = 0;
+
+        while (searchFrom < sql.length()) {
+            int statementStart = sql.indexOf(statementPrefix, searchFrom);
+            if (statementStart < 0) {
+                break;
+            }
+
+            int valuesStart = findValuesStart(sql, statementStart + statementPrefix.length(), resourcePath);
+            int statementEnd = findStatementEnd(sql, valuesStart, resourcePath);
+            rows.addAll(parseTuples(sql.substring(valuesStart, statementEnd), resourcePath));
+            searchFrom = statementEnd + 1;
         }
         return rows;
     }
@@ -133,6 +140,88 @@ final class BootstrapSqlSupport {
      * @param resourcePath the resource path value
      * @return the resulting parse tuples
      */
+    private static int findValuesStart(String sql, int startIndex, String resourcePath) {
+        int depth = 0;
+        boolean inString = false;
+
+        for (int index = startIndex; index < sql.length(); index++) {
+            char current = sql.charAt(index);
+            if (inString) {
+                if (current == '\\' && index + 1 < sql.length()) {
+                    index++;
+                    continue;
+                }
+                if (current == '\'') {
+                    if (index + 1 < sql.length() && sql.charAt(index + 1) == '\'') {
+                        index++;
+                    } else {
+                        inString = false;
+                    }
+                }
+                continue;
+            }
+
+            if (current == '\'') {
+                inString = true;
+                continue;
+            }
+            if (current == '(') {
+                depth++;
+                continue;
+            }
+            if (current == ')' && depth > 0) {
+                depth--;
+                continue;
+            }
+            if (depth == 0 && sql.regionMatches(true, index, VALUES, 0, VALUES.length())) {
+                return index + VALUES.length();
+            }
+        }
+
+        throw new IllegalStateException("Missing VALUES clause in " + resourcePath);
+    }
+
+    private static int findStatementEnd(String sql, int startIndex, String resourcePath) {
+        int depth = 0;
+        boolean inString = false;
+
+        for (int index = startIndex; index < sql.length(); index++) {
+            char current = sql.charAt(index);
+            if (inString) {
+                if (current == '\\' && index + 1 < sql.length()) {
+                    index++;
+                    continue;
+                }
+                if (current == '\'') {
+                    if (index + 1 < sql.length() && sql.charAt(index + 1) == '\'') {
+                        index++;
+                    } else {
+                        inString = false;
+                    }
+                }
+                continue;
+            }
+
+            if (current == '\'') {
+                inString = true;
+                continue;
+            }
+            if (current == '(') {
+                depth++;
+                continue;
+            }
+            if (current == ')' && depth > 0) {
+                depth--;
+                continue;
+            }
+            if (current == ';' && depth == 0) {
+                return index;
+            }
+        }
+
+        throw new IllegalStateException("Missing statement terminator in " + resourcePath);
+    }
+
     private static List<List<String>> parseTuples(String valuesBlock, String resourcePath) {
         List<List<String>> tuples = new ArrayList<>();
         List<String> fields = null;
