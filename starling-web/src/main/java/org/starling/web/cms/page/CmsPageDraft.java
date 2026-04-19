@@ -5,6 +5,9 @@ public record CmsPageDraft(
         String templateName,
         String title,
         String summary,
-        String markdown
+        String markdown,
+        boolean visibleToGuests,
+        String allowedRanks,
+        String layoutJson
 ) {
 }

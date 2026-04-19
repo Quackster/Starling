@@ -36,6 +36,24 @@ public class CmsPageEntity {
     @Column(name = "published_markdown", nullable = false, type = "LONGTEXT")
     private String publishedMarkdown = "";
 
+    @Column(name = "draft_visible_to_guests", nullable = false, defaultValue = "1")
+    private int draftVisibleToGuests = 1;
+
+    @Column(name = "draft_allowed_ranks", nullable = false, length = 64, defaultValue = "''")
+    private String draftAllowedRanks = "";
+
+    @Column(name = "draft_layout_json", type = "LONGTEXT")
+    private String draftLayoutJson = "";
+
+    @Column(name = "published_visible_to_guests", nullable = false, defaultValue = "1")
+    private int publishedVisibleToGuests = 1;
+
+    @Column(name = "published_allowed_ranks", nullable = false, length = 64, defaultValue = "''")
+    private String publishedAllowedRanks = "";
+
+    @Column(name = "published_layout_json", type = "LONGTEXT")
+    private String publishedLayoutJson = "";
+
     @Column(name = "is_published", nullable = false, defaultValue = "0")
     private int isPublished;
 
@@ -57,6 +75,12 @@ public class CmsPageEntity {
     public String getPublishedTitle() { return publishedTitle; }
     public String getPublishedSummary() { return publishedSummary; }
     public String getPublishedMarkdown() { return publishedMarkdown; }
+    public int getDraftVisibleToGuests() { return draftVisibleToGuests; }
+    public String getDraftAllowedRanks() { return draftAllowedRanks; }
+    public String getDraftLayoutJson() { return draftLayoutJson; }
+    public int getPublishedVisibleToGuests() { return publishedVisibleToGuests; }
+    public String getPublishedAllowedRanks() { return publishedAllowedRanks; }
+    public String getPublishedLayoutJson() { return publishedLayoutJson; }
     public int getIsPublished() { return isPublished; }
     public Timestamp getPublishedAt() { return publishedAt; }
     public Timestamp getCreatedAt() { return createdAt; }
@@ -70,6 +94,12 @@ public class CmsPageEntity {
     public void setPublishedTitle(String publishedTitle) { this.publishedTitle = publishedTitle; }
     public void setPublishedSummary(String publishedSummary) { this.publishedSummary = publishedSummary; }
     public void setPublishedMarkdown(String publishedMarkdown) { this.publishedMarkdown = publishedMarkdown; }
+    public void setDraftVisibleToGuests(int draftVisibleToGuests) { this.draftVisibleToGuests = draftVisibleToGuests; }
+    public void setDraftAllowedRanks(String draftAllowedRanks) { this.draftAllowedRanks = draftAllowedRanks; }
+    public void setDraftLayoutJson(String draftLayoutJson) { this.draftLayoutJson = draftLayoutJson; }
+    public void setPublishedVisibleToGuests(int publishedVisibleToGuests) { this.publishedVisibleToGuests = publishedVisibleToGuests; }
+    public void setPublishedAllowedRanks(String publishedAllowedRanks) { this.publishedAllowedRanks = publishedAllowedRanks; }
+    public void setPublishedLayoutJson(String publishedLayoutJson) { this.publishedLayoutJson = publishedLayoutJson; }
     public void setIsPublished(int isPublished) { this.isPublished = isPublished; }
     public void setPublishedAt(Timestamp publishedAt) { this.publishedAt = publishedAt; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }

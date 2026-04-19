@@ -1,5 +1,7 @@
 package org.starling.web.cms.page;
 
+import org.starling.storage.entity.UserEntity;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -55,6 +57,25 @@ public final class PageService {
      */
     public Optional<CmsPage> findHomepage() {
         return findPublishedBySlug("home");
+    }
+
+    /**
+     * Returns whether a published page can be viewed by the current user.
+     * @param page the page
+     * @param currentUser the current user, when present
+     * @return true when visible
+     */
+    public boolean canViewPublished(CmsPage page, Optional<UserEntity> currentUser) {
+        return CmsPageAccessControl.canView(page.publishedVisibleToGuests(), page.publishedAllowedRanks(), currentUser);
+    }
+
+    /**
+     * Returns whether a published page requires login.
+     * @param page the page
+     * @return true when login is required
+     */
+    public boolean publishedPageRequiresLogin(CmsPage page) {
+        return CmsPageAccessControl.requiresLogin(page.publishedVisibleToGuests());
     }
 
     /**

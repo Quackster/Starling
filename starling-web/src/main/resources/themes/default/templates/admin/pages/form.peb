@@ -1,7 +1,7 @@
 <section class="admin-toolbar">
     <div>
         <h1>{% if isNew %}New Page{% else %}Edit Page{% endif %}</h1>
-        <p>Drafts stay private until you publish them.</p>
+        <p>Drafts stay private until you publish them, including layout and access changes.</p>
     </div>
     <a class="button-secondary" href="/admin/pages">Back to Pages</a>
 </section>
@@ -16,10 +16,7 @@
             <span>Slug</span>
             <input type="text" name="slug" value="{{ page.slug }}">
         </label>
-        <label>
-            <span>Template</span>
-            <input type="text" name="templateName" value="{{ page.templateName }}">
-        </label>
+        <input type="hidden" name="templateName" value="{{ page.templateName }}">
         <label>
             <span>Summary</span>
             <textarea name="summary" rows="3">{{ page.draftSummary }}</textarea>
@@ -28,20 +25,108 @@
             <span>Markdown</span>
             <textarea name="markdown" rows="16">{{ page.draftMarkdown }}</textarea>
         </label>
+        <section class="admin-card">
+            <h2>Access</h2>
+            <label class="checkbox-row">
+                <input type="checkbox" name="visibleToGuests"{% if page.draftVisibleToGuests %} checked{% endif %}>
+                <span>Allow guests to view this page</span>
+            </label>
+            <div class="stack-form">
+                <span>Allowed ranks when guest access is off</span>
+                <div class="checkbox-grid">
+                    {% for rank in ranks %}
+                        <label class="checkbox-row">
+                            <input type="checkbox" name="rank_{{ rank.value }}"{% if rank.selected %} checked{% endif %}>
+                            <span>Rank {{ rank.value }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+            <p>If no ranks are selected, any signed-in user can view the page. Guest access overrides rank checks.</p>
+        </section>
+        <section class="admin-card">
+            <h2>Available Habblets</h2>
+            <p>Choose which built-in habblets should render on this page and which column they belong in.</p>
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Habblet</th>
+                    <th>Column</th>
+                    <th>Order</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for habblet in availableHabblets %}
+                    <tr>
+                        <td>
+                            <strong>{{ habblet.label }}</strong>
+                            <div>{{ habblet.description }}{% if habblet.requiresLogin %} Signed-in users only.{% endif %}</div>
+                        </td>
+                        <td>
+                            <select name="widget_{{ habblet.key }}_column">
+                                <option value="">Hidden</option>
+                                <option value="column1"{% if habblet.columnId == 'column1' %} selected{% endif %}>Column 1</option>
+                                <option value="column2"{% if habblet.columnId == 'column2' %} selected{% endif %}>Column 2</option>
+                                <option value="column3"{% if habblet.columnId == 'column3' %} selected{% endif %}>Column 3</option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="number" name="widget_{{ habblet.key }}_order" value="{{ habblet.order }}" min="1" step="1">
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </section>
+        <section class="admin-card">
+            <h2>Custom Text Habblets</h2>
+            <p>Add extra text panels anywhere on the page. These render as markdown.</p>
+            <input type="hidden" name="customTextSlotCount" value="{{ customTextSlots | length }}">
+            {% for slot in customTextSlots %}
+                <div class="stack-form">
+                    <h3>Text Habblet {{ loop.index }}</h3>
+                    <label>
+                        <span>Column</span>
+                        <select name="customText_{{ slot.index }}_column">
+                            <option value="">Hidden</option>
+                            <option value="column1"{% if slot.columnId == 'column1' %} selected{% endif %}>Column 1</option>
+                            <option value="column2"{% if slot.columnId == 'column2' %} selected{% endif %}>Column 2</option>
+                            <option value="column3"{% if slot.columnId == 'column3' %} selected{% endif %}>Column 3</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>Order</span>
+                        <input type="number" name="customText_{{ slot.index }}_order" value="{{ slot.order }}" min="1" step="1">
+                    </label>
+                    <label>
+                        <span>Title</span>
+                        <input type="text" name="customText_{{ slot.index }}_title" value="{{ slot.title }}">
+                    </label>
+                    <label>
+                        <span>Markdown</span>
+                        <textarea name="customText_{{ slot.index }}_markdown" rows="6">{{ slot.markdown }}</textarea>
+                    </label>
+                </div>
+            {% endfor %}
+        </section>
         <div class="button-row">
             <button type="submit" class="button-primary">Save Draft</button>
             {% if not isNew %}
                 <button type="button" class="button-secondary" hx-post="/admin/pages/{{ page.id }}/publish">Publish</button>
                 <button type="button" class="button-secondary" hx-post="/admin/pages/{{ page.id }}/unpublish">Unpublish</button>
+                <a class="button-secondary" href="/admin/pages/{{ page.id }}/preview-page" target="_blank">Open Page Preview</a>
+                {% if page.published %}
+                    <a class="button-secondary" href="{{ page.publicUrl }}" target="_blank">View Published Page</a>
+                {% endif %}
             {% endif %}
-            <button type="button" class="button-secondary" hx-post="/admin/pages/preview" hx-include="#content-form" hx-target="#markdown-preview">Preview</button>
+            <button type="button" class="button-secondary" hx-post="/admin/pages/preview" hx-include="#content-form" hx-target="#markdown-preview">Preview Main Body</button>
         </div>
     </form>
 
     <aside class="admin-card">
         <h2>Preview</h2>
         <div id="markdown-preview" class="formatted-copy preview-shell">
-            <p>Use the preview button to render the current markdown draft.</p>
+            <p>Use the preview button to render the main markdown block, or open the full page preview to inspect habblets and access-driven layout.</p>
         </div>
     </aside>
 </section>

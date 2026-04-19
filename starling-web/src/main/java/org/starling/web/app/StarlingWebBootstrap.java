@@ -24,6 +24,11 @@ import org.starling.web.cms.article.ArticleViewFactory;
 import org.starling.web.cms.bootstrap.CmsBootstrap;
 import org.starling.web.cms.page.PageService;
 import org.starling.web.cms.page.PageViewFactory;
+import org.starling.web.cms.page.CmsPageHabbletCatalog;
+import org.starling.web.cms.page.CmsPageHabbletModelFactory;
+import org.starling.web.cms.page.CmsPageLayoutCodec;
+import org.starling.web.cms.page.CmsPageLayoutRenderer;
+import org.starling.web.cms.page.CmsPagePublicRenderer;
 import org.starling.web.config.WebConfig;
 import org.starling.web.feature.account.page.AccountController;
 import org.starling.web.feature.account.page.RegistrationController;
@@ -105,6 +110,8 @@ public final class StarlingWebBootstrap {
         RankPermissionService rankPermissionService = new RankPermissionService();
         UserSessionService userSessionService = new UserSessionService(config.sessionSecret());
         PageService pageService = new PageService();
+        CmsPageHabbletCatalog cmsPageHabbletCatalog = new CmsPageHabbletCatalog();
+        CmsPageLayoutCodec cmsPageLayoutCodec = new CmsPageLayoutCodec();
         ArticleService articleService = new ArticleService();
         HotCampaignService hotCampaignService = new HotCampaignService();
         MinimailRecipientService minimailRecipientService = new MinimailRecipientService();
@@ -118,6 +125,9 @@ public final class StarlingWebBootstrap {
         UserViewModelFactory userViewModelFactory = new UserViewModelFactory();
         CommunityWidgetsFactory communityWidgetsFactory = new CommunityWidgetsFactory(userViewModelFactory);
         CreditsPageContentFactory creditsPageContentFactory = new CreditsPageContentFactory();
+        ArticleViewFactory articleViewFactory = new ArticleViewFactory(markdownRenderer, siteBranding);
+        NewsPromoContentFactory newsPromoContentFactory = new NewsPromoContentFactory(articleService, articleViewFactory);
+        MePageContentFactory mePageContentFactory = new MePageContentFactory();
         PublicNavigationConfig publicNavigationConfig = new PublicNavigationConfigLoader().load();
         PublicPageLayoutConfig publicPageLayoutConfig = new PublicPageLayoutConfigLoader().load();
         PublicNavigationModelFactory publicNavigationModelFactory = new PublicNavigationModelFactory(
@@ -133,10 +143,36 @@ public final class StarlingWebBootstrap {
                 publicNavigationModelFactory
         );
         AdminPageModelFactory adminPageModelFactory = new AdminPageModelFactory(siteBranding, rankPermissionService);
-        ArticleViewFactory articleViewFactory = new ArticleViewFactory(markdownRenderer, siteBranding);
         PageViewFactory pageViewFactory = new PageViewFactory(markdownRenderer);
-        NewsPromoContentFactory newsPromoContentFactory = new NewsPromoContentFactory(articleService, articleViewFactory);
-        MePageContentFactory mePageContentFactory = new MePageContentFactory();
+        CmsPageHabbletModelFactory cmsPageHabbletModelFactory = new CmsPageHabbletModelFactory(
+                userSessionService,
+                userViewModelFactory,
+                communityWidgetsFactory,
+                newsPromoContentFactory,
+                tagDirectoryService,
+                userTagService,
+                hotCampaignService,
+                minimailViewFactory,
+                minimailSessionState,
+                mePageContentFactory,
+                referralService,
+                creditsPageContentFactory,
+                articleService,
+                articleViewFactory
+        );
+        CmsPageLayoutRenderer cmsPageLayoutRenderer = new CmsPageLayoutRenderer(
+                templateRenderer,
+                markdownRenderer,
+                cmsPageHabbletCatalog
+        );
+        CmsPagePublicRenderer cmsPagePublicRenderer = new CmsPagePublicRenderer(
+                templateRenderer,
+                publicPageModelFactory,
+                pageViewFactory,
+                cmsPageLayoutCodec,
+                cmsPageHabbletModelFactory,
+                cmsPageLayoutRenderer
+        );
         MeAccess meAccess = new MeAccess(userSessionService);
 
         return new WebDependencies(
@@ -169,6 +205,9 @@ public final class StarlingWebBootstrap {
                 adminPageModelFactory,
                 articleViewFactory,
                 pageViewFactory,
+                cmsPageHabbletCatalog,
+                cmsPageLayoutCodec,
+                cmsPagePublicRenderer,
                 userViewModelFactory
         );
     }
@@ -238,7 +277,8 @@ public final class StarlingWebBootstrap {
                 dependencies.templateRenderer(),
                 dependencies.pageService(),
                 dependencies.publicPageModelFactory(),
-                dependencies.pageViewFactory()
+                dependencies.userSessionService(),
+                dependencies.cmsPagePublicRenderer()
         );
         PolicyController policyController = new PolicyController(
                 dependencies.templateRenderer(),
@@ -317,7 +357,10 @@ public final class StarlingWebBootstrap {
                 dependencies.templateRenderer(),
                 dependencies.adminPageModelFactory(),
                 dependencies.pageService(),
-                dependencies.pageViewFactory()
+                dependencies.pageViewFactory(),
+                dependencies.cmsPageHabbletCatalog(),
+                dependencies.cmsPageLayoutCodec(),
+                dependencies.cmsPagePublicRenderer()
         );
         AdminArticlesController adminArticlesController = new AdminArticlesController(
                 dependencies.templateRenderer(),

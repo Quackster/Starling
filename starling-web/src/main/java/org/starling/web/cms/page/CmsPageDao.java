@@ -78,9 +78,15 @@ public final class CmsPageDao {
                 page.setDraftTitle(draft.title());
                 page.setDraftSummary(draft.summary());
                 page.setDraftMarkdown(draft.markdown());
+                page.setDraftVisibleToGuests(draft.visibleToGuests() ? 1 : 0);
+                page.setDraftAllowedRanks(draft.allowedRanks());
+                page.setDraftLayoutJson(draft.layoutJson());
                 page.setPublishedTitle("");
                 page.setPublishedSummary("");
                 page.setPublishedMarkdown("");
+                page.setPublishedVisibleToGuests(1);
+                page.setPublishedAllowedRanks("");
+                page.setPublishedLayoutJson("");
                 page.setIsPublished(0);
                 page.setPublishedAt(null);
                 page.setCreatedAt(now);
@@ -102,6 +108,9 @@ public final class CmsPageDao {
             page.setDraftTitle(draft.title());
             page.setDraftSummary(draft.summary());
             page.setDraftMarkdown(draft.markdown());
+            page.setDraftVisibleToGuests(draft.visibleToGuests() ? 1 : 0);
+            page.setDraftAllowedRanks(draft.allowedRanks());
+            page.setDraftLayoutJson(draft.layoutJson());
             page.setUpdatedAt(now);
             context.update(page);
             return id;
@@ -126,6 +135,9 @@ public final class CmsPageDao {
             page.setPublishedTitle(page.getDraftTitle());
             page.setPublishedSummary(page.getDraftSummary());
             page.setPublishedMarkdown(page.getDraftMarkdown());
+            page.setPublishedVisibleToGuests(page.getDraftVisibleToGuests());
+            page.setPublishedAllowedRanks(page.getDraftAllowedRanks());
+            page.setPublishedLayoutJson(page.getDraftLayoutJson());
             page.setIsPublished(1);
             page.setPublishedAt(now);
             page.setUpdatedAt(now);
@@ -166,10 +178,20 @@ public final class CmsPageDao {
                 page.getPublishedTitle(),
                 page.getPublishedSummary(),
                 page.getPublishedMarkdown(),
+                page.getDraftVisibleToGuests() > 0,
+                safeValue(page.getDraftAllowedRanks()),
+                safeValue(page.getDraftLayoutJson()),
+                page.getPublishedVisibleToGuests() > 0,
+                safeValue(page.getPublishedAllowedRanks()),
+                safeValue(page.getPublishedLayoutJson()),
                 page.getIsPublished() == 1,
                 page.getPublishedAt(),
                 page.getCreatedAt(),
                 page.getUpdatedAt()
         );
+    }
+
+    private static String safeValue(String value) {
+        return value == null ? "" : value;
     }
 }

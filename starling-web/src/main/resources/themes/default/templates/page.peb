@@ -14,45 +14,46 @@ var andSoItBegins = (new Date()).getTime();
 <script src="{{ site.webGalleryPath }}/static/js/libs.js" type="text/javascript"></script>
 <script src="{{ site.webGalleryPath }}/static/js/common.js" type="text/javascript"></script>
 <script src="{{ site.webGalleryPath }}/static/js/fullcontent.js" type="text/javascript"></script>
+<script src="{{ site.webGalleryPath }}/static/js/rooms.js" type="text/javascript"></script>
+<script src="{{ site.webGalleryPath }}/static/js/moredata.js" type="text/javascript"></script>
+<script src="{{ site.webGalleryPath }}/static/js/group.js" type="text/javascript"></script>
+<script src="{{ site.webGalleryPath }}/static/js/minimail.js" type="text/javascript"></script>
+<script src="{{ site.webGalleryPath }}/static/js/habboclub.js" type="text/javascript"></script>
+<script src="{{ site.webGalleryPath }}/static/js/credits.js" type="text/javascript"></script>
 <link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/style.css" type="text/css" />
 <link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/buttons.css" type="text/css" />
 <link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/boxes.css" type="text/css" />
 <link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/tooltips.css" type="text/css" />
 <link rel="stylesheet" href="{{ site.webGalleryPath }}/styles/local/com.css" type="text/css" />
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/rooms.css" type="text/css" />
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/welcome.css" type="text/css" />
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/personal.css" type="text/css" />
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/group.css" type="text/css" />
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/minimail.css" type="text/css" />
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/styles/myhabbo/control.textarea.css" type="text/css" />
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/styles/local/me.css" type="text/css" />
 <script src="{{ site.webGalleryPath }}/js/local/com.js" type="text/javascript"></script>
     <meta name="build" content="{{ site.siteName }}" />
 </head>
-<body id="community" class="anonymous ">
+{% if session.loggedIn == false %}
+<body id="home" class="anonymous ">
+{% else %}
+<body id="home" class=" ">
+{% endif %}
 {% include "base/header.peb" %}
 
 <div id="content-container">
+    {% include "base/subnav.peb" %}
     <div id="container">
         <div id="content" style="position: relative" class="clearfix">
+            {% if pageLayout is defined %}
+            {% include "fragments/page_columns.peb" %}
+            {% else %}
             <div id="column1" class="column" style="width: 580px;">
-                <div class="habblet-container ">
-                    <div class="cbb clearfix notitle ">
-                        <div id="article-wrapper">
-                            <h2>{{ page.title }}</h2>
-                            {% if page.summary != "" %}
-                            <p class="summary">{{ page.summary }}</p>
-                            {% endif %}
-                            <div class="article-body">
-                                {{ page.html | raw }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                {% include "habblet/page_content.peb" %}
                 <script type="text/javascript">if (!$(document.body).hasClassName('process-template')) { Rounder.init(); }</script>
             </div>
-
-            <div id="column3" class="column">
-                <div class="habblet-container ">
-                    <div class="ad-container">
-                        {% include "base/ads_container.peb" %}
-                    </div>
-                </div>
-                <script type="text/javascript">if (!$(document.body).hasClassName('process-template')) { Rounder.init(); }</script>
-            </div>
+            {% endif %}
         </div>
     {% include "base/footer.peb" %}
 </div>
@@ -62,4 +63,3 @@ HabboView.run();
 </script>
 </body>
 </html>
-

@@ -3,6 +3,7 @@ package org.starling.web.cms.page;
 import org.starling.web.render.MarkdownRenderer;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class PageViewFactory {
@@ -23,14 +24,57 @@ public final class PageViewFactory {
      * @return the resulting view model
      */
     public Map<String, Object> page(CmsPage page) {
+        return pageView(
+                page.id(),
+                page.slug(),
+                page.publishedTitle(),
+                page.publishedSummary(),
+                page.publishedMarkdown(),
+                page.publishedVisibleToGuests(),
+                page.publishedAllowedRanks(),
+                page.publishedAt()
+        );
+    }
+
+    /**
+     * Creates a draft page preview view model.
+     * @param page the page value
+     * @return the resulting draft view model
+     */
+    public Map<String, Object> draftPage(CmsPage page) {
+        return pageView(
+                page.id(),
+                page.slug(),
+                page.draftTitle(),
+                page.draftSummary(),
+                page.draftMarkdown(),
+                page.draftVisibleToGuests(),
+                page.draftAllowedRanks(),
+                null
+        );
+    }
+
+    private Map<String, Object> pageView(
+            int id,
+            String slug,
+            String title,
+            String summary,
+            String markdown,
+            boolean visibleToGuests,
+            String allowedRanks,
+            Object publishedAt
+    ) {
         Map<String, Object> view = new HashMap<>();
-        view.put("id", page.id());
-        view.put("slug", page.slug());
-        view.put("title", page.publishedTitle());
-        view.put("summary", page.publishedSummary());
-        view.put("markdown", page.publishedMarkdown());
-        view.put("html", markdownRenderer.render(page.publishedMarkdown()));
-        view.put("publishedAt", page.publishedAt());
+        view.put("id", id);
+        view.put("slug", slug);
+        view.put("title", title);
+        view.put("summary", summary);
+        view.put("markdown", markdown);
+        view.put("html", markdownRenderer.render(markdown));
+        view.put("publishedAt", publishedAt);
+        view.put("visibleToGuests", visibleToGuests);
+        view.put("allowedRanks", CmsPageAccessControl.allowedRanks(allowedRanks));
+        view.put("accessSummary", CmsPageAccessControl.summary(visibleToGuests, allowedRanks));
         return view;
     }
 
@@ -49,6 +93,12 @@ public final class PageViewFactory {
         view.put("published", page.published());
         view.put("publishedAt", page.publishedAt());
         view.put("updatedAt", page.updatedAt());
+        boolean visibleToGuests = page.published() ? page.publishedVisibleToGuests() : page.draftVisibleToGuests();
+        String allowedRanks = page.published() ? page.publishedAllowedRanks() : page.draftAllowedRanks();
+        view.put("visibleToGuests", visibleToGuests);
+        view.put("allowedRanks", CmsPageAccessControl.allowedRanks(allowedRanks));
+        view.put("accessSummary", CmsPageAccessControl.summary(visibleToGuests, allowedRanks));
+        view.put("publicUrl", "/page/" + page.slug());
         return view;
     }
 
@@ -62,6 +112,8 @@ public final class PageViewFactory {
         view.put("draftTitle", page.draftTitle());
         view.put("draftSummary", page.draftSummary());
         view.put("draftMarkdown", page.draftMarkdown());
+        view.put("draftVisibleToGuests", page.draftVisibleToGuests());
+        view.put("draftAllowedRanks", CmsPageAccessControl.allowedRanks(page.draftAllowedRanks()));
         return view;
     }
 
@@ -79,9 +131,13 @@ public final class PageViewFactory {
         page.put("draftTitle", "");
         page.put("draftSummary", "");
         page.put("draftMarkdown", "");
+        page.put("draftVisibleToGuests", true);
+        page.put("draftAllowedRanks", List.of());
         page.put("published", false);
         page.put("publishedAt", null);
         page.put("updatedAt", null);
+        page.put("accessSummary", CmsPageAccessControl.summary(true, ""));
+        page.put("publicUrl", "");
         return page;
     }
 }

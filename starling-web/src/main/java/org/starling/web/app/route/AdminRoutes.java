@@ -63,6 +63,7 @@ public final class AdminRoutes {
         app.get("/admin/pages", adminRouteGuard.protect(RankPermissionKeys.HOUSEKEEPING_PAGES, adminPagesController::index));
         app.get("/admin/pages/new", adminRouteGuard.protect(RankPermissionKeys.HOUSEKEEPING_PAGES, adminPagesController::newPage));
         app.post("/admin/pages/preview", adminRouteGuard.protect(RankPermissionKeys.HOUSEKEEPING_PAGES, adminPreviewController::preview));
+        app.get("/admin/pages/{id}/preview-page", adminRouteGuard.protect(RankPermissionKeys.HOUSEKEEPING_PAGES, adminPagesController::previewPage));
         app.get("/admin/pages/{id}/edit", adminRouteGuard.protect(RankPermissionKeys.HOUSEKEEPING_PAGES, adminPagesController::edit));
         app.post("/admin/pages", adminRouteGuard.protect(RankPermissionKeys.HOUSEKEEPING_PAGES, adminPagesController::create));
         app.post("/admin/pages/{id}", adminRouteGuard.protect(RankPermissionKeys.HOUSEKEEPING_PAGES, adminPagesController::update));

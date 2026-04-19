@@ -1,0 +1,10 @@
+<div class="habblet-container ">
+    <div class="cbb clearfix notitle ">
+        <div class="box-content article-body">
+            {% if habblet.title != "" %}
+            <h2>{{ habblet.title }}</h2>
+            {% endif %}
+            {{ habblet.html | raw }}
+        </div>
+    </div>
+</div>

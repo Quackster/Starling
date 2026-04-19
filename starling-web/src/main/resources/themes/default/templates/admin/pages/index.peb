@@ -12,8 +12,10 @@
         <tr>
             <th>Title</th>
             <th>Slug</th>
+            <th>Access</th>
             <th>Status</th>
             <th>Updated</th>
+            <th>Actions</th>
         </tr>
         </thead>
         <tbody>
@@ -21,12 +23,19 @@
             <tr>
                 <td><a href="/admin/pages/{{ page.id }}/edit">{{ page.title }}</a></td>
                 <td>{{ page.slug }}</td>
+                <td>{{ page.accessSummary }}</td>
                 <td>{% if page.published %}Published{% else %}Draft{% endif %}</td>
                 <td>{{ page.updatedAt }}</td>
+                <td>
+                    <a href="/admin/pages/{{ page.id }}/edit">Edit</a>
+                    {% if page.published %}
+                        <span> | </span><a href="{{ page.publicUrl }}" target="_blank">View</a>
+                    {% endif %}
+                </td>
             </tr>
         {% else %}
             <tr>
-                <td colspan="4">No pages yet.</td>
+                <td colspan="6">No pages yet.</td>
             </tr>
         {% endfor %}
         </tbody>

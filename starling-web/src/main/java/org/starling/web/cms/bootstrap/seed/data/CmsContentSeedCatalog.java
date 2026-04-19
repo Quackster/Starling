@@ -18,7 +18,10 @@ public final class CmsContentSeedCatalog {
             Starling-Web ships with draft and publish flows for pages and news.
 
             Use the admin area to shape the public site while navigation stays configurable from YAML.
-            """
+            """,
+            true,
+            "",
+            ""
     );
     private static final List<CmsArticleDraft> ARTICLES = List.of(
             new CmsArticleDraft(
