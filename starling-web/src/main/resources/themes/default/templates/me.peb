@@ -148,6 +148,148 @@ if (typeof HabboClient != "undefined") { HabboClient.windowName = "client"; }
                 </div>
             </div>
             <script type="text/javascript">if (!$(document.body).hasClassName('process-template')) { Rounder.init(); }</script>
+
+            <div class="habblet-container minimail" id="mail">
+                <div class="cbb clearfix blue ">
+                    <h2 class="title">My Messages</h2>
+                    <div id="minimail">
+                        {% if minimail.notice != "" %}
+                        <div class="minimail-flash minimail-notice">{{ minimail.notice }}</div>
+                        {% endif %}
+                        {% if minimail.error != "" %}
+                        <div class="minimail-flash minimail-error">{{ minimail.error }}</div>
+                        {% endif %}
+
+                        <div class="minimail-toolbar clearfix">
+                            <a href="{{ site.sitePath }}/me?mailbox={{ minimail.label }}&compose=true{% if minimail.unreadOnly %}&unreadOnly=true{% endif %}" class="new-button compose"><b>Compose</b><i></i></a>
+                            <div class="clearfix labels nostandard">
+                                <ul class="box-tabs">
+                                    <li{% if minimail.label == "inbox" %} class="selected"{% endif %}><a href="{{ site.sitePath }}/me?mailbox=inbox">Inbox{% if minimail.unreadCount > 0 %} ({{ minimail.unreadCount }}){% endif %}</a><span class="tab-spacer"></span></li>
+                                    <li{% if minimail.label == "sent" %} class="selected"{% endif %}><a href="{{ site.sitePath }}/me?mailbox=sent">Sent</a><span class="tab-spacer"></span></li>
+                                    <li{% if minimail.label == "trash" %} class="selected"{% endif %}><a href="{{ site.sitePath }}/me?mailbox=trash">Trash</a><span class="tab-spacer"></span></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {% if minimail.composeMode %}
+                        <form method="post" action="{{ site.sitePath }}/me/minimail/compose" class="minimail-compose-form">
+                            <label for="minimail-recipients">To</label>
+                            <input id="minimail-recipients" type="text" name="recipients" value="{{ minimail.composeRecipients }}" maxlength="255" />
+                            <p class="minimail-help">Separate multiple usernames with commas.</p>
+
+                            <label for="minimail-subject">Subject</label>
+                            <input id="minimail-subject" type="text" name="subject" value="{{ minimail.composeSubject }}" maxlength="100" />
+
+                            <label for="minimail-body">Message</label>
+                            <textarea id="minimail-body" name="body" rows="5" cols="10">{{ minimail.composeBody }}</textarea>
+
+                            <div class="minimail-form-actions">
+                                <button type="submit" class="minimail-button">Send Message</button>
+                                <a href="{{ site.sitePath }}/me?mailbox={{ minimail.label }}{% if minimail.unreadOnly %}&unreadOnly=true{% endif %}" class="minimail-cancel">Cancel</a>
+                            </div>
+                        </form>
+                        {% endif %}
+
+                        {% if minimail.label == "inbox" %}
+                        <form method="get" action="{{ site.sitePath }}/me" class="minimail-filter-form">
+                            <input type="hidden" name="mailbox" value="inbox" />
+                            <label><input type="checkbox" name="unreadOnly" value="true"{% if minimail.unreadOnly %} checked="checked"{% endif %} /> Only unread</label>
+                            <button type="submit" class="minimail-link-button">Apply</button>
+                        </form>
+                        {% elseif minimail.label == "trash" %}
+                        <form method="post" action="{{ site.sitePath }}/me/minimail/trash/empty" class="minimail-trash-form">
+                            <p>Messages moved to trash stay here until you empty it.</p>
+                            <button type="submit" class="minimail-link-button">Empty trash</button>
+                        </form>
+                        {% endif %}
+
+                        {% if minimail.totalMessages > 0 %}
+                        <div class="minimail-pagination">
+                            <span>{{ minimail.startIndex }} - {{ minimail.endIndex }} of {{ minimail.totalMessages }}</span>
+                            {% if minimail.hasNewerPage %}
+                            <a href="{{ site.sitePath }}/me?mailbox={{ minimail.label }}&mailPage={{ minimail.newerPage }}{% if minimail.unreadOnly %}&unreadOnly=true{% endif %}" class="minimail-page-link">Newer</a>
+                            {% endif %}
+                            {% if minimail.hasOlderPage %}
+                            <a href="{{ site.sitePath }}/me?mailbox={{ minimail.label }}&mailPage={{ minimail.olderPage }}{% if minimail.unreadOnly %}&unreadOnly=true{% endif %}" class="minimail-page-link">Older</a>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <div class="minimail-list">
+                            {% if minimail.messages | length > 0 %}
+                            {% for message in minimail.messages %}
+                            <a href="{{ site.sitePath }}/me?mailbox={{ minimail.label }}&messageId={{ message.id }}{% if minimail.unreadOnly %}&unreadOnly=true{% endif %}{% if minimail.currentPage > 1 %}&mailPage={{ minimail.currentPage }}{% endif %}" class="minimail-preview {{ message.statusClass }}{% if minimail.selectedMessageId == message.id %} selected{% endif %}">
+                                <img src="{{ message.avatarUrl }}" alt="{{ message.senderName }}" />
+                                <span class="minimail-preview-meta">
+                                    <span class="minimail-preview-date">{{ message.sentAt }}</span>
+                                    {% if minimail.label == "sent" %}
+                                    <span class="minimail-preview-name">To: {{ message.recipientName }}</span>
+                                    {% else %}
+                                    <span class="minimail-preview-name">{{ message.senderName }}</span>
+                                    {% endif %}
+                                    <span class="minimail-preview-subject">&ldquo;{{ message.subject }}&rdquo;</span>
+                                </span>
+                            </a>
+                            {% endfor %}
+                            {% else %}
+                            <p class="minimail-empty">{{ minimail.emptyMessage }}</p>
+                            {% endif %}
+                        </div>
+
+                        {% if minimail.selectedMessage %}
+                        <div class="minimail-detail">
+                            <div class="minimail-detail-head">
+                                <img src="{{ minimail.selectedMessage.senderAvatarUrl }}" alt="{{ minimail.selectedMessage.senderName }}" />
+                                <div class="minimail-detail-copy">
+                                    <h3>{{ minimail.selectedMessage.subject }}</h3>
+                                    <p><strong>From:</strong> {{ minimail.selectedMessage.senderName }}</p>
+                                    <p><strong>To:</strong> {{ minimail.selectedMessage.recipientName }}</p>
+                                    <p><strong>Sent:</strong> {{ minimail.selectedMessage.sentAt }}</p>
+                                </div>
+                            </div>
+                            <div class="minimail-detail-body">{{ minimail.selectedMessage.bodyHtml | raw }}</div>
+
+                            <div class="minimail-detail-actions">
+                                {% if minimail.label == "trash" %}
+                                <form method="post" action="{{ site.sitePath }}/me/minimail/{{ minimail.selectedMessage.id }}/restore">
+                                    <button type="submit" class="minimail-button">Restore</button>
+                                </form>
+                                <form method="post" action="{{ site.sitePath }}/me/minimail/{{ minimail.selectedMessage.id }}/delete">
+                                    <input type="hidden" name="mailbox" value="trash" />
+                                    <input type="hidden" name="mailPage" value="{{ minimail.currentPage }}" />
+                                    <button type="submit" class="minimail-button minimail-button-danger">Delete Permanently</button>
+                                </form>
+                                {% elseif minimail.label == "inbox" %}
+                                <form method="post" action="{{ site.sitePath }}/me/minimail/{{ minimail.selectedMessage.id }}/delete">
+                                    <input type="hidden" name="mailbox" value="inbox" />
+                                    <input type="hidden" name="mailPage" value="{{ minimail.currentPage }}" />
+                                    {% if minimail.unreadOnly %}
+                                    <input type="hidden" name="unreadOnly" value="true" />
+                                    {% endif %}
+                                    <button type="submit" class="minimail-button minimail-button-danger">Move To Trash</button>
+                                </form>
+                                {% if minimail.selectedMessage.replyable %}
+                                <a href="{{ site.sitePath }}/me?mailbox=inbox&messageId={{ minimail.selectedMessage.id }}&reply=true{% if minimail.unreadOnly %}&unreadOnly=true{% endif %}{% if minimail.currentPage > 1 %}&mailPage={{ minimail.currentPage }}{% endif %}" class="minimail-cancel minimail-inline-link">Reply</a>
+                                {% endif %}
+                                {% endif %}
+                            </div>
+
+                            {% if minimail.replyMode %}
+                            <form method="post" action="{{ site.sitePath }}/me/minimail/{{ minimail.selectedMessage.id }}/reply" class="minimail-reply-form">
+                                <label for="minimail-reply-body">Reply</label>
+                                <textarea id="minimail-reply-body" name="body" rows="5" cols="10">{{ minimail.composeBody }}</textarea>
+                                <div class="minimail-form-actions">
+                                    <button type="submit" class="minimail-button">Send Reply</button>
+                                    <a href="{{ site.sitePath }}/me?mailbox=inbox&messageId={{ minimail.selectedMessage.id }}{% if minimail.unreadOnly %}&unreadOnly=true{% endif %}{% if minimail.currentPage > 1 %}&mailPage={{ minimail.currentPage }}{% endif %}" class="minimail-cancel">Cancel</a>
+                                </div>
+                            </form>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <script type="text/javascript">if (!$(document.body).hasClassName('process-template')) { Rounder.init(); }</script>
         </div>
 
         <div id="column2" class="column">

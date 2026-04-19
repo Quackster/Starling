@@ -2,6 +2,7 @@ package org.starling.web;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.starling.config.DatabaseConfig;
@@ -14,6 +15,7 @@ import org.starling.web.cms.dao.CmsNavigationDao;
 import org.starling.web.cms.dao.CmsPageDao;
 import org.starling.web.config.WebConfig;
 import org.starling.web.me.HotCampaignDao;
+import org.starling.web.me.MailboxLabel;
 import org.starling.web.me.MinimailDao;
 
 import io.javalin.Javalin;
@@ -86,6 +88,11 @@ class StarlingWebIntegrationTest {
                 .cookieHandler(new CookieManager())
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
+    }
+
+    @BeforeEach
+    void resetClient() {
+        this.client = newClient();
     }
 
     @AfterAll
@@ -353,7 +360,67 @@ class StarlingWebIntegrationTest {
         assertTrue(welcomeResponse.body().contains("Choose a pre-decorated room"));
         assertTrue(meResponse.body().contains("Hot Campaigns"));
         assertTrue(meResponse.body().contains("My Tags"));
+        assertTrue(meResponse.body().contains("My Messages"));
         assertFalse(meResponse.body().contains("Reccomended Rooms"));
+    }
+
+    @Test
+    void minimailComposeDeleteAndRestoreFlowWorks() throws Exception {
+        HttpResponse<String> loginResponse = postForm(
+                "/account/submit",
+                Map.of("username", "admin", "password", "admin"),
+                Map.of()
+        );
+        assertEquals(200, loginResponse.statusCode());
+
+        HttpResponse<String> composeResponse = postForm(
+                "/me/minimail/compose",
+                Map.of(
+                        "recipients", "admin",
+                        "subject", "Integration minimail",
+                        "body", "Testing the minimail flow."
+                ),
+                Map.of()
+        );
+        assertEquals(200, composeResponse.statusCode());
+        assertTrue(composeResponse.body().contains("Message sent."));
+        assertTrue(composeResponse.body().contains("Integration minimail"));
+
+        int messageId = MinimailDao.listInbox(1, false, 20, 0).stream()
+                .filter(message -> "Integration minimail".equals(message.subject()))
+                .findFirst()
+                .orElseThrow()
+                .id();
+
+        HttpResponse<String> deleteResponse = postForm(
+                "/me/minimail/" + messageId + "/delete",
+                Map.of("mailbox", MailboxLabel.INBOX.key(), "mailPage", "1"),
+                Map.of()
+        );
+        assertEquals(200, deleteResponse.statusCode());
+        assertTrue(deleteResponse.body().contains("Message moved to trash."));
+
+        HttpResponse<String> trashResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/me?mailbox=trash")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertEquals(200, trashResponse.statusCode());
+        assertTrue(trashResponse.body().contains("Integration minimail"));
+
+        HttpResponse<String> restoreResponse = postForm(
+                "/me/minimail/" + messageId + "/restore",
+                Map.of(),
+                Map.of()
+        );
+        assertEquals(200, restoreResponse.statusCode());
+        assertTrue(restoreResponse.body().contains("Message restored to your inbox."));
+
+        HttpResponse<String> inboxResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/me?mailbox=inbox")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertEquals(200, inboxResponse.statusCode());
+        assertTrue(inboxResponse.body().contains("Integration minimail"));
     }
 
     @Test
@@ -478,6 +545,13 @@ class StarlingWebIntegrationTest {
         assertEquals("hero.png", CmsMediaDao.listAll().get(0).fileName());
         assertEquals(2, CmsMediaDao.listAll().get(0).width());
         assertEquals(2, CmsMediaDao.listAll().get(0).height());
+    }
+
+    private HttpClient newClient() {
+        return HttpClient.newBuilder()
+                .cookieHandler(new CookieManager())
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .build();
     }
 
     private void login() throws Exception {

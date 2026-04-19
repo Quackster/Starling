@@ -244,6 +244,28 @@ public final class MinimailDao {
     }
 
     /**
+     * Updates the conversation id for a single row.
+     * @param messageId the message id
+     * @param conversationId the conversation id
+     */
+    public static void setConversationId(int messageId, int conversationId) {
+        EntityContext.inTransaction(context -> {
+            try (var statement = context.conn().prepareStatement("""
+                    UPDATE minimail
+                    SET conversationid = ?
+                    WHERE id = ?
+                    """)) {
+                statement.setInt(1, Math.max(conversationId, 0));
+                statement.setInt(2, messageId);
+                statement.executeUpdate();
+                return null;
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to update minimail conversation id", e);
+            }
+        });
+    }
+
+    /**
      * Updates a single row to mark it as read.
      * @param recipientId the recipient id
      * @param messageId the message id

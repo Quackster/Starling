@@ -59,3 +59,212 @@ body#home #column2 .tag-list {
 body#home #column2 .box-content {
     padding-top: 2px;
 }
+
+body#home #minimail {
+    color: #45637d;
+}
+
+body#home .minimail-toolbar {
+    margin-bottom: 10px;
+}
+
+body#home .minimail-toolbar .new-button {
+    float: right;
+}
+
+body#home .minimail-toolbar .labels {
+    overflow: hidden;
+}
+
+body#home .minimail-flash {
+    margin: 0 0 10px;
+    padding: 10px 12px;
+    border: 1px solid #c8d8e6;
+    background: #f3f8fc;
+    color: #35526c;
+}
+
+body#home .minimail-error {
+    border-color: #dba3a3;
+    background: #fff1f1;
+    color: #8a3a3a;
+}
+
+body#home .minimail-compose-form,
+body#home .minimail-reply-form {
+    margin-bottom: 14px;
+    padding: 12px;
+    border: 1px solid #d6e4ef;
+    background: #f8fbfe;
+}
+
+body#home .minimail-compose-form label,
+body#home .minimail-reply-form label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: bold;
+}
+
+body#home .minimail-compose-form input[type="text"],
+body#home .minimail-compose-form textarea,
+body#home .minimail-reply-form textarea {
+    box-sizing: border-box;
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 7px 8px;
+    border: 1px solid #adc3d8;
+    font: normal 12px Verdana, Arial, sans-serif;
+    color: #35526c;
+}
+
+body#home .minimail-help,
+body#home .minimail-trash-form p {
+    margin: 0 0 10px;
+    color: #6a849c;
+    font-size: 11px;
+}
+
+body#home .minimail-filter-form,
+body#home .minimail-trash-form,
+body#home .minimail-pagination,
+body#home .minimail-empty {
+    margin-bottom: 10px;
+}
+
+body#home .minimail-filter-form label {
+    margin-right: 8px;
+}
+
+body#home .minimail-list {
+    border-top: 1px solid #d6e4ef;
+}
+
+body#home .minimail-preview {
+    display: block;
+    overflow: hidden;
+    padding: 10px 0;
+    border-bottom: 1px solid #d6e4ef;
+    color: #35526c;
+    text-decoration: none;
+}
+
+body#home .minimail-preview:hover {
+    text-decoration: none;
+    background: #f8fbfe;
+}
+
+body#home .minimail-preview.selected {
+    background: #eef6fb;
+}
+
+body#home .minimail-preview.unread .minimail-preview-name,
+body#home .minimail-preview.unread .minimail-preview-subject {
+    font-weight: bold;
+}
+
+body#home .minimail-preview img {
+    float: left;
+    width: 32px;
+    height: 55px;
+    margin-right: 10px;
+}
+
+body#home .minimail-preview-meta {
+    display: block;
+    overflow: hidden;
+}
+
+body#home .minimail-preview-date,
+body#home .minimail-preview-name,
+body#home .minimail-preview-subject {
+    display: block;
+}
+
+body#home .minimail-preview-date {
+    color: #7b95ac;
+    font-size: 10px;
+}
+
+body#home .minimail-preview-subject {
+    margin-top: 2px;
+}
+
+body#home .minimail-detail {
+    margin-top: 12px;
+    padding: 12px;
+    border: 1px solid #d6e4ef;
+    background: #ffffff;
+}
+
+body#home .minimail-detail-head {
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+body#home .minimail-detail-head img {
+    float: left;
+    width: 32px;
+    height: 55px;
+    margin-right: 12px;
+}
+
+body#home .minimail-detail-copy h3 {
+    margin: 0 0 8px;
+    color: #2d577c;
+}
+
+body#home .minimail-detail-copy p {
+    margin: 0 0 4px;
+}
+
+body#home .minimail-detail-body {
+    padding: 12px;
+    border: 1px solid #d6e4ef;
+    background: #f8fbfe;
+    line-height: 1.5;
+}
+
+body#home .minimail-detail-actions,
+body#home .minimail-form-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+body#home .minimail-detail-actions form {
+    margin: 0;
+}
+
+body#home .minimail-button,
+body#home .minimail-link-button {
+    padding: 7px 12px;
+    border: 1px solid #5e89aa;
+    background: #7aa7c8;
+    color: #fff;
+    font: bold 11px Verdana, Arial, sans-serif;
+    cursor: pointer;
+}
+
+body#home .minimail-link-button {
+    padding: 4px 8px;
+    font-weight: normal;
+}
+
+body#home .minimail-button-danger {
+    border-color: #a85c5c;
+    background: #c77272;
+}
+
+body#home .minimail-cancel,
+body#home .minimail-inline-link,
+body#home .minimail-page-link {
+    color: #2d577c;
+    font-weight: bold;
+}
+
+body#home .minimail-empty {
+    padding: 14px 0;
+    color: #5f7992;
+}
