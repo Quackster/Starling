@@ -46,6 +46,27 @@ public final class DatabaseSupport {
     }
 
     /**
+     * Drops the configured database if it exists.
+     * @param config the database config value
+     */
+    public static void dropDatabaseIfExists(DatabaseConfig config) {
+        String dropDatabaseSql = "DROP DATABASE IF EXISTS `" + escapeIdentifier(config.dbName()) + "`";
+
+        try (Connection connection = DriverManager.getConnection(
+                config.adminJdbcUrl(),
+                config.dbUsername(),
+                config.dbPassword()
+        );
+             Statement statement = connection.createStatement()) {
+            statement.executeUpdate(dropDatabaseSql);
+            log.info("Dropped database '{}' if it existed", config.dbName());
+        } catch (Exception e) {
+            log.error("Failed to drop database '{}': {}", config.dbName(), e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
      * Escapes an identifier for use in raw SQL.
      * @param identifier the identifier value
      * @return the escaped identifier

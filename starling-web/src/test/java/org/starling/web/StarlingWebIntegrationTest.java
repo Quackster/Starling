@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.starling.config.DatabaseConfig;
 import org.starling.storage.EntityContext;
+import org.starling.storage.DatabaseSupport;
 import org.starling.storage.dao.PublicTagDao;
 import org.starling.storage.dao.UserDao;
 import org.starling.storage.entity.UserEntity;
@@ -35,9 +36,6 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.Statement;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -108,14 +106,7 @@ class StarlingWebIntegrationTest {
             }
             EntityContext.shutdown();
         } finally {
-            try (Connection connection = DriverManager.getConnection(
-                    databaseConfig.adminJdbcUrl(),
-                    databaseConfig.dbUsername(),
-                    databaseConfig.dbPassword()
-            );
-                 Statement statement = connection.createStatement()) {
-                statement.executeUpdate("DROP DATABASE IF EXISTS `" + databaseConfig.dbName().replace("`", "``") + "`");
-            }
+            DatabaseSupport.dropDatabaseIfExists(databaseConfig);
 
             if (tempRoot != null && Files.exists(tempRoot)) {
                 Files.walk(tempRoot)

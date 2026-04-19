@@ -25,7 +25,6 @@ import org.starling.storage.entity.UserEntity;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
-import java.sql.Statement;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -71,10 +70,7 @@ class DatabaseIntegrationTest {
         try {
             EntityContext.shutdown();
         } finally {
-            try (Connection connection = DriverManager.getConnection(config.adminJdbcUrl(), config.dbUsername(), config.dbPassword());
-                 Statement statement = connection.createStatement()) {
-                statement.executeUpdate("DROP DATABASE IF EXISTS `" + config.dbName().replace("`", "``") + "`");
-            }
+            DatabaseSupport.dropDatabaseIfExists(config.database());
         }
     }
 

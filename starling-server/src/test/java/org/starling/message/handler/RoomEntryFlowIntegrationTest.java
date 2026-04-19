@@ -22,6 +22,7 @@ import org.starling.net.codec.ServerMessage;
 import org.starling.net.codec.VL64Encoding;
 import org.starling.net.session.Session;
 import org.starling.storage.DatabaseBootstrap;
+import org.starling.storage.DatabaseSupport;
 import org.starling.storage.EntityContext;
 import org.starling.storage.dao.PublicRoomDao;
 import org.starling.storage.dao.RoomDao;
@@ -29,9 +30,6 @@ import org.starling.storage.dao.UserDao;
 import org.starling.storage.entity.UserEntity;
 import org.starling.support.PacketDebugStrings;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.Statement;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -91,10 +89,7 @@ class RoomEntryFlowIntegrationTest {
         try {
             EntityContext.shutdown();
         } finally {
-            try (Connection connection = DriverManager.getConnection(config.adminJdbcUrl(), config.dbUsername(), config.dbPassword());
-                 Statement statement = connection.createStatement()) {
-                statement.executeUpdate("DROP DATABASE IF EXISTS `" + config.dbName().replace("`", "``") + "`");
-            }
+            DatabaseSupport.dropDatabaseIfExists(config.database());
         }
     }
 
