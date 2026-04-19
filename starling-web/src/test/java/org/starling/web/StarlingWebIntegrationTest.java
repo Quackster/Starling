@@ -177,6 +177,126 @@ class StarlingWebIntegrationTest {
     }
 
     @Test
+    void communityCreditsAndTagsPagesRenderPhpRetroWidgets() throws Exception {
+        HttpResponse<String> communityResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/community")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> creditsResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/credits")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> pixelsResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/credits/pixels")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> tagResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/tag")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> tagDetailResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/tag/retro")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> voucherResponse = postForm(
+                "/habblet/ajax/redeemvoucher",
+                Map.of("voucherCode", "FREE"),
+                Map.of()
+        );
+        HttpResponse<byte[]> badgeResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/habbo-imaging/badge/ACH_Test.gif")).GET().build(),
+                HttpResponse.BodyHandlers.ofByteArray()
+        );
+
+        assertEquals(200, communityResponse.statusCode());
+        assertEquals(200, creditsResponse.statusCode());
+        assertEquals(200, pixelsResponse.statusCode());
+        assertEquals(200, tagResponse.statusCode());
+        assertEquals(200, tagDetailResponse.statusCode());
+        assertEquals(200, voucherResponse.statusCode());
+        assertEquals(200, badgeResponse.statusCode());
+        assertTrue(communityResponse.body().contains("Top Rated"));
+        assertTrue(communityResponse.body().contains("Latest news"));
+        assertTrue(communityResponse.body().contains("Random Habbos - Click Us!"));
+        assertTrue(communityResponse.body().contains("<h2 class=\"title\">Tags</h2>"));
+        assertTrue(communityResponse.body().contains("active-habbo-imagemap"));
+        assertTrue(creditsResponse.body().contains("How to get Credits"));
+        assertTrue(creditsResponse.body().contains("Your purse"));
+        assertTrue(creditsResponse.body().contains("What are Coins?"));
+        assertTrue(pixelsResponse.body().contains("Learn about Pixels"));
+        assertTrue(pixelsResponse.body().contains("Rent some stuff"));
+        assertTrue(tagResponse.body().contains("Popular tags"));
+        assertTrue(tagResponse.body().contains("Tag fight"));
+        assertTrue(tagDetailResponse.body().contains("RetroGuide"));
+        assertTrue(tagDetailResponse.body().contains("/tag/retro"));
+        assertTrue(voucherResponse.body().contains("Please sign in to see your purse."));
+        assertTrue(badgeResponse.body().length > 0);
+    }
+
+    @Test
+    void signedInTagWidgetsSupportMatchAndTagMutations() throws Exception {
+        HttpResponse<String> loginResponse = postForm(
+                "/account/submit",
+                Map.of("username", "admin", "password", "admin"),
+                Map.of()
+        );
+        assertEquals(200, loginResponse.statusCode());
+        assertTrue(loginResponse.uri().toString().endsWith("/me"));
+
+        HttpResponse<String> matchResponse = postForm(
+                "/habblet/ajax/tagmatch",
+                Map.of("friendName", "RetroGuide"),
+                Map.of()
+        );
+        HttpResponse<String> tagSearchBeforeAddResponse = postForm(
+                "/habblet/ajax/tagsearch",
+                Map.of("tag", "coins"),
+                Map.of()
+        );
+        HttpResponse<String> addTagResponse = postForm(
+                "/myhabbo/tag/add",
+                Map.of("tagName", "coins"),
+                Map.of()
+        );
+        HttpResponse<String> removeTagResponse = postForm(
+                "/myhabbo/tag/remove",
+                Map.of("tagName", "coins"),
+                Map.of()
+        );
+        HttpResponse<String> tagSearchAfterRemoveResponse = postForm(
+                "/habblet/ajax/tagsearch",
+                Map.of("tag", "coins"),
+                Map.of()
+        );
+        HttpResponse<String> fightResponse = postForm(
+                "/habblet/ajax/tagfight",
+                Map.of("tag1", "retro", "tag2", "coins"),
+                Map.of()
+        );
+        HttpResponse<String> signedInVoucherResponse = postForm(
+                "/habblet/ajax/redeemvoucher",
+                Map.of("voucherCode", "FREE"),
+                Map.of()
+        );
+
+        assertEquals(200, matchResponse.statusCode());
+        assertEquals(200, tagSearchBeforeAddResponse.statusCode());
+        assertEquals(200, tagSearchAfterRemoveResponse.statusCode());
+        assertEquals(200, fightResponse.statusCode());
+        assertEquals(200, signedInVoucherResponse.statusCode());
+        assertEquals("valid", addTagResponse.body());
+        assertEquals("valid", removeTagResponse.body());
+        assertTrue(matchResponse.body().contains("67 %"));
+        assertTrue(matchResponse.body().contains("You have a lot in common!"));
+        assertTrue(tagSearchBeforeAddResponse.body().contains("Rare Traders"));
+        assertTrue(tagSearchBeforeAddResponse.body().contains("Tag yourself with:"));
+        assertTrue(tagSearchAfterRemoveResponse.body().contains("Tag yourself with:"));
+        assertTrue(fightResponse.body().contains("And the winner is:"));
+        assertTrue(fightResponse.body().contains("<b>retro</b>"));
+        assertTrue(signedInVoucherResponse.body().contains("Voucher redemption is not enabled yet in Starling."));
+    }
+
+    @Test
     void publicUserLoginFailurePreservesLisbonQueryParams() throws Exception {
         HttpResponse<String> response = postForm(
                 "/account/submit",
