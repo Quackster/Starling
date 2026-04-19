@@ -12,6 +12,8 @@ import org.starling.web.cms.dao.CmsPageDao;
 import org.starling.web.cms.model.CmsArticleDraft;
 import org.starling.web.cms.model.CmsPageDraft;
 import org.starling.web.config.WebConfig;
+import org.starling.web.me.HotCampaignDao;
+import org.starling.web.me.MinimailDao;
 
 import java.nio.file.Files;
 import java.sql.Statement;
@@ -144,6 +146,36 @@ public final class CmsBootstrap {
                             PRIMARY KEY (id)
                         ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
                         """);
+                statement.executeUpdate("""
+                        CREATE TABLE IF NOT EXISTS campaigns (
+                            id INT NOT NULL AUTO_INCREMENT,
+                            url VARCHAR(255) NOT NULL,
+                            image VARCHAR(255) NOT NULL DEFAULT '',
+                            name VARCHAR(255) NOT NULL,
+                            `desc` TEXT NOT NULL,
+                            visible TINYINT NOT NULL DEFAULT 1,
+                            sort_order INT NOT NULL DEFAULT 0,
+                            PRIMARY KEY (id),
+                            KEY idx_campaigns_visible (visible, sort_order, id)
+                        ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+                        """);
+                statement.executeUpdate("""
+                        CREATE TABLE IF NOT EXISTS minimail (
+                            id INT NOT NULL AUTO_INCREMENT,
+                            senderid INT NOT NULL DEFAULT 0,
+                            to_id INT NOT NULL,
+                            subject VARCHAR(100) NOT NULL,
+                            time BIGINT NOT NULL,
+                            message LONGTEXT NOT NULL,
+                            read_mail TINYINT NOT NULL DEFAULT 0,
+                            deleted TINYINT NOT NULL DEFAULT 0,
+                            conversationid INT NOT NULL DEFAULT 0,
+                            PRIMARY KEY (id),
+                            KEY idx_minimail_inbox (to_id, deleted, read_mail, id),
+                            KEY idx_minimail_sent (senderid, id),
+                            KEY idx_minimail_conversation (conversationid, id)
+                        ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+                        """);
                 return null;
             } catch (Exception e) {
                 throw new RuntimeException("Failed to ensure cms schema", e);
@@ -196,6 +228,7 @@ public final class CmsBootstrap {
      */
     public static void seedDefaults() {
         CmsNavigationDao.ensureMainMenu();
+        seedHotCampaigns();
         CmsPageDao.seedDefault(new CmsPageDraft(
                 "home",
                 "page",
@@ -219,5 +252,55 @@ public final class CmsBootstrap {
                 You can manage **pages**, **news**, **menus**, and **media** from the back office at `/admin`.
                 """
         ));
+        seedBootstrapMinimail();
+    }
+
+    private static void seedHotCampaigns() {
+        if (HotCampaignDao.count() > 0) {
+            return;
+        }
+
+        HotCampaignDao.create(
+                "/community",
+                "/web-gallery/images/hot_campaigns/welcome.svg",
+                "Welcome Lounge",
+                "Take a tour of the community spaces and see what Starling is building next.",
+                0
+        );
+        HotCampaignDao.create(
+                "/news",
+                "/web-gallery/images/hot_campaigns/news.svg",
+                "Read The Headlines",
+                "Catch up on the latest announcements, staff updates, and community highlights.",
+                1
+        );
+        HotCampaignDao.create(
+                "/welcome",
+                "/web-gallery/images/hot_campaigns/start.svg",
+                "Start Strong",
+                "Jump into the welcome flow, pick your first room, and get comfortable in the hotel.",
+                2
+        );
+    }
+
+    private static void seedBootstrapMinimail() {
+        if (MinimailDao.count() > 0) {
+            return;
+        }
+
+        UserEntity bootstrapUser = UserDao.findByUsername("admin");
+        if (bootstrapUser == null) {
+            return;
+        }
+
+        MinimailDao.createSystemMessage(
+                bootstrapUser.getId(),
+                "Welcome to Starling",
+                """
+                Thanks for logging in.
+
+                Minimail is now available from your /me page, so you can keep in touch without leaving the hotel site.
+                """
+        );
     }
 }

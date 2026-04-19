@@ -13,6 +13,8 @@ import org.starling.web.cms.dao.CmsMediaDao;
 import org.starling.web.cms.dao.CmsNavigationDao;
 import org.starling.web.cms.dao.CmsPageDao;
 import org.starling.web.config.WebConfig;
+import org.starling.web.me.HotCampaignDao;
+import org.starling.web.me.MinimailDao;
 
 import io.javalin.Javalin;
 
@@ -120,6 +122,8 @@ class StarlingWebIntegrationTest {
     void bootstrapSeedsAdminContentAndNavigation() {
         assertEquals(1, CmsAdminDao.count());
         assertEquals(1, UserDao.count());
+        assertTrue(HotCampaignDao.count() >= 3);
+        assertTrue(MinimailDao.count() >= 1);
         assertTrue(CmsPageDao.findPublishedBySlug("home").isPresent());
         assertTrue(CmsArticleDao.findPublishedBySlug("welcome-to-starling").isPresent());
         assertEquals(2, CmsNavigationDao.listItems(CmsNavigationDao.ensureMainMenu().id()).size());
