@@ -184,7 +184,7 @@ public final class RegistrationController {
                 RequestValues.valueOrEmpty(context.queryParam("referral")),
                 viewState.referral()
         );
-        UserEntity inviter = referral.isBlank() ? null : UserDao.findByUsername(referral);
+        UserEntity inviter = referralService.findInviterByReferral(referral);
         if (inviter != null) {
             context.sessionAttribute("registerReferral", inviter.getUsername());
         }

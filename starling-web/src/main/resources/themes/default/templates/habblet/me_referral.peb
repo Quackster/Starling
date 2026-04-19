@@ -1,34 +1,76 @@
 <div class="habblet-container ">
     <div class="cbb clearfix default ">
-        <h2 class="title">Invite Friends</h2>
-        <div id="friend-invitation-habblet-container" class="box-content">
-            <div id="invitation-link-container">
-                <h3>Enjoy {{ site.siteName }} more with friends</h3>
-                <div class="copytext">
-                    <p>Share your invite link with friends. You earn {{ referralReward }} credits for every successful signup.</p>
-                    <p class="referral-note">Successful invites so far: <strong>{{ referralCount }}</strong></p>
-                </div>
-                <div class="invitation-buttons clearfix">
-                    <a class="new-button" id="getlink-friend-invite-button" href="#"><b>Get invite link</b><i></i></a>
-                </div>
-                <div id="referral-link-output"></div>
-            </div>
+        <div class="box-tabs-container clearfix">
+            <h2>{{ site.siteName }}s</h2>
+            <ul class="box-tabs">
+                <li id="tab-0-4-1"><a href="#">Search {{ site.siteName }}s</a><span class="tab-spacer"></span></li>
+                <li id="tab-0-4-2" class="selected"><a href="#">Invite Friend(s)</a><span class="tab-spacer"></span></li>
+            </ul>
         </div>
-        <script type="text/javascript">
-        document.observe("dom:loaded", function() {
-            var inviteButton = $("getlink-friend-invite-button");
-            if (!inviteButton) {
-                return;
-            }
-
-            inviteButton.observe("click", function(event) {
-                Event.stop(event);
-                new Ajax.Updater("referral-link-output", "{{ site.sitePath }}/habblet/ajax/mgmgetinvitelink", {
-                    method: "get",
-                    evalScripts: true
-                });
+        <div id="tab-0-4-1-content" style="display: none">
+            <div class="habblet-content-info">
+                <a name="habbo-search">Type in the first characters of the name to search for other {{ site.siteName }}s.</a>
+            </div>
+            <div id="habbo-search-error-container" style="display: none;"><div id="habbo-search-error" class="rounded rounded-red"></div></div>
+            <br clear="all"/>
+            <div id="avatar-habblet-list-search">
+                <input type="text" id="avatar-habblet-search-string"/>
+                <a href="#" id="avatar-habblet-search-button" class="new-button"><b>Search</b><i></i></a>
+            </div>
+            <br clear="all"/>
+            <div id="avatar-habblet-content">
+                <div id="avatar-habblet-list-container" class="habblet-list-container">
+                    <ul class="habblet-list">
+                    </ul>
+                </div>
+                <script type="text/javascript">
+                L10N.put("habblet.search.error.search_string_too_long", "The search keyword was too long. Maximum length is 30 characters.");
+                L10N.put("habblet.search.error.search_string_too_short", "The search keyword was too short. 2 characters required.");
+                L10N.put("habblet.search.add_friend.title", "Add to friend list");
+                new HabboSearchHabblet(2, 30);
+                </script>
+            </div>
+            <script type="text/javascript">
+            Rounder.addCorners($("habbo-search-error"), 8, 8);
+            </script>
+        </div>
+        <div id="tab-0-4-2-content">
+            <div id="friend-invitation-habblet-container" class="box-content">
+                <div style="display: none">
+                    <div id="invitation-form" class="clearfix">
+                        <textarea name="invitation_message" id="invitation_message" class="invitation-message">Come and hangout with me in {{ site.siteName }}.- {{ playerDetails.name }}</textarea>
+                        <div id="invitation-email">
+                            <div class="invitation-input">1.<input onkeypress="$('invitation_recipient2').enable()" type="text" name="invitation_recipients" id="invitation_recipient1" value="Friend's email address:" class="invitation-input" /></div>
+                            <div class="invitation-input">2.<input disabled onkeypress="$('invitation_recipient3').enable()" type="text" name="invitation_recipients" id="invitation_recipient2" value="Friend's email address:" class="invitation-input" /></div>
+                            <div class="invitation-input">3.<input disabled type="text" name="invitation_recipients" id="invitation_recipient3" value="Friend's email address:" class="invitation-input" /></div>
+                        </div>
+                        <div class="clear"></div>
+                        <div class="fielderror" id="invitation_message_error" style="display: none;"><div class="rounded"></div></div>
+                    </div>
+                    <div class="invitation-buttons clearfix" id="invitation_buttons">
+                        <a class="new-button" id="send-friend-invite-button" href="#"><b>Invite Friend(s)</b><i></i></a>
+                    </div>
+                    <hr/>
+                </div>
+                <div id="invitation-link-container">
+                    <h3>Enjoy {{ site.siteName }} more with real life friends!</h3>
+                    <div class="copytext">
+                        <p>Invite your friends to Habbo and earn cool badges! Send a link to your friend and ask them to register and activate their email. If they are using Habbo in active way you get rewarded with a badge.</p>
+                    </div>
+                    <div class="invitation-buttons clearfix">
+                        <a class="new-button" id="getlink-friend-invite-button" href="#"><b>Click for the invitation link!</b><i></i></a>
+                    </div>
+                </div>
+            </div>
+            <script type="text/javascript">
+            L10N.put("invitation.button.invite", "Invite Friend(s)");
+            L10N.put("invitation.form.recipient", "Friend's email address:");
+            L10N.put("invitation.error.message_too_long", "invitation.error.message_limit");
+            inviteFriendHabblet = new InviteFriendHabblet(500);
+            $("friend-invitation-habblet-container").select(".fielderror .rounded").each(function(el) {
+                Rounder.addCorners(el, 8, 8);
             });
-        });
-        </script>
+            </script>
+        </div>
     </div>
 </div>

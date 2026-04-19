@@ -29,7 +29,7 @@ public final class ReferralService {
             return;
         }
 
-        UserEntity inviter = UserDao.findByUsername(referralUsername.trim());
+        UserEntity inviter = findInviterByReferral(referralUsername);
         if (inviter == null || inviter.getId() == invitedUser.getId()) {
             return;
         }
@@ -82,6 +82,31 @@ public final class ReferralService {
     }
 
     /**
+     * Finds an inviter from a referral identity.
+     * @param referralIdentity the referral id or username
+     * @return the inviter when found
+     */
+    public UserEntity findInviterByReferral(String referralIdentity) {
+        String normalized = referralIdentity == null ? "" : referralIdentity.trim();
+        if (normalized.isBlank()) {
+            return null;
+        }
+
+        try {
+            int userId = Integer.parseInt(normalized);
+            if (userId > 0) {
+                UserEntity inviter = UserDao.findById(userId);
+                if (inviter != null) {
+                    return inviter;
+                }
+            }
+        } catch (NumberFormatException ignored) {
+        }
+
+        return UserDao.findByUsername(normalized);
+    }
+
+    /**
      * Returns the public invite link for an inviter.
      * @param inviter the inviter
      * @param siteBranding the site branding
@@ -94,6 +119,6 @@ public final class ReferralService {
 
         return siteBranding.sitePath()
                 + "/register?referral="
-                + URLEncoder.encode(inviter.getUsername(), StandardCharsets.UTF_8);
+                + URLEncoder.encode(Integer.toString(inviter.getId()), StandardCharsets.UTF_8);
     }
 }

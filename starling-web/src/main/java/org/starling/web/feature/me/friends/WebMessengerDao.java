@@ -7,6 +7,7 @@ import org.starling.storage.entity.UserEntity;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Web-only DAO for classic messenger summary data.
@@ -79,6 +80,49 @@ public final class WebMessengerDao {
     }
 
     /**
+     * Counts how many friends a user has.
+     * @param userId the user id value
+     * @return the friend count
+     */
+    public static int countFriends(int userId) {
+        return EntityContext.withContext(context -> {
+            try {
+                return Math.toIntExact(context.from(MessengerFriendEntity.class)
+                        .filter(filter -> filter.equals(MessengerFriendEntity::getToId, userId))
+                        .count());
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to count messenger friends", e);
+            }
+        });
+    }
+
+    /**
+     * Searches users by username prefix.
+     * @param query the query value
+     * @return the matching users
+     */
+    public static List<UserEntity> searchUsers(String query) {
+        String normalized = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
+        if (normalized.isEmpty()) {
+            return List.of();
+        }
+
+        return EntityContext.withContext(context -> {
+            try {
+                return context.from(UserEntity.class)
+                        .filter(filter -> filter.like(UserEntity::getUsername, normalized + "%"))
+                        .orderBy(order -> order
+                                .col(UserEntity::getUsername).asc()
+                                .col(UserEntity::getId).asc())
+                        .limit(30)
+                        .toList();
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to search messenger users", e);
+            }
+        });
+    }
+
+    /**
      * Ensures a two-way friendship exists.
      * @param userId the user id value
      * @param friendId the friend id value
@@ -127,6 +171,48 @@ public final class WebMessengerDao {
                 throw new RuntimeException("Failed to ensure messenger request", e);
             }
             return null;
+        });
+    }
+
+    /**
+     * Returns whether a request exists.
+     * @param targetUserId the target user id value
+     * @param requesterUserId the requester user id value
+     * @return whether the request exists
+     */
+    public static boolean requestExists(int targetUserId, int requesterUserId) {
+        return EntityContext.withContext(context -> {
+            try {
+                return context.from(MessengerRequestEntity.class)
+                        .filter(filter -> filter
+                                .equals(MessengerRequestEntity::getToId, targetUserId)
+                                .and()
+                                .equals(MessengerRequestEntity::getFromId, requesterUserId))
+                        .count() > 0;
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to check messenger request", e);
+            }
+        });
+    }
+
+    /**
+     * Returns whether a friendship exists.
+     * @param userId the user id value
+     * @param friendId the friend id value
+     * @return whether the friendship exists
+     */
+    public static boolean friendExists(int userId, int friendId) {
+        return EntityContext.withContext(context -> {
+            try {
+                return context.from(MessengerFriendEntity.class)
+                        .filter(filter -> filter
+                                .equals(MessengerFriendEntity::getToId, userId)
+                                .and()
+                                .equals(MessengerFriendEntity::getFromId, friendId))
+                        .count() > 0;
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to check messenger friendship", e);
+            }
         });
     }
 

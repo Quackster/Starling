@@ -96,7 +96,9 @@ public final class MePageController {
         MinimailSessionState.FlashState flashState = minimailSessionState.takeFlashState(context);
         List<Map<String, Object>> promoStories = newsPromoContentFactory.list(4);
         List<String> myTags = userTagService.currentUserTags(context, currentUser.get());
-        List<Map<String, Object>> recommendedRooms = communityWidgetsFactory.recommendedRooms();
+        List<Map<String, Object>> recommendedRooms = communityWidgetsFactory.recommendedRooms().stream()
+                .limit(5)
+                .toList();
         List<Map<String, Object>> hotGroups = communityWidgetsFactory.hotGroups();
         List<Map<String, Object>> myGroups = communityWidgetsFactory.myGroups(currentUser.get());
         List<Map<String, Object>> recommendedGroups = communityWidgetsFactory.recommendedGroups();

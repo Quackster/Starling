@@ -41,5 +41,9 @@ public final class WidgetRoutes {
         app.post("/myhabbo/tag/remove", tagHabbletController::removeTag);
         app.post("/habblet/ajax/redeemvoucher", creditsHabbletController::redeemVoucher);
         app.get("/habblet/ajax/mgmgetinvitelink", referralHabbletController::inviteLink);
+        app.post("/habblet/habbosearchcontent", referralHabbletController::searchContent);
+        app.post("/habblet/ajax/confirmAddFriend", referralHabbletController::confirmAddFriend);
+        app.post("/habblet/ajax/addFriend", referralHabbletController::addFriend);
+        app.post("/myhabbo/friends/add", referralHabbletController::add);
     }
 }

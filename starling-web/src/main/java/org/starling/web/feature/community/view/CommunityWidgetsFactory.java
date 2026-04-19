@@ -133,7 +133,7 @@ public final class CommunityWidgetsFactory {
                 "description", room.getDescription(),
                 "owner", room.getOwnerName(),
                 "ownerUrl", "/home/" + room.getOwnerName(),
-                "occupancyClass", occupancyClass(room.getCurrentUsers())
+                "occupancyClass", occupancyClass(room.getCurrentUsers(), room.getMaxUsers())
         );
     }
 
@@ -176,17 +176,20 @@ public final class CommunityWidgetsFactory {
                 .format(ACTIVE_MEMBER_DATE_FORMAT);
     }
 
-    private static String occupancyClass(int currentUsers) {
-        if (currentUsers >= 15) {
+    private static String occupancyClass(int currentUsers, int maxUsers) {
+        int normalizedMaxUsers = Math.max(maxUsers, 1);
+        double occupancyPercentage = (currentUsers / (double) normalizedMaxUsers) * 100.0;
+
+        if (occupancyPercentage >= 99.0) {
             return "room-occupancy-5";
         }
-        if (currentUsers >= 12) {
+        if (occupancyPercentage > 65.0) {
             return "room-occupancy-4";
         }
-        if (currentUsers >= 8) {
+        if (occupancyPercentage > 32.0) {
             return "room-occupancy-3";
         }
-        if (currentUsers >= 4) {
+        if (occupancyPercentage > 0.0) {
             return "room-occupancy-2";
         }
         return "room-occupancy-1";

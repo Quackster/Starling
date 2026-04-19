@@ -19,7 +19,7 @@
             </div>
             <script type="text/javascript">
             L10N.put("show.more", "Show more rooms");
-            L10N.put("show.less", "Show less rooms");
+            L10N.put("show.less", "Show fewer rooms");
             var roomListHabblet_h120 = new RoomListHabblet("rooms-habblet-list-container-h120", "room-toggle-more-data-h120", "room-more-data-h120");
             </script>
         </div>
@@ -35,7 +35,7 @@
             </div>
             <script type="text/javascript">
             L10N.put("show.more", "Show more rooms");
-            L10N.put("show.less", "Show less rooms");
+            L10N.put("show.less", "Show fewer rooms");
             var roomListHabblet_h119 = new RoomListHabblet("rooms-habblet-list-container-h119", "room-toggle-more-data-h119", "room-more-data-h119");
             </script>
         </div>

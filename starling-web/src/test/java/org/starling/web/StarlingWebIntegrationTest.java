@@ -14,6 +14,7 @@ import org.starling.web.cms.admin.CmsAdminDao;
 import org.starling.web.cms.article.CmsArticleDao;
 import org.starling.web.cms.page.CmsPageDao;
 import org.starling.web.config.WebConfig;
+import org.starling.web.feature.me.friends.WebMessengerDao;
 import org.starling.web.feature.me.campaign.HotCampaignDao;
 import org.starling.web.feature.me.mail.MailboxLabel;
 import org.starling.web.feature.me.mail.MinimailDao;
@@ -496,9 +497,10 @@ class StarlingWebIntegrationTest {
         assertTrue(meResponse.body().contains("Hot Campaigns"));
         assertTrue(meResponse.body().contains("My Tags"));
         assertTrue(meResponse.body().contains("My Messages"));
-        assertTrue(meResponse.body().contains("Recommended Rooms"));
+        assertTrue(meResponse.body().contains("Reccomended Rooms"));
         assertTrue(meResponse.body().contains("Recommended Groups"));
-        assertTrue(meResponse.body().contains("Invite Friends"));
+        assertTrue(meResponse.body().contains("Search Habbos"));
+        assertTrue(meResponse.body().contains("Invite Friend(s)"));
         assertTrue(meResponse.body().contains("/web-gallery/v2/styles/welcome.css"));
         assertTrue(meResponse.body().contains("/web-gallery/v2/styles/group.css"));
         assertTrue(meResponse.body().contains("/web-gallery/v2/styles/rooms.css"));
@@ -520,7 +522,7 @@ class StarlingWebIntegrationTest {
         assertTrue(meResponse.body().contains("RetroGuide"));
         assertTrue(meResponse.body().contains("PixelPilot"));
         assertTrue(meResponse.body().contains("Habbo Guides"));
-        assertTrue(meResponse.body().contains("Get invite link"));
+        assertTrue(meResponse.body().contains("Click for the invitation link!"));
         assertTrue(meResponse.body().contains("/groups/welcome-crew"));
     }
 
@@ -541,14 +543,87 @@ class StarlingWebIntegrationTest {
                 HttpRequest.newBuilder(baseUri.resolve("/habblet/ajax/mgmgetinvitelink")).GET().build(),
                 HttpResponse.BodyHandlers.ofString()
         );
+        UserEntity adminUser = UserDao.findByUsername("admin");
+        assertNotNull(adminUser);
 
         assertEquals(200, groupResponse.statusCode());
         assertEquals(200, inviteLinkResponse.statusCode());
         assertTrue(groupResponse.body().contains("Welcome Crew"));
         assertTrue(groupResponse.body().contains("Helping new players settle into the hotel."));
         assertTrue(groupResponse.body().contains("/tag/community"));
-        assertTrue(inviteLinkResponse.body().contains("/register?referral=admin"));
-        assertTrue(inviteLinkResponse.body().contains("1000 credits"));
+        assertTrue(inviteLinkResponse.body().contains("/register?referral=" + adminUser.getId()));
+        assertTrue(inviteLinkResponse.body().contains("real life friends"));
+    }
+
+    @Test
+    void meInviteSearchAndAddFriendEndpointsMatchLisbonContracts() throws Exception {
+        String alphaName = "SearchBuddy" + UUID.randomUUID().toString().replace("-", "").substring(0, 5);
+        String betaName = "SearchBuddy" + UUID.randomUUID().toString().replace("-", "").substring(0, 5);
+
+        UserDao.save(UserEntity.createRegisteredUser(
+                alphaName,
+                "Password1",
+                "hr-100-61.hd-180-2.ch-210-92.lg-270-82.sh-290-64",
+                "M",
+                alphaName + "@example.com"
+        ));
+        UserDao.save(UserEntity.createRegisteredUser(
+                betaName,
+                "Password1",
+                "hr-100-61.hd-180-2.ch-210-92.lg-270-82.sh-290-64",
+                "M",
+                betaName + "@example.com"
+        ));
+
+        UserEntity alphaUser = UserDao.findByUsername(alphaName);
+        UserEntity betaUser = UserDao.findByUsername(betaName);
+        UserEntity adminUser = UserDao.findByUsername("admin");
+        assertNotNull(alphaUser);
+        assertNotNull(betaUser);
+        assertNotNull(adminUser);
+
+        HttpResponse<String> loginResponse = postForm(
+                "/account/submit",
+                Map.of("username", "admin", "password", "admin"),
+                Map.of()
+        );
+        assertEquals(200, loginResponse.statusCode());
+
+        HttpResponse<String> searchResponse = postForm(
+                "/habblet/habbosearchcontent",
+                Map.of("searchString", "SearchBuddy", "pageNumber", "1"),
+                Map.of()
+        );
+        HttpResponse<String> confirmResponse = postForm(
+                "/habblet/ajax/confirmAddFriend",
+                Map.of("accountId", Integer.toString(alphaUser.getId())),
+                Map.of()
+        );
+        HttpResponse<String> addResponse = postForm(
+                "/habblet/ajax/addFriend",
+                Map.of("accountId", Integer.toString(alphaUser.getId())),
+                Map.of()
+        );
+        HttpResponse<String> jsAddResponse = postForm(
+                "/myhabbo/friends/add",
+                Map.of("accountId", Integer.toString(betaUser.getId())),
+                Map.of()
+        );
+
+        assertEquals(200, searchResponse.statusCode());
+        assertEquals(200, confirmResponse.statusCode());
+        assertEquals(200, addResponse.statusCode());
+        assertEquals(200, jsAddResponse.statusCode());
+        assertTrue(searchResponse.body().contains(alphaName));
+        assertTrue(searchResponse.body().contains(betaName));
+        assertTrue(searchResponse.body().contains("avatar-habblet-list-container-list-paging"));
+        assertTrue(searchResponse.body().contains("title=\"Send friend request\""));
+        assertTrue(confirmResponse.body().contains("Are you sure you want to add " + alphaName + " to your friend list?"));
+        assertTrue(addResponse.body().contains("Friend request has been sent successfully."));
+        assertTrue(addResponse.body().contains("avatar-habblet-dialog-body"));
+        assertTrue(jsAddResponse.body().contains("Dialog.showInfoDialog(\"add-friend-messages\", \"Friend request has been sent successfully.\", \"OK\");"));
+        assertTrue(WebMessengerDao.requestExists(alphaUser.getId(), adminUser.getId()));
+        assertTrue(WebMessengerDao.requestExists(betaUser.getId(), adminUser.getId()));
     }
 
     @Test
