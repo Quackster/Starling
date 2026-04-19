@@ -1,11 +1,15 @@
 package org.starling.web.feature.me.mail;
 
+import org.oldskooler.entity4j.DbContext;
 import org.starling.storage.EntityContext;
+import org.starling.storage.entity.UserEntity;
 
-import java.sql.ResultSet;
 import java.time.Instant;
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public final class MinimailDao {
 
@@ -19,14 +23,7 @@ public final class MinimailDao {
      * @return the message count
      */
     public static int count() {
-        return EntityContext.withContext(context -> {
-            try (var statement = context.conn().prepareStatement("SELECT COUNT(*) FROM minimail");
-                 var resultSet = statement.executeQuery()) {
-                return resultSet.next() ? resultSet.getInt(1) : 0;
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to count minimail rows", e);
-            }
-        });
+        return EntityContext.withContext(context -> Math.toIntExact(context.from(MinimailEntity.class).count()));
     }
 
     /**
@@ -38,23 +35,15 @@ public final class MinimailDao {
      */
     public static int countInbox(int recipientId, boolean deleted, boolean unreadOnly) {
         return EntityContext.withContext(context -> {
-            String sql = """
-                    SELECT COUNT(*)
-                    FROM minimail
-                    WHERE to_id = ?
-                      AND deleted = ?
-                      AND (? = 0 OR read_mail = 0)
-                    """;
-            try (var statement = context.conn().prepareStatement(sql)) {
-                statement.setInt(1, recipientId);
-                statement.setInt(2, deleted ? 1 : 0);
-                statement.setInt(3, unreadOnly ? 1 : 0);
-                try (var resultSet = statement.executeQuery()) {
-                    return resultSet.next() ? resultSet.getInt(1) : 0;
-                }
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to count inbox minimail rows", e);
+            var query = context.from(MinimailEntity.class)
+                    .filter(filter -> filter
+                            .equals(MinimailEntity::getRecipientId, recipientId)
+                            .and()
+                            .equals(MinimailEntity::getDeleted, deleted ? 1 : 0));
+            if (unreadOnly) {
+                query = query.filter(filter -> filter.equals(MinimailEntity::getReadMail, 0));
             }
+            return Math.toIntExact(query.count());
         });
     }
 
@@ -64,20 +53,9 @@ public final class MinimailDao {
      * @return the sent count
      */
     public static int countSent(int senderId) {
-        return EntityContext.withContext(context -> {
-            try (var statement = context.conn().prepareStatement("""
-                    SELECT COUNT(*)
-                    FROM minimail
-                    WHERE senderid = ?
-                    """)) {
-                statement.setInt(1, senderId);
-                try (var resultSet = statement.executeQuery()) {
-                    return resultSet.next() ? resultSet.getInt(1) : 0;
-                }
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to count sent minimail rows", e);
-            }
-        });
+        return EntityContext.withContext(context -> Math.toIntExact(context.from(MinimailEntity.class)
+                .filter(filter -> filter.equals(MinimailEntity::getSenderId, senderId))
+                .count()));
     }
 
     /**
@@ -121,24 +99,12 @@ public final class MinimailDao {
      */
     public static List<MinimailMessage> listSent(int senderId, int pageSize, int offset) {
         return EntityContext.withContext(context -> {
-            List<MinimailMessage> messages = new ArrayList<>();
-            try (var statement = context.conn().prepareStatement(baseSelect() + """
-                    WHERE m.senderid = ?
-                    ORDER BY m.id DESC
-                    LIMIT ? OFFSET ?
-                    """)) {
-                statement.setInt(1, senderId);
-                statement.setInt(2, Math.max(pageSize, 1));
-                statement.setInt(3, Math.max(offset, 0));
-                try (var resultSet = statement.executeQuery()) {
-                    while (resultSet.next()) {
-                        messages.add(map(resultSet));
-                    }
-                }
-                return messages;
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to list sent minimail rows", e);
-            }
+            return toMessages(context, context.from(MinimailEntity.class)
+                    .filter(filter -> filter.equals(MinimailEntity::getSenderId, senderId))
+                    .orderBy(order -> order.col(MinimailEntity::getId).desc())
+                    .limit(Math.max(pageSize, 1))
+                    .offset(Math.max(offset, 0))
+                    .toList());
         });
     }
 
@@ -151,35 +117,24 @@ public final class MinimailDao {
      */
     public static MinimailMessage findForMailbox(int userId, int messageId, MailboxLabel mailboxLabel) {
         return EntityContext.withContext(context -> {
-            String sql = switch (mailboxLabel) {
-                case SENT -> baseSelect() + """
-                        WHERE m.id = ?
-                          AND m.senderid = ?
-                        LIMIT 1
-                        """;
-                case TRASH -> baseSelect() + """
-                        WHERE m.id = ?
-                          AND m.to_id = ?
-                          AND m.deleted = 1
-                        LIMIT 1
-                        """;
-                case INBOX -> baseSelect() + """
-                        WHERE m.id = ?
-                          AND m.to_id = ?
-                          AND m.deleted = 0
-                        LIMIT 1
-                        """;
+            var query = context.from(MinimailEntity.class)
+                    .filter(filter -> filter.equals(MinimailEntity::getId, messageId));
+
+            query = switch (mailboxLabel) {
+                case SENT -> query.filter(filter -> filter.equals(MinimailEntity::getSenderId, userId));
+                case TRASH -> query.filter(filter -> filter
+                        .equals(MinimailEntity::getRecipientId, userId)
+                        .and()
+                        .equals(MinimailEntity::getDeleted, 1));
+                case INBOX -> query.filter(filter -> filter
+                        .equals(MinimailEntity::getRecipientId, userId)
+                        .and()
+                        .equals(MinimailEntity::getDeleted, 0));
             };
 
-            try (var statement = context.conn().prepareStatement(sql)) {
-                statement.setInt(1, messageId);
-                statement.setInt(2, userId);
-                try (var resultSet = statement.executeQuery()) {
-                    return resultSet.next() ? map(resultSet) : null;
-                }
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to load minimail row", e);
-            }
+            return query.first()
+                    .map(message -> toMessage(context, message, loadUserMap(context, List.of(message))))
+                    .orElse(null);
         });
     }
 
@@ -191,20 +146,18 @@ public final class MinimailDao {
      */
     public static MinimailMessage findVisibleToUser(int userId, int messageId) {
         return EntityContext.withContext(context -> {
-            try (var statement = context.conn().prepareStatement(baseSelect() + """
-                    WHERE m.id = ?
-                      AND (m.to_id = ? OR m.senderid = ?)
-                    LIMIT 1
-                    """)) {
-                statement.setInt(1, messageId);
-                statement.setInt(2, userId);
-                statement.setInt(3, userId);
-                try (var resultSet = statement.executeQuery()) {
-                    return resultSet.next() ? map(resultSet) : null;
-                }
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to load visible minimail row", e);
-            }
+            return context.from(MinimailEntity.class)
+                    .filter(filter -> filter
+                            .equals(MinimailEntity::getId, messageId)
+                            .and()
+                            .open()
+                            .equals(MinimailEntity::getRecipientId, userId)
+                            .or()
+                            .equals(MinimailEntity::getSenderId, userId)
+                            .close())
+                    .first()
+                    .map(message -> toMessage(context, message, loadUserMap(context, List.of(message))))
+                    .orElse(null);
         });
     }
 
@@ -228,28 +181,24 @@ public final class MinimailDao {
      */
     public static void createMessages(int senderId, List<Integer> recipientIds, String subject, String body, int conversationId) {
         EntityContext.inTransaction(context -> {
-            try (var statement = context.conn().prepareStatement("""
-                    INSERT INTO minimail (senderid, to_id, subject, time, message, read_mail, deleted, conversationid)
-                    VALUES (?, ?, ?, ?, ?, 0, 0, ?)
-                    """)) {
-                long now = Instant.now().getEpochSecond();
-                for (Integer recipientId : recipientIds) {
-                    if (recipientId == null || recipientId <= 0) {
-                        continue;
-                    }
-                    statement.setInt(1, senderId);
-                    statement.setInt(2, recipientId);
-                    statement.setString(3, subject);
-                    statement.setLong(4, now);
-                    statement.setString(5, body);
-                    statement.setInt(6, Math.max(conversationId, 0));
-                    statement.addBatch();
+            long now = Instant.now().getEpochSecond();
+            for (Integer recipientId : recipientIds) {
+                if (recipientId == null || recipientId <= 0) {
+                    continue;
                 }
-                statement.executeBatch();
-                return null;
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to create minimail rows", e);
+
+                MinimailEntity message = new MinimailEntity();
+                message.setSenderId(senderId);
+                message.setRecipientId(recipientId);
+                message.setSubject(subject);
+                message.setTime(now);
+                message.setMessage(body);
+                message.setReadMail(0);
+                message.setDeleted(0);
+                message.setConversationId(Math.max(conversationId, 0));
+                context.insert(message);
             }
+            return null;
         });
     }
 
@@ -258,14 +207,14 @@ public final class MinimailDao {
      * @return the next conversation id
      */
     public static int nextConversationId() {
-        return EntityContext.withContext(context -> {
-            try (var statement = context.conn().prepareStatement("SELECT COALESCE(MAX(conversationid), 0) FROM minimail");
-                 var resultSet = statement.executeQuery()) {
-                return resultSet.next() ? resultSet.getInt(1) + 1 : 1;
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to determine the next minimail conversation id", e);
-            }
-        });
+        return EntityContext.withContext(context -> context.from(MinimailEntity.class)
+                .orderBy(order -> order
+                        .col(MinimailEntity::getConversationId).desc()
+                        .col(MinimailEntity::getId).desc())
+                .limit(1)
+                .first()
+                .map(message -> Math.max(message.getConversationId(), 0) + 1)
+                .orElse(1));
     }
 
     /**
@@ -275,18 +224,16 @@ public final class MinimailDao {
      */
     public static void setConversationId(int messageId, int conversationId) {
         EntityContext.inTransaction(context -> {
-            try (var statement = context.conn().prepareStatement("""
-                    UPDATE minimail
-                    SET conversationid = ?
-                    WHERE id = ?
-                    """)) {
-                statement.setInt(1, Math.max(conversationId, 0));
-                statement.setInt(2, messageId);
-                statement.executeUpdate();
+            MinimailEntity message = context.from(MinimailEntity.class)
+                    .filter(filter -> filter.equals(MinimailEntity::getId, messageId))
+                    .first()
+                    .orElse(null);
+            if (message == null) {
                 return null;
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to update minimail conversation id", e);
             }
+            message.setConversationId(Math.max(conversationId, 0));
+            context.update(message);
+            return null;
         });
     }
 
@@ -296,12 +243,7 @@ public final class MinimailDao {
      * @param messageId the message id
      */
     public static void markRead(int recipientId, int messageId) {
-        updateSingleRecipientRow(recipientId, messageId, """
-                UPDATE minimail
-                SET read_mail = 1
-                WHERE id = ?
-                  AND to_id = ?
-                """, "mark minimail as read");
+        updateSingleRecipientRow(recipientId, messageId, false, message -> message.setReadMail(1));
     }
 
     /**
@@ -310,13 +252,7 @@ public final class MinimailDao {
      * @param messageId the message id
      */
     public static void softDelete(int recipientId, int messageId) {
-        updateSingleRecipientRow(recipientId, messageId, """
-                UPDATE minimail
-                SET deleted = 1
-                WHERE id = ?
-                  AND to_id = ?
-                  AND deleted = 0
-                """, "delete minimail");
+        updateSingleRecipientRow(recipientId, messageId, false, message -> message.setDeleted(1));
     }
 
     /**
@@ -325,13 +261,7 @@ public final class MinimailDao {
      * @param messageId the message id
      */
     public static void restore(int recipientId, int messageId) {
-        updateSingleRecipientRow(recipientId, messageId, """
-                UPDATE minimail
-                SET deleted = 0
-                WHERE id = ?
-                  AND to_id = ?
-                  AND deleted = 1
-                """, "restore minimail");
+        updateSingleRecipientRow(recipientId, messageId, true, message -> message.setDeleted(0));
     }
 
     /**
@@ -340,12 +270,21 @@ public final class MinimailDao {
      * @param messageId the message id
      */
     public static void hardDelete(int recipientId, int messageId) {
-        updateSingleRecipientRow(recipientId, messageId, """
-                DELETE FROM minimail
-                WHERE id = ?
-                  AND to_id = ?
-                  AND deleted = 1
-                """, "purge minimail");
+        EntityContext.inTransaction(context -> {
+            MinimailEntity message = context.from(MinimailEntity.class)
+                    .filter(filter -> filter
+                            .equals(MinimailEntity::getId, messageId)
+                            .and()
+                            .equals(MinimailEntity::getRecipientId, recipientId)
+                            .and()
+                            .equals(MinimailEntity::getDeleted, 1))
+                    .first()
+                    .orElse(null);
+            if (message != null) {
+                context.delete(message);
+            }
+            return null;
+        });
     }
 
     /**
@@ -354,17 +293,13 @@ public final class MinimailDao {
      */
     public static void emptyTrash(int recipientId) {
         EntityContext.inTransaction(context -> {
-            try (var statement = context.conn().prepareStatement("""
-                    DELETE FROM minimail
-                    WHERE to_id = ?
-                      AND deleted = 1
-                    """)) {
-                statement.setInt(1, recipientId);
-                statement.executeUpdate();
-                return null;
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to empty minimail trash", e);
-            }
+            context.from(MinimailEntity.class)
+                    .filter(filter -> filter
+                            .equals(MinimailEntity::getRecipientId, recipientId)
+                            .and()
+                            .equals(MinimailEntity::getDeleted, 1))
+                    .delete();
+            return null;
         });
     }
 
@@ -375,23 +310,20 @@ public final class MinimailDao {
      * @return the visible row count
      */
     public static int countConversation(int userId, int conversationId) {
-        return EntityContext.withContext(context -> {
-            try (var statement = context.conn().prepareStatement("""
-                    SELECT COUNT(*)
-                    FROM minimail
-                    WHERE conversationid = ?
-                      AND ((to_id = ? AND deleted = 0) OR senderid = ?)
-                    """)) {
-                statement.setInt(1, Math.max(conversationId, 0));
-                statement.setInt(2, userId);
-                statement.setInt(3, userId);
-                try (var resultSet = statement.executeQuery()) {
-                    return resultSet.next() ? resultSet.getInt(1) : 0;
-                }
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to count minimail conversation rows", e);
-            }
-        });
+        return EntityContext.withContext(context -> Math.toIntExact(context.from(MinimailEntity.class)
+                .filter(filter -> filter
+                        .equals(MinimailEntity::getConversationId, Math.max(conversationId, 0))
+                        .and()
+                        .open()
+                        .open()
+                        .equals(MinimailEntity::getRecipientId, userId)
+                        .and()
+                        .equals(MinimailEntity::getDeleted, 0)
+                        .close()
+                        .or()
+                        .equals(MinimailEntity::getSenderId, userId)
+                        .close())
+                .count()));
     }
 
     /**
@@ -404,27 +336,23 @@ public final class MinimailDao {
      */
     public static List<MinimailMessage> listConversation(int userId, int conversationId, int pageSize, int offset) {
         return EntityContext.withContext(context -> {
-            List<MinimailMessage> messages = new ArrayList<>();
-            try (var statement = context.conn().prepareStatement(baseSelect() + """
-                    WHERE m.conversationid = ?
-                      AND ((m.to_id = ? AND m.deleted = 0) OR m.senderid = ?)
-                    ORDER BY m.id DESC
-                    LIMIT ? OFFSET ?
-                    """)) {
-                statement.setInt(1, Math.max(conversationId, 0));
-                statement.setInt(2, userId);
-                statement.setInt(3, userId);
-                statement.setInt(4, Math.max(pageSize, 1));
-                statement.setInt(5, Math.max(offset, 0));
-                try (var resultSet = statement.executeQuery()) {
-                    while (resultSet.next()) {
-                        messages.add(map(resultSet));
-                    }
-                }
-                return messages;
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to list minimail conversation rows", e);
-            }
+            return toMessages(context, context.from(MinimailEntity.class)
+                    .filter(filter -> filter
+                            .equals(MinimailEntity::getConversationId, Math.max(conversationId, 0))
+                            .and()
+                            .open()
+                            .open()
+                            .equals(MinimailEntity::getRecipientId, userId)
+                            .and()
+                            .equals(MinimailEntity::getDeleted, 0)
+                            .close()
+                            .or()
+                            .equals(MinimailEntity::getSenderId, userId)
+                            .close())
+                    .orderBy(order -> order.col(MinimailEntity::getId).desc())
+                    .limit(Math.max(pageSize, 1))
+                    .offset(Math.max(offset, 0))
+                    .toList());
         });
     }
 
@@ -440,80 +368,98 @@ public final class MinimailDao {
             int offset
     ) {
         return EntityContext.withContext(context -> {
-            List<MinimailMessage> messages = new ArrayList<>();
-            try (var statement = context.conn().prepareStatement(baseSelect() + """
-                    WHERE m.to_id = ?
-                      AND m.deleted = ?
-                      AND (? = 0 OR m.read_mail = 0)
-                    ORDER BY m.id DESC
-                    LIMIT ? OFFSET ?
-                    """)) {
-                statement.setInt(1, recipientId);
-                statement.setInt(2, deleted ? 1 : 0);
-                statement.setInt(3, unreadOnly ? 1 : 0);
-                statement.setInt(4, Math.max(pageSize, 1));
-                statement.setInt(5, Math.max(offset, 0));
-                try (var resultSet = statement.executeQuery()) {
-                    while (resultSet.next()) {
-                        messages.add(map(resultSet));
-                    }
-                }
-                return messages;
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to list minimail rows", e);
+            var query = context.from(MinimailEntity.class)
+                    .filter(filter -> filter
+                            .equals(MinimailEntity::getRecipientId, recipientId)
+                            .and()
+                            .equals(MinimailEntity::getDeleted, deleted ? 1 : 0))
+                    .orderBy(order -> order.col(MinimailEntity::getId).desc())
+                    .limit(Math.max(pageSize, 1))
+                    .offset(Math.max(offset, 0));
+            if (unreadOnly) {
+                query = query.filter(filter -> filter.equals(MinimailEntity::getReadMail, 0));
             }
+            return toMessages(context, query.toList());
         });
     }
 
-    private static void updateSingleRecipientRow(int recipientId, int messageId, String sql, String action) {
+    private static void updateSingleRecipientRow(int recipientId, int messageId, boolean requireDeleted, MessageUpdater updater) {
         EntityContext.inTransaction(context -> {
-            try (var statement = context.conn().prepareStatement(sql)) {
-                statement.setInt(1, messageId);
-                statement.setInt(2, recipientId);
-                statement.executeUpdate();
+            MinimailEntity message = context.from(MinimailEntity.class)
+                    .filter(filter -> filter
+                            .equals(MinimailEntity::getId, messageId)
+                            .and()
+                            .equals(MinimailEntity::getRecipientId, recipientId)
+                            .and()
+                            .equals(MinimailEntity::getDeleted, requireDeleted ? 1 : 0))
+                    .first()
+                    .orElse(null);
+            if (message == null) {
                 return null;
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to " + action, e);
             }
+            updater.update(message);
+            context.update(message);
+            return null;
         });
     }
 
-    private static MinimailMessage map(ResultSet resultSet) throws Exception {
+    private static List<MinimailMessage> toMessages(DbContext context, List<MinimailEntity> messageEntities) {
+        if (messageEntities.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Integer, UserEntity> usersById = loadUserMap(context, messageEntities);
+        return messageEntities.stream()
+                .map(message -> toMessage(context, message, usersById))
+                .toList();
+    }
+
+    private static MinimailMessage toMessage(DbContext context, MinimailEntity message, Map<Integer, UserEntity> usersById) {
+        UserEntity sender = usersById.get(message.getSenderId());
+        UserEntity recipient = usersById.get(message.getRecipientId());
         return new MinimailMessage(
-                resultSet.getInt("id"),
-                resultSet.getInt("senderid"),
-                resultSet.getInt("to_id"),
-                resultSet.getString("subject"),
-                resultSet.getString("message"),
-                Instant.ofEpochSecond(resultSet.getLong("time")),
-                resultSet.getInt("read_mail") > 0,
-                resultSet.getInt("deleted") > 0,
-                resultSet.getInt("conversationid"),
-                resultSet.getString("sender_username"),
-                resultSet.getString("sender_figure"),
-                resultSet.getString("recipient_username"),
-                resultSet.getString("recipient_figure")
+                message.getId(),
+                message.getSenderId(),
+                message.getRecipientId(),
+                message.getSubject(),
+                message.getMessage(),
+                Instant.ofEpochSecond(message.getTime()),
+                message.getReadMail() > 0,
+                message.getDeleted() > 0,
+                message.getConversationId(),
+                sender == null ? "" : sender.getUsername(),
+                sender == null ? "" : sender.getFigure(),
+                recipient == null ? "" : recipient.getUsername(),
+                recipient == null ? "" : recipient.getFigure()
         );
     }
 
-    private static String baseSelect() {
-        return """
-                SELECT m.id,
-                       m.senderid,
-                       m.to_id,
-                       m.subject,
-                       m.time,
-                       m.message,
-                       m.read_mail,
-                       m.deleted,
-                       m.conversationid,
-                       sender.username AS sender_username,
-                       sender.figure AS sender_figure,
-                       recipient.username AS recipient_username,
-                       recipient.figure AS recipient_figure
-                FROM minimail m
-                LEFT JOIN users sender ON sender.id = m.senderid
-                LEFT JOIN users recipient ON recipient.id = m.to_id
-                """;
+    private static Map<Integer, UserEntity> loadUserMap(DbContext context, List<MinimailEntity> messageEntities) {
+        Set<Integer> userIds = new HashSet<>();
+        for (MinimailEntity message : messageEntities) {
+            if (message.getSenderId() > 0) {
+                userIds.add(message.getSenderId());
+            }
+            if (message.getRecipientId() > 0) {
+                userIds.add(message.getRecipientId());
+            }
+        }
+
+        if (userIds.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Integer, UserEntity> usersById = new HashMap<>();
+        for (UserEntity user : context.from(UserEntity.class)
+                .filter(filter -> filter.in(UserEntity::getId, userIds))
+                .toList()) {
+            usersById.put(user.getId(), user);
+        }
+        return usersById;
+    }
+
+    @FunctionalInterface
+    private interface MessageUpdater {
+        void update(MinimailEntity message);
     }
 }
