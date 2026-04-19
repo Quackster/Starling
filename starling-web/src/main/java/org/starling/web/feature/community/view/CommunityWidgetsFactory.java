@@ -8,6 +8,8 @@ import org.starling.storage.entity.RoomEntity;
 import org.starling.storage.entity.UserEntity;
 import org.starling.web.user.view.UserViewModelFactory;
 
+import java.sql.Timestamp;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -15,6 +17,8 @@ import java.util.Map;
 import java.util.Optional;
 
 public final class CommunityWidgetsFactory {
+
+    private static final DateTimeFormatter ACTIVE_MEMBER_DATE_FORMAT = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
     private final UserViewModelFactory userViewModelFactory;
 
@@ -156,10 +160,20 @@ public final class CommunityWidgetsFactory {
 
     private Map<String, Object> member(UserEntity user) {
         Map<String, Object> currentUserView = new LinkedHashMap<>(userViewModelFactory.create(user));
-        currentUserView.put("createdOn", currentUserView.get("memberSince"));
+        currentUserView.put("createdOn", formatActiveMemberDate(user.getCreatedAt()));
         currentUserView.put("status", user.isOnline() ? "online" : "offline");
         currentUserView.put("url", "/home/" + user.getUsername());
         return currentUserView;
+    }
+
+    private static String formatActiveMemberDate(Timestamp timestamp) {
+        if (timestamp == null) {
+            return "";
+        }
+
+        return timestamp.toLocalDateTime()
+                .toLocalDate()
+                .format(ACTIVE_MEMBER_DATE_FORMAT);
     }
 
     private static String occupancyClass(int currentUsers) {

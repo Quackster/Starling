@@ -1,21 +1,27 @@
 package org.starling.storage.dao;
 
+import org.oldskooler.entity4j.DbContext;
 import org.starling.game.messenger.MessengerCategory;
 import org.starling.game.messenger.MessengerMessage;
 import org.starling.game.messenger.MessengerUser;
 import org.starling.storage.EntityContext;
+import org.starling.storage.entity.MessengerCategoryEntity;
+import org.starling.storage.entity.MessengerFriendEntity;
+import org.starling.storage.entity.MessengerMessageEntity;
+import org.starling.storage.entity.MessengerRequestEntity;
+import org.starling.storage.entity.UserEntity;
 
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 /**
- * Raw SQL DAO for classic messenger tables.
+ * DAO for classic messenger tables.
  */
 public final class MessengerDao {
 
@@ -31,38 +37,24 @@ public final class MessengerDao {
      */
     public static Map<Integer, MessengerUser> getFriends(int userId) {
         return EntityContext.withContext(context -> {
-            Map<Integer, MessengerUser> friends = new LinkedHashMap<>();
-            try (var statement = context.conn().prepareStatement("""
-                    SELECT u.id, u.username, u.figure, u.sex, u.motto, u.last_online,
-                           u.allow_stalking, u.is_online, u.online_status_visible,
-                           mf.category_id
-                    FROM messenger_friends mf
-                    INNER JOIN users u ON mf.from_id = u.id
-                    WHERE mf.to_id = ?
-                    ORDER BY LOWER(u.username), u.id
-                    """)) {
-                statement.setInt(1, userId);
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    while (resultSet.next()) {
-                        MessengerUser friend = new MessengerUser(
-                                resultSet.getInt("id"),
-                                resultSet.getString("username"),
-                                resultSet.getString("figure"),
-                                resultSet.getString("sex"),
-                                resultSet.getString("motto"),
-                                toEpochSeconds(resultSet.getTimestamp("last_online")),
-                                resultSet.getInt("allow_stalking") > 0,
-                                resultSet.getInt("category_id"),
-                                resultSet.getInt("is_online") > 0,
-                                resultSet.getInt("online_status_visible") > 0
-                        );
-                        friends.put(friend.getUserId(), friend);
-                    }
+            try {
+                List<MessengerFriendEntity> friendships = context.from(MessengerFriendEntity.class)
+                        .filter(filter -> filter.equals(MessengerFriendEntity::getToId, userId))
+                        .toList();
+                Map<Integer, Integer> categoryByFriendId = new HashMap<>();
+
+                for (MessengerFriendEntity friendship : friendships) {
+                    categoryByFriendId.put(friendship.getFromId(), friendship.getCategoryId());
                 }
+
+                Map<Integer, MessengerUser> friends = new LinkedHashMap<>();
+                for (UserEntity user : loadUsersByIds(context, new ArrayList<>(categoryByFriendId.keySet()))) {
+                    friends.put(user.getId(), new MessengerUser(user, categoryByFriendId.getOrDefault(user.getId(), 0)));
+                }
+                return friends;
             } catch (Exception e) {
                 throw new RuntimeException("Failed to load messenger friends", e);
             }
-            return friends;
         });
     }
 
@@ -73,37 +65,22 @@ public final class MessengerDao {
      */
     public static Map<Integer, MessengerUser> getRequests(int userId) {
         return EntityContext.withContext(context -> {
-            Map<Integer, MessengerUser> requests = new LinkedHashMap<>();
-            try (var statement = context.conn().prepareStatement("""
-                    SELECT u.id, u.username, u.figure, u.sex, u.motto, u.last_online,
-                           u.allow_stalking, u.is_online, u.online_status_visible
-                    FROM messenger_requests mr
-                    INNER JOIN users u ON mr.from_id = u.id
-                    WHERE mr.to_id = ?
-                    ORDER BY LOWER(u.username), u.id
-                    """)) {
-                statement.setInt(1, userId);
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    while (resultSet.next()) {
-                        MessengerUser requester = new MessengerUser(
-                                resultSet.getInt("id"),
-                                resultSet.getString("username"),
-                                resultSet.getString("figure"),
-                                resultSet.getString("sex"),
-                                resultSet.getString("motto"),
-                                toEpochSeconds(resultSet.getTimestamp("last_online")),
-                                resultSet.getInt("allow_stalking") > 0,
-                                0,
-                                resultSet.getInt("is_online") > 0,
-                                resultSet.getInt("online_status_visible") > 0
-                        );
-                        requests.put(requester.getUserId(), requester);
-                    }
+            try {
+                List<Integer> requesterIds = context.from(MessengerRequestEntity.class)
+                        .filter(filter -> filter.equals(MessengerRequestEntity::getToId, userId))
+                        .toList()
+                        .stream()
+                        .map(MessengerRequestEntity::getFromId)
+                        .toList();
+                Map<Integer, MessengerUser> requests = new LinkedHashMap<>();
+
+                for (UserEntity user : loadUsersByIds(context, requesterIds)) {
+                    requests.put(user.getId(), new MessengerUser(user, 0));
                 }
+                return requests;
             } catch (Exception e) {
                 throw new RuntimeException("Failed to load messenger requests", e);
             }
-            return requests;
         });
     }
 
@@ -119,24 +96,20 @@ public final class MessengerDao {
         }
 
         return EntityContext.withContext(context -> {
-            List<Integer> userIds = new ArrayList<>();
-            try (var statement = context.conn().prepareStatement("""
-                    SELECT id
-                    FROM users
-                    WHERE LOWER(username) LIKE ?
-                    ORDER BY LOWER(username), id
-                    LIMIT 30
-                    """)) {
-                statement.setString(1, normalized + "%");
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    while (resultSet.next()) {
-                        userIds.add(resultSet.getInt("id"));
-                    }
-                }
+            try {
+                return context.from(UserEntity.class)
+                        .filter(filter -> filter.like(UserEntity::getUsername, normalized + "%"))
+                        .orderBy(order -> order
+                                .col(UserEntity::getUsername).asc()
+                                .col(UserEntity::getId).asc())
+                        .limit(30)
+                        .toList()
+                        .stream()
+                        .map(UserEntity::getId)
+                        .toList();
             } catch (Exception e) {
                 throw new RuntimeException("Failed to search messenger users", e);
             }
-            return userIds;
         });
     }
 
@@ -173,17 +146,13 @@ public final class MessengerDao {
      */
     public static boolean requestExists(int targetUserId, int requesterUserId) {
         return EntityContext.withContext(context -> {
-            try (var statement = context.conn().prepareStatement("""
-                    SELECT 1
-                    FROM messenger_requests
-                    WHERE to_id = ? AND from_id = ?
-                    LIMIT 1
-                    """)) {
-                statement.setInt(1, targetUserId);
-                statement.setInt(2, requesterUserId);
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    return resultSet.next();
-                }
+            try {
+                return context.from(MessengerRequestEntity.class)
+                        .filter(filter -> filter
+                                .equals(MessengerRequestEntity::getToId, targetUserId)
+                                .and()
+                                .equals(MessengerRequestEntity::getFromId, requesterUserId))
+                        .count() > 0;
             } catch (Exception e) {
                 throw new RuntimeException("Failed to check messenger request", e);
             }
@@ -198,17 +167,13 @@ public final class MessengerDao {
      */
     public static boolean friendExists(int userId, int friendId) {
         return EntityContext.withContext(context -> {
-            try (var statement = context.conn().prepareStatement("""
-                    SELECT 1
-                    FROM messenger_friends
-                    WHERE to_id = ? AND from_id = ?
-                    LIMIT 1
-                    """)) {
-                statement.setInt(1, userId);
-                statement.setInt(2, friendId);
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    return resultSet.next();
-                }
+            try {
+                return context.from(MessengerFriendEntity.class)
+                        .filter(filter -> filter
+                                .equals(MessengerFriendEntity::getToId, userId)
+                                .and()
+                                .equals(MessengerFriendEntity::getFromId, friendId))
+                        .count() > 0;
             } catch (Exception e) {
                 throw new RuntimeException("Failed to check messenger friendship", e);
             }
@@ -344,30 +309,30 @@ public final class MessengerDao {
      */
     public static Map<Integer, MessengerMessage> getUnreadMessages(int userId) {
         return EntityContext.withContext(context -> {
-            Map<Integer, MessengerMessage> messages = new LinkedHashMap<>();
-            try (var statement = context.conn().prepareStatement("""
-                    SELECT id, receiver_id, sender_id, date, body
-                    FROM messenger_messages
-                    WHERE receiver_id = ? AND unread = 1
-                    ORDER BY id ASC
-                    """)) {
-                statement.setInt(1, userId);
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    while (resultSet.next()) {
-                        MessengerMessage message = new MessengerMessage(
-                                resultSet.getInt("id"),
-                                resultSet.getInt("receiver_id"),
-                                resultSet.getInt("sender_id"),
-                                resultSet.getLong("date"),
-                                resultSet.getString("body")
-                        );
-                        messages.put(message.getId(), message);
-                    }
+            try {
+                Map<Integer, MessengerMessage> messages = new LinkedHashMap<>();
+                List<MessengerMessageEntity> messageEntities = context.from(MessengerMessageEntity.class)
+                        .filter(filter -> filter
+                                .equals(MessengerMessageEntity::getReceiverId, userId)
+                                .and()
+                                .equals(MessengerMessageEntity::getUnread, 1))
+                        .orderBy(order -> order.col(MessengerMessageEntity::getId).asc())
+                        .toList();
+
+                for (MessengerMessageEntity messageEntity : messageEntities) {
+                    MessengerMessage message = new MessengerMessage(
+                            messageEntity.getId(),
+                            messageEntity.getReceiverId(),
+                            messageEntity.getSenderId(),
+                            messageEntity.getDate(),
+                            messageEntity.getBody()
+                    );
+                    messages.put(message.getId(), message);
                 }
+                return messages;
             } catch (Exception e) {
                 throw new RuntimeException("Failed to load messenger messages", e);
             }
-            return messages;
         });
     }
 
@@ -398,37 +363,35 @@ public final class MessengerDao {
      */
     public static List<MessengerCategory> getCategories(int userId) {
         return EntityContext.withContext(context -> {
-            List<MessengerCategory> categories = new ArrayList<>();
-            try (var statement = context.conn().prepareStatement("""
-                    SELECT id, user_id, name
-                    FROM messenger_categories
-                    WHERE user_id = ?
-                    ORDER BY id ASC
-                    """)) {
-                statement.setInt(1, userId);
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    while (resultSet.next()) {
-                        categories.add(new MessengerCategory(
-                                resultSet.getInt("id"),
-                                resultSet.getInt("user_id"),
-                                resultSet.getString("name")
-                        ));
-                    }
-                }
+            try {
+                return context.from(MessengerCategoryEntity.class)
+                        .filter(filter -> filter.equals(MessengerCategoryEntity::getUserId, userId))
+                        .orderBy(order -> order.col(MessengerCategoryEntity::getId).asc())
+                        .toList()
+                        .stream()
+                        .map(category -> new MessengerCategory(
+                                category.getId(),
+                                category.getUserId(),
+                                category.getName()
+                        ))
+                        .toList();
             } catch (Exception e) {
                 throw new RuntimeException("Failed to load messenger categories", e);
             }
-            return categories;
         });
     }
 
-    /**
-     * Converts a timestamp to epoch seconds.
-     * @param timestamp the timestamp value
-     * @return the epoch-second value
-     */
-    private static long toEpochSeconds(Timestamp timestamp) {
-        return timestamp == null ? 0L : timestamp.toInstant().getEpochSecond();
+    private static List<UserEntity> loadUsersByIds(DbContext context, List<Integer> userIds) {
+        if (userIds.isEmpty()) {
+            return List.of();
+        }
+
+        return context.from(UserEntity.class)
+                .filter(filter -> filter.in(UserEntity::getId, userIds))
+                .orderBy(order -> order
+                        .col(UserEntity::getUsername).asc()
+                        .col(UserEntity::getId).asc())
+                .toList();
     }
 
     /**
