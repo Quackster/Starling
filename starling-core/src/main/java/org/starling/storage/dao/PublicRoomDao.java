@@ -81,11 +81,9 @@ public final class PublicRoomDao {
      */
     public static void resetCurrentUsers() {
         EntityContext.inTransaction(context -> {
-            try (var statement = context.conn().prepareStatement("UPDATE public_rooms SET current_users = 0")) {
-                statement.executeUpdate();
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to reset public room occupancy", e);
-            }
+            context.from(PublicRoomEntity.class)
+                    .filter(filter -> filter.notEquals(PublicRoomEntity::getId, 0))
+                    .update(setter -> setter.set(PublicRoomEntity::getCurrentUsers, 0));
             return null;
         });
     }
@@ -98,14 +96,9 @@ public final class PublicRoomDao {
     public static void saveCurrentUsers(int roomId, int currentUsers) {
         int persistedCurrentUsers = Math.max(currentUsers, 0);
         EntityContext.inTransaction(context -> {
-            try (var statement = context.conn()
-                    .prepareStatement("UPDATE public_rooms SET current_users = ? WHERE id = ?")) {
-                statement.setInt(1, persistedCurrentUsers);
-                statement.setInt(2, roomId);
-                statement.executeUpdate();
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to save public room occupancy", e);
-            }
+            context.from(PublicRoomEntity.class)
+                    .filter(filter -> filter.equals(PublicRoomEntity::getId, roomId))
+                    .update(setter -> setter.set(PublicRoomEntity::getCurrentUsers, persistedCurrentUsers));
             return null;
         });
     }

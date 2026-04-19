@@ -131,15 +131,12 @@ public class UserDao {
     public static void markOnline(int userId) {
         java.sql.Timestamp now = new java.sql.Timestamp(System.currentTimeMillis());
         EntityContext.inTransaction(context -> {
-            try (var statement = context.conn()
-                    .prepareStatement("UPDATE users SET is_online = 1, last_online = ?, updated_at = ? WHERE id = ?")) {
-                statement.setTimestamp(1, now);
-                statement.setTimestamp(2, now);
-                statement.setInt(3, userId);
-                statement.executeUpdate();
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to mark user online", e);
-            }
+            context.from(UserEntity.class)
+                    .filter(filter -> filter.equals(UserEntity::getId, userId))
+                    .update(setter -> setter
+                            .set(UserEntity::getIsOnline, 1)
+                            .set(UserEntity::getLastOnline, now)
+                            .set(UserEntity::getUpdatedAt, now));
             return null;
         });
     }
@@ -151,15 +148,12 @@ public class UserDao {
     public static void markOffline(int userId) {
         java.sql.Timestamp now = new java.sql.Timestamp(System.currentTimeMillis());
         EntityContext.inTransaction(context -> {
-            try (var statement = context.conn()
-                    .prepareStatement("UPDATE users SET is_online = 0, last_online = ?, updated_at = ? WHERE id = ?")) {
-                statement.setTimestamp(1, now);
-                statement.setTimestamp(2, now);
-                statement.setInt(3, userId);
-                statement.executeUpdate();
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to mark user offline", e);
-            }
+            context.from(UserEntity.class)
+                    .filter(filter -> filter.equals(UserEntity::getId, userId))
+                    .update(setter -> setter
+                            .set(UserEntity::getIsOnline, 0)
+                            .set(UserEntity::getLastOnline, now)
+                            .set(UserEntity::getUpdatedAt, now));
             return null;
         });
     }
@@ -169,11 +163,9 @@ public class UserDao {
      */
     public static void resetOnlineStates() {
         EntityContext.inTransaction(context -> {
-            try (var statement = context.conn().prepareStatement("UPDATE users SET is_online = 0")) {
-                statement.executeUpdate();
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to reset user online states", e);
-            }
+            context.from(UserEntity.class)
+                    .filter(filter -> filter.notEquals(UserEntity::getId, 0))
+                    .update(setter -> setter.set(UserEntity::getIsOnline, 0));
             return null;
         });
     }

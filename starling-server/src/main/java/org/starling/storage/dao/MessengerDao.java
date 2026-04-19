@@ -11,8 +11,8 @@ import org.starling.storage.entity.MessengerMessageEntity;
 import org.starling.storage.entity.MessengerRequestEntity;
 import org.starling.storage.entity.UserEntity;
 
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -124,16 +124,11 @@ public final class MessengerDao {
         }
 
         EntityContext.inTransaction(context -> {
-            try (var statement = context.conn().prepareStatement("""
-                    INSERT INTO messenger_requests (to_id, from_id)
-                    VALUES (?, ?)
-                    """)) {
-                statement.setInt(1, targetUserId);
-                statement.setInt(2, requesterUserId);
-                statement.executeUpdate();
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to add messenger request", e);
-            }
+            MessengerRequestEntity request = new MessengerRequestEntity();
+            request.setToId(targetUserId);
+            request.setFromId(requesterUserId);
+            request.setCreatedAt(Timestamp.from(Instant.now()));
+            context.insert(request);
             return null;
         });
     }
@@ -187,19 +182,22 @@ public final class MessengerDao {
      */
     public static void removeRequest(int targetUserId, int requesterUserId) {
         EntityContext.inTransaction(context -> {
-            try (var statement = context.conn().prepareStatement("""
-                    DELETE FROM messenger_requests
-                    WHERE (to_id = ? AND from_id = ?)
-                       OR (to_id = ? AND from_id = ?)
-                    """)) {
-                statement.setInt(1, targetUserId);
-                statement.setInt(2, requesterUserId);
-                statement.setInt(3, requesterUserId);
-                statement.setInt(4, targetUserId);
-                statement.executeUpdate();
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to remove messenger request", e);
-            }
+            context.from(MessengerRequestEntity.class)
+                    .filter(filter -> filter
+                            .open()
+                            .open()
+                            .equals(MessengerRequestEntity::getToId, targetUserId)
+                            .and()
+                            .equals(MessengerRequestEntity::getFromId, requesterUserId)
+                            .close()
+                            .or()
+                            .open()
+                            .equals(MessengerRequestEntity::getToId, requesterUserId)
+                            .and()
+                            .equals(MessengerRequestEntity::getFromId, targetUserId)
+                            .close()
+                            .close())
+                    .delete();
             return null;
         });
     }
@@ -210,15 +208,9 @@ public final class MessengerDao {
      */
     public static void removeAllRequests(int targetUserId) {
         EntityContext.inTransaction(context -> {
-            try (var statement = context.conn().prepareStatement("""
-                    DELETE FROM messenger_requests
-                    WHERE to_id = ?
-                    """)) {
-                statement.setInt(1, targetUserId);
-                statement.executeUpdate();
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to remove all messenger requests", e);
-            }
+            context.from(MessengerRequestEntity.class)
+                    .filter(filter -> filter.equals(MessengerRequestEntity::getToId, targetUserId))
+                    .delete();
             return null;
         });
     }
@@ -235,17 +227,12 @@ public final class MessengerDao {
         }
 
         EntityContext.inTransaction(context -> {
-            try (var statement = context.conn().prepareStatement("""
-                    INSERT INTO messenger_friends (from_id, to_id, category_id)
-                    VALUES (?, ?, ?)
-                    """)) {
-                statement.setInt(1, friendId);
-                statement.setInt(2, userId);
-                statement.setInt(3, categoryId);
-                statement.executeUpdate();
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to add messenger friendship", e);
-            }
+            MessengerFriendEntity friendship = new MessengerFriendEntity();
+            friendship.setFromId(friendId);
+            friendship.setToId(userId);
+            friendship.setCategoryId(categoryId);
+            friendship.setCreatedAt(Timestamp.from(Instant.now()));
+            context.insert(friendship);
             return null;
         });
     }
@@ -257,16 +244,12 @@ public final class MessengerDao {
      */
     public static void removeFriend(int userId, int friendId) {
         EntityContext.inTransaction(context -> {
-            try (var statement = context.conn().prepareStatement("""
-                    DELETE FROM messenger_friends
-                    WHERE to_id = ? AND from_id = ?
-                    """)) {
-                statement.setInt(1, userId);
-                statement.setInt(2, friendId);
-                statement.executeUpdate();
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to remove messenger friendship", e);
-            }
+            context.from(MessengerFriendEntity.class)
+                    .filter(filter -> filter
+                            .equals(MessengerFriendEntity::getToId, userId)
+                            .and()
+                            .equals(MessengerFriendEntity::getFromId, friendId))
+                    .delete();
             return null;
         });
     }
@@ -279,26 +262,15 @@ public final class MessengerDao {
      * @return the inserted message id
      */
     public static int addMessage(int receiverId, int senderId, String message) {
-        return EntityContext.withContext(context -> {
-            try (var statement = context.conn().prepareStatement("""
-                    INSERT INTO messenger_messages (receiver_id, sender_id, unread, body, date)
-                    VALUES (?, ?, 1, ?, ?)
-                    """, Statement.RETURN_GENERATED_KEYS)) {
-                statement.setInt(1, receiverId);
-                statement.setInt(2, senderId);
-                statement.setString(3, sanitizeMessage(message));
-                statement.setLong(4, System.currentTimeMillis() / 1000L);
-                statement.executeUpdate();
-
-                try (ResultSet keys = statement.getGeneratedKeys()) {
-                    if (keys.next()) {
-                        return keys.getInt(1);
-                    }
-                }
-                return 0;
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to add messenger message", e);
-            }
+        return EntityContext.inTransaction(context -> {
+            MessengerMessageEntity messageEntity = new MessengerMessageEntity();
+            messageEntity.setReceiverId(receiverId);
+            messageEntity.setSenderId(senderId);
+            messageEntity.setUnread(1);
+            messageEntity.setBody(sanitizeMessage(message));
+            messageEntity.setDate(System.currentTimeMillis() / 1000L);
+            context.insert(messageEntity);
+            return messageEntity.getId();
         });
     }
 
@@ -342,16 +314,9 @@ public final class MessengerDao {
      */
     public static void markMessageRead(int messageId) {
         EntityContext.inTransaction(context -> {
-            try (var statement = context.conn().prepareStatement("""
-                    UPDATE messenger_messages
-                    SET unread = 0
-                    WHERE id = ?
-                    """)) {
-                statement.setInt(1, messageId);
-                statement.executeUpdate();
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to mark messenger message as read", e);
-            }
+            context.from(MessengerMessageEntity.class)
+                    .filter(filter -> filter.equals(MessengerMessageEntity::getId, messageId))
+                    .update(setter -> setter.set(MessengerMessageEntity::getUnread, 0));
             return null;
         });
     }

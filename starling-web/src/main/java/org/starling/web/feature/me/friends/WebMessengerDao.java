@@ -6,6 +6,7 @@ import org.starling.storage.entity.MessengerRequestEntity;
 import org.starling.storage.entity.UserEntity;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 
@@ -133,18 +134,25 @@ public final class WebMessengerDao {
         }
 
         EntityContext.inTransaction(context -> {
-            try (var statement = context.conn().prepareStatement("""
-                    INSERT IGNORE INTO messenger_friends (from_id, to_id, category_id)
-                    VALUES (?, ?, 0), (?, ?, 0)
-                    """)) {
-                statement.setInt(1, friendId);
-                statement.setInt(2, userId);
-                statement.setInt(3, userId);
-                statement.setInt(4, friendId);
-                statement.executeUpdate();
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to ensure messenger friendship", e);
+            Timestamp now = Timestamp.from(Instant.now());
+            if (!friendExistsInContext(context, userId, friendId)) {
+                MessengerFriendEntity userFriendship = new MessengerFriendEntity();
+                userFriendship.setFromId(friendId);
+                userFriendship.setToId(userId);
+                userFriendship.setCategoryId(0);
+                userFriendship.setCreatedAt(now);
+                context.insert(userFriendship);
             }
+
+            if (!friendExistsInContext(context, friendId, userId)) {
+                MessengerFriendEntity friendFriendship = new MessengerFriendEntity();
+                friendFriendship.setFromId(userId);
+                friendFriendship.setToId(friendId);
+                friendFriendship.setCategoryId(0);
+                friendFriendship.setCreatedAt(now);
+                context.insert(friendFriendship);
+            }
+
             return null;
         });
     }
@@ -160,15 +168,12 @@ public final class WebMessengerDao {
         }
 
         EntityContext.inTransaction(context -> {
-            try (var statement = context.conn().prepareStatement("""
-                    INSERT IGNORE INTO messenger_requests (to_id, from_id)
-                    VALUES (?, ?)
-                    """)) {
-                statement.setInt(1, targetUserId);
-                statement.setInt(2, requesterUserId);
-                statement.executeUpdate();
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to ensure messenger request", e);
+            if (!requestExistsInContext(context, targetUserId, requesterUserId)) {
+                MessengerRequestEntity request = new MessengerRequestEntity();
+                request.setToId(targetUserId);
+                request.setFromId(requesterUserId);
+                request.setCreatedAt(Timestamp.from(Instant.now()));
+                context.insert(request);
             }
             return null;
         });
@@ -218,5 +223,23 @@ public final class WebMessengerDao {
 
     private static long toEpochSeconds(Timestamp timestamp) {
         return timestamp == null ? 0L : timestamp.toInstant().getEpochSecond();
+    }
+
+    private static boolean requestExistsInContext(org.oldskooler.entity4j.DbContext context, int targetUserId, int requesterUserId) {
+        return context.from(MessengerRequestEntity.class)
+                .filter(filter -> filter
+                        .equals(MessengerRequestEntity::getToId, targetUserId)
+                        .and()
+                        .equals(MessengerRequestEntity::getFromId, requesterUserId))
+                .count() > 0;
+    }
+
+    private static boolean friendExistsInContext(org.oldskooler.entity4j.DbContext context, int userId, int friendId) {
+        return context.from(MessengerFriendEntity.class)
+                .filter(filter -> filter
+                        .equals(MessengerFriendEntity::getToId, userId)
+                        .and()
+                        .equals(MessengerFriendEntity::getFromId, friendId))
+                .count() > 0;
     }
 }
