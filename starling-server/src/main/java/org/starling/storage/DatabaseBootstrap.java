@@ -9,8 +9,11 @@ import org.starling.storage.DatabaseSupport;
 import org.starling.storage.bootstrap.DatabaseSeedRegistrar;
 import org.starling.storage.bootstrap.DatabaseSeedRegistrars;
 import org.starling.storage.entity.NavigatorCategoryEntity;
+import org.starling.storage.entity.PublicRoomEntity;
+import org.starling.storage.entity.PublicRoomItemEntity;
 import org.starling.storage.entity.RecommendedItemEntity;
 import org.starling.storage.entity.RoomEntity;
+import org.starling.storage.entity.RoomModelEntity;
 import org.starling.storage.entity.UserEntity;
 
 import java.sql.Statement;
@@ -199,24 +202,8 @@ public final class DatabaseBootstrap {
                         KEY idx_messenger_categories_user (user_id)
                     ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
                     """);
-            statement.executeUpdate("""
-                    UPDATE rooms r
-                    LEFT JOIN users u ON lower(u.username) = lower(r.owner_name)
-                    SET r.owner_id = u.id
-                    WHERE r.owner_id IS NULL OR r.owner_id = 0
-                    """);
-            statement.executeUpdate("UPDATE rooms SET model_name = 'model_a' WHERE model_name IS NULL OR model_name = ''");
-            statement.executeUpdate("UPDATE rooms SET heightmap = '' WHERE heightmap IS NULL");
-            statement.executeUpdate("UPDATE rooms SET wallpaper = '' WHERE wallpaper IS NULL");
-            statement.executeUpdate("UPDATE rooms SET floor_pattern = '' WHERE floor_pattern IS NULL");
-            statement.executeUpdate("UPDATE rooms SET landscape = '' WHERE landscape IS NULL");
-            statement.executeUpdate("UPDATE rooms SET door_password = '' WHERE door_password IS NULL");
-            statement.executeUpdate("UPDATE room_models SET public_room_items = '' WHERE public_room_items IS NULL");
             statement.executeUpdate("ALTER TABLE public_rooms ADD COLUMN IF NOT EXISTS heightmap TEXT NULL AFTER unit_str_id");
-            statement.executeUpdate("UPDATE public_rooms SET heightmap = '' WHERE heightmap IS NULL");
-            statement.executeUpdate("UPDATE public_room_items SET behaviour = '' WHERE behaviour IS NULL");
-            statement.executeUpdate("UPDATE public_room_items SET current_program = '' WHERE current_program IS NULL");
-            statement.executeUpdate("UPDATE users SET is_online = 0 WHERE is_online <> 0");
+            normalizeSharedData(context);
             log.info("Ensured navigator schema extensions exist");
         } catch (Exception e) {
             log.error("Failed to ensure schema extensions: {}", e.getMessage(), e);
@@ -237,6 +224,72 @@ public final class DatabaseBootstrap {
         } catch (Exception e) {
             log.error("Failed to seed default data: {}", e.getMessage(), e);
             throw new RuntimeException(e);
+        }
+    }
+
+    private static void normalizeSharedData(DbContext context) {
+        backfillRoomOwnerIds(context);
+
+        context.from(RoomEntity.class)
+                .filter(filter -> filter
+                        .open()
+                        .isNull(RoomEntity::getModelName)
+                        .or()
+                        .equals(RoomEntity::getModelName, "")
+                        .close())
+                .update(setter -> setter.set(RoomEntity::getModelName, "model_a"));
+        context.from(RoomEntity.class)
+                .filter(filter -> filter.isNull(RoomEntity::getHeightmap))
+                .update(setter -> setter.set(RoomEntity::getHeightmap, ""));
+        context.from(RoomEntity.class)
+                .filter(filter -> filter.isNull(RoomEntity::getWallpaper))
+                .update(setter -> setter.set(RoomEntity::getWallpaper, ""));
+        context.from(RoomEntity.class)
+                .filter(filter -> filter.isNull(RoomEntity::getFloorPattern))
+                .update(setter -> setter.set(RoomEntity::getFloorPattern, ""));
+        context.from(RoomEntity.class)
+                .filter(filter -> filter.isNull(RoomEntity::getLandscape))
+                .update(setter -> setter.set(RoomEntity::getLandscape, ""));
+        context.from(RoomEntity.class)
+                .filter(filter -> filter.isNull(RoomEntity::getDoorPassword))
+                .update(setter -> setter.set(RoomEntity::getDoorPassword, ""));
+        context.from(RoomModelEntity.class)
+                .filter(filter -> filter.isNull(RoomModelEntity::getPublicRoomItems))
+                .update(setter -> setter.set(RoomModelEntity::getPublicRoomItems, ""));
+        context.from(PublicRoomEntity.class)
+                .filter(filter -> filter.isNull(PublicRoomEntity::getHeightmap))
+                .update(setter -> setter.set(PublicRoomEntity::getHeightmap, ""));
+        context.from(PublicRoomItemEntity.class)
+                .filter(filter -> filter.isNull(PublicRoomItemEntity::getBehaviour))
+                .update(setter -> setter.set(PublicRoomItemEntity::getBehaviour, ""));
+        context.from(PublicRoomItemEntity.class)
+                .filter(filter -> filter.isNull(PublicRoomItemEntity::getCurrentProgram))
+                .update(setter -> setter.set(PublicRoomItemEntity::getCurrentProgram, ""));
+        context.from(UserEntity.class)
+                .filter(filter -> filter.notEquals(UserEntity::getIsOnline, 0))
+                .update(setter -> setter.set(UserEntity::getIsOnline, 0));
+    }
+
+    private static void backfillRoomOwnerIds(DbContext context) {
+        for (RoomEntity room : context.from(RoomEntity.class)
+                .filter(filter -> filter
+                        .open()
+                        .isNull(RoomEntity::getOwnerId)
+                        .or()
+                        .equals(RoomEntity::getOwnerId, 0)
+                        .close())
+                .toList()) {
+            Integer ownerId = context.from(UserEntity.class)
+                    .filter(filter -> filter.equalsIgnoreCase(UserEntity::getUsername, room.getOwnerName()))
+                    .first()
+                    .map(UserEntity::getId)
+                    .orElse(null);
+            if (ownerId == null) {
+                continue;
+            }
+
+            room.setOwnerId(ownerId);
+            context.update(room);
         }
     }
 }

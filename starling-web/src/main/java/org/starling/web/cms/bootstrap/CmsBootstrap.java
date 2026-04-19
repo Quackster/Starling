@@ -200,11 +200,7 @@ public final class CmsBootstrap {
                 statement.executeUpdate("ALTER TABLE recommended ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER sponsored");
                 statement.executeUpdate("ALTER TABLE user_referrals ADD COLUMN IF NOT EXISTS reward_credits INT NOT NULL DEFAULT 0 AFTER inviter_userid");
                 statement.executeUpdate("ALTER TABLE user_referrals ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER reward_credits");
-                statement.executeUpdate("UPDATE groups_details SET alias = lower(replace(name, ' ', '-')) WHERE alias IS NULL OR alias = ''");
-                statement.executeUpdate("UPDATE groups_details SET badge = '' WHERE badge IS NULL");
-                statement.executeUpdate("UPDATE groups_details SET description = '' WHERE description IS NULL");
-                statement.executeUpdate("UPDATE recommended SET sponsored = 0 WHERE sponsored IS NULL");
-                statement.executeUpdate("UPDATE users SET credits = 0 WHERE credits IS NULL");
+                normalizeSharedData(context);
                 return null;
             } catch (Exception e) {
                 throw new RuntimeException("Failed to ensure shared schema", e);
@@ -304,6 +300,33 @@ public final class CmsBootstrap {
                 throw new RuntimeException("Failed to ensure cms schema", e);
             }
         });
+    }
+
+    private static void normalizeSharedData(org.oldskooler.entity4j.DbContext context) {
+        for (GroupEntity group : context.from(GroupEntity.class)
+                .filter(filter -> filter
+                        .open()
+                        .isNull(GroupEntity::getAlias)
+                        .or()
+                        .equals(GroupEntity::getAlias, "")
+                        .close())
+                .toList()) {
+            group.setAlias(Slugifier.slugify(group.getName()));
+            context.update(group);
+        }
+
+        context.from(GroupEntity.class)
+                .filter(filter -> filter.isNull(GroupEntity::getBadge))
+                .update(setter -> setter.set(GroupEntity::getBadge, ""));
+        context.from(GroupEntity.class)
+                .filter(filter -> filter.isNull(GroupEntity::getDescription))
+                .update(setter -> setter.set(GroupEntity::getDescription, ""));
+        context.from(RecommendedItemEntity.class)
+                .filter(filter -> filter.isNull(RecommendedItemEntity::getSponsored))
+                .update(setter -> setter.set(RecommendedItemEntity::getSponsored, 0));
+        context.from(UserEntity.class)
+                .filter(filter -> filter.isNull(UserEntity::getCredits))
+                .update(setter -> setter.set(UserEntity::getCredits, 0));
     }
 
     /**
