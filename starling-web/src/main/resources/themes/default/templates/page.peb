@@ -8,18 +8,18 @@
 <script type="text/javascript">
 var andSoItBegins = (new Date()).getTime();
 </script>
-    <link rel="shortcut icon" href="{{ site.staticContentPath }}/web-gallery/v2/favicon.ico" type="image/vnd.microsoft.icon" />
-<script src="{{ site.staticContentPath }}/web-gallery/static/js/libs2.js" type="text/javascript"></script>
-<script src="{{ site.staticContentPath }}/web-gallery/static/js/visual.js" type="text/javascript"></script>
-<script src="{{ site.staticContentPath }}/web-gallery/static/js/libs.js" type="text/javascript"></script>
-<script src="{{ site.staticContentPath }}/web-gallery/static/js/common.js" type="text/javascript"></script>
-<script src="{{ site.staticContentPath }}/web-gallery/static/js/fullcontent.js" type="text/javascript"></script>
-<link rel="stylesheet" href="{{ site.staticContentPath }}/web-gallery/v2/styles/style.css" type="text/css" />
-<link rel="stylesheet" href="{{ site.staticContentPath }}/web-gallery/v2/styles/buttons.css" type="text/css" />
-<link rel="stylesheet" href="{{ site.staticContentPath }}/web-gallery/v2/styles/boxes.css" type="text/css" />
-<link rel="stylesheet" href="{{ site.staticContentPath }}/web-gallery/v2/styles/tooltips.css" type="text/css" />
-<link rel="stylesheet" href="{{ site.staticContentPath }}/web-gallery/styles/local/com.css" type="text/css" />
-<script src="{{ site.staticContentPath }}/web-gallery/js/local/com.js" type="text/javascript"></script>
+    <link rel="shortcut icon" href="{{ site.webGalleryPath }}/v2/favicon.ico" type="image/vnd.microsoft.icon" />
+<script src="{{ site.webGalleryPath }}/static/js/libs2.js" type="text/javascript"></script>
+<script src="{{ site.webGalleryPath }}/static/js/visual.js" type="text/javascript"></script>
+<script src="{{ site.webGalleryPath }}/static/js/libs.js" type="text/javascript"></script>
+<script src="{{ site.webGalleryPath }}/static/js/common.js" type="text/javascript"></script>
+<script src="{{ site.webGalleryPath }}/static/js/fullcontent.js" type="text/javascript"></script>
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/style.css" type="text/css" />
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/buttons.css" type="text/css" />
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/boxes.css" type="text/css" />
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/tooltips.css" type="text/css" />
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/styles/local/com.css" type="text/css" />
+<script src="{{ site.webGalleryPath }}/js/local/com.js" type="text/javascript"></script>
     <meta name="build" content="{{ site.siteName }}" />
 </head>
 <body id="community" class="anonymous ">
@@ -62,3 +62,4 @@ HabboView.run();
 </script>
 </body>
 </html>
+

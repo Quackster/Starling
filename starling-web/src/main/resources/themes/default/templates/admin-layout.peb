@@ -11,7 +11,7 @@
 <body class="admin-shell">
     <header class="admin-header">
         <div class="admin-header__inner">
-            <a class="admin-brand" href="/admin">Starling CMS</a>
+            <a class="admin-brand" href="/admin">{{ cmsTitle }}</a>
             <nav class="admin-nav">
                 <a class="admin-nav__link" href="/">View Site</a>
                 {% if currentAdminName %}

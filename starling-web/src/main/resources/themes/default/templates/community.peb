@@ -8,23 +8,23 @@
 <script type="text/javascript">
 var andSoItBegins = (new Date()).getTime();
 </script>
-<script src="{{ site.staticContentPath }}/web-gallery/static/js/visual.js" type="text/javascript"></script>
-<script src="{{ site.staticContentPath }}/web-gallery/static/js/libs.js" type="text/javascript"></script>
-<script src="{{ site.staticContentPath }}/web-gallery/static/js/common.js" type="text/javascript"></script>
-<script src="{{ site.staticContentPath }}/web-gallery/static/js/fullcontent.js" type="text/javascript"></script>
-<script src="{{ site.staticContentPath }}/web-gallery/static/js/libs2.js" type="text/javascript"></script>
-<link rel="stylesheet" href="{{ site.staticContentPath }}/web-gallery/v2/styles/style.css" type="text/css" />
-<link rel="stylesheet" href="{{ site.staticContentPath }}/web-gallery/v2/styles/buttons.css" type="text/css" />
-<link rel="stylesheet" href="{{ site.staticContentPath }}/web-gallery/v2/styles/boxes.css" type="text/css" />
-<link rel="stylesheet" href="{{ site.staticContentPath }}/web-gallery/v2/styles/tooltips.css" type="text/css" />
-<link rel="stylesheet" href="{{ site.staticContentPath }}/web-gallery/styles/local/com.css" type="text/css" />
+<script src="{{ site.webGalleryPath }}/static/js/visual.js" type="text/javascript"></script>
+<script src="{{ site.webGalleryPath }}/static/js/libs.js" type="text/javascript"></script>
+<script src="{{ site.webGalleryPath }}/static/js/common.js" type="text/javascript"></script>
+<script src="{{ site.webGalleryPath }}/static/js/fullcontent.js" type="text/javascript"></script>
+<script src="{{ site.webGalleryPath }}/static/js/libs2.js" type="text/javascript"></script>
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/style.css" type="text/css" />
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/buttons.css" type="text/css" />
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/boxes.css" type="text/css" />
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/tooltips.css" type="text/css" />
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/styles/local/com.css" type="text/css" />
 
 <script type="text/javascript">
 document.habboLoggedIn = {{ session.loggedIn }};
 var habboName = "{{ site.playerName }}";
 var habboReqPath = "{{ site.sitePath }}";
-var habboStaticFilePath = "{{ site.staticContentPath }}/web-gallery";
-var habboImagerUrl = "{{ site.staticContentPath }}/habbo-imaging/";
+var habboStaticFilePath = "{{ site.webGalleryPath }}";
+var habboImagerUrl = "{{ site.habboImagingPath }}/";
 var habboPartner = "";
 window.name = "habboMain";
 </script>
@@ -72,7 +72,7 @@ window.name = "habboMain";
 
                 <div class="habblet-container ">
                     <div class="cbb clearfix activehomes ">
-                        <h2 class="title">Random Habbos - Click Us!</h2>
+                        <h2 class="title">Random {{ site.pluralName }} - Click Us!</h2>
                         <div id="homes-habblet-list-container" class="habblet-list-container">
                             <ul class="habblet-list two-cols clearfix">
                             {% for member in activeMembers %}
@@ -97,7 +97,7 @@ window.name = "habboMain";
                     <div class="cbb clearfix notitle ">
                         <div id="newspromo">
                             <div id="topstories">
-                                <div class="topstory" style="background-image: url({{ site.staticContentPath }}/web-gallery/v2/images/landing/uk_party_frontpage_image.gif)">
+                                <div class="topstory" style="background-image: url({{ site.webGalleryPath }}/v2/images/landing/uk_party_frontpage_image.gif)">
                                     <h4>Latest news</h4>
                                     <h3><a href="{{ topStory.url }}">{{ topStory.title }}</a></h3>
                                     <p class="summary">{{ topStory.summary }}</p>
@@ -154,3 +154,4 @@ HabboView.run();
 </script>
 </body>
 </html>
+

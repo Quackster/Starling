@@ -70,6 +70,8 @@ class StarlingWebIntegrationTest {
                 "default",
                 tempRoot.resolve("themes"),
                 tempRoot.resolve("uploads"),
+                "Habbo",
+                "/web-gallery",
                 "admin@example.com",
                 "Password123!",
                 databaseConfig
@@ -158,14 +160,16 @@ class StarlingWebIntegrationTest {
         assertEquals(200, privacyResponse.statusCode());
         assertTrue(homepageResponse.body().contains("create-habbo"));
         assertTrue(homepageResponse.body().contains("landing-register-text"));
+        assertTrue(homepageResponse.body().contains("Habbo is a virtual world where you can meet and make friends."));
+        assertTrue(homepageResponse.body().contains("Habbos online now!"));
         assertTrue(homepageResponse.body().contains("/web-gallery/v2/styles/style.css"));
         assertFalse(homepageResponse.body().contains("/assets/web-gallery/"));
         assertTrue(communityResponse.body().contains("Random Habbos"));
         assertTrue(communityResponse.body().contains("Reccomended Rooms"));
         assertTrue(newsIndexResponse.body().contains("article-archive"));
         assertTrue(newsIndexResponse.body().contains("Welcome to Starling-Web"));
-        assertTrue(disclaimerResponse.body().contains("Terms of Service"));
-        assertTrue(privacyResponse.body().contains("Privacy Policy"));
+        assertTrue(disclaimerResponse.body().contains("Terms of Service for <b>Habbo</b>"));
+        assertTrue(privacyResponse.body().contains("Here at <b>Habbo</b>"));
     }
 
     @Test

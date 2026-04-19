@@ -4,6 +4,7 @@ import io.javalin.http.Context;
 import org.starling.web.cms.model.CmsMediaAsset;
 import org.starling.web.request.RequestValues;
 import org.starling.web.service.MediaAssetService;
+import org.starling.web.site.SiteBranding;
 import org.starling.web.theme.ThemeResourceResolver;
 import org.starling.web.user.CaptchaService;
 
@@ -18,15 +19,21 @@ public final class AssetController {
 
     private final ThemeResourceResolver themeResourceResolver;
     private final MediaAssetService mediaAssetService;
+    private final SiteBranding siteBranding;
 
     /**
      * Creates a new AssetController.
      * @param themeResourceResolver the theme resource resolver
      * @param mediaAssetService the media asset service
      */
-    public AssetController(ThemeResourceResolver themeResourceResolver, MediaAssetService mediaAssetService) {
+    public AssetController(
+            ThemeResourceResolver themeResourceResolver,
+            MediaAssetService mediaAssetService,
+            SiteBranding siteBranding
+    ) {
         this.themeResourceResolver = themeResourceResolver;
         this.mediaAssetService = mediaAssetService;
+        this.siteBranding = siteBranding;
     }
 
     /**
@@ -90,7 +97,7 @@ public final class AssetController {
         int width = "b".equalsIgnoreCase(context.queryParam("size")) ? 64 : 32;
         int height = "b".equalsIgnoreCase(context.queryParam("size")) ? 110 : 55;
         context.contentType("image/png");
-        context.result(new ByteArrayInputStream(CaptchaService.renderAvatarPlaceholder("Starling", width, height)));
+        context.result(new ByteArrayInputStream(CaptchaService.renderAvatarPlaceholder(siteBranding.siteName(), width, height)));
     }
 
     private void serveThemeAsset(Context context, String assetPrefix) {

@@ -9,27 +9,27 @@
 <script type="text/javascript">
 var andSoItBegins = (new Date()).getTime();
 </script>
-    <link rel="shortcut icon" href="{{ site.staticContentPath }}/web-gallery/v2/favicon.ico" type="image/vnd.microsoft.icon" />
+    <link rel="shortcut icon" href="{{ site.webGalleryPath }}/v2/favicon.ico" type="image/vnd.microsoft.icon" />
     <link rel="alternate" type="application/rss+xml" title="{{ site.siteName }}: RSS" href="{{ site.sitePath }}/articles/rss.xml" />
 
-<script src="{{ site.staticContentPath }}/web-gallery/static/js/libs2.js" type="text/javascript"></script>
-<script src="{{ site.staticContentPath }}/web-gallery/static/js/landing.js" type="text/javascript"></script>
-<link rel="stylesheet" href="{{ site.staticContentPath }}/web-gallery/v2/styles/style.css" type="text/css" />
-<link rel="stylesheet" href="{{ site.staticContentPath }}/web-gallery/v2/styles/buttons.css" type="text/css" />
-<link rel="stylesheet" href="{{ site.staticContentPath }}/web-gallery/v2/styles/boxes.css" type="text/css" />
-<link rel="stylesheet" href="{{ site.staticContentPath }}/web-gallery/v2/styles/tooltips.css" type="text/css" />
-<link rel="stylesheet" href="{{ site.staticContentPath }}/web-gallery/styles/local/com.css" type="text/css" />
+<script src="{{ site.webGalleryPath }}/static/js/libs2.js" type="text/javascript"></script>
+<script src="{{ site.webGalleryPath }}/static/js/landing.js" type="text/javascript"></script>
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/style.css" type="text/css" />
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/buttons.css" type="text/css" />
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/boxes.css" type="text/css" />
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/tooltips.css" type="text/css" />
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/styles/local/com.css" type="text/css" />
 
-<script src="{{ site.staticContentPath }}/web-gallery/js/local/com.js" type="text/javascript"></script>
-<link rel="stylesheet" href="{{ site.staticContentPath }}/web-gallery/v2/styles/process.css" type="text/css" />
+<script src="{{ site.webGalleryPath }}/js/local/com.js" type="text/javascript"></script>
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/process.css" type="text/css" />
 
 <script type="text/javascript">
 document.habboLoggedIn = false;
 var habboName = null;
 var ad_keywords = "";
 var habboReqPath = "{{ site.sitePath }}";
-var habboStaticFilePath = "{{ site.staticContentPath }}/web-gallery";
-var habboImagerUrl = "{{ site.staticContentPath }}/habbo-imaging/";
+var habboStaticFilePath = "{{ site.webGalleryPath }}";
+var habboImagerUrl = "{{ site.habboImagingPath }}/";
 var habboPartner = "";
 var habboDefaultClientPopupUrl = "{{ site.sitePath }}/client";
 window.name = "habboMain";
@@ -42,20 +42,20 @@ if (typeof HabboClient != "undefined") { HabboClient.windowName = "client"; }
 <meta name="keywords" content="{{ site.siteName }}, virtual, world, join, groups, forums, play, games, online, friends, teens, collecting, social network, create, collect, connect, furniture, virtual, goods, sharing, badges, social, networking, hangout, safe, music, celebrity, celebrity visits, cele" />
 
 <!--[if IE 8]>
-<link rel="stylesheet" href="{{ site.staticContentPath }}/web-gallery/v2/styles/ie8.css" type="text/css" />
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/ie8.css" type="text/css" />
 <![endif]-->
 <!--[if lt IE 8]>
-<link rel="stylesheet" href="{{ site.staticContentPath }}/web-gallery/v2/styles/ie.css" type="text/css" />
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/ie.css" type="text/css" />
 <![endif]-->
 <!--[if lt IE 7]>
-<link rel="stylesheet" href="{{ site.staticContentPath }}/web-gallery/v2/styles/ie6.css" type="text/css" />
-<script src="{{ site.staticContentPath }}/web-gallery/static/js/pngfix.js" type="text/javascript"></script>
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/ie6.css" type="text/css" />
+<script src="{{ site.webGalleryPath }}/static/js/pngfix.js" type="text/javascript"></script>
 <script type="text/javascript">
 try { document.execCommand('BackgroundImageCache', false, true); } catch(e) {}
 </script>
 
 <style type="text/css">
-body { behavior: url({{ site.staticContentPath }}/web-gallery/js/csshover.htc); }
+body { behavior: url({{ site.webGalleryPath }}/js/csshover.htc); }
 </style>
 <![endif]-->
 <meta name="build" content="HavanaWeb" />
@@ -73,7 +73,7 @@ body { behavior: url({{ site.staticContentPath }}/web-gallery/js/csshover.htc); 
 				<div class="habblet-container " id="create-habbo">
 
 						<div id="create-habbo-flash">
-	<div id="create-habbo-nonflash" style="background-image: url({{ site.staticContentPath }}/web-gallery/v2/images/landing/landing_group.png)">
+	<div id="create-habbo-nonflash" style="background-image: url({{ site.webGalleryPath }}/v2/images/landing/landing_group.png)">
         <div id="landing-register-text"><a href="register"><span>Join now, it's free >></span></a></div>
         <div id="landing-promotional-text"><span>{{ site.siteName }} is a virtual world where you can meet and make friends.</span></div>
     </div>
@@ -89,10 +89,10 @@ body { behavior: url({{ site.staticContentPath }}/web-gallery/js/csshover.htc); 
 </div>
 
 <script type="text/javascript" language="JavaScript">
-var swfobj = new SWFObject("{{ site.staticContentPath }}/web-gallery/flash/intro/habbos.swf", "ch", "396", "378", "8");
+var swfobj = new SWFObject("{{ site.webGalleryPath }}/flash/intro/habbos.swf", "ch", "396", "378", "8");
 swfobj.addParam("AllowScriptAccess", "always");
 swfobj.addParam("wmode", "transparent");
-swfobj.addVariable("base_url", "{{ site.staticContentPath }}/web-gallery/flash/intro");
+swfobj.addVariable("base_url", "{{ site.webGalleryPath }}/flash/intro");
 swfobj.addVariable("habbos_url", "{{ site.staticContentPath }}/xml/promo_habbos.xml");
 swfobj.addVariable("create_button_text", "Register today! &raquo;");
 swfobj.addVariable("in_hotel_text", "Online now!");
@@ -101,7 +101,7 @@ swfobj.addVariable("video_start", "PLAY VIDEO");
 swfobj.addVariable("video_stop", "STOP VIDEO");
 swfobj.addVariable("button_link", "register");
 swfobj.addVariable("localization_url", "{{ site.staticContentPath }}/xml/landing_intro.xml");
-swfobj.addVariable("video_link", "{{ site.staticContentPath }}/web-gallery/flash/intro/Habbo_intro.swf");
+swfobj.addVariable("video_link", "{{ site.webGalleryPath }}/flash/intro/Habbo_intro.swf");
 swfobj.write("create-habbo-flash");
 HabboView.add(function() {
 	if (deconcept.SWFObjectUtil.getPlayerVersion()["major"] >= 8) {
@@ -210,8 +210,8 @@ var PromoHabbos = { track:function(n) { if (!!n && window.pageTracker) { pageTra
 		<br /> -->
 				
 						<div class="ad-container">
-<!-- <a href="{{ site.sitePath }}/register"><img src="{{ site.staticContentPath }}/web-gallery/v2/images/landing/filler_ad.png" alt="" /></a> -->
-<a href="{{ site.sitePath }}/games"><img src="{{ site.staticContentPath }}/web-gallery/v2/images/landing/uk_party_frontpage_image.gif" alt="" /></a>
+<!-- <a href="{{ site.sitePath }}/register"><img src="{{ site.webGalleryPath }}/v2/images/landing/filler_ad.png" alt="" /></a> -->
+<a href="{{ site.sitePath }}/games"><img src="{{ site.webGalleryPath }}/v2/images/landing/uk_party_frontpage_image.gif" alt="" /></a>
 
 </div>
 	
@@ -229,11 +229,11 @@ var PromoHabbos = { track:function(n) { if (!!n && window.pageTracker) { pageTra
 				<div class="habblet-container ">		
 	
 						<!-- <div class="habblet box-content" id="tag-cloud-slim">
-    <span class="tags-habbos-like">{{ site.siteName }}s Like..</span>
+    <span class="tags-habbos-like">{{ site.pluralName }} Like..</span>
 No tags to display.</div> -->
 
 				<div class="habblet box-content" id="tag-cloud-slim">
-				<span class="tags-habbos-like">{{ site.siteName }}s Like..</span>
+				<span class="tags-habbos-like">{{ site.pluralName }} Like..</span>
 				{% autoescape 'html' %}
 					{% if tagCloud|length > 0 %}
 						{% for kvp in tagCloud %}
@@ -267,3 +267,4 @@ HabboView.run();
 
 </body>
 </html>
+

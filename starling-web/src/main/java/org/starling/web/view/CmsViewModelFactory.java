@@ -6,6 +6,7 @@ import org.starling.web.cms.model.CmsNavigationItem;
 import org.starling.web.cms.model.CmsNavigationMenu;
 import org.starling.web.cms.model.CmsPage;
 import org.starling.web.render.MarkdownRenderer;
+import org.starling.web.site.SiteBranding;
 
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -20,13 +21,15 @@ import java.util.Map;
 public final class CmsViewModelFactory {
 
     private final MarkdownRenderer markdownRenderer;
+    private final SiteBranding siteBranding;
 
     /**
      * Creates a new CmsViewModelFactory.
      * @param markdownRenderer the markdown renderer
      */
-    public CmsViewModelFactory(MarkdownRenderer markdownRenderer) {
+    public CmsViewModelFactory(MarkdownRenderer markdownRenderer, SiteBranding siteBranding) {
         this.markdownRenderer = markdownRenderer;
+        this.siteBranding = siteBranding;
     }
 
     /**
@@ -90,7 +93,7 @@ public final class CmsViewModelFactory {
             placeholder.put("articleImage", "");
             placeholder.put("date", formatArticleDate(null));
             placeholder.put("escapedStory", "<p>There is no news.</p>");
-            placeholder.put("author", "Starling CMS");
+            placeholder.put("author", siteBranding.cmsTitle());
             placeholder.put("url", "no-news");
             placeholder.put("published", true);
             placeholder.put("categories", List.of());
@@ -103,7 +106,7 @@ public final class CmsViewModelFactory {
         view.put("articleImage", "");
         view.put("date", formatArticleDate(article.publishedAt()));
         view.put("escapedStory", markdownRenderer.render(article.publishedMarkdown()));
-        view.put("author", "Starling CMS");
+        view.put("author", siteBranding.cmsTitle());
         view.put("url", article.slug());
         view.put("published", article.published());
         view.put("categories", List.of());
@@ -161,7 +164,7 @@ public final class CmsViewModelFactory {
         view.put("summary", "Publish a CMS article to fill this slot.");
         view.put("date", "");
         view.put("url", "/news");
-        view.put("image", "/web-gallery/v2/images/landing/uk_party_frontpage_image.gif");
+        view.put("image", siteBranding.webGalleryAsset("v2/images/landing/uk_party_frontpage_image.gif"));
         view.put("index", index);
         return view;
     }

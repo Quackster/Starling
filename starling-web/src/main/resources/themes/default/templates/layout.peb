@@ -10,7 +10,7 @@
     <header class="site-header">
         <div class="site-header__inner">
             <a class="site-logo" href="/">
-                <img src="/assets/logo.png" alt="Starling">
+                <img src="/assets/logo.png" alt="{{ site.siteName }}">
             </a>
             <nav class="site-nav">
                 {% for item in menuItems %}
@@ -28,8 +28,8 @@
     <footer class="site-footer">
         <div class="site-footer__inner">
             <img src="/assets/smallhotel.png" alt="" class="site-footer__hotel">
-            <p>Starling CMS theme inspired by classic Habbo-era layouts.</p>
-            <p>&copy; {{ year }} Starling</p>
+            <p>{{ site.siteName }} CMS theme inspired by classic Habbo-era layouts.</p>
+            <p>&copy; {{ year }} {{ site.siteName }}</p>
         </div>
     </footer>
 </body>

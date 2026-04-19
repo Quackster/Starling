@@ -13,6 +13,8 @@ public record WebConfig(
         String themeName,
         Path themeDirectory,
         Path uploadDirectory,
+        String siteName,
+        String webGalleryPath,
         String bootstrapAdminEmail,
         String bootstrapAdminPassword,
         DatabaseConfig database
@@ -24,6 +26,8 @@ public record WebConfig(
             Map.entry("STARLING_WEB_THEME", "web.theme"),
             Map.entry("STARLING_WEB_THEME_DIR", "web.theme.directory"),
             Map.entry("STARLING_WEB_UPLOAD_DIR", "web.upload.directory"),
+            Map.entry("STARLING_WEB_SITE_NAME", "web.site.name"),
+            Map.entry("STARLING_WEB_WEB_GALLERY_PATH", "web.web-gallery.path"),
             Map.entry("STARLING_WEB_ADMIN_EMAIL", "web.admin.email"),
             Map.entry("STARLING_WEB_ADMIN_PASSWORD", "web.admin.password"),
             Map.entry("STARLING_DB_HOST", "db.host"),
@@ -54,6 +58,8 @@ public record WebConfig(
                 properties.getProperty("web.theme", "default"),
                 Path.of(properties.getProperty("web.theme.directory", "themes")),
                 Path.of(properties.getProperty("web.upload.directory", "uploads")),
+                properties.getProperty("web.site.name", "Habbo"),
+                properties.getProperty("web.web-gallery.path", "/web-gallery"),
                 properties.getProperty("web.admin.email", "admin@starling.local"),
                 properties.getProperty("web.admin.password", "admin123!"),
                 DatabaseConfig.from(properties)

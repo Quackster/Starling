@@ -7,6 +7,7 @@ import org.starling.web.service.ArticleService;
 import org.starling.web.service.MediaAssetService;
 import org.starling.web.service.NavigationService;
 import org.starling.web.service.PageService;
+import org.starling.web.site.SiteBranding;
 import org.starling.web.theme.ThemeResourceResolver;
 import org.starling.web.user.UserSessionService;
 import org.starling.web.view.AdminPageModelFactory;
@@ -20,6 +21,7 @@ public record WebDependencies(
         MarkdownRenderer markdownRenderer,
         SignedSessionService signedSessionService,
         UserSessionService userSessionService,
+        SiteBranding siteBranding,
         ThemeResourceResolver themeResourceResolver,
         PageService pageService,
         ArticleService articleService,

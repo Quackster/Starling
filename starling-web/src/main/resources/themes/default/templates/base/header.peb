@@ -87,7 +87,7 @@
 			
 		</ul>
 
-        <div id="habbos-online"><div class="rounded"><span>{{ site.formattedUsersOnline }} {{ site.siteName }}s online</span></div></div>
+        <div id="habbos-online"><div class="rounded"><span>{{ site.formattedUsersOnline }} {{ site.pluralName }} online</span></div></div>
 	</div>
 </div>
 
@@ -184,7 +184,7 @@
 			
 		</ul>
 
-        <div id="habbos-online"><div class="rounded"><span>{{ site.formattedUsersOnline }} {{ site.siteName }}s online</span></div></div>
+        <div id="habbos-online"><div class="rounded"><span>{{ site.formattedUsersOnline }} {{ site.pluralName }} online</span></div></div>
 	</div>
 </div>
 

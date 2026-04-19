@@ -29,6 +29,8 @@ class ThemeResourceResolverTest {
                     "default",
                     root.resolve("themes"),
                     root.resolve("uploads"),
+                    "Habbo",
+                    "/web-gallery",
                     "admin@starling.local",
                     "password",
                     new DatabaseConfig("127.0.0.1", 3306, "starling", "root", "verysecret", "")

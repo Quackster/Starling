@@ -1,6 +1,6 @@
 <section class="admin-card">
     <h1>Dashboard</h1>
-    <p>Starling-Web is live with separate CMS auth, draft/publish workflows, and theme overrides.</p>
+    <p>{{ cmsTitle }} is live with separate CMS auth, draft/publish workflows, and theme overrides.</p>
 </section>
 
 <section class="stat-grid">

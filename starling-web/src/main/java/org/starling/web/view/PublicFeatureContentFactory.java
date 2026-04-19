@@ -1,6 +1,7 @@
 package org.starling.web.view;
 
 import org.starling.storage.entity.UserEntity;
+import org.starling.web.site.SiteBranding;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -11,13 +12,15 @@ import java.util.Optional;
 public final class PublicFeatureContentFactory {
 
     private final UserViewModelFactory userViewModelFactory;
+    private final SiteBranding siteBranding;
 
     /**
      * Creates a new PublicFeatureContentFactory.
      * @param userViewModelFactory the user view model factory
      */
-    public PublicFeatureContentFactory(UserViewModelFactory userViewModelFactory) {
+    public PublicFeatureContentFactory(UserViewModelFactory userViewModelFactory, SiteBranding siteBranding) {
         this.userViewModelFactory = userViewModelFactory;
+        this.siteBranding = siteBranding;
     }
 
     /**
@@ -34,7 +37,7 @@ public final class PublicFeatureContentFactory {
      */
     public List<Map<String, Object>> recommendedGroups() {
         return List.of(
-                Map.of("name", "Starling Builders", "badge", "b0514Xs09114s05013s05014"),
+                Map.of("name", siteBranding.siteName() + " Builders", "badge", "b0514Xs09114s05013s05014"),
                 Map.of("name", "Rare Traders", "badge", "b04124s09113s05013s05014"),
                 Map.of("name", "Pixel Collectors", "badge", "b0509Xs09114s05013s05014"),
                 Map.of("name", "Rooftop Residents", "badge", "b0404Xs09114s05013s05014")

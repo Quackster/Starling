@@ -1,6 +1,6 @@
 <section class="page-header">
     <h1>News</h1>
-    <p>The latest public updates published from Starling-Web.</p>
+    <p>The latest public updates published from {{ site.siteName }} CMS.</p>
 </section>
 
 <section class="panel">

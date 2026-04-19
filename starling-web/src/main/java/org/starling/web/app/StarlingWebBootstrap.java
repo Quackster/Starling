@@ -32,6 +32,7 @@ import org.starling.web.service.ArticleService;
 import org.starling.web.service.MediaAssetService;
 import org.starling.web.service.NavigationService;
 import org.starling.web.service.PageService;
+import org.starling.web.site.SiteBranding;
 import org.starling.web.theme.ThemeResourceResolver;
 import org.starling.web.user.UserSessionService;
 import org.starling.web.view.AdminPageModelFactory;
@@ -66,6 +67,7 @@ public final class StarlingWebBootstrap {
     }
 
     private WebDependencies createDependencies() {
+        SiteBranding siteBranding = new SiteBranding(config.siteName(), config.webGalleryPath());
         ThemeResourceResolver themeResourceResolver = new ThemeResourceResolver(config);
         TemplateRenderer templateRenderer = new TemplateRenderer(themeResourceResolver);
         MarkdownRenderer markdownRenderer = new MarkdownRenderer();
@@ -76,16 +78,17 @@ public final class StarlingWebBootstrap {
         ArticleService articleService = new ArticleService();
         NavigationService navigationService = new NavigationService();
         UserViewModelFactory userViewModelFactory = new UserViewModelFactory();
-        PublicPageModelFactory publicPageModelFactory = new PublicPageModelFactory(userSessionService, userViewModelFactory);
-        PublicFeatureContentFactory publicFeatureContentFactory = new PublicFeatureContentFactory(userViewModelFactory);
-        AdminPageModelFactory adminPageModelFactory = new AdminPageModelFactory();
-        CmsViewModelFactory cmsViewModelFactory = new CmsViewModelFactory(markdownRenderer);
+        PublicPageModelFactory publicPageModelFactory = new PublicPageModelFactory(userSessionService, userViewModelFactory, siteBranding);
+        PublicFeatureContentFactory publicFeatureContentFactory = new PublicFeatureContentFactory(userViewModelFactory, siteBranding);
+        AdminPageModelFactory adminPageModelFactory = new AdminPageModelFactory(siteBranding);
+        CmsViewModelFactory cmsViewModelFactory = new CmsViewModelFactory(markdownRenderer, siteBranding);
 
         return new WebDependencies(
                 templateRenderer,
                 markdownRenderer,
                 signedSessionService,
                 userSessionService,
+                siteBranding,
                 themeResourceResolver,
                 pageService,
                 articleService,
@@ -138,7 +141,8 @@ public final class StarlingWebBootstrap {
         );
         PolicyController policyController = new PolicyController(
                 dependencies.templateRenderer(),
-                dependencies.publicPageModelFactory()
+                dependencies.publicPageModelFactory(),
+                dependencies.siteBranding()
         );
         AccountController accountController = new AccountController(
                 dependencies.templateRenderer(),
@@ -152,7 +156,8 @@ public final class StarlingWebBootstrap {
         );
         AssetController assetController = new AssetController(
                 dependencies.themeResourceResolver(),
-                dependencies.mediaAssetService()
+                dependencies.mediaAssetService(),
+                dependencies.siteBranding()
         );
         AdminRouteGuard adminRouteGuard = new AdminRouteGuard(dependencies.signedSessionService());
         AdminAuthController adminAuthController = new AdminAuthController(
