@@ -36,6 +36,9 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -129,6 +132,10 @@ class StarlingWebIntegrationTest {
         assertTrue(MinimailDao.count() >= 1);
         assertTrue(CmsPageDao.findPublishedBySlug("home").isPresent());
         assertTrue(CmsArticleDao.findPublishedBySlug("welcome-to-starling").isPresent());
+        assertTrue(indexExists("groups_details", "uk_groups_details_alias"));
+        assertTrue(indexExists("cms_pages", "uk_cms_pages_slug"));
+        assertTrue(indexExists("cms_articles", "idx_cms_articles_published"));
+        assertTrue(indexExists("minimail", "idx_minimail_inbox"));
     }
 
     @Test
@@ -1164,6 +1171,25 @@ class StarlingWebIntegrationTest {
                 .filter(cookie -> name.equals(cookie.getName()))
                 .findFirst()
                 .orElse(null);
+    }
+
+    private boolean indexExists(String tableName, String indexName) {
+        try (Connection connection = DriverManager.getConnection(
+                databaseConfig.jdbcUrl(),
+                databaseConfig.dbUsername(),
+                databaseConfig.dbPassword()
+        );
+             ResultSet indexes = connection.getMetaData().getIndexInfo(connection.getCatalog(), null, tableName, false, false)) {
+            while (indexes.next()) {
+                String existingIndexName = indexes.getString("INDEX_NAME");
+                if (existingIndexName != null && existingIndexName.equalsIgnoreCase(indexName)) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to inspect index " + indexName + " on " + tableName, e);
+        }
     }
 
 }

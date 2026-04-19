@@ -13,7 +13,9 @@ import org.starling.storage.entity.PublicRoomEntity;
 import org.starling.storage.entity.PublicRoomItemEntity;
 import org.starling.storage.entity.RecommendedItemEntity;
 import org.starling.storage.entity.RoomEntity;
+import org.starling.storage.entity.RoomFavoriteEntity;
 import org.starling.storage.entity.RoomModelEntity;
+import org.starling.storage.entity.RoomRightEntity;
 import org.starling.storage.entity.UserEntity;
 
 import java.sql.Statement;
@@ -46,7 +48,9 @@ public final class DatabaseBootstrap {
                     UserEntity.class,
                     NavigatorCategoryEntity.class,
                     RoomEntity.class,
-                    RecommendedItemEntity.class
+                    RecommendedItemEntity.class,
+                    RoomFavoriteEntity.class,
+                    RoomRightEntity.class
             );
 
             statement.executeUpdate("""
@@ -131,31 +135,13 @@ public final class DatabaseBootstrap {
                         KEY idx_public_rooms_category (category_id)
                     ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
                     """);
-            statement.executeUpdate("""
-                    CREATE TABLE IF NOT EXISTS room_favorites (
-                        id INT NOT NULL AUTO_INCREMENT,
-                        user_id INT NOT NULL,
-                        room_type INT NOT NULL DEFAULT 0,
-                        room_id INT NOT NULL,
-                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                        PRIMARY KEY (id),
-                        UNIQUE KEY uk_room_favorites_user_type_room (user_id, room_type, room_id),
-                        KEY idx_room_favorites_user (user_id)
-                    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
-                    """);
+            DatabaseSupport.ensureUniqueIndex(context.conn(), "room_favorites", "uk_room_favorites_user_type_room", "user_id", "room_type", "room_id");
+            DatabaseSupport.ensureIndex(context.conn(), "room_favorites", "idx_room_favorites_user", false, "user_id");
             statement.executeUpdate("ALTER TABLE room_favorites MODIFY COLUMN room_type INT NOT NULL DEFAULT 0");
-            statement.executeUpdate("""
-                    CREATE TABLE IF NOT EXISTS room_rights (
-                        id INT NOT NULL AUTO_INCREMENT,
-                        room_id INT NOT NULL,
-                        user_id INT NOT NULL,
-                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                        PRIMARY KEY (id),
-                        UNIQUE KEY uk_room_rights_room_user (room_id, user_id),
-                        KEY idx_room_rights_room (room_id)
-                    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
-                    """);
-            SharedSchemaSupport.ensureMessengerSchema(statement);
+            DatabaseSupport.ensureUniqueIndex(context.conn(), "room_rights", "uk_room_rights_room_user", "room_id", "user_id");
+            DatabaseSupport.ensureIndex(context.conn(), "room_rights", "idx_room_rights_room", false, "room_id");
+            DatabaseSupport.ensureIndex(context.conn(), "recommended", "idx_recommended_type", false, "type", "sponsored");
+            SharedSchemaSupport.ensureMessengerSchema(context);
             statement.executeUpdate("ALTER TABLE public_rooms ADD COLUMN IF NOT EXISTS heightmap TEXT NULL AFTER unit_str_id");
             normalizeSharedData(context);
             log.info("Ensured navigator schema extensions exist");

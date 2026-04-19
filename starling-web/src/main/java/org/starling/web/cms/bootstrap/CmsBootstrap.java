@@ -16,15 +16,20 @@ import org.starling.storage.entity.RoomEntity;
 import org.starling.storage.entity.UserEntity;
 import org.starling.storage.entity.UserReferralEntity;
 import org.starling.web.cms.admin.CmsAdminDao;
+import org.starling.web.cms.admin.CmsAdminUserEntity;
 import org.starling.web.cms.auth.PasswordHasher;
 import org.starling.web.cms.article.CmsArticle;
 import org.starling.web.cms.article.CmsArticleDao;
 import org.starling.web.cms.article.CmsArticleDraft;
+import org.starling.web.cms.article.CmsArticleEntity;
+import org.starling.web.cms.page.CmsPageEntity;
 import org.starling.web.cms.page.CmsPageDao;
 import org.starling.web.cms.page.CmsPageDraft;
 import org.starling.web.config.WebConfig;
+import org.starling.web.feature.me.campaign.CampaignEntity;
 import org.starling.web.feature.me.campaign.HotCampaignDao;
 import org.starling.web.feature.me.friends.WebMessengerDao;
+import org.starling.web.feature.me.mail.MinimailEntity;
 import org.starling.web.feature.me.mail.MinimailDao;
 import org.starling.web.util.Slugifier;
 
@@ -73,71 +78,14 @@ public final class CmsBootstrap {
                         RecommendedItemEntity.class,
                         UserReferralEntity.class
                 );
-
-                statement.executeUpdate("""
-                        CREATE TABLE IF NOT EXISTS groups_details (
-                            id INT NOT NULL AUTO_INCREMENT,
-                            alias VARCHAR(80) NOT NULL,
-                            name VARCHAR(64) NOT NULL,
-                            badge VARCHAR(64) NOT NULL DEFAULT '',
-                            description TEXT NOT NULL,
-                            ownerid INT NOT NULL,
-                            roomid INT NOT NULL DEFAULT 0,
-                            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                            PRIMARY KEY (id),
-                            UNIQUE KEY uk_groups_details_alias (alias)
-                        ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
-                        """);
-                statement.executeUpdate("""
-                        CREATE TABLE IF NOT EXISTS groups_memberships (
-                            id INT NOT NULL AUTO_INCREMENT,
-                            userid INT NOT NULL,
-                            groupid INT NOT NULL,
-                            member_rank INT NOT NULL DEFAULT 0,
-                            is_current INT NOT NULL DEFAULT 0,
-                            is_pending INT NOT NULL DEFAULT 0,
-                            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                            PRIMARY KEY (id),
-                            UNIQUE KEY uk_groups_memberships_user_group (userid, groupid),
-                            KEY idx_groups_memberships_group (groupid)
-                        ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
-                        """);
-                statement.executeUpdate("""
-                        CREATE TABLE IF NOT EXISTS tags (
-                            id INT NOT NULL AUTO_INCREMENT,
-                            ownerid INT NOT NULL,
-                            tag VARCHAR(25) NOT NULL,
-                            type VARCHAR(16) NOT NULL DEFAULT 'user',
-                            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                            PRIMARY KEY (id),
-                            UNIQUE KEY uk_tags_owner_type_tag (ownerid, type, tag)
-                        ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
-                        """);
-                statement.executeUpdate("""
-                        CREATE TABLE IF NOT EXISTS recommended (
-                            id INT NOT NULL AUTO_INCREMENT,
-                            type VARCHAR(16) NOT NULL,
-                            rec_id INT NOT NULL,
-                            sponsored INT NOT NULL DEFAULT 0,
-                            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                            PRIMARY KEY (id),
-                            KEY idx_recommended_type (type, sponsored)
-                        ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
-                        """);
-                statement.executeUpdate("""
-                        CREATE TABLE IF NOT EXISTS user_referrals (
-                            id INT NOT NULL AUTO_INCREMENT,
-                            invited_userid INT NOT NULL,
-                            inviter_userid INT NOT NULL,
-                            reward_credits INT NOT NULL DEFAULT 0,
-                            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                            PRIMARY KEY (id),
-                            UNIQUE KEY uk_user_referrals_invited_user (invited_userid),
-                            KEY idx_user_referrals_inviter_user (inviter_userid)
-                        ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
-                        """);
-                SharedSchemaSupport.ensureMessengerSchema(statement);
+                DatabaseSupport.ensureUniqueIndex(context.conn(), "groups_details", "uk_groups_details_alias", "alias");
+                DatabaseSupport.ensureUniqueIndex(context.conn(), "groups_memberships", "uk_groups_memberships_user_group", "userid", "groupid");
+                DatabaseSupport.ensureIndex(context.conn(), "groups_memberships", "idx_groups_memberships_group", false, "groupid");
+                DatabaseSupport.ensureUniqueIndex(context.conn(), "tags", "uk_tags_owner_type_tag", "ownerid", "type", "tag");
+                DatabaseSupport.ensureIndex(context.conn(), "recommended", "idx_recommended_type", false, "type", "sponsored");
+                DatabaseSupport.ensureUniqueIndex(context.conn(), "user_referrals", "uk_user_referrals_invited_user", "invited_userid");
+                DatabaseSupport.ensureIndex(context.conn(), "user_referrals", "idx_user_referrals_inviter_user", false, "inviter_userid");
+                SharedSchemaSupport.ensureMessengerSchema(context);
                 statement.executeUpdate("ALTER TABLE groups_details ADD COLUMN IF NOT EXISTS alias VARCHAR(80) NOT NULL DEFAULT '' AFTER id");
                 statement.executeUpdate("ALTER TABLE groups_details ADD COLUMN IF NOT EXISTS badge VARCHAR(64) NOT NULL DEFAULT '' AFTER name");
                 statement.executeUpdate("ALTER TABLE groups_details ADD COLUMN IF NOT EXISTS description TEXT NOT NULL AFTER badge");
@@ -169,87 +117,21 @@ public final class CmsBootstrap {
     public static void ensureSchema() {
         EntityContext.withContext(context -> {
             try (Statement statement = context.conn().createStatement()) {
-                statement.executeUpdate("""
-                        CREATE TABLE IF NOT EXISTS cms_admin_users (
-                            id INT NOT NULL AUTO_INCREMENT,
-                            email VARCHAR(255) NOT NULL,
-                            display_name VARCHAR(120) NOT NULL,
-                            password_hash TEXT NOT NULL,
-                            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                            last_login_at TIMESTAMP NULL DEFAULT NULL,
-                            PRIMARY KEY (id),
-                            UNIQUE KEY uk_cms_admin_users_email (email)
-                        ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
-                        """);
-                statement.executeUpdate("""
-                        CREATE TABLE IF NOT EXISTS cms_pages (
-                            id INT NOT NULL AUTO_INCREMENT,
-                            slug VARCHAR(160) NOT NULL,
-                            template_name VARCHAR(80) NOT NULL DEFAULT 'page',
-                            draft_title VARCHAR(255) NOT NULL,
-                            draft_summary TEXT NOT NULL,
-                            draft_markdown LONGTEXT NOT NULL,
-                            published_title VARCHAR(255) NOT NULL DEFAULT '',
-                            published_summary TEXT NOT NULL,
-                            published_markdown LONGTEXT NOT NULL,
-                            is_published INT NOT NULL DEFAULT 0,
-                            published_at TIMESTAMP NULL DEFAULT NULL,
-                            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                            PRIMARY KEY (id),
-                            UNIQUE KEY uk_cms_pages_slug (slug)
-                        ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
-                        """);
-                statement.executeUpdate("""
-                        CREATE TABLE IF NOT EXISTS cms_articles (
-                            id INT NOT NULL AUTO_INCREMENT,
-                            slug VARCHAR(160) NOT NULL,
-                            draft_title VARCHAR(255) NOT NULL,
-                            draft_summary TEXT NOT NULL,
-                            draft_markdown LONGTEXT NOT NULL,
-                            published_title VARCHAR(255) NOT NULL DEFAULT '',
-                            published_summary TEXT NOT NULL,
-                            published_markdown LONGTEXT NOT NULL,
-                            is_published INT NOT NULL DEFAULT 0,
-                            published_at TIMESTAMP NULL DEFAULT NULL,
-                            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                            PRIMARY KEY (id),
-                            UNIQUE KEY uk_cms_articles_slug (slug),
-                            KEY idx_cms_articles_published (is_published, published_at)
-                        ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
-                        """);
-                statement.executeUpdate("""
-                        CREATE TABLE IF NOT EXISTS campaigns (
-                            id INT NOT NULL AUTO_INCREMENT,
-                            url VARCHAR(255) NOT NULL,
-                            image VARCHAR(255) NOT NULL DEFAULT '',
-                            name VARCHAR(255) NOT NULL,
-                            `desc` TEXT NOT NULL,
-                            visible TINYINT NOT NULL DEFAULT 1,
-                            sort_order INT NOT NULL DEFAULT 0,
-                            PRIMARY KEY (id),
-                            KEY idx_campaigns_visible (visible, sort_order, id)
-                        ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
-                        """);
-                statement.executeUpdate("""
-                        CREATE TABLE IF NOT EXISTS minimail (
-                            id INT NOT NULL AUTO_INCREMENT,
-                            senderid INT NOT NULL DEFAULT 0,
-                            to_id INT NOT NULL,
-                            subject VARCHAR(100) NOT NULL,
-                            time BIGINT NOT NULL,
-                            message LONGTEXT NOT NULL,
-                            read_mail TINYINT NOT NULL DEFAULT 0,
-                            deleted TINYINT NOT NULL DEFAULT 0,
-                            conversationid INT NOT NULL DEFAULT 0,
-                            PRIMARY KEY (id),
-                            KEY idx_minimail_inbox (to_id, deleted, read_mail, id),
-                            KEY idx_minimail_sent (senderid, id),
-                            KEY idx_minimail_conversation (conversationid, id)
-                        ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
-                        """);
+                context.createTables(
+                        CmsAdminUserEntity.class,
+                        CmsPageEntity.class,
+                        CmsArticleEntity.class,
+                        CampaignEntity.class,
+                        MinimailEntity.class
+                );
+                DatabaseSupport.ensureUniqueIndex(context.conn(), "cms_admin_users", "uk_cms_admin_users_email", "email");
+                DatabaseSupport.ensureUniqueIndex(context.conn(), "cms_pages", "uk_cms_pages_slug", "slug");
+                DatabaseSupport.ensureUniqueIndex(context.conn(), "cms_articles", "uk_cms_articles_slug", "slug");
+                DatabaseSupport.ensureIndex(context.conn(), "cms_articles", "idx_cms_articles_published", false, "is_published", "published_at");
+                DatabaseSupport.ensureIndex(context.conn(), "campaigns", "idx_campaigns_visible", false, "visible", "sort_order", "id");
+                DatabaseSupport.ensureIndex(context.conn(), "minimail", "idx_minimail_inbox", false, "to_id", "deleted", "read_mail", "id");
+                DatabaseSupport.ensureIndex(context.conn(), "minimail", "idx_minimail_sent", false, "senderid", "id");
+                DatabaseSupport.ensureIndex(context.conn(), "minimail", "idx_minimail_conversation", false, "conversationid", "id");
                 return null;
             } catch (Exception e) {
                 throw new RuntimeException("Failed to ensure cms schema", e);

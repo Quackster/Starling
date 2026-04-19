@@ -92,6 +92,11 @@ class DatabaseIntegrationTest {
         assertTrue(tableExists("messenger_requests"));
         assertTrue(tableExists("messenger_messages"));
         assertTrue(tableExists("messenger_categories"));
+        assertTrue(indexExists("recommended", "idx_recommended_type"));
+        assertTrue(indexExists("room_favorites", "uk_room_favorites_user_type_room"));
+        assertTrue(indexExists("room_rights", "uk_room_rights_room_user"));
+        assertTrue(indexExists("messenger_friends", "uk_messenger_friends_from_to"));
+        assertTrue(indexExists("messenger_messages", "idx_messenger_messages_receiver_unread"));
 
         UserEntity admin = UserDao.findByUsername("admin");
         assertNotNull(admin);
@@ -319,6 +324,26 @@ class DatabaseIntegrationTest {
         try (Connection connection = DriverManager.getConnection(config.jdbcUrl(), config.dbUsername(), config.dbPassword())) {
             ResultSet tables = connection.getMetaData().getTables(config.dbName(), null, tableName, null);
             return tables.next();
+        }
+    }
+
+    /**
+     * Indexes exists.
+     * @param tableName the table name value
+     * @param indexName the index name value
+     * @return the result of this operation
+     * @throws Exception if the operation fails
+     */
+    private boolean indexExists(String tableName, String indexName) throws Exception {
+        try (Connection connection = DriverManager.getConnection(config.jdbcUrl(), config.dbUsername(), config.dbPassword());
+             ResultSet indexes = connection.getMetaData().getIndexInfo(connection.getCatalog(), null, tableName, false, false)) {
+            while (indexes.next()) {
+                String existingIndexName = indexes.getString("INDEX_NAME");
+                if (existingIndexName != null && existingIndexName.equalsIgnoreCase(indexName)) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 

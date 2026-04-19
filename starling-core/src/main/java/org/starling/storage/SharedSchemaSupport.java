@@ -1,6 +1,10 @@
 package org.starling.storage;
 
-import java.sql.Statement;
+import org.oldskooler.entity4j.DbContext;
+import org.starling.storage.entity.MessengerCategoryEntity;
+import org.starling.storage.entity.MessengerFriendEntity;
+import org.starling.storage.entity.MessengerMessageEntity;
+import org.starling.storage.entity.MessengerRequestEntity;
 
 public final class SharedSchemaSupport {
 
@@ -11,59 +15,27 @@ public final class SharedSchemaSupport {
 
     /**
      * Ensures the shared messenger tables exist.
-     * @param statement the statement value
+     * @param context the context value
      */
-    public static void ensureMessengerSchema(Statement statement) {
-        try {
-            statement.executeUpdate("""
-                    CREATE TABLE IF NOT EXISTS messenger_friends (
-                        id INT NOT NULL AUTO_INCREMENT,
-                        from_id INT NOT NULL,
-                        to_id INT NOT NULL,
-                        category_id INT NOT NULL DEFAULT 0,
-                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                        PRIMARY KEY (id),
-                        UNIQUE KEY uk_messenger_friends_from_to (from_id, to_id),
-                        KEY idx_messenger_friends_to (to_id),
-                        KEY idx_messenger_friends_from (from_id)
-                    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
-                    """);
-            statement.executeUpdate("""
-                    CREATE TABLE IF NOT EXISTS messenger_requests (
-                        id INT NOT NULL AUTO_INCREMENT,
-                        to_id INT NOT NULL,
-                        from_id INT NOT NULL,
-                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                        PRIMARY KEY (id),
-                        UNIQUE KEY uk_messenger_requests_to_from (to_id, from_id),
-                        KEY idx_messenger_requests_to (to_id),
-                        KEY idx_messenger_requests_from (from_id)
-                    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
-                    """);
-            statement.executeUpdate("""
-                    CREATE TABLE IF NOT EXISTS messenger_messages (
-                        id INT NOT NULL AUTO_INCREMENT,
-                        receiver_id INT NOT NULL,
-                        sender_id INT NOT NULL,
-                        unread INT NOT NULL DEFAULT 1,
-                        body TEXT NOT NULL,
-                        date BIGINT NOT NULL DEFAULT 0,
-                        PRIMARY KEY (id),
-                        KEY idx_messenger_messages_receiver_unread (receiver_id, unread),
-                        KEY idx_messenger_messages_sender (sender_id)
-                    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
-                    """);
-            statement.executeUpdate("""
-                    CREATE TABLE IF NOT EXISTS messenger_categories (
-                        id INT NOT NULL AUTO_INCREMENT,
-                        user_id INT NOT NULL,
-                        name VARCHAR(64) NOT NULL,
-                        PRIMARY KEY (id),
-                        KEY idx_messenger_categories_user (user_id)
-                    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
-                    """);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to ensure shared messenger schema", e);
-        }
+    public static void ensureMessengerSchema(DbContext context) {
+        context.createTables(
+                MessengerFriendEntity.class,
+                MessengerRequestEntity.class,
+                MessengerMessageEntity.class,
+                MessengerCategoryEntity.class
+        );
+
+        DatabaseSupport.ensureUniqueIndex(context.conn(), "messenger_friends", "uk_messenger_friends_from_to", "from_id", "to_id");
+        DatabaseSupport.ensureIndex(context.conn(), "messenger_friends", "idx_messenger_friends_to", false, "to_id");
+        DatabaseSupport.ensureIndex(context.conn(), "messenger_friends", "idx_messenger_friends_from", false, "from_id");
+
+        DatabaseSupport.ensureUniqueIndex(context.conn(), "messenger_requests", "uk_messenger_requests_to_from", "to_id", "from_id");
+        DatabaseSupport.ensureIndex(context.conn(), "messenger_requests", "idx_messenger_requests_to", false, "to_id");
+        DatabaseSupport.ensureIndex(context.conn(), "messenger_requests", "idx_messenger_requests_from", false, "from_id");
+
+        DatabaseSupport.ensureIndex(context.conn(), "messenger_messages", "idx_messenger_messages_receiver_unread", false, "receiver_id", "unread");
+        DatabaseSupport.ensureIndex(context.conn(), "messenger_messages", "idx_messenger_messages_sender", false, "sender_id");
+
+        DatabaseSupport.ensureIndex(context.conn(), "messenger_categories", "idx_messenger_categories_user", false, "user_id");
     }
 }
