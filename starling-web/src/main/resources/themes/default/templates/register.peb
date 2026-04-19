@@ -108,17 +108,17 @@ body { behavior: url({{ site.webGalleryPath }}/js/csshover.htc); }
 			<div id="process-content">
 	        <div id="column1" class="column">
 			<div class="habblet-container ">
-	    <form method="post" action="{{ site.sitePath }}/register" id="registerform" autocomplete="off">
-			<input type="hidden" name="bean.figure" id="register-figure" value="{{ registerFigure }}" />
-			<input type="hidden" name="bean.gender" id="register-gender" value="{{ registerGender }}" />
-			<input type="hidden" name="bean.editorState" id="register-editor-state" value="" />
-			{% if registerReferral != "" %}<input type="hidden" name="referral" id="register-referrer" value="{{ registerReferral }}" />{% endif %}
 			{% if registerInviterName != "" %}
 			<div id="inviter-info">
                 <p>Your friend {{ registerInviterName }} is waiting for you!</p>
                 <img alt="{{ registerInviterName }}" title="{{ registerInviterName }}" src="{{ site.sitePath }}/habbo-imaging/avatarimage?figure={{ registerInviterFigure }}&size=b&direction=4&head_direction=4&crr=0&gesture=sml&frame=1" />
             </div>
 			{% endif %}
+	    <form method="post" action="{{ site.sitePath }}/register" id="registerform" autocomplete="off">
+			<input type="hidden" name="bean.figure" id="register-figure" value="{{ registerFigure }}" />
+			<input type="hidden" name="bean.gender" id="register-gender" value="{{ registerGender }}" />
+			<input type="hidden" name="bean.editorState" id="register-editor-state" value="" />
+			{% if registerReferral != "" %}<input type="hidden" name="referral" id="register-referrer" value="{{ registerReferral }}" />{% endif %}
 			{% if not registerCaptchaInvalid %}
 	        <div id="register-column-left">
                 <div id="register-section-2">
@@ -256,9 +256,9 @@ body { behavior: url({{ site.webGalleryPath }}/js/csshover.htc); }
                             </fieldset>
                         </div>
                     </div>
-                    <div id="form-validation-error-box"{% if registerFormError == "" %} style="display:none"{% endif %}>
+                    <div id="form-validation-error-box" style="display:none">
                         <div class="register-error">
-                            <div class="rounded rounded-red">{{ registerFormError }}</div>
+                            <div class="rounded rounded-red">Sorry, registration failed. Please check the information you gave in the red boxes.</div>
                         </div>
                     </div>
                 </div>
@@ -307,7 +307,7 @@ body { behavior: url({{ site.webGalleryPath }}/js/csshover.htc); }
                                 <div class="register-label"><img id="captcha" src="{{ site.sitePath }}/captcha.jpg?t={{ randomNum }}&register=1" alt="" width="200" height="60" /></div>
                                 <div class="register-label" id="captcha-reload">
                                     <img src="{{ site.webGalleryPath }}/v2/images/shared_icons/reload_icon.gif" width="15" height="15"/>
-                                    <a href="#" onclick="document.getElementById('captcha').src='{{ site.sitePath }}/captcha.jpg?t=' + new Date().getTime() + '&register=1'; return false;">I can't read the code! Please give me another one.</a>
+                                    <a href="#">I can't read the code! Please give me another one.</a>
                                 </div>
 
                                 <div id="captcha-error-box">
@@ -317,13 +317,18 @@ body { behavior: url({{ site.webGalleryPath }}/js/csshover.htc); }
                                 </div>
                                 <div class="register-label"><label for="register-captcha">Type in the security code shown in the image above</label></div>
                                 <div id="captcha_response"><input type="text" name="bean.captchaResponse" id="recaptcha_response_field" class="register-text error" value="" size="25" /></div>
+                                <script type="text/javascript">
+                                document.observe("dom:loaded", function() {
+                                    Event.observe($("captcha-reload"), "click", function(e) {Utils.reloadCaptcha()});
+                                });
+                                </script>
                             </fieldset>
 
                             <div id="terms-error-box"></div>
                             <fieldset id="register-fieldset-terms">
                                 <div class="rounded rounded-darkgray" id="register-terms">
                                     <div id="register-terms-content">
-                                        <p><a href="{{ site.sitePath }}/papers/disclaimer" target="_blank" id="register-terms-link">Terms of Service</a></p>
+                                        <p><a href="{{ site.sitePath }}/papers/termsAndConditions" target="_blank" id="register-terms-link">Terms of Service</a></p>
                                         <p class="last">
                                             <input type="checkbox" name="bean.termsOfServiceSelection" id="register-terms-check" value="true" checked="checked" />
                                             <label for="register-terms-check">By clicking on continue, I confirm that I have read and accept the Terms of Use and Privacy Policy.</label>
@@ -335,7 +340,7 @@ body { behavior: url({{ site.webGalleryPath }}/js/csshover.htc); }
                     </div>
                     <div id="form-validation-error-box" style="display:none">
                         <div class="register-error">
-                            <div class="rounded rounded-red">There was a problem with your registration details.</div>
+                            <div class="rounded rounded-red">Sorry, registration failed. Please check the information you gave in the red boxes.</div>
                         </div>
                     </div>
                 </div>

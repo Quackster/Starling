@@ -188,6 +188,84 @@ class StarlingWebIntegrationTest {
     }
 
     @Test
+    void registerPageMatchesPhpRetroLayoutAndAjaxContracts() throws Exception {
+        HttpResponse<String> registerResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/register?referral=admin")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> termsResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/papers/termsAndConditions")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> takenNameResponse = postForm(
+                "/habblet/ajax/namecheck",
+                Map.of("name", "admin"),
+                Map.of()
+        );
+        HttpResponse<String> freeNameResponse = postForm(
+                "/habblet/ajax/namecheck",
+                Map.of("name", "RegisterTest" + UUID.randomUUID().toString().substring(0, 6)),
+                Map.of()
+        );
+
+        assertEquals(200, registerResponse.statusCode());
+        assertEquals(200, termsResponse.statusCode());
+        assertEquals(200, takenNameResponse.statusCode());
+        assertEquals(200, freeNameResponse.statusCode());
+        assertTrue(registerResponse.body().contains("id=\"inviter-info\""));
+        assertTrue(registerResponse.body().indexOf("id=\"inviter-info\"") < registerResponse.body().indexOf("<form method=\"post\" action=\"/register\" id=\"registerform\""));
+        assertTrue(registerResponse.body().indexOf("id=\"register-column-left\"") < registerResponse.body().indexOf("id=\"register-column-right\""));
+        assertTrue(registerResponse.body().contains("id=\"name-error-box\""));
+        assertTrue(registerResponse.body().contains("id=\"terms-error-box\""));
+        assertTrue(registerResponse.body().contains("/web-gallery/static/js/registration.js"));
+        assertTrue(registerResponse.body().contains("Sorry, registration failed. Please check the information you gave in the red boxes."));
+        assertTrue(termsResponse.body().contains("Terms of Service for <b>Habbo</b>"));
+        assertEquals(
+                "{\"registration_name\":\"Sorry, but this username is taken. Please choose another one.\"}",
+                takenNameResponse.headers().firstValue("X-JSON").orElse("")
+        );
+        assertEquals("{}", freeNameResponse.headers().firstValue("X-JSON").orElse(""));
+    }
+
+    @Test
+    void registerWrongCaptchaRendersPhpRetroSummaryBranchInPlace() throws Exception {
+        HttpResponse<byte[]> captchaResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/captcha.jpg")).GET().build(),
+                HttpResponse.BodyHandlers.ofByteArray()
+        );
+        assertEquals(200, captchaResponse.statusCode());
+
+        String username = "captcha" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+        String email = username + "@example.com";
+        HttpResponse<String> registerResponse = postForm(
+                "/register",
+                Map.ofEntries(
+                        Map.entry("bean.avatarName", username),
+                        Map.entry("password", "Password1"),
+                        Map.entry("retypedPassword", "Password1"),
+                        Map.entry("bean.day", "1"),
+                        Map.entry("bean.month", "1"),
+                        Map.entry("bean.year", "2000"),
+                        Map.entry("bean.email", email),
+                        Map.entry("bean.retypedEmail", email),
+                        Map.entry("bean.captchaResponse", "wrong"),
+                        Map.entry("bean.termsOfServiceSelection", "true")
+                ),
+                Map.of()
+        );
+
+        assertEquals(200, registerResponse.statusCode());
+        assertTrue(registerResponse.uri().toString().endsWith("/register"));
+        assertTrue(registerResponse.body().contains("id=\"captcha-error-box\""));
+        assertTrue(registerResponse.body().contains("The code that you filled in isn't right, please try again."));
+        assertTrue(registerResponse.body().contains("<div class=\"register-input\">" + username + "</div>"));
+        assertTrue(registerResponse.body().contains("<div class=\"register-input\">1/1/2000</div>"));
+        assertTrue(registerResponse.body().contains("<div class=\"register-input\">" + email + "</div>"));
+        assertTrue(registerResponse.body().contains("/papers/termsAndConditions"));
+        assertTrue(registerResponse.body().contains("id=\"register-terms-check\" value=\"true\" checked=\"checked\""));
+    }
+
+    @Test
     void communityCreditsAndTagsPagesRenderPhpRetroWidgets() throws Exception {
         HttpResponse<String> communityResponse = client.send(
                 HttpRequest.newBuilder(baseUri.resolve("/community")).GET().build(),

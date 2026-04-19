@@ -115,6 +115,7 @@ public final class PublicRoutes {
         app.get("/home/{username}", context -> context.redirect("/me"));
         app.get("/games", context -> context.redirect("/news"));
         app.get("/papers/disclaimer", policyController::disclaimer);
+        app.get("/papers/termsAndConditions", policyController::disclaimer);
         app.get("/papers/privacy", policyController::privacy);
     }
 }

@@ -15,6 +15,7 @@ import java.util.stream.IntStream;
 public final class RegistrationController {
 
     private static final String DEFAULT_FIGURE = "hr-100-61.hd-180-2.ch-210-92.lg-270-82.sh-290-64";
+    private static final String EMAIL_PATTERN = "(?i)^[a-z0-9_\\.-]+@([a-z0-9]+([\\-]+[a-z0-9]+)*\\.)+[a-z]{2,7}$";
 
     private final TemplateRenderer templateRenderer;
     private final UserSessionService userSessionService;
@@ -46,50 +47,14 @@ public final class RegistrationController {
             return;
         }
 
-        String referral = resolveReferral(
-                RequestValues.valueOrEmpty(context.queryParam("referral")),
-                RequestValues.valueOrEmpty(context.sessionAttribute("registerReferral"))
+        renderRegisterPage(
+                context,
+                RegistrationViewState.fromSession(context),
+                errorsFromLegacyCode(
+                        RequestValues.valueOrEmpty(context.queryParam("error")),
+                        Boolean.TRUE.equals(context.sessionAttribute("registerCaptchaInvalid"))
+                )
         );
-        UserEntity inviter = referral.isBlank() ? null : UserDao.findByUsername(referral);
-        if (inviter != null) {
-            context.sessionAttribute("registerReferral", inviter.getUsername());
-        }
-
-        boolean captchaInvalid = Boolean.TRUE.equals(context.sessionAttribute("registerCaptchaInvalid"));
-        String errorCode = RequestValues.valueOrEmpty(context.queryParam("error"));
-
-        Map<String, Object> model = publicPageModelFactory.create(context, "community");
-        model.put("referral", referral);
-        model.put("registerReferral", inviter != null ? inviter.getUsername() : "");
-        model.put("registerInviterName", inviter != null ? inviter.getUsername() : "");
-        model.put("registerInviterFigure", inviter != null ? inviter.getFigure() : "");
-        model.put("randomNum", System.currentTimeMillis() % 10000);
-        model.put("randomFemaleFigure1", "hr-100-42.hd-180-1.ch-210-66.lg-270-82.sh-290-91");
-        model.put("randomFemaleFigure2", "hr-100-61.hd-600-1.ch-255-62.lg-280-82.sh-300-64");
-        model.put("randomFemaleFigure3", "hr-515-45.hd-600-2.ch-255-92.lg-720-82.sh-730-64");
-        model.put("randomMaleFigure1", DEFAULT_FIGURE);
-        model.put("randomMaleFigure2", "hr-165-42.hd-190-1.ch-255-66.lg-280-82.sh-305-64");
-        model.put("randomMaleFigure3", "hr-828-61.hd-180-1.ch-210-66.lg-270-82.sh-290-91");
-        model.put("registerCaptchaInvalid", captchaInvalid);
-        model.put("registerUsername", RequestValues.valueOrEmpty(context.sessionAttribute("registerUsername")));
-        model.put("registerShowPassword", RequestValues.valueOrEmpty(context.sessionAttribute("registerShowPassword")));
-        model.put("registerFigure", RequestValues.valueOrDefault(context.sessionAttribute("registerFigure"), DEFAULT_FIGURE));
-        model.put("registerGender", RequestValues.valueOrDefault(context.sessionAttribute("registerGender"), "M"));
-        model.put("registerEmail", RequestValues.valueOrEmpty(context.sessionAttribute("registerEmail")));
-        model.put("registerDay", RequestValues.valueOrEmpty(context.sessionAttribute("registerDay")));
-        model.put("registerMonth", RequestValues.valueOrEmpty(context.sessionAttribute("registerMonth")));
-        model.put("registerYear", RequestValues.valueOrEmpty(context.sessionAttribute("registerYear")));
-        model.put("registerDayInt", RequestValues.parseInt(RequestValues.valueOrEmpty(context.sessionAttribute("registerDay")), 0));
-        model.put("registerMonthInt", RequestValues.parseInt(RequestValues.valueOrEmpty(context.sessionAttribute("registerMonth")), 0));
-        model.put("registerYearInt", RequestValues.parseInt(RequestValues.valueOrEmpty(context.sessionAttribute("registerYear")), 0));
-        model.put("registerNameError", nameError(errorCode));
-        model.put("registerPasswordError", passwordError(errorCode));
-        model.put("registerBirthdayError", birthdayError(errorCode));
-        model.put("registerEmailError", emailError(errorCode));
-        model.put("registerTermsError", termsError(errorCode));
-        model.put("registerFormError", formError(errorCode));
-        model.put("registerYearOptions", yearOptions());
-        context.html(templateRenderer.render("register", model));
     }
 
     /**
@@ -105,65 +70,10 @@ public final class RegistrationController {
         RegistrationRequest request = RegistrationRequest.from(context);
         persistRegisterState(context, request);
 
-        if (request.hasBlankRequiredFields()) {
-            context.redirect("/register?error=blank_fields");
-            return;
-        }
-
-        if (!isValidUsername(request.username())) {
-            context.redirect("/register?error=bad_username_invalid");
-            return;
-        }
-
-        if (request.username().length() > 24) {
-            context.redirect("/register?error=bad_username_length");
-            return;
-        }
-
-        if (request.username().regionMatches(true, 0, "MOD-", 0, 4)) {
-            context.redirect("/register?error=bad_username_reserved");
-            return;
-        }
-
-        if (UserDao.findByUsername(request.username()) != null) {
-            context.redirect("/register?error=bad_username_taken");
-            return;
-        }
-
-        if (!request.password().equals(request.retypedPassword()) || request.password().length() < 6) {
-            context.redirect("/register?error=bad_password");
-            return;
-        }
-
-        if (!isValidBirthDate(request.day(), request.month(), request.year())) {
-            context.redirect("/register?error=bad_birthday");
-            return;
-        }
-
-        if (!request.email().matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")) {
-            context.redirect("/register?error=bad_email_invalid");
-            return;
-        }
-
-        if (!request.email().equalsIgnoreCase(request.retypedEmail())) {
-            context.redirect("/register?error=bad_email_mismatch");
-            return;
-        }
-
-        if (UserDao.findByEmail(request.email()) != null) {
-            context.redirect("/register?error=bad_email_taken");
-            return;
-        }
-
-        if (!request.termsAccepted()) {
-            context.redirect("/register?error=bad_terms");
-            return;
-        }
-
-        String expectedCaptcha = RequestValues.valueOrEmpty(context.sessionAttribute("registerCaptchaText"));
-        if (expectedCaptcha.isBlank() || !request.captchaResponse().equalsIgnoreCase(expectedCaptcha)) {
-            context.sessionAttribute("registerCaptchaInvalid", true);
-            context.redirect("/register?error=bad_captcha");
+        RegistrationErrors errors = validateRequest(context, request);
+        context.sessionAttribute("registerCaptchaInvalid", errors.captchaInvalid());
+        if (errors.hasAny()) {
+            renderRegisterPage(context, RegistrationViewState.fromRequest(request), errors);
             return;
         }
 
@@ -194,11 +104,13 @@ public final class RegistrationController {
         String error = null;
 
         if (UserDao.findByUsername(name) != null) {
-            error = "This name is already in use.";
+            error = "Sorry, but this username is taken. Please choose another one.";
+        } else if (name.isBlank()) {
+            error = "Please enter a username.";
         } else if (!isValidUsername(name)) {
-            error = "Your name can only contain letters, numbers and -=?!@:.";
-        } else if (name.length() > 24 || name.isBlank()) {
-            error = "Your name must be between 1 and 24 characters.";
+            error = "Sorry, but this username contains invalid characters.";
+        } else if (name.length() > 24) {
+            error = "Sorry, but this username is too long.";
         } else if (name.regionMatches(true, 0, "MOD-", 0, 4)) {
             error = "This name is not allowed.";
         }
@@ -261,6 +173,93 @@ public final class RegistrationController {
         return RequestValues.valueOrEmpty(sessionReferral).trim();
     }
 
+    private void renderRegisterPage(Context context, RegistrationViewState viewState, RegistrationErrors errors) {
+        String referral = resolveReferral(
+                RequestValues.valueOrEmpty(context.queryParam("referral")),
+                viewState.referral()
+        );
+        UserEntity inviter = referral.isBlank() ? null : UserDao.findByUsername(referral);
+        if (inviter != null) {
+            context.sessionAttribute("registerReferral", inviter.getUsername());
+        }
+
+        Map<String, Object> model = publicPageModelFactory.create(context, "community");
+        model.put("registerReferral", inviter != null ? inviter.getUsername() : "");
+        model.put("registerInviterName", inviter != null ? inviter.getUsername() : "");
+        model.put("registerInviterFigure", inviter != null ? inviter.getFigure() : "");
+        model.put("randomNum", System.currentTimeMillis() % 10000);
+        model.put("randomFemaleFigure1", "hr-100-42.hd-180-1.ch-210-66.lg-270-82.sh-290-91");
+        model.put("randomFemaleFigure2", "hr-100-61.hd-600-1.ch-255-62.lg-280-82.sh-300-64");
+        model.put("randomFemaleFigure3", "hr-515-45.hd-600-2.ch-255-92.lg-720-82.sh-730-64");
+        model.put("randomMaleFigure1", DEFAULT_FIGURE);
+        model.put("randomMaleFigure2", "hr-165-42.hd-190-1.ch-255-66.lg-280-82.sh-305-64");
+        model.put("randomMaleFigure3", "hr-828-61.hd-180-1.ch-210-66.lg-270-82.sh-290-91");
+        model.put("registerCaptchaInvalid", errors.captchaInvalid());
+        model.put("registerUsername", viewState.username());
+        model.put("registerFigure", viewState.figure());
+        model.put("registerGender", viewState.gender());
+        model.put("registerEmail", viewState.email());
+        model.put("registerDay", viewState.day());
+        model.put("registerMonth", viewState.month());
+        model.put("registerYear", viewState.year());
+        model.put("registerDayInt", RequestValues.parseInt(viewState.day(), 0));
+        model.put("registerMonthInt", RequestValues.parseInt(viewState.month(), 0));
+        model.put("registerYearInt", RequestValues.parseInt(viewState.year(), 0));
+        model.put("registerNameError", errors.name());
+        model.put("registerPasswordError", errors.password());
+        model.put("registerBirthdayError", errors.birthday());
+        model.put("registerEmailError", errors.email());
+        model.put("registerTermsError", errors.terms());
+        model.put("registerYearOptions", yearOptions());
+        context.html(templateRenderer.render("register", model));
+    }
+
+    private RegistrationErrors validateRequest(Context context, RegistrationRequest request) {
+        String nameError = "";
+        String passwordError = "";
+        String birthdayError = "";
+        String emailError = "";
+        String termsError = "";
+
+        if (UserDao.findByUsername(request.username()) != null) {
+            nameError = "This username is in use. Please choose another name.";
+        } else if (!request.username().equals(request.username().replaceAll("[^A-Za-z0-9\\-=?!@:.]", ""))) {
+            nameError = "Your username is invalid or contains invalid characters.";
+        } else if (request.username().length() > 24) {
+            nameError = "The name you have chosen is too long.";
+        } else if (request.username().isBlank()) {
+            nameError = "Please enter a username.";
+        }
+
+        if (request.username().regionMatches(true, 0, "MOD-", 0, 4)) {
+            nameError = "This name is not allowed.";
+        }
+
+        if (!request.password().equals(request.retypedPassword())) {
+            passwordError = "The passwords do not match. Please try again.";
+        } else if (request.password().length() < 6) {
+            passwordError = "Your password is too short.";
+        }
+
+        if (!isValidBirthDate(request.day(), request.month(), request.year())) {
+            birthdayError = "Please supply a valid date of birth.";
+        }
+
+        if (request.email().length() < 6 || !request.email().matches(EMAIL_PATTERN)) {
+            emailError = "Please supply a valid e-mail address.";
+        } else if (!request.email().equals(request.retypedEmail())) {
+            emailError = "The e-mail addresses don't match.";
+        }
+
+        if (!request.termsAccepted()) {
+            termsError = "Please accept the terms of service";
+        }
+
+        String expectedCaptcha = RequestValues.valueOrEmpty(context.sessionAttribute("registerCaptchaText"));
+        boolean captchaInvalid = expectedCaptcha.isBlank() || !request.captchaResponse().equalsIgnoreCase(expectedCaptcha);
+        return new RegistrationErrors(nameError, passwordError, birthdayError, emailError, termsError, captchaInvalid);
+    }
+
     private boolean isValidUsername(String username) {
         return username.matches("[A-Za-z0-9\\-=?!@:.]+");
     }
@@ -278,52 +277,104 @@ public final class RegistrationController {
                 .toList();
     }
 
-    private String nameError(String errorCode) {
+    private RegistrationErrors errorsFromLegacyCode(String errorCode, boolean captchaInvalid) {
         return switch (errorCode) {
-            case "bad_username_taken" -> "This name is already in use.";
-            case "bad_username_invalid" -> "Your name can only contain letters, numbers and -=?!@:.";
-            case "bad_username_length" -> "Your name must be between 1 and 24 characters.";
-            case "bad_username_reserved" -> "This name is not allowed.";
-            default -> "";
+            case "bad_username_taken" -> new RegistrationErrors(
+                    "This username is in use. Please choose another name.", "", "", "", "", captchaInvalid
+            );
+            case "bad_username_invalid" -> new RegistrationErrors(
+                    "Your username is invalid or contains invalid characters.", "", "", "", "", captchaInvalid
+            );
+            case "bad_username_length" -> new RegistrationErrors(
+                    "The name you have chosen is too long.", "", "", "", "", captchaInvalid
+            );
+            case "bad_username_reserved" -> new RegistrationErrors(
+                    "This name is not allowed.", "", "", "", "", captchaInvalid
+            );
+            case "bad_password", "bad_password_mismatch" -> new RegistrationErrors(
+                    "", "The passwords do not match. Please try again.", "", "", "", captchaInvalid
+            );
+            case "bad_password_short" -> new RegistrationErrors(
+                    "", "Your password is too short.", "", "", "", captchaInvalid
+            );
+            case "bad_birthday" -> new RegistrationErrors(
+                    "", "", "Please supply a valid date of birth.", "", "", captchaInvalid
+            );
+            case "bad_email_invalid" -> new RegistrationErrors(
+                    "", "", "", "Please supply a valid e-mail address.", "", captchaInvalid
+            );
+            case "bad_email_mismatch" -> new RegistrationErrors(
+                    "", "", "", "The e-mail addresses don't match.", "", captchaInvalid
+            );
+            case "bad_terms" -> new RegistrationErrors(
+                    "", "", "", "", "Please accept the terms of service", captchaInvalid
+            );
+            default -> RegistrationErrors.none(captchaInvalid);
         };
-    }
-
-    private String passwordError(String errorCode) {
-        return "bad_password".equals(errorCode)
-                ? "Your passwords do not match, or your password is too short."
-                : "";
-    }
-
-    private String birthdayError(String errorCode) {
-        return "bad_birthday".equals(errorCode)
-                ? "Please enter a valid date of birth."
-                : "";
-    }
-
-    private String emailError(String errorCode) {
-        return switch (errorCode) {
-            case "bad_email_invalid" -> "Please enter a valid email address.";
-            case "bad_email_mismatch" -> "Emails don't match.";
-            case "bad_email_taken" -> "The email entered is already used by someone else.";
-            default -> "";
-        };
-    }
-
-    private String termsError(String errorCode) {
-        return "bad_terms".equals(errorCode)
-                ? "Please read and accept the Terms of Use and Privacy Policy."
-                : "";
-    }
-
-    private String formError(String errorCode) {
-        return "blank_fields".equals(errorCode)
-                ? "Please fill in all required fields before continuing."
-                : "";
     }
 
     private String escapeJson(String value) {
         return value
                 .replace("\\", "\\\\")
                 .replace("\"", "\\\"");
+    }
+
+    private record RegistrationViewState(
+            String username,
+            String figure,
+            String gender,
+            String email,
+            String day,
+            String month,
+            String year,
+            String referral
+    ) {
+        private static RegistrationViewState fromSession(Context context) {
+            return new RegistrationViewState(
+                    RequestValues.valueOrEmpty(context.sessionAttribute("registerUsername")),
+                    RequestValues.valueOrDefault(context.sessionAttribute("registerFigure"), DEFAULT_FIGURE),
+                    RequestValues.valueOrDefault(context.sessionAttribute("registerGender"), "M"),
+                    RequestValues.valueOrEmpty(context.sessionAttribute("registerEmail")),
+                    RequestValues.valueOrEmpty(context.sessionAttribute("registerDay")),
+                    RequestValues.valueOrEmpty(context.sessionAttribute("registerMonth")),
+                    RequestValues.valueOrEmpty(context.sessionAttribute("registerYear")),
+                    RequestValues.valueOrEmpty(context.sessionAttribute("registerReferral"))
+            );
+        }
+
+        private static RegistrationViewState fromRequest(RegistrationRequest request) {
+            return new RegistrationViewState(
+                    request.username(),
+                    request.figure(),
+                    request.gender(),
+                    request.email(),
+                    request.day(),
+                    request.month(),
+                    request.year(),
+                    request.referral()
+            );
+        }
+    }
+
+    private record RegistrationErrors(
+            String name,
+            String password,
+            String birthday,
+            String email,
+            String terms,
+            boolean captchaInvalid
+    ) {
+        private static RegistrationErrors none(boolean captchaInvalid) {
+            return new RegistrationErrors("", "", "", "", "", captchaInvalid);
+        }
+
+        private boolean hasAny() {
+            return captchaInvalid
+                    || !name.isBlank()
+                    || !password.isBlank()
+                    || !birthday.isBlank()
+                    || !email.isBlank()
+                    || !terms.isBlank();
+        }
     }
 }
