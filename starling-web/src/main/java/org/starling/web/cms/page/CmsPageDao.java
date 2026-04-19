@@ -155,18 +155,6 @@ public final class CmsPageDao {
         });
     }
 
-    /**
-     * Seeds a default page when the table is empty.
-     * @param draft the draft value
-     */
-    public static void seedDefault(CmsPageDraft draft) {
-        if (count() > 0) {
-            return;
-        }
-        int id = saveDraft(null, draft);
-        publish(id);
-    }
-
     private static CmsPage map(CmsPageEntity page) {
         return new CmsPage(
                 page.getId(),

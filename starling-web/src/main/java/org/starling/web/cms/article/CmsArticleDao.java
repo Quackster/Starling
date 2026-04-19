@@ -169,18 +169,6 @@ public final class CmsArticleDao {
         });
     }
 
-    /**
-     * Seeds a default article when the table is empty.
-     * @param draft the draft value
-     */
-    public static void seedDefault(CmsArticleDraft draft) {
-        if (count() > 0) {
-            return;
-        }
-        int id = saveDraft(null, draft);
-        publish(id);
-    }
-
     private static CmsArticle map(CmsArticleEntity article) {
         return new CmsArticle(
                 article.getId(),
