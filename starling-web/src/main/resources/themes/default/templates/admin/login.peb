@@ -1,10 +1,10 @@
 <section class="admin-card admin-card--narrow">
     <h1>Admin Login</h1>
-    <p>Use your CMS admin account to manage public content.</p>
+    <p>Sign in with a hotel user that has the admin role.</p>
     <form method="post" action="/admin/login" class="stack-form">
         <label>
-            <span>Email</span>
-            <input type="email" name="email" value="{{ email }}" required>
+            <span>Username or Email</span>
+            <input type="text" name="email" value="{{ email }}" required>
         </label>
         <label>
             <span>Password</span>

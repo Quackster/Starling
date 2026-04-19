@@ -103,6 +103,7 @@ public final class CmsBootstrap {
                 DatabaseSupport.ensureIndex(context.conn(), "recommended", "idx_recommended_type", false, "type", "sponsored");
                 DatabaseSupport.ensureUniqueIndex(context.conn(), "user_referrals", "uk_user_referrals_invited_user", "invited_userid");
                 DatabaseSupport.ensureIndex(context.conn(), "user_referrals", "idx_user_referrals_inviter_user", false, "inviter_userid");
+                DatabaseSupport.ensureColumn(context.conn(), "users", column("cms_role", "VARCHAR(32)").notNull().defaultValue("user"), "rank");
                 SharedSchemaSupport.ensureMessengerSchema(context);
                 normalizeSharedData(context);
                 return null;
@@ -165,6 +166,14 @@ public final class CmsBootstrap {
         context.from(UserEntity.class)
                 .filter(filter -> filter.isNull(UserEntity::getCredits))
                 .update(setter -> setter.set(UserEntity::getCredits, 0));
+        context.from(UserEntity.class)
+                .filter(filter -> filter
+                        .open()
+                        .isNull(UserEntity::getCmsRole)
+                        .or()
+                        .equals(UserEntity::getCmsRole, "")
+                        .close())
+                .update(setter -> setter.set(UserEntity::getCmsRole, "user"));
     }
 
     /**
@@ -201,6 +210,14 @@ public final class CmsBootstrap {
      */
     public static void ensureBootstrapHotelUser() {
         if (UserDao.count() > 0) {
+            UserEntity existingAdmin = UserDao.findByUsername("admin");
+            if (existingAdmin != null && !existingAdmin.isAdmin()) {
+                existingAdmin.setCmsRole("admin");
+                if (existingAdmin.getRank() < 7) {
+                    existingAdmin.setRank(7);
+                }
+                UserDao.save(existingAdmin);
+            }
             return;
         }
 

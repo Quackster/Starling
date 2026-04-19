@@ -136,6 +136,10 @@ class StarlingWebIntegrationTest {
         assertTrue(indexExists("cms_pages", "uk_cms_pages_slug"));
         assertTrue(indexExists("cms_articles", "idx_cms_articles_published"));
         assertTrue(indexExists("minimail", "idx_minimail_inbox"));
+        UserEntity adminUser = UserDao.findByUsername("admin");
+        assertNotNull(adminUser);
+        assertTrue(adminUser.isAdmin());
+        assertEquals(7, adminUser.getRank());
     }
 
     @Test
@@ -1009,6 +1013,63 @@ class StarlingWebIntegrationTest {
     }
 
     @Test
+    void publicAdminSessionCanOpenHousekeepingAndSeeLink() throws Exception {
+        HttpResponse<String> loginResponse = postForm(
+                "/account/submit",
+                Map.of("username", "admin", "password", "admin"),
+                Map.of()
+        );
+        assertEquals(200, loginResponse.statusCode());
+        assertTrue(loginResponse.uri().toString().endsWith("/me"));
+
+        HttpResponse<String> dashboardResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/admin")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> communityResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/community")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertEquals(200, dashboardResponse.statusCode());
+        assertTrue(dashboardResponse.body().contains("Dashboard"));
+        assertTrue(communityResponse.body().contains("href=\"/admin\""));
+    }
+
+    @Test
+    void nonAdminUsersCannotAccessHousekeeping() throws Exception {
+        String username = "plainuser" + UUID.randomUUID().toString().substring(0, 6);
+        UserDao.save(UserEntity.createRegisteredUser(
+                username,
+                "Password1",
+                "hr-100-61.hd-180-2.ch-210-92.lg-270-82.sh-290-64",
+                "M",
+                username + "@example.com"
+        ));
+
+        HttpResponse<String> loginResponse = postForm(
+                "/account/submit",
+                Map.of("username", username, "password", "Password1"),
+                Map.of()
+        );
+        assertEquals(200, loginResponse.statusCode());
+        assertTrue(loginResponse.uri().toString().endsWith("/me"));
+
+        HttpResponse<String> dashboardResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/admin")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> communityResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/community")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertEquals(403, dashboardResponse.statusCode());
+        assertTrue(dashboardResponse.body().contains("permission"));
+        assertFalse(communityResponse.body().contains("href=\"/admin\""));
+    }
+
+    @Test
     void loginPreviewPublishAndAliasRoutesWork() throws Exception {
         login();
 
@@ -1132,7 +1193,7 @@ class StarlingWebIntegrationTest {
     private void login() throws Exception {
         HttpResponse<String> response = postForm(
                 "/admin/login",
-                Map.of("email", webConfig.bootstrapAdminEmail(), "password", webConfig.bootstrapAdminPassword()),
+                Map.of("email", "admin", "password", "admin"),
                 Map.of()
         );
         assertEquals(200, response.statusCode());

@@ -1,7 +1,7 @@
 package org.starling.web.admin;
 
 import io.javalin.http.Context;
-import org.starling.web.cms.admin.CmsAdminUser;
+import org.starling.storage.entity.UserEntity;
 import org.starling.web.site.SiteBranding;
 
 import java.time.Year;
@@ -28,12 +28,12 @@ public final class AdminPageModelFactory {
      */
     public Map<String, Object> create(Context context, String currentPath) {
         Map<String, Object> model = new HashMap<>();
-        CmsAdminUser currentAdmin = context.attribute("cmsAdmin");
+        UserEntity currentAdmin = context.attribute("adminUser");
         model.put("siteTitle", siteBranding.cmsTitle());
         model.put("siteName", siteBranding.siteName());
         model.put("cmsTitle", siteBranding.cmsTitle());
         model.put("currentPath", currentPath);
-        model.put("currentAdminName", currentAdmin == null ? null : currentAdmin.displayName());
+        model.put("currentAdminName", currentAdmin == null ? null : currentAdmin.getUsername());
         model.put("notice", context.queryParam("notice"));
         model.put("error", context.queryParam("error"));
         model.put("year", Year.now().getValue());

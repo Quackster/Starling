@@ -11,6 +11,7 @@ public record NavigationLinkConfig(
         boolean visibleWhenLoggedOut,
         String cssId,
         String cssClass,
-        int minimumRank
+        int minimumRank,
+        boolean requiresAdminRole
 ) {
 }

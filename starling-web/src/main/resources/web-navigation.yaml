@@ -31,11 +31,11 @@ main:
     visibleWhenLoggedOut: true
   - key: housekeeping
     label: Housekeeping
-    href: /allseeingeye/hk/
+    href: /admin
     cssId: tab-register-now
-    minimumRank: 6
     visibleWhenLoggedIn: true
     visibleWhenLoggedOut: false
+    requiresAdminRole: true
 
 sub:
   me:

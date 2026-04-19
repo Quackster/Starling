@@ -1,34 +1,31 @@
 package org.starling.web.admin.auth;
 
 import io.javalin.http.Context;
+import org.starling.storage.dao.UserDao;
+import org.starling.storage.entity.UserEntity;
 import org.starling.web.admin.AdminPageModelFactory;
-import org.starling.web.cms.auth.PasswordHasher;
-import org.starling.web.cms.auth.SignedSessionService;
-import org.starling.web.cms.admin.CmsAdminDao;
-import org.starling.web.cms.admin.CmsAdminUser;
 import org.starling.web.render.TemplateRenderer;
-
-import java.util.Optional;
+import org.starling.web.user.UserSessionService;
 
 public final class AdminAuthController {
 
     private final TemplateRenderer templateRenderer;
-    private final SignedSessionService signedSessionService;
+    private final UserSessionService userSessionService;
     private final AdminPageModelFactory adminPageModelFactory;
 
     /**
      * Creates a new AdminAuthController.
      * @param templateRenderer the template renderer
-     * @param signedSessionService the signed admin session service
+     * @param userSessionService the public user session service
      * @param adminPageModelFactory the admin page model factory
      */
     public AdminAuthController(
             TemplateRenderer templateRenderer,
-            SignedSessionService signedSessionService,
+            UserSessionService userSessionService,
             AdminPageModelFactory adminPageModelFactory
     ) {
         this.templateRenderer = templateRenderer;
-        this.signedSessionService = signedSessionService;
+        this.userSessionService = userSessionService;
         this.adminPageModelFactory = adminPageModelFactory;
     }
 
@@ -37,6 +34,11 @@ public final class AdminAuthController {
      * @param context the request context
      */
     public void loginPage(Context context) {
+        if (userSessionService.authenticate(context).map(UserEntity::isAdmin).orElse(false)) {
+            context.redirect("/admin");
+            return;
+        }
+
         context.html(templateRenderer.render("admin-layout", "admin/login", adminPageModelFactory.login(context)));
     }
 
@@ -47,10 +49,10 @@ public final class AdminAuthController {
     public void login(Context context) {
         AdminLoginRequest request = AdminLoginRequest.from(context);
 
-        Optional<CmsAdminUser> adminUser = CmsAdminDao.findByEmail(request.email())
-                .filter(candidate -> PasswordHasher.verify(request.password(), candidate.passwordHash()));
-
-        if (adminUser.isEmpty()) {
+        UserEntity adminUser = UserDao.findByUsernameOrEmail(request.email());
+        if (adminUser == null
+                || !adminUser.isAdmin()
+                || !adminUser.getPassword().equals(request.password())) {
             context.status(401).html(templateRenderer.render(
                     "admin-layout",
                     "admin/login",
@@ -59,8 +61,8 @@ public final class AdminAuthController {
             return;
         }
 
-        CmsAdminDao.updateLastLogin(adminUser.get().id());
-        signedSessionService.start(context, adminUser.get());
+        UserDao.updateLogin(adminUser);
+        userSessionService.start(context, adminUser, true);
         context.redirect("/admin");
     }
 
@@ -69,7 +71,7 @@ public final class AdminAuthController {
      * @param context the request context
      */
     public void logout(Context context) {
-        signedSessionService.clear(context);
+        userSessionService.clear(context);
         context.redirect("/admin/login");
     }
 }

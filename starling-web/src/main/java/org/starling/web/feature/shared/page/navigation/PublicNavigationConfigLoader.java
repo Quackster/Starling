@@ -100,7 +100,8 @@ public final class PublicNavigationConfigLoader {
                     valueAsBoolean(values.get("visibleWhenLoggedOut"), true),
                     valueAsString(values.get("cssId")),
                     valueAsString(values.get("cssClass")),
-                    valueAsInt(values.get("minimumRank"), 0)
+                    valueAsInt(values.get("minimumRank"), 0),
+                    valueAsBoolean(values.get("requiresAdminRole"), false)
             ));
         }
         return links;

@@ -2,24 +2,24 @@ package org.starling.web.admin.auth;
 
 import io.javalin.http.Context;
 import io.javalin.http.Handler;
-import org.starling.web.cms.auth.SignedSessionService;
-import org.starling.web.cms.admin.CmsAdminUser;
+import org.starling.storage.entity.UserEntity;
+import org.starling.web.user.UserSessionService;
 import org.starling.web.util.Htmx;
 
 import java.util.Optional;
 
 public final class AdminRouteGuard {
 
-    public static final String CURRENT_ADMIN_ATTRIBUTE = "cmsAdmin";
+    public static final String CURRENT_ADMIN_ATTRIBUTE = "adminUser";
 
-    private final SignedSessionService signedSessionService;
+    private final UserSessionService userSessionService;
 
     /**
      * Creates a new AdminRouteGuard.
-     * @param signedSessionService the signed admin session service
+     * @param userSessionService the public user session service
      */
-    public AdminRouteGuard(SignedSessionService signedSessionService) {
-        this.signedSessionService = signedSessionService;
+    public AdminRouteGuard(UserSessionService userSessionService) {
+        this.userSessionService = userSessionService;
     }
 
     /**
@@ -29,8 +29,9 @@ public final class AdminRouteGuard {
      */
     public Handler protect(Handler handler) {
         return context -> {
-            Optional<CmsAdminUser> adminUser = signedSessionService.authenticate(context);
-            if (adminUser.isEmpty()) {
+            Optional<UserEntity> currentUser = userSessionService.authenticate(context);
+            if (currentUser.isEmpty()) {
+                context.sessionAttribute("postLoginPath", currentPath(context));
                 if (Htmx.isRequest(context)) {
                     context.header("HX-Redirect", "/admin/login");
                     context.status(401);
@@ -41,8 +42,20 @@ public final class AdminRouteGuard {
                 return;
             }
 
-            context.attribute(CURRENT_ADMIN_ATTRIBUTE, adminUser.get());
+            if (!currentUser.get().isAdmin()) {
+                context.status(403).result("You do not have permission to access housekeeping.");
+                return;
+            }
+
+            context.attribute(CURRENT_ADMIN_ATTRIBUTE, currentUser.get());
             handler.handle(context);
         };
+    }
+
+    private String currentPath(Context context) {
+        String queryString = context.queryString();
+        return queryString == null || queryString.isBlank()
+                ? context.path()
+                : context.path() + "?" + queryString;
     }
 }

@@ -1,7 +1,6 @@
 package org.starling.web.app;
 
 import org.starling.web.app.asset.AvatarImagingService;
-import org.starling.web.cms.auth.SignedSessionService;
 import org.starling.web.cms.article.ArticleService;
 import org.starling.web.cms.article.ArticleViewFactory;
 import org.starling.web.cms.page.PageService;
@@ -34,7 +33,6 @@ import org.starling.web.user.view.UserViewModelFactory;
 public record WebDependencies(
         TemplateRenderer templateRenderer,
         MarkdownRenderer markdownRenderer,
-        SignedSessionService signedSessionService,
         UserSessionService userSessionService,
         SiteBranding siteBranding,
         ThemeResourceResolver themeResourceResolver,

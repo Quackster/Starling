@@ -1,6 +1,6 @@
 <section class="admin-card">
     <h1>Dashboard</h1>
-    <p>{{ cmsTitle }} is live with separate CMS auth, draft/publish workflows, and theme overrides.</p>
+    <p>{{ cmsTitle }} is live with hotel-user admin roles, draft/publish workflows, and theme overrides.</p>
     <p>Main navigation now comes from <code>web-navigation.yaml</code> instead of CMS tables.</p>
 </section>
 

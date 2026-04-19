@@ -49,6 +49,9 @@ public class UserEntity {
     @Column(name = "rank", nullable = false)
     private int rank = 1;
 
+    @Column(name = "cms_role", nullable = false, length = 32, defaultValue = "'user'")
+    private String cmsRole = "user";
+
     @Column(name = "last_online", nullable = false)
     private java.sql.Timestamp lastOnline;
 
@@ -156,6 +159,8 @@ public class UserEntity {
         user.motto = "Hello Habbo!";
         user.email = "admin@starling.local";
         user.credits = 10000;
+        user.rank = 7;
+        user.cmsRole = "admin";
         user.lastOnline = now;
         user.createdAt = now;
         user.updatedAt = now;
@@ -243,6 +248,11 @@ public class UserEntity {
      */
     public int getTickets() { return tickets; }
     /**
+     * Returns the cms role.
+     * @return the cms role
+     */
+    public String getCmsRole() { return cmsRole; }
+    /**
      * Returns the film.
      * @return the film
      */
@@ -323,6 +333,11 @@ public class UserEntity {
      */
     public boolean isTradeEnabled() { return tradeEnabled > 0; }
     /**
+     * Returns whether the user can access housekeeping.
+     * @return true when the user is an admin
+     */
+    public boolean isAdmin() { return "admin".equalsIgnoreCase(cmsRole); }
+    /**
      * Returns whether club is active.
      * @return whether club is active
      */
@@ -388,4 +403,14 @@ public class UserEntity {
      * @param credits the credits value
      */
     public void setCredits(int credits) { this.credits = credits; }
+    /**
+     * Sets the rank.
+     * @param rank the rank value
+     */
+    public void setRank(int rank) { this.rank = rank; }
+    /**
+     * Sets the cms role.
+     * @param cmsRole the cms role value
+     */
+    public void setCmsRole(String cmsRole) { this.cmsRole = cmsRole; }
 }

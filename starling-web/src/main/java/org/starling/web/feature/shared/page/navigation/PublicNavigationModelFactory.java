@@ -60,6 +60,9 @@ public final class PublicNavigationModelFactory {
             if (rankId < link.minimumRank()) {
                 continue;
             }
+            if (link.requiresAdminRole() && currentUser.map(UserEntity::isAdmin).orElse(false) == false) {
+                continue;
+            }
 
             Map<String, Object> model = new LinkedHashMap<>();
             model.put("key", link.key());

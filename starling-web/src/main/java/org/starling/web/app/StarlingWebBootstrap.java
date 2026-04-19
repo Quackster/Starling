@@ -17,7 +17,6 @@ import org.starling.web.app.route.PublicRoutes;
 import org.starling.web.app.route.WidgetRoutes;
 import org.starling.web.cms.article.ArticleService;
 import org.starling.web.cms.article.ArticleViewFactory;
-import org.starling.web.cms.auth.SignedSessionService;
 import org.starling.web.cms.bootstrap.CmsBootstrap;
 import org.starling.web.cms.page.PageService;
 import org.starling.web.cms.page.PageViewFactory;
@@ -99,7 +98,6 @@ public final class StarlingWebBootstrap {
         AvatarImagingService avatarImagingService = new AvatarImagingService();
         TemplateRenderer templateRenderer = new TemplateRenderer(themeResourceResolver);
         MarkdownRenderer markdownRenderer = new MarkdownRenderer();
-        SignedSessionService signedSessionService = new SignedSessionService(config.sessionSecret());
         UserSessionService userSessionService = new UserSessionService(config.sessionSecret());
         PageService pageService = new PageService();
         ArticleService articleService = new ArticleService();
@@ -135,7 +133,6 @@ public final class StarlingWebBootstrap {
         return new WebDependencies(
                 templateRenderer,
                 markdownRenderer,
-                signedSessionService,
                 userSessionService,
                 siteBranding,
                 themeResourceResolver,
@@ -291,10 +288,10 @@ public final class StarlingWebBootstrap {
                 dependencies.siteBranding(),
                 dependencies.avatarImagingService()
         );
-        AdminRouteGuard adminRouteGuard = new AdminRouteGuard(dependencies.signedSessionService());
+        AdminRouteGuard adminRouteGuard = new AdminRouteGuard(dependencies.userSessionService());
         AdminAuthController adminAuthController = new AdminAuthController(
                 dependencies.templateRenderer(),
-                dependencies.signedSessionService(),
+                dependencies.userSessionService(),
                 dependencies.adminPageModelFactory()
         );
         AdminDashboardController adminDashboardController = new AdminDashboardController(
