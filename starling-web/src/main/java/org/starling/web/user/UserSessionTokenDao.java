@@ -1,9 +1,13 @@
 package org.starling.web.user;
 
 import org.starling.storage.EntityContext;
+import org.starling.storage.entity.UserEntity;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.Locale;
 import java.util.OptionalInt;
 
 public final class UserSessionTokenDao {
@@ -20,16 +24,18 @@ public final class UserSessionTokenDao {
      */
     public static void storeToken(int userId, String token) {
         EntityContext.inTransaction(context -> {
-            try (PreparedStatement statement = context.conn().prepareStatement(
-                    "UPDATE users SET remember_token = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
-            )) {
-                statement.setString(1, token);
-                statement.setInt(2, userId);
-                statement.executeUpdate();
+            UserEntity user = context.from(UserEntity.class)
+                    .filter(filter -> filter.equals(UserEntity::getId, userId))
+                    .first()
+                    .orElse(null);
+            if (user == null) {
                 return null;
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to store public user session token", e);
             }
+
+            user.setRememberToken(token);
+            user.setUpdatedAt(Timestamp.from(Instant.now()));
+            context.update(user);
+            return null;
         });
     }
 
@@ -40,26 +46,13 @@ public final class UserSessionTokenDao {
      */
     public static OptionalInt findUserIdByTokenHash(String tokenHash) {
         return EntityContext.withContext(context -> {
-            try (PreparedStatement statement = context.conn().prepareStatement(
-                    """
-                    SELECT id
-                    FROM users
-                    WHERE remember_token IS NOT NULL
-                      AND LOWER(SHA2(remember_token, 256)) = LOWER(?)
-                    LIMIT 1
-                    """
-            )) {
-                statement.setString(1, tokenHash);
-
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    if (!resultSet.next()) {
-                        return OptionalInt.empty();
-                    }
-                    return OptionalInt.of(resultSet.getInt("id"));
-                }
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to find public user session token", e);
-            }
+            return context.from(UserEntity.class)
+                    .filter(filter -> filter.isNotNull(UserEntity::getRememberToken))
+                    .toList()
+                    .stream()
+                    .filter(user -> hashesEqual(user.getRememberToken(), tokenHash))
+                    .mapToInt(UserEntity::getId)
+                    .findFirst();
         });
     }
 
@@ -69,21 +62,42 @@ public final class UserSessionTokenDao {
      */
     public static void clearTokenByHash(String tokenHash) {
         EntityContext.inTransaction(context -> {
-            try (PreparedStatement statement = context.conn().prepareStatement(
-                    """
-                    UPDATE users
-                    SET remember_token = NULL,
-                        updated_at = CURRENT_TIMESTAMP
-                    WHERE remember_token IS NOT NULL
-                      AND LOWER(SHA2(remember_token, 256)) = LOWER(?)
-                    """
-            )) {
-                statement.setString(1, tokenHash);
-                statement.executeUpdate();
+            UserEntity user = context.from(UserEntity.class)
+                    .filter(filter -> filter.isNotNull(UserEntity::getRememberToken))
+                    .toList()
+                    .stream()
+                    .filter(candidate -> hashesEqual(candidate.getRememberToken(), tokenHash))
+                    .findFirst()
+                    .orElse(null);
+            if (user == null) {
                 return null;
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to clear public user session token", e);
             }
+
+            user.setRememberToken(null);
+            user.setUpdatedAt(Timestamp.from(Instant.now()));
+            context.update(user);
+            return null;
         });
+    }
+
+    private static boolean hashesEqual(String rawToken, String tokenHash) {
+        if (rawToken == null || tokenHash == null) {
+            return false;
+        }
+        return hashToken(rawToken).equals(tokenHash.toLowerCase(Locale.ROOT));
+    }
+
+    private static String hashToken(String token) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(token.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hash = new StringBuilder(digest.length * 2);
+            for (byte value : digest) {
+                hash.append(Character.forDigit((value >>> 4) & 0x0F, 16));
+                hash.append(Character.forDigit(value & 0x0F, 16));
+            }
+            return hash.toString();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to hash public user session token", e);
+        }
     }
 }

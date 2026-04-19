@@ -4,11 +4,11 @@ import org.starling.storage.EntityContext;
 import org.starling.storage.entity.GroupEntity;
 import org.starling.storage.entity.GroupMembershipEntity;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,31 +44,39 @@ public final class GroupDao {
     }
 
     public static List<GroupEntity> listByUserId(int userId) {
-        return findByIdsInOrder(queryIds(
-                """
-                SELECT groupid
-                FROM groups_memberships
-                WHERE userid = ? AND is_pending = 0
-                ORDER BY is_current DESC, groupid ASC
-                """,
-                statement -> statement.setInt(1, userId)
-        ));
+        return findByIdsInOrder(EntityContext.withContext(context -> context.from(GroupMembershipEntity.class)
+                .filter(filter -> filter
+                        .equals(GroupMembershipEntity::getUserId, userId)
+                        .and()
+                        .equals(GroupMembershipEntity::getIsPending, 0))
+                .orderBy(order -> order
+                        .col(GroupMembershipEntity::getIsCurrent).desc()
+                        .col(GroupMembershipEntity::getGroupId).asc())
+                .toList()
+                .stream()
+                .map(GroupMembershipEntity::getGroupId)
+                .toList()));
     }
 
     public static List<GroupEntity> listHot(int limit) {
-        String sql = """
-                SELECT g.id
-                FROM groups_details g
-                LEFT JOIN groups_memberships m ON m.groupid = g.id AND m.is_pending = 0
-                GROUP BY g.id
-                ORDER BY COUNT(m.id) DESC, g.id ASC
-                """ + (limit > 0 ? " LIMIT ?" : "");
+        return EntityContext.withContext(context -> {
+            List<GroupEntity> groups = context.from(GroupEntity.class).toList();
+            Map<Integer, Integer> memberCounts = new HashMap<>();
 
-        return findByIdsInOrder(queryIds(sql, statement -> {
-            if (limit > 0) {
-                statement.setInt(1, limit);
+            for (GroupMembershipEntity membership : context.from(GroupMembershipEntity.class)
+                    .filter(filter -> filter.equals(GroupMembershipEntity::getIsPending, 0))
+                    .toList()) {
+                memberCounts.merge(membership.getGroupId(), 1, Integer::sum);
             }
-        }));
+
+            return groups.stream()
+                    .sorted(Comparator
+                            .comparingInt((GroupEntity group) -> memberCounts.getOrDefault(group.getId(), 0))
+                            .reversed()
+                            .thenComparingInt(GroupEntity::getId))
+                    .limit(limit > 0 ? limit : groups.size())
+                    .toList();
+        });
     }
 
     public static List<GroupEntity> findRecommended(Boolean sponsored, int limit) {
@@ -80,34 +88,34 @@ public final class GroupDao {
     }
 
     public static int countMembers(int groupId) {
-        return EntityContext.withContext(context -> {
-            try (PreparedStatement statement = context.conn().prepareStatement(
-                    "SELECT COUNT(*) FROM groups_memberships WHERE groupid = ? AND is_pending = 0"
-            )) {
-                statement.setInt(1, groupId);
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    resultSet.next();
-                    return resultSet.getInt(1);
-                }
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to count group members", e);
-            }
-        });
+        return EntityContext.withContext(context -> Math.toIntExact(context.from(GroupMembershipEntity.class)
+                .filter(filter -> filter
+                        .equals(GroupMembershipEntity::getGroupId, groupId)
+                        .and()
+                        .equals(GroupMembershipEntity::getIsPending, 0))
+                .count()));
     }
 
     public static List<Integer> listMemberIds(int groupId, int limit) {
-        String sql = """
-                SELECT userid
-                FROM groups_memberships
-                WHERE groupid = ? AND is_pending = 0
-                ORDER BY is_current DESC, member_rank DESC, userid ASC
-                """ + (limit > 0 ? " LIMIT ?" : "");
+        return EntityContext.withContext(context -> {
+            var memberQuery = context.from(GroupMembershipEntity.class)
+                    .filter(filter -> filter
+                            .equals(GroupMembershipEntity::getGroupId, groupId)
+                            .and()
+                            .equals(GroupMembershipEntity::getIsPending, 0))
+                    .orderBy(order -> order
+                            .col(GroupMembershipEntity::getIsCurrent).desc()
+                            .col(GroupMembershipEntity::getMemberRank).desc()
+                            .col(GroupMembershipEntity::getUserId).asc());
 
-        return queryIds(sql, statement -> {
-            statement.setInt(1, groupId);
             if (limit > 0) {
-                statement.setInt(2, limit);
+                memberQuery = memberQuery.limit(limit);
             }
+
+            return memberQuery.toList()
+                    .stream()
+                    .map(GroupMembershipEntity::getUserId)
+                    .toList();
         });
     }
 
@@ -170,25 +178,6 @@ public final class GroupDao {
         return saveMembership(membership);
     }
 
-    private static List<Integer> queryIds(String sql, SqlBinder binder) {
-        return EntityContext.withContext(context -> {
-            try (PreparedStatement statement = context.conn().prepareStatement(sql)) {
-                if (binder != null) {
-                    binder.bind(statement);
-                }
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    List<Integer> ids = new ArrayList<>();
-                    while (resultSet.next()) {
-                        ids.add(resultSet.getInt(1));
-                    }
-                    return ids;
-                }
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to query group ids", e);
-            }
-        });
-    }
-
     private static List<GroupEntity> findByIdsInOrder(List<Integer> groupIds) {
         if (groupIds == null || groupIds.isEmpty()) {
             return List.of();
@@ -213,8 +202,4 @@ public final class GroupDao {
         return ordered;
     }
 
-    @FunctionalInterface
-    private interface SqlBinder {
-        void bind(PreparedStatement statement) throws Exception;
-    }
 }

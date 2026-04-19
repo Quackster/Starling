@@ -3,11 +3,8 @@ package org.starling.storage.dao;
 import org.starling.storage.EntityContext;
 import org.starling.storage.entity.RecommendedItemEntity;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 
 public final class RecommendedItemDao {
@@ -34,36 +31,22 @@ public final class RecommendedItemDao {
     }
 
     public static List<Integer> listIds(String type, Boolean sponsored, int limit) {
-        StringBuilder sql = new StringBuilder("SELECT rec_id FROM recommended WHERE type = ?");
-        if (sponsored != null) {
-            sql.append(" AND sponsored = ?");
-        }
-        sql.append(" ORDER BY id ASC");
-        if (limit > 0) {
-            sql.append(" LIMIT ?");
-        }
-
         return EntityContext.withContext(context -> {
-            try (PreparedStatement statement = context.conn().prepareStatement(sql.toString())) {
-                int index = 1;
-                statement.setString(index++, type);
-                if (sponsored != null) {
-                    statement.setInt(index++, sponsored ? 1 : 0);
-                }
-                if (limit > 0) {
-                    statement.setInt(index, limit);
-                }
+            var query = context.from(RecommendedItemEntity.class)
+                    .filter(filter -> filter.equals(RecommendedItemEntity::getType, type))
+                    .orderBy(order -> order.col(RecommendedItemEntity::getId).asc());
 
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    List<Integer> ids = new ArrayList<>();
-                    while (resultSet.next()) {
-                        ids.add(resultSet.getInt(1));
-                    }
-                    return ids;
-                }
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to load recommended ids for " + type, e);
+            if (sponsored != null) {
+                query = query.filter(filter -> filter.equals(RecommendedItemEntity::getSponsored, sponsored ? 1 : 0));
             }
+            if (limit > 0) {
+                query = query.limit(limit);
+            }
+
+            return query.toList()
+                    .stream()
+                    .map(RecommendedItemEntity::getRecId)
+                    .toList();
         });
     }
 }

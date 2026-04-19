@@ -253,6 +253,11 @@ public class UserEntity {
      */
     public String getEmail() { return email; }
     /**
+     * Returns the remember token.
+     * @return the remember token
+     */
+    public String getRememberToken() { return rememberToken; }
+    /**
      * Returns the last online timestamp.
      * @return the last online timestamp
      */
@@ -373,6 +378,11 @@ public class UserEntity {
      * @param updatedAt the updated at value
      */
     public void setUpdatedAt(Timestamp updatedAt) { this.updatedAt = updatedAt; }
+    /**
+     * Sets the remember token.
+     * @param rememberToken the remember token value
+     */
+    public void setRememberToken(String rememberToken) { this.rememberToken = rememberToken; }
     /**
      * Sets the credits.
      * @param credits the credits value
