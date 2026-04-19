@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="70" viewBox="0 0 160 70">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#63b6ff"/>
+      <stop offset="100%" stop-color="#1c5f9f"/>
+    </linearGradient>
+  </defs>
+  <rect width="160" height="70" rx="8" fill="url(#bg)"/>
+  <circle cx="30" cy="22" r="12" fill="#fff" fill-opacity=".35"/>
+  <circle cx="55" cy="30" r="18" fill="#fff" fill-opacity=".18"/>
+  <rect x="16" y="43" width="84" height="9" rx="4.5" fill="#fff" fill-opacity=".22"/>
+  <text x="16" y="23" fill="#ffffff" font-family="Verdana, Arial, sans-serif" font-size="14" font-weight="700">WELCOME</text>
+  <text x="16" y="61" fill="#eaf6ff" font-family="Verdana, Arial, sans-serif" font-size="11">Meet the hotel crew</text>
+</svg>

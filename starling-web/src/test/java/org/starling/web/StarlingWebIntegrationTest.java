@@ -231,8 +231,9 @@ class StarlingWebIntegrationTest {
         assertEquals(200, captchaResponse.statusCode());
         assertTrue(registerResponse.uri().toString().endsWith("/me"));
         assertTrue(welcomeResponse.body().contains("Choose a pre-decorated room"));
-        assertTrue(meResponse.body().contains("Groups"));
-        assertTrue(meResponse.body().contains("Reccomended Rooms"));
+        assertTrue(meResponse.body().contains("Hot Campaigns"));
+        assertTrue(meResponse.body().contains("My Tags"));
+        assertFalse(meResponse.body().contains("Reccomended Rooms"));
     }
 
     @Test

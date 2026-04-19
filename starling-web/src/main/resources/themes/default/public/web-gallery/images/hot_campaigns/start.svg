@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="70" viewBox="0 0 160 70">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#84df98"/>
+      <stop offset="100%" stop-color="#2f8d52"/>
+    </linearGradient>
+  </defs>
+  <rect width="160" height="70" rx="8" fill="url(#bg)"/>
+  <path d="M20 48c10-17 23-29 39-36 7 2 15 6 24 13-18 8-31 19-40 33z" fill="#fff" fill-opacity=".25"/>
+  <path d="M62 23l20 13-20 13z" fill="#ffffff"/>
+  <text x="92" y="25" fill="#f5fff8" font-family="Verdana, Arial, sans-serif" font-size="14" font-weight="700">START</text>
+  <text x="92" y="42" fill="#f5fff8" font-family="Verdana, Arial, sans-serif" font-size="14" font-weight="700">HERE</text>
+  <text x="92" y="59" fill="#daf7e2" font-family="Verdana, Arial, sans-serif" font-size="11">Choose your room</text>
+</svg>

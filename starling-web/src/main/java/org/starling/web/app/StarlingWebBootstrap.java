@@ -32,6 +32,7 @@ import org.starling.web.route.AssetRoutes;
 import org.starling.web.route.AuthRoutes;
 import org.starling.web.route.PublicRoutes;
 import org.starling.web.service.ArticleService;
+import org.starling.web.service.HotCampaignService;
 import org.starling.web.service.MediaAssetService;
 import org.starling.web.service.NavigationService;
 import org.starling.web.service.PageService;
@@ -79,6 +80,7 @@ public final class StarlingWebBootstrap {
         MediaAssetService mediaAssetService = new MediaAssetService(new MediaStorageService(config));
         PageService pageService = new PageService();
         ArticleService articleService = new ArticleService();
+        HotCampaignService hotCampaignService = new HotCampaignService();
         NavigationService navigationService = new NavigationService();
         UserViewModelFactory userViewModelFactory = new UserViewModelFactory();
         PublicNavigationConfig publicNavigationConfig = new PublicNavigationConfigLoader().load();
@@ -102,6 +104,7 @@ public final class StarlingWebBootstrap {
                 themeResourceResolver,
                 pageService,
                 articleService,
+                hotCampaignService,
                 navigationService,
                 mediaAssetService,
                 publicNavigationModelFactory,
@@ -133,6 +136,7 @@ public final class StarlingWebBootstrap {
                 dependencies.templateRenderer(),
                 dependencies.userSessionService(),
                 dependencies.articleService(),
+                dependencies.hotCampaignService(),
                 dependencies.publicPageModelFactory(),
                 dependencies.publicFeatureContentFactory(),
                 dependencies.userViewModelFactory(),

@@ -5,6 +5,7 @@ import org.starling.web.cms.auth.SignedSessionService;
 import org.starling.web.render.MarkdownRenderer;
 import org.starling.web.render.TemplateRenderer;
 import org.starling.web.service.ArticleService;
+import org.starling.web.service.HotCampaignService;
 import org.starling.web.service.MediaAssetService;
 import org.starling.web.service.NavigationService;
 import org.starling.web.service.PageService;
@@ -26,6 +27,7 @@ public record WebDependencies(
         ThemeResourceResolver themeResourceResolver,
         PageService pageService,
         ArticleService articleService,
+        HotCampaignService hotCampaignService,
         NavigationService navigationService,
         MediaAssetService mediaAssetService,
         PublicNavigationModelFactory publicNavigationModelFactory,

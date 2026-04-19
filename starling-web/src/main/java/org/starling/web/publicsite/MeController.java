@@ -4,6 +4,7 @@ import io.javalin.http.Context;
 import org.starling.storage.entity.UserEntity;
 import org.starling.web.render.TemplateRenderer;
 import org.starling.web.service.ArticleService;
+import org.starling.web.service.HotCampaignService;
 import org.starling.web.user.UserSessionService;
 import org.starling.web.view.CmsViewModelFactory;
 import org.starling.web.view.PublicFeatureContentFactory;
@@ -19,6 +20,7 @@ public final class MeController {
     private final TemplateRenderer templateRenderer;
     private final UserSessionService userSessionService;
     private final ArticleService articleService;
+    private final HotCampaignService hotCampaignService;
     private final PublicPageModelFactory publicPageModelFactory;
     private final PublicFeatureContentFactory publicFeatureContentFactory;
     private final UserViewModelFactory userViewModelFactory;
@@ -38,6 +40,7 @@ public final class MeController {
             TemplateRenderer templateRenderer,
             UserSessionService userSessionService,
             ArticleService articleService,
+            HotCampaignService hotCampaignService,
             PublicPageModelFactory publicPageModelFactory,
             PublicFeatureContentFactory publicFeatureContentFactory,
             UserViewModelFactory userViewModelFactory,
@@ -46,6 +49,7 @@ public final class MeController {
         this.templateRenderer = templateRenderer;
         this.userSessionService = userSessionService;
         this.articleService = articleService;
+        this.hotCampaignService = hotCampaignService;
         this.publicPageModelFactory = publicPageModelFactory;
         this.publicFeatureContentFactory = publicFeatureContentFactory;
         this.userViewModelFactory = userViewModelFactory;
@@ -76,8 +80,7 @@ public final class MeController {
 
         model.put("currentUser", userViewModelFactory.create(currentUser.get()));
         model.put("onlineFriends", publicFeatureContentFactory.onlineFriends());
-        model.put("recommendedGroups", publicFeatureContentFactory.recommendedGroups());
-        model.put("recommendedRooms", publicFeatureContentFactory.recommendedRooms());
+        model.put("hotCampaigns", hotCampaignService.listVisible());
         model.put("tagCloud", publicFeatureContentFactory.tagCloud());
         context.html(templateRenderer.render("me", model));
     }

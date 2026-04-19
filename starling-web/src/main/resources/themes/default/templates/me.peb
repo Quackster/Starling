@@ -20,6 +20,7 @@ var andSoItBegins = (new Date()).getTime();
 <link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/boxes.css" type="text/css" />
 <link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/tooltips.css" type="text/css" />
 <link rel="stylesheet" href="{{ site.webGalleryPath }}/styles/local/com.css" type="text/css" />
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/styles/local/me.css" type="text/css" />
 <link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/personal.css" type="text/css" />
 <script src="{{ site.webGalleryPath }}/js/local/com.js" type="text/javascript"></script>
 
@@ -124,47 +125,25 @@ if (typeof HabboClient != "undefined") { HabboClient.windowName = "client"; }
             <script type="text/javascript">if (!$(document.body).hasClassName('process-template')) { Rounder.init(); }</script>
 
             <div class="habblet-container ">
-                <div class="cbb clearfix blue ">
-                    <div class="box-tabs-container clearfix">
-                        <h2>Groups</h2>
-                        <ul class="box-tabs">
-                            <li class="selected"><a href="#">My Groups</a><span class="tab-spacer"></span></li>
-                        </ul>
-                    </div>
-                    <div id="groups-habblet-info" class="habblet-content-info">
-                        View the groups you are in, create your own group, or get some inspiration from the community.
-                    </div>
-                    <div id="groups-habblet-list-container" class="habblet-list-container groups-list">
-                        <ul class="habblet-list two-cols clearfix">
-                        {% for group in recommendedGroups %}
-                            <li class="{% if loop.index is even %}even right{% else %}odd left{% endif %}">
-                                <a class="item" href="{{ site.sitePath }}/community">{{ group.name }}</a>
+                <div class="cbb clearfix orange ">
+                    <h2 class="title">Hot Campaigns</h2>
+                    <div id="hotcampaigns-habblet-list-container">
+                        {% if hotCampaigns | length > 0 %}
+                        <ul id="hotcampaigns-habblet-list">
+                        {% for campaign in hotCampaigns %}
+                            <li class="{% if loop.index is even %}even{% else %}odd{% endif %}{% if loop.last %} last{% endif %}">
+                                <div class="hotcampaign-container">
+                                    <a href="{{ campaign.url }}"><img src="{{ campaign.imageUrl }}" alt="{{ campaign.name }}" /></a>
+                                    <h3>{{ campaign.name }}</h3>
+                                    <p>{{ campaign.description }}</p>
+                                    <p class="link"><a href="{{ campaign.url }}">Go there &raquo;</a></p>
+                                </div>
                             </li>
                         {% endfor %}
                         </ul>
-                    </div>
-                    <div class="habblet-button-row clearfix"><a class="new-button" href="{{ site.sitePath }}/community"><b>Browse Groups</b><i></i></a></div>
-                </div>
-            </div>
-            <script type="text/javascript">if (!$(document.body).hasClassName('process-template')) { Rounder.init(); }</script>
-
-            <div class="habblet-container ">
-                <div class="cbb clearfix green ">
-                    <div class="box-tabs-container clearfix">
-                        <h2>Tags</h2>
-                        <ul class="box-tabs">
-                            <li class="selected"><a href="#">My Tags</a><span class="tab-spacer"></span></li>
-                        </ul>
-                    </div>
-                    <div id="my-tag-info" class="habblet-content-info">
-                        You have not used up all your tags yet - add some more!
-                    </div>
-                    <div class="box-content">
-                        <ul class="tag-list make-clickable">
-                        {% for tag in tagCloud %}
-                            <li><a href="{{ site.sitePath }}/tag" class="tag">{{ tag }}</a></li>
-                        {% endfor %}
-                        </ul>
+                        {% else %}
+                        <p class="hotcampaigns-empty">No campaigns are live right now. Check back soon.</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -206,23 +185,28 @@ if (typeof HabboClient != "undefined") { HabboClient.windowName = "client"; }
             <div class="habblet-container ">
                 <div class="cbb clearfix green ">
                     <div class="box-tabs-container clearfix">
-                        <h2>Reccomended Rooms</h2>
-                        <ul class="box-tabs"></ul>
+                        <h2>Tags</h2>
+                        <ul class="box-tabs">
+                            <li class="selected"><a href="#">My Tags</a><span class="tab-spacer"></span></li>
+                        </ul>
                     </div>
-                    <div id="rooms-habblet-list-container-h105" class="recommendedrooms-lite-habblet-list-container">
-                        <ul class="habblet-list">
-                        {% for room in recommendedRooms %}
-                            <li class="{% if loop.index is even %}odd{% else %}even{% endif %}">
-                                <span class="clearfix enter-room-link {{ room.occupancyClass }}" title="Go to room">
-                                    <span class="room-enter">Enter</span>
-                                    <span class="room-name">{{ room.name }}</span>
-                                    <span class="room-description">{{ room.description }}</span>
-                                    <span class="room-owner">Owner: <a href="{{ site.sitePath }}/community">{{ room.owner }}</a></span>
-                                </span>
-                            </li>
+                    <div id="my-tag-info" class="habblet-content-info">
+                        {% if tagCloud | length > 0 %}
+                        You have not used up all your tags yet - add some more!
+                        {% else %}
+                        You have not set any tags yet.
+                        {% endif %}
+                    </div>
+                    <div class="box-content">
+                        {% if tagCloud | length > 0 %}
+                        <ul class="tag-list make-clickable">
+                        {% for tag in tagCloud %}
+                            <li><a href="{{ site.sitePath }}/tag" class="tag">{{ tag }}</a></li>
                         {% endfor %}
                         </ul>
-                        <div class="clearfix"></div>
+                        {% else %}
+                        <p class="tag-habblet-empty">You have not set any tags yet.</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
