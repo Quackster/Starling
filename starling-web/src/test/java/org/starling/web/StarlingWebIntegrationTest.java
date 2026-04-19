@@ -265,6 +265,10 @@ class StarlingWebIntegrationTest {
                 Map.of("tagName", "coins"),
                 Map.of()
         );
+        HttpResponse<String> myTagsListResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/habblet/mytagslist")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
         HttpResponse<String> removeTagResponse = postForm(
                 "/myhabbo/tag/remove",
                 Map.of("tagName", "coins"),
@@ -291,12 +295,15 @@ class StarlingWebIntegrationTest {
         assertEquals(200, tagSearchAfterRemoveResponse.statusCode());
         assertEquals(200, fightResponse.statusCode());
         assertEquals(200, signedInVoucherResponse.statusCode());
+        assertEquals(200, myTagsListResponse.statusCode());
         assertEquals("valid", addTagResponse.body());
         assertEquals("valid", removeTagResponse.body());
         assertTrue(matchResponse.body().contains("67 %"));
         assertTrue(matchResponse.body().contains("You have a lot in common!"));
         assertTrue(tagSearchBeforeAddResponse.body().contains("Rare Traders"));
         assertTrue(tagSearchBeforeAddResponse.body().contains("Tag yourself with:"));
+        assertTrue(myTagsListResponse.body().contains("/tag/coins"));
+        assertTrue(myTagsListResponse.body().contains("id=\"add-tag-button\""));
         assertTrue(tagSearchAfterRemoveResponse.body().contains("Tag yourself with:"));
         assertTrue(fightResponse.body().contains("And the winner is:"));
         assertTrue(fightResponse.body().contains("<b>retro</b>"));

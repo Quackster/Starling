@@ -1,0 +1,72 @@
+<div class="habblet-container ">
+    <div id="new-personal-info" style="background-image:url({{ site.webGalleryPath }}/v2/images/personal_info/hotel_views/htlview_br.png)" >
+
+        {% if site.serverOnline %}
+        <div class="enter-hotel-btn">
+            <div class="open enter-btn">
+                <a href="{{ site.sitePath }}/client" target="client">Enter {{ site.siteName }}<i></i></a>
+                <b></b>
+            </div>
+        </div>
+        {% else %}
+        <div class="enter-hotel-btn">
+            <div class="closed enter-btn">
+                <span>{{ site.siteName }} is offline</span>
+                <b></b>
+            </div>
+        </div>
+        {% endif %}
+
+        <div id="habbo-plate">
+            <a href="{{ site.sitePath }}/profile">
+                <img alt="{{ currentUser.name }}" src="{{ site.sitePath }}/habbo-imaging/avatarimage?figure={{ currentUser.figure }}&size=b&direction=3&head_direction=3&crr=0&gesture=sml&frame=1" width="64" height="110" />
+            </a>
+        </div>
+
+        <div id="habbo-info">
+            <div id="motto-container" class="clearfix">
+                <strong>{{ currentUser.name }}:</strong>
+                <div>
+                    <span title="Click to enter your motto/ status">{% if currentUser.motto != "" %}{{ currentUser.motto }}{% else %}Click here to enter your motto{% endif %}</span>
+                </div>
+            </div>
+        </div>
+
+        <ul id="link-bar" class="clearfix">
+            <li class="change-looks"><a href="{{ site.sitePath }}/profile">Change looks &raquo;</a></li>
+            <li class="credits">
+                <a href="{{ site.sitePath }}/credits">{{ currentUser.credits }}</a> credits
+            </li>
+            <li class="club">
+                {% if currentUser.clubActive %}
+                <a href="{{ site.sitePath }}/club">{{ currentUser.clubDays }}</a> HC days
+                {% else %}
+                <a href="{{ site.sitePath }}/club">Join {{ site.siteName }} club &raquo;</a>
+                {% endif %}
+            </li>
+        </ul>
+
+        <div id="habbo-feed">
+            <ul id="feed-items">
+                <li class="small" id="feed-friends">
+                    You have {{ onlineFriends | length }} friends online
+                    <span>
+                    {% for friend in onlineFriends %}
+                        <a href="{{ site.sitePath }}/home/{{ friend }}">{{ friend }}</a>{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                    </span>
+                </li>
+                <li class="small" id="feed-lastlogin">
+                    Last signed in:
+                    {{ currentUser.lastOnline }}
+                </li>
+                <li class="small" id="feed-member-since">
+                    Member since:
+                    {{ currentUser.memberSince }}
+                </li>
+            </ul>
+        </div>
+
+        <p class="last"></p>
+    </div>
+</div>

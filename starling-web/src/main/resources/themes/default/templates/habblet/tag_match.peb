@@ -1,0 +1,27 @@
+{% if session.loggedIn %}
+<div class="habblet-container ">
+    <div class="cbb clearfix default ">
+        <h2 class="title">Tag match</h2>
+        <div id="tag-match-habblet-container">
+            <div id="tag-match-result">
+                Enter a friend name to see how many tags you have in common.
+            </div>
+
+            <div id="tag-match-form">
+                <input type="text" id="tag-match-friend" value=""/>
+                <a class="new-button" id="tag-match-send" href="#"><b>Match</b><i></i></a>
+            </div>
+            <script type="text/javascript">
+            document.observe("dom:loaded", function() {
+                Event.observe($('tag-match-friend'), "keypress", function(e) {
+                    if (e.keyCode == Event.KEY_RETURN) {
+                        TagHelper.matchFriend();
+                    }
+                });
+                Event.observe($('tag-match-send'), "click", function(e) { Event.stop(e); TagHelper.matchFriend(); });
+            });
+            </script>
+        </div>
+    </div>
+</div>
+{% endif %}

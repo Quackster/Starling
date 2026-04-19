@@ -1,0 +1,8 @@
+{% for column in pageLayout.columns %}
+<div id="{{ column.id }}" class="column">
+    {% for widget in column.widgets %}
+    {{ widget.html | raw }}
+    <script type="text/javascript">if (!$(document.body).hasClassName('process-template')) { Rounder.init(); }</script>
+    {% endfor %}
+</div>
+{% endfor %}

@@ -1,0 +1,6 @@
+<div class="habblet-container ">
+    <div class="cbb clearfix default ">
+        <h2 class="title">Tag search</h2>
+        {% include "habblet/tag_search_results.peb" %}
+    </div>
+</div>

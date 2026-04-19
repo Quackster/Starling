@@ -9,6 +9,7 @@ import org.starling.web.site.SiteBranding;
 import org.starling.web.user.UserSessionService;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -113,5 +114,25 @@ public final class TagHabbletController {
 
         publicTagService.removeTag(context, currentUser.get(), context.formParam("tagName"));
         context.result("valid");
+    }
+
+    /**
+     * Renders the signed-in /me tag list fragment.
+     * @param context the request context
+     */
+    public void myTagsList(Context context) {
+        Optional<UserEntity> currentUser = userSessionService.authenticate(context);
+        if (currentUser.isEmpty()) {
+            context.html("");
+            return;
+        }
+
+        List<String> myTags = publicTagService.currentUserTags(context, currentUser.get());
+        Map<String, Object> model = new LinkedHashMap<>();
+        model.put("site", Map.of("sitePath", siteBranding.sitePath()));
+        model.put("myTags", myTags);
+        model.put("tagCount", myTags.size());
+        model.put("tagQuestion", publicTagService.tagQuestion());
+        context.html(templateRenderer.render("habblet/me_tags_list", model));
     }
 }

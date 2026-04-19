@@ -1,0 +1,40 @@
+<div class="habblet-container ">
+    <div class="cbb clearfix notitle ">
+        <div id="article-wrapper">
+            <h2>{{ currentArticle.title }}</h2>
+            <div class="article-meta">Posted {{ currentArticle.date }}
+                {% set num = 1 %}
+                {% if currentArticle.categories|length > 0 %}
+                {% for category in currentArticle.categories %}
+                    <a href="{{ site.sitePath }}/{{ articleLink }}/category/{{ category.index }}">{{ category.label }}</a>{% if num < (currentArticle.categories|length) %},{% endif %}{% set num = num + 1 %}
+                {% endfor %}
+                {% endif %}
+            </div>
+
+            {% if currentArticle.articleImage != "" %}
+            <img src="{{ currentArticle.articleImage }}" class="article-image"/>
+            {% endif %}
+            <p class="summary">{{ currentArticle.shortstory }}</p>
+
+            <div class="article-body">
+                {{ currentArticle.escapedStory | raw }}
+                <div class="article-author">- {{ currentArticle.author }}</div>
+
+                <script type="text/javascript" language="Javascript">
+                    document.observe("dom:loaded", function() {
+                        $$('.article-images a').each(function(a) {
+                            Event.observe(a, 'click', function(e) {
+                                Event.stop(e);
+                                Overlay.lightbox(a.href, "Image is loading");
+                            });
+                        });
+
+                        $$('a.article-5').each(function(a) {
+                            a.replace(a.innerHTML);
+                        });
+                    });
+                </script>
+            </div>
+        </div>
+    </div>
+</div>

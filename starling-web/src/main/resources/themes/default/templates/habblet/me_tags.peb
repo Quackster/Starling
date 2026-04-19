@@ -1,0 +1,31 @@
+<div class="habblet-container ">
+    <div class="cbb clearfix green ">
+        <div class="box-tabs-container clearfix">
+            <h2>Tags</h2>
+            <ul class="box-tabs">
+                <li id="tab-1-5-1"><a href="{{ site.sitePath }}/tag">Habbos like...</a><span class="tab-spacer"></span></li>
+                <li id="tab-1-5-2" class="selected"><a href="#">My Tags</a><span class="tab-spacer"></span></li>
+            </ul>
+        </div>
+        <div id="tab-1-5-1-content" style="display: none">
+            <div class="progressbar"><img src="{{ site.webGalleryPath }}/images/progress_bubbles.gif" alt="" width="29" height="6" /></div>
+            <a href="{{ site.sitePath }}/tag" class="tab-ajax"></a>
+        </div>
+        <div id="tab-1-5-2-content">
+            <div id="my-tag-info" class="habblet-content-info">
+                {% if tagCount > 19 %}
+                You have reached the tag limit.
+                {% elseif tagCount == 0 %}
+                You have not set any tags yet.
+                {% else %}
+                You have not used up all your tags yet - add some more!
+                {% endif %}
+            </div>
+            <div class="box-content">
+                <div class="habblet" id="my-tags-list">
+                    {% include "habblet/me_tags_list.peb" %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -75,6 +75,11 @@ public final class NewsController {
 
         Map<String, Object> model = publicPageModelFactory.create(context, "community", newsPage);
         model.put("newsPage", newsPage);
+        model.put("articleLink", switch (newsPage) {
+            case "events" -> "community/events";
+            case "fansites" -> "community/fansites";
+            default -> "articles";
+        });
         model.put("monthlyView", false);
         model.put("archiveView", archiveView);
         model.put("urlSuffix", "");

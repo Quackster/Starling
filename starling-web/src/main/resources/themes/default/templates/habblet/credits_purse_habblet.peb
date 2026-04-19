@@ -1,0 +1,9 @@
+<div class="habblet-container ">
+    <div class="cbb clearfix brown ">
+        <h2 class="title">Your purse</h2>
+        {% include "habblet/credits_purse.peb" %}
+        <script type="text/javascript">
+        new PurseHabblet();
+        </script>
+    </div>
+</div>

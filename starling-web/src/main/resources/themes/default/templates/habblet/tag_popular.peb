@@ -1,0 +1,12 @@
+<div class="habblet-container ">
+    <div class="cbb clearfix default ">
+        <h2 class="title">Popular tags</h2>
+        <div id="tag-related-habblet-container" class="habblet box-contents">
+            <ul class="tag-list">
+            {% for tag in tagSearch.popularTags %}
+                <li><a href="{{ tag.url }}" class="tag" style="font-size:{{ tag.size }}%">{{ tag.name }}</a> </li>
+            {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>

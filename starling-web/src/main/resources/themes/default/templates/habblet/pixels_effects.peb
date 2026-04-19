@@ -1,0 +1,11 @@
+<div class="habblet-container ">
+    <div class="cbb clearfix {{ effectsPixelPanel.className }} ">
+        <h2 class="title">{{ effectsPixelPanel.title }}</h2>
+        <div id="pixels-info" class="box-content pixels-info">
+            <div class="pixels-info-text clearfix">
+                <img class="pixels-image" src="{{ effectsPixelPanel.image }}" alt=""/>
+                <p class="pixels-text">{{ effectsPixelPanel.text }}</p>
+            </div>
+        </div>
+    </div>
+</div>

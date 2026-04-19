@@ -1,0 +1,21 @@
+<div class="habblet-container ">
+    <div class="cbb clearfix orange ">
+        <h2 class="title">Hot Campaigns</h2>
+        <div id="hotcampaigns-habblet-list-container">
+            {% if hotCampaigns | length > 0 %}
+            <ul id="hotcampaigns-habblet-list">
+            {% for campaign in hotCampaigns %}
+                <li class="{% if loop.index is even %}even{% else %}odd{% endif %}">
+                    <div class="hotcampaign-container">
+                        <a href="{{ campaign.url }}"><img src="{{ campaign.imageUrl }}" align="left" alt="" /></a>
+                        <h3>{{ campaign.name }}</h3>
+                        <p>{{ campaign.description }}</p>
+                        <p class="link"><a href="{{ campaign.url }}">Go there &raquo;</a></p>
+                    </div>
+                </li>
+            {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+</div>

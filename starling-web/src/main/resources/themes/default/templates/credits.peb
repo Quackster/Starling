@@ -50,75 +50,7 @@ if (typeof HabboClient != "undefined") { HabboClient.windowName = "client"; }
     {% include "base/subnav.peb" %}
     <div id="container">
         <div id="content" style="position: relative" class="clearfix">
-            <div id="column1" class="column">
-                <div class="habblet-container ">
-                    <div class="cbb clearfix green ">
-                        <h2 class="title">How to get Credits</h2>
-                        <ul id="credits-methods">
-                        {% for category in creditCategories %}
-                            <li id="credits-type-{{ category.id }}">
-                                <h4 class="{{ category.headerClass }}">{{ category.title }}</h4>
-                                <ul>
-                                {% for method in category.methods %}
-                                    <li class="clearfix {% if loop.index is even %}odd{% else %}even{% endif %}"><div id="method-{{ method.id }}" class="credits-method-container">
-                                        <div class="credits-summary">
-                                            {% if method.showButton %}
-                                            <div class="credits-tools">
-                                                <a class="new-button" id="{{ method.buttonId }}" href="{{ method.buttonHref }}"><b>{{ method.buttonLabel }}</b><i></i></a>
-                                            </div>
-                                            {% endif %}
-                                            <h3>{{ method.title }}</h3>
-                                            <p>{{ method.summary }}</p>
-                                            <p class="credits-read-more" id="method-show-{{ method.id }}" style="display: none">Read more</p>
-                                        </div>
-                                        <div id="method-full-{{ method.id }}" class="credits-method-full">
-                                            {{ method.details | raw }}
-                                        </div>
-                                        <script type="text/javascript">
-                                        $("method-show-{{ method.id }}").show();
-                                        $("method-full-{{ method.id }}").hide();
-                                        </script>
-                                    </div></li>
-                                {% endfor %}
-                                </ul>
-                            </li>
-                        {% endfor %}
-                        </ul>
-                        <script type="text/javascript">
-                        L10N.put("credits.navi.read_more", "Read more");
-                        L10N.put("credits.navi.close_fulltext", "Close instructions");
-                        PaymentMethodHabblet.init();
-                        </script>
-                    </div>
-                </div>
-                <script type="text/javascript">if (!$(document.body).hasClassName('process-template')) { Rounder.init(); }</script>
-            </div>
-            <div id="column2" class="column">
-                <div class="habblet-container ">
-                    <div class="cbb clearfix brown ">
-                        <h2 class="title">Your purse</h2>
-                        {% include "habblet/credits_purse.peb" %}
-                        <script type="text/javascript">
-                        new PurseHabblet();
-                        </script>
-                    </div>
-                </div>
-                <script type="text/javascript">if (!$(document.body).hasClassName('process-template')) { Rounder.init(); }</script>
-
-                <div class="habblet-container ">
-                    <div class="cbb clearfix orange ">
-                        <h2 class="title">{{ creditsInfo.title }}</h2>
-                        <div id="credits-promo" class="box-content credits-info">
-                            <div class="credit-info-text clearfix">
-                                <img class="credits-image" src="{{ creditsInfo.image }}" alt="" width="77" height="105" />
-                                <p class="credits-text">{{ creditsInfo.text }}</p>
-                            </div>
-                            <p class="credits-text-2">{{ creditsInfo.subtext }}</p>
-                        </div>
-                    </div>
-                </div>
-                <script type="text/javascript">if (!$(document.body).hasClassName('process-template')) { Rounder.init(); }</script>
-            </div>
+            {% include "fragments/page_columns.peb" %}
         </div>
 <script type="text/javascript">
 HabboView.run();

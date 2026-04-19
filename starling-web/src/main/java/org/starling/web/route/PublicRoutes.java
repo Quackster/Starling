@@ -69,6 +69,7 @@ public final class PublicRoutes {
         app.post("/me/minimail/trash/empty", meController::emptyTrash);
         app.get("/minimail/loadMessages", meController::loadLegacyMessage);
         app.post("/minimail/loadMessages", meController::loadLegacyMessage);
+        app.get("/minimail/loadMessage", meController::loadLegacyMessage);
         app.post("/minimail/loadMessage", meController::loadLegacyMessage);
         app.post("/minimail/sendMessage", meController::sendLegacyMessage);
         app.post("/minimail/deleteMessage", meController::deleteLegacyMessage);

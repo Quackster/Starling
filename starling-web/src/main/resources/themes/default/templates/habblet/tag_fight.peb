@@ -1,0 +1,25 @@
+<div class="habblet-container ">
+    <div class="cbb clearfix default ">
+        <h2 class="title">Tag fight</h2>
+        <div id="tag-fight-habblet-container">
+            <div class="fight-process" id="fight-process">Pick two tags and let them fight!</div>
+            <div id="fightForm" class="fight-form">
+                <div class="tag-field-container">First tag<br /><input maxlength="30" type="text" class="tag-input" name="tag1" id="tag1"/></div>
+                <div class="tag-field-container">Second tag<br /><input maxlength="30" type="text" class="tag-input" name="tag2" id="tag2"/></div>
+            </div>
+            <div id="fightResults" class="fight-results">
+                <div class="fight-image">
+                    <img src="{{ site.webGalleryPath }}/images/tagfight/tagfight_start.gif" alt="" name="fightanimation" id="fightanimation" />
+                    <a id="tag-fight-button" href="#" class="new-button" onclick="TagFight.init(); return false;"><b>Fight</b><i></i></a>
+                </div>
+            </div>
+            <div class="tagfight-preload">
+                <img src="{{ site.webGalleryPath }}/images/tagfight/tagfight_end_0.gif" width="1" height="1"/>
+                <img src="{{ site.webGalleryPath }}/images/tagfight/tagfight_end_1.gif" width="1" height="1"/>
+                <img src="{{ site.webGalleryPath }}/images/tagfight/tagfight_end_2.gif" width="1" height="1"/>
+                <img src="{{ site.webGalleryPath }}/images/tagfight/tagfight_loop.gif" width="1" height="1"/>
+                <img src="{{ site.webGalleryPath }}/images/tagfight/tagfight_start.gif" width="1" height="1"/>
+            </div>
+        </div>
+    </div>
+</div>

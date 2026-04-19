@@ -1,0 +1,32 @@
+{% if myTags | length > 0 %}
+<ul class="tag-list make-clickable">
+{% for tag in myTags %}
+    <li>
+        <a href="{{ site.sitePath }}/tag/{{ tag }}" class="tag" style="font-size: 10px;">{{ tag }}</a>
+        <a class="tag-remove-link" title="Remove tag" href="#"></a>
+    </li>
+{% endfor %}
+</ul>
+{% endif %}
+
+{% if tagCount < 20 %}
+<form method="post" action="{{ site.sitePath }}/myhabbo/tag/add" class="me-tag-form" onsubmit="return false;">
+    <div class="add-tag-form clearfix">
+        <a class="new-button" href="#" id="add-tag-button" onclick="TagHelper.addFormTagToMe(); return false;"><b>Add tag</b><i></i></a>
+        <input type="text" id="add-tag-input" maxlength="20" style="float: right" />
+        <em class="tag-question">{{ tagQuestion }}</em>
+    </div>
+    <div style="clear: both"></div>
+</form>
+{% else %}
+<div class="add-tag-form">You have reached the tag limit.</div>
+{% endif %}
+
+<script type="text/javascript">
+TagHelper.setTexts({
+    tagLimitText: "You have reached the tag limit.",
+    invalidTagText: "That tag isn't valid.",
+    buttonText: "OK"
+});
+TagHelper.bindEventsToTagLists();
+</script>

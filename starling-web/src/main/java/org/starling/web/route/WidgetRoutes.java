@@ -27,6 +27,8 @@ public final class WidgetRoutes {
         app.post("/habblet/ajax/tagsearch", tagHabbletController::tagSearch);
         app.post("/habblet/ajax/tagfight", tagHabbletController::tagFight);
         app.post("/habblet/ajax/tagmatch", tagHabbletController::tagMatch);
+        app.get("/habblet/mytagslist", tagHabbletController::myTagsList);
+        app.get("/myhabbo/tags/list", tagHabbletController::myTagsList);
         app.post("/myhabbo/tag/add", tagHabbletController::addTag);
         app.post("/myhabbo/tag/remove", tagHabbletController::removeTag);
         app.post("/habblet/ajax/redeemvoucher", creditsHabbletController::redeemVoucher);

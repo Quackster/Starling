@@ -92,97 +92,7 @@ body { behavior: url({{ site.webGalleryPath }}/js/csshover.htc); }
 	
 <div id="container">
 	<div id="content" style="position: relative" class="clearfix">
-		{% if newsPage == "custom_event" %}
-		<div id="column1" class="column" style="width: 770px">
-		{% else %}
-		<div id="column1" class="column">     		
-			<div class="habblet-container ">		
-				<div class="cbb clearfix default ">
-						{% if newsPage == "news" %}
-						<h2 class="title">News</h2>
-						{% endif %}
-						{% if newsPage == "events" %}
-						<h2 class="title">Events</h2>
-						{% endif %}
-						{% if newsPage == "fansites" %}
-						<h2 class="title">Fansites</h2>
-						{% endif %}
-						<div id="article-archive">
-						{% if monthlyView %}
-							{% for month in months.entrySet() %}
-								{% include "habblet/news_sidebar.peb" with { "articles": month.getValue(), "header": month.getKey() } %}
-							{% endfor %}
-						{% elseif archiveView %}
-							{% for archived in archives.entrySet() %}
-								{% include "habblet/news_sidebar.peb" with { "articles": archived.getValue(), "header": archived.getKey() } %}
-							{% endfor %}
-						{% else %}
-							{% include "habblet/news_sidebar.peb" with { "articles": articlesToday, "header": 'Today' } %}
-							{% include "habblet/news_sidebar.peb" with { "articles": articlesYesterday, "header": 'Yesterday' } %}
-							{% include "habblet/news_sidebar.peb" with { "articles": articlesThisWeek, "header": 'Last week' } %}
-							{% include "habblet/news_sidebar.peb" with { "articles": articlesThisMonth, "header": 'Last month' } %}
-							{% include "habblet/news_sidebar.peb" with { "articles": articlesPastYear, "header": 'This year' } %}
-						{% endif %}
-						{% if (not archiveView) %}
-						<a href="{{ site.sitePath }}/{{ articleLink }}/archive">More news &raquo;</a>
-						{% endif %}		
-					</div>
-				</div>
-			</div>
-			<script type="text/javascript">if (!$(document.body).hasClassName('process-template')) { Rounder.init(); }</script>
-		</div>
-		<div id="column2" class="column">
-		{% endif %}
-			<div class="habblet-container ">		
-				<div class="cbb clearfix notitle ">
-					<div id="article-wrapper">
-						<h2>{{ currentArticle.title }}</h2>
-						{% if newsPage != "custom_event" %}
-						<div class="article-meta">Posted {{ currentArticle.date }}
-							<!-- <a href="{{ site.sitePath }}/{{ articleLink }}/category/{{ currentArticle.getCategoryLower() }}"> -->
-							
-							{% set num = 1 %}
-							{% if currentArticle.categories|length > 0 %}
-							{% for category in currentArticle.categories %}				
-								<a href="{{ site.sitePath }}/{{ articleLink }}/category/{{ category.index }}">{{ category.label }}</a>{% if num < (currentArticle.categories|length) %},{% endif %}{% set num = num + 1 %}
-							{% endfor %}
-							{% endif %}			
-							<!-- </a> -->
-						</div>
-						{% endif %}
-												
-						{% if currentArticle.articleImage != "" %}
-						<img src="{{ currentArticle.articleImage }}" class="article-image"/>
-						{% endif %}
-						<p class="summary">{{ currentArticle.shortstory }}</p>
-		
-						<div class="article-body">
-							{{ currentArticle.escapedStory | raw }}
-
-							{% if newsPage != "custom_event" %}
-							<div class="article-author">- {{ currentArticle.author }}</div>
-							{% endif %}
-							
-							<script type="text/javascript" language="Javascript">
-								document.observe("dom:loaded", function() {
-									$$('.article-images a').each(function(a) {
-										Event.observe(a, 'click', function(e) {
-											Event.stop(e);
-											Overlay.lightbox(a.href, "Image is loading");
-										});
-									});
-									
-									$$('a.article-5').each(function(a) {
-										a.replace(a.innerHTML);
-									});
-								});
-							</script>
-						</div>
-					</div>
-				</div>
-			</div>
-			<script type="text/javascript">if (!$(document.body).hasClassName('process-template')) { Rounder.init(); }</script>
-		</div>
+        {% include "fragments/page_columns.peb" %}
 <script type="text/javascript">
 HabboView.run();
 </script>
@@ -190,16 +100,6 @@ HabboView.run();
 HabboView.run();
 
 </script>
-
-
-<div id="column3" class="column">
-				<div class="habblet-container ">
-						<div class="ad-container">
-						{% include "base/ads_container.peb" %}
-						</div>
-				</div>
-				<script type="text/javascript">if (!$(document.body).hasClassName('process-template')) { Rounder.init(); }</script>
-</div>
 
 <!--[if lt IE 7]>
 <script type="text/javascript">

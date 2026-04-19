@@ -1,0 +1,5 @@
+<div class="habblet-container ">
+    <div class="ad-container">
+        {% include "base/ads_container.peb" %}
+    </div>
+</div>

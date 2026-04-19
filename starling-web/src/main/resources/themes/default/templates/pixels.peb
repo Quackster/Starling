@@ -49,42 +49,7 @@ if (typeof HabboClient != "undefined") { HabboClient.windowName = "client"; }
     {% include "base/subnav.peb" %}
     <div id="container">
         <div id="content" style="position: relative" class="clearfix">
-            <div id="column1" class="column">
-                <div class="habblet-container ">
-                    <div class="cbb clearfix {{ heroPixelPanel.className }} ">
-                        <h2 class="title">{{ heroPixelPanel.title }}</h2>
-                        <div class="pixels-infobox-container">
-                            <div class="pixels-infobox-text">
-                                <h3>{{ heroPixelPanel.heading }}</h3>
-                                <ul>
-                                {% for item in heroPixelPanel.listItems %}
-                                    <li><p>{{ item }}</p></li>
-                                {% endfor %}
-                                </ul>
-                                <p>{{ heroPixelPanel.text }}</p>
-                                <p><a href="{{ heroPixelPanel.linkHref }}" target="_blank">{{ heroPixelPanel.linkLabel }}</a></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <script type="text/javascript">if (!$(document.body).hasClassName('process-template')) { Rounder.init(); }</script>
-            </div>
-            <div id="column2" class="column">
-                {% for panel in secondaryPixelPanels %}
-                <div class="habblet-container ">
-                    <div class="cbb clearfix {{ panel.className }} ">
-                        <h2 class="title">{{ panel.title }}</h2>
-                        <div id="pixels-info" class="box-content pixels-info">
-                            <div class="pixels-info-text clearfix">
-                                <img class="pixels-image" src="{{ panel.image }}" alt=""/>
-                                <p class="pixels-text">{{ panel.text }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <script type="text/javascript">if (!$(document.body).hasClassName('process-template')) { Rounder.init(); }</script>
-                {% endfor %}
-            </div>
+            {% include "fragments/page_columns.peb" %}
         </div>
 <script type="text/javascript">
 HabboView.run();

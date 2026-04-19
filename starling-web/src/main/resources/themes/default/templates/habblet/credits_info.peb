@@ -1,0 +1,12 @@
+<div class="habblet-container ">
+    <div class="cbb clearfix orange ">
+        <h2 class="title">{{ creditsInfo.title }}</h2>
+        <div id="credits-promo" class="box-content credits-info">
+            <div class="credit-info-text clearfix">
+                <img class="credits-image" src="{{ creditsInfo.image }}" alt="" width="77" height="105" />
+                <p class="credits-text">{{ creditsInfo.text }}</p>
+            </div>
+            <p class="credits-text-2">{{ creditsInfo.subtext }}</p>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,17 @@
+<div class="habblet-container ">
+    <div class="cbb clearfix {{ heroPixelPanel.className }} ">
+        <h2 class="title">{{ heroPixelPanel.title }}</h2>
+        <div class="pixels-infobox-container">
+            <div class="pixels-infobox-text">
+                <h3>{{ heroPixelPanel.heading }}</h3>
+                <ul>
+                {% for item in heroPixelPanel.listItems %}
+                    <li><p>{{ item }}</p></li>
+                {% endfor %}
+                </ul>
+                <p>{{ heroPixelPanel.text }}</p>
+                <p><a href="{{ heroPixelPanel.linkHref }}" target="_blank">{{ heroPixelPanel.linkLabel }}</a></p>
+            </div>
+        </div>
+    </div>
+</div>

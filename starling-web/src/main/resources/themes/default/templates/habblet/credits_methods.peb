@@ -1,0 +1,40 @@
+<div class="habblet-container ">
+    <div class="cbb clearfix green ">
+        <h2 class="title">How to get Credits</h2>
+        <ul id="credits-methods">
+        {% for category in creditCategories %}
+            <li id="credits-type-{{ category.id }}">
+                <h4 class="{{ category.headerClass }}">{{ category.title }}</h4>
+                <ul>
+                {% for method in category.methods %}
+                    <li class="clearfix {% if loop.index is even %}odd{% else %}even{% endif %}"><div id="method-{{ method.id }}" class="credits-method-container">
+                        <div class="credits-summary">
+                            {% if method.showButton %}
+                            <div class="credits-tools">
+                                <a class="new-button" id="{{ method.buttonId }}" href="{{ method.buttonHref }}"><b>{{ method.buttonLabel }}</b><i></i></a>
+                            </div>
+                            {% endif %}
+                            <h3>{{ method.title }}</h3>
+                            <p>{{ method.summary }}</p>
+                            <p class="credits-read-more" id="method-show-{{ method.id }}" style="display: none">Read more</p>
+                        </div>
+                        <div id="method-full-{{ method.id }}" class="credits-method-full">
+                            {{ method.details | raw }}
+                        </div>
+                        <script type="text/javascript">
+                        $("method-show-{{ method.id }}").show();
+                        $("method-full-{{ method.id }}").hide();
+                        </script>
+                    </div></li>
+                {% endfor %}
+                </ul>
+            </li>
+        {% endfor %}
+        </ul>
+        <script type="text/javascript">
+        L10N.put("credits.navi.read_more", "Read more");
+        L10N.put("credits.navi.close_fulltext", "Close instructions");
+        PaymentMethodHabblet.init();
+        </script>
+    </div>
+</div>

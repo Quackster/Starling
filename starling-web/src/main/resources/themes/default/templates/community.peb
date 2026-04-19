@@ -52,23 +52,7 @@ if (typeof HabboClient != "undefined") { HabboClient.windowName = "client"; }
     {% include "base/subnav.peb" %}
     <div id="container">
         <div id="content" style="position: relative" class="clearfix">
-            <div id="column1" class="column">
-                {% include "habblet/community_rooms.peb" %}
-                <script type="text/javascript">if (!$(document.body).hasClassName('process-template')) { Rounder.init(); }</script>
-
-                {% include "habblet/community_groups.peb" %}
-                <script type="text/javascript">if (!$(document.body).hasClassName('process-template')) { Rounder.init(); }</script>
-
-                {% include "habblet/community_active_habbos.peb" %}
-                <script type="text/javascript">if (!$(document.body).hasClassName('process-template')) { Rounder.init(); }</script>
-            </div>
-            <div id="column2" class="column">
-                {% include "habblet/community_news_promo.peb" %}
-                <script type="text/javascript">if (!$(document.body).hasClassName('process-template')) { Rounder.init(); }</script>
-
-                {% include "habblet/community_tags.peb" %}
-                <script type="text/javascript">if (!$(document.body).hasClassName('process-template')) { Rounder.init(); }</script>
-            </div>
+            {% include "fragments/page_columns.peb" %}
         </div>
 {% include "base/footer.peb" %}
 
