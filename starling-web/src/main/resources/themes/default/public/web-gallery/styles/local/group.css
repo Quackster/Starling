@@ -1,0 +1,53 @@
+body#group-page .group-page-summary {
+    padding: 12px;
+}
+
+body#group-page .group-page-badge {
+    float: left;
+    width: 48px;
+    height: 48px;
+    margin-right: 12px;
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+
+body#group-page .group-page-copy {
+    overflow: hidden;
+    color: #4d6b84;
+}
+
+body#group-page .group-page-copy p {
+    margin: 0 0 8px;
+}
+
+body#group-page .group-page-meta {
+    color: #5d7b95;
+}
+
+body#group-page .group-page-empty {
+    margin: 0;
+    color: #5d7b95;
+}
+
+body#group-page .group-page-members {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+body#group-page .group-page-members li {
+    overflow: hidden;
+    padding: 8px 0;
+    border-bottom: 1px solid #d8e4ee;
+}
+
+body#group-page .group-page-members li:last-child {
+    border-bottom: 0;
+}
+
+body#group-page .group-page-members img {
+    float: left;
+    width: 33px;
+    height: 56px;
+    margin-right: 10px;
+}

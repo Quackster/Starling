@@ -64,6 +64,20 @@ public class UserDao {
     }
 
     /**
+     * Lists users by recent activity.
+     * @param limit the max user count
+     * @return the resulting user list
+     */
+    public static List<UserEntity> listRecentlyActive(int limit) {
+        return EntityContext.withContext(context -> context.from(UserEntity.class)
+                .orderBy(order -> order
+                        .col(UserEntity::getLastOnline).desc()
+                        .col(UserEntity::getId).asc())
+                .limit(limit)
+                .toList());
+    }
+
+    /**
      * Finds by username or email.
      * @param identity the identity value
      * @return the resulting user
@@ -108,6 +122,60 @@ public class UserDao {
         user.setLastOnline(new java.sql.Timestamp(System.currentTimeMillis()));
         user.setUpdatedAt(new java.sql.Timestamp(System.currentTimeMillis()));
         save(user);
+    }
+
+    /**
+     * Marks a user online.
+     * @param userId the user id value
+     */
+    public static void markOnline(int userId) {
+        java.sql.Timestamp now = new java.sql.Timestamp(System.currentTimeMillis());
+        EntityContext.inTransaction(context -> {
+            try (var statement = context.conn()
+                    .prepareStatement("UPDATE users SET is_online = 1, last_online = ?, updated_at = ? WHERE id = ?")) {
+                statement.setTimestamp(1, now);
+                statement.setTimestamp(2, now);
+                statement.setInt(3, userId);
+                statement.executeUpdate();
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to mark user online", e);
+            }
+            return null;
+        });
+    }
+
+    /**
+     * Marks a user offline.
+     * @param userId the user id value
+     */
+    public static void markOffline(int userId) {
+        java.sql.Timestamp now = new java.sql.Timestamp(System.currentTimeMillis());
+        EntityContext.inTransaction(context -> {
+            try (var statement = context.conn()
+                    .prepareStatement("UPDATE users SET is_online = 0, last_online = ?, updated_at = ? WHERE id = ?")) {
+                statement.setTimestamp(1, now);
+                statement.setTimestamp(2, now);
+                statement.setInt(3, userId);
+                statement.executeUpdate();
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to mark user offline", e);
+            }
+            return null;
+        });
+    }
+
+    /**
+     * Resets all persisted online states.
+     */
+    public static void resetOnlineStates() {
+        EntityContext.inTransaction(context -> {
+            try (var statement = context.conn().prepareStatement("UPDATE users SET is_online = 0")) {
+                statement.executeUpdate();
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to reset user online states", e);
+            }
+            return null;
+        });
     }
 
     /**

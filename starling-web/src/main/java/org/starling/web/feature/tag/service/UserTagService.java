@@ -1,18 +1,16 @@
 package org.starling.web.feature.tag.service;
 
 import io.javalin.http.Context;
+import org.starling.storage.dao.PublicTagDao;
 import org.starling.storage.entity.UserEntity;
 import org.starling.web.util.Slugifier;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 public final class UserTagService {
 
-    private static final String SESSION_TAG_PREFIX = "public.tags.";
     private static final int MAX_TAGS_PER_USER = 20;
-    private static final List<String> DEFAULT_USER_TAGS = List.of("builder", "retro", "community");
     private static final List<String> TAG_QUESTIONS = List.of(
             "What is your favourite TV show?",
             "Who is your favourite actor?",
@@ -39,12 +37,9 @@ public final class UserTagService {
      * @return the resulting tag list
      */
     public List<String> currentUserTags(Context context, UserEntity user) {
-        @SuppressWarnings("unchecked")
-        List<String> stored = context.sessionAttribute(SESSION_TAG_PREFIX + user.getId());
-        if (stored == null || stored.isEmpty()) {
-            return new ArrayList<>(DEFAULT_USER_TAGS);
-        }
-        return new ArrayList<>(stored);
+        return PublicTagDao.listByOwner("user", user.getId()).stream()
+                .map(tag -> tag.getTag().toLowerCase(Locale.ROOT))
+                .toList();
     }
 
     /**
@@ -76,8 +71,7 @@ public final class UserTagService {
             return "taglimit";
         }
 
-        tags.add(tag);
-        context.sessionAttribute(SESSION_TAG_PREFIX + user.getId(), tags);
+        PublicTagDao.addTag("user", user.getId(), tag);
         return "valid";
     }
 
@@ -89,9 +83,7 @@ public final class UserTagService {
      */
     public void removeTag(Context context, UserEntity user, String requestedTag) {
         String tag = normalizeTag(requestedTag);
-        List<String> tags = currentUserTags(context, user);
-        tags.removeIf(existing -> existing.equals(tag));
-        context.sessionAttribute(SESSION_TAG_PREFIX + user.getId(), tags);
+        PublicTagDao.removeTag("user", user.getId(), tag);
     }
 
     /**

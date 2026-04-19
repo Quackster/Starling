@@ -333,3 +333,30 @@ body#home .tag-habblet-error {
     background: #fff3f3;
     color: #8a3b3b;
 }
+
+body#home .group-meta {
+    margin-top: 4px;
+    color: #6b849c;
+    font-size: 10px;
+}
+
+body#home #friend-invitation-habblet-container h3 {
+    margin: 0 0 8px;
+    color: #31506a;
+    font-size: 13px;
+}
+
+body#home .referral-note {
+    margin-top: 6px;
+    color: #5c7891;
+}
+
+body#home #referral-link-output {
+    margin-top: 10px;
+}
+
+body#home .referral-link-box textarea {
+    box-sizing: border-box;
+    color: #35526c;
+    font: normal 11px Verdana, Arial, sans-serif;
+}

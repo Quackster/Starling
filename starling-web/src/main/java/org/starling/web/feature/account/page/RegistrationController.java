@@ -3,6 +3,7 @@ package org.starling.web.feature.account.page;
 import io.javalin.http.Context;
 import org.starling.storage.dao.UserDao;
 import org.starling.storage.entity.UserEntity;
+import org.starling.web.feature.me.referral.ReferralService;
 import org.starling.web.feature.shared.page.PublicPageModelFactory;
 import org.starling.web.render.TemplateRenderer;
 import org.starling.web.request.RequestValues;
@@ -20,21 +21,25 @@ public final class RegistrationController {
     private final TemplateRenderer templateRenderer;
     private final UserSessionService userSessionService;
     private final PublicPageModelFactory publicPageModelFactory;
+    private final ReferralService referralService;
 
     /**
      * Creates a new RegistrationController.
      * @param templateRenderer the template renderer
      * @param userSessionService the public user session service
      * @param publicPageModelFactory the public page model factory
+     * @param referralService the referral service
      */
     public RegistrationController(
             TemplateRenderer templateRenderer,
             UserSessionService userSessionService,
-            PublicPageModelFactory publicPageModelFactory
+            PublicPageModelFactory publicPageModelFactory,
+            ReferralService referralService
     ) {
         this.templateRenderer = templateRenderer;
         this.userSessionService = userSessionService;
         this.publicPageModelFactory = publicPageModelFactory;
+        this.referralService = referralService;
     }
 
     /**
@@ -89,6 +94,7 @@ public final class RegistrationController {
             throw new IllegalStateException("Registered user could not be loaded after insert");
         }
 
+        referralService.applyReferral(createdUser, request.referral());
         UserDao.updateLogin(createdUser);
         clearRegisterState(context);
         userSessionService.start(context, createdUser);

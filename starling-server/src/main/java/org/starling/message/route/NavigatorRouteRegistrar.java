@@ -12,7 +12,6 @@ public final class NavigatorRouteRegistrar implements MessageRouteRegistrar {
      */
     @Override
     public void register(MessageRouter router) {
-        router.register(IncomingPackets.FRIENDLIST_INIT, NavigatorHandlers::handleFriendListInit);
         router.register(IncomingPackets.NAVIGATE, NavigatorHandlers::handleNavigate);
         router.register(IncomingPackets.GETUSERFLATCATS, NavigatorHandlers::handleGetUserFlatCats);
         router.register(IncomingPackets.GETFLATCAT, NavigatorHandlers::handleGetFlatCategory);

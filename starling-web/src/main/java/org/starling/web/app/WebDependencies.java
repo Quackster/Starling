@@ -17,6 +17,7 @@ import org.starling.web.feature.me.mail.MinimailRecipientService;
 import org.starling.web.feature.me.mail.MinimailSessionState;
 import org.starling.web.feature.me.mail.MinimailViewFactory;
 import org.starling.web.feature.me.mail.MinimailWriteService;
+import org.starling.web.feature.me.referral.ReferralService;
 import org.starling.web.feature.shared.page.PublicPageModelFactory;
 import org.starling.web.feature.shared.page.layout.PublicPageLayoutRenderer;
 import org.starling.web.feature.shared.page.navigation.PublicNavigationModelFactory;
@@ -46,6 +47,7 @@ public record WebDependencies(
         MinimailViewFactory minimailViewFactory,
         MinimailSessionState minimailSessionState,
         LegacyMinimailJsonEncoder legacyMinimailJsonEncoder,
+        ReferralService referralService,
         UserTagService userTagService,
         TagDirectoryService tagDirectoryService,
         CommunityWidgetsFactory communityWidgetsFactory,

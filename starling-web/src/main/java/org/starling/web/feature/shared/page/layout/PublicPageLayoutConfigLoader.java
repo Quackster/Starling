@@ -47,7 +47,10 @@ public final class PublicPageLayoutConfigLoader {
                         stringList(columnValues.get("widgets"))
                 ));
             }
-            pages.put(entry.getKey(), new PageLayoutConfig(columns));
+            pages.put(entry.getKey(), new PageLayoutConfig(
+                    columns,
+                    stringList(values.get("disabledWidgets"))
+            ));
         }
 
         return new PublicPageLayoutConfig(widgets, pages);

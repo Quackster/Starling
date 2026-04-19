@@ -1,0 +1,69 @@
+<div class="habblet-container ">
+    <div class="cbb clearfix blue ">
+        <div class="box-tabs-container clearfix">
+            <h2>Groups</h2>
+            <ul class="box-tabs">
+                <li id="tab-me-groups-hot"><a href="#">Hot Groups</a><span class="tab-spacer"></span></li>
+                <li id="tab-me-groups-mine" class="selected"><a href="#">My Groups</a><span class="tab-spacer"></span></li>
+            </ul>
+        </div>
+        <div id="tab-me-groups-hot-content" style="display: none">
+            {% if hotGroups | length > 0 %}
+            <ul class="habblet-list two-cols clearfix">
+            {% for group in hotGroups %}
+                <li class="{% if loop.index is even %}even right{% else %}odd left{% endif %}" style="background-image: url({{ site.sitePath }}/habbo-imaging/badge/{{ group.badge }}.gif)">
+                    <a class="item" href="{{ group.url }}">{{ group.name }}</a>
+                    <div class="group-meta">{{ group.memberCount }} members</div>
+                </li>
+            {% endfor %}
+            </ul>
+            {% else %}
+            <div class="habblet-content-info">No groups have been created yet.</div>
+            {% endif %}
+        </div>
+        <div id="tab-me-groups-mine-content">
+            <div id="groups-habblet-info" class="habblet-content-info">
+                Browse your memberships and jump into the groups you belong to.
+            </div>
+            {% if myGroups | length > 0 %}
+            <ul class="habblet-list two-cols clearfix">
+            {% for group in myGroups %}
+                <li class="{% if loop.index is even %}even right{% else %}odd left{% endif %}" style="background-image: url({{ site.sitePath }}/habbo-imaging/badge/{{ group.badge }}.gif)">
+                    <a class="item" href="{{ group.url }}">{{ group.name }}</a>
+                    <div class="group-meta">{{ group.memberCount }} members</div>
+                </li>
+            {% endfor %}
+            </ul>
+            {% else %}
+            <div class="habblet-content-info">You are not a member of any groups yet.</div>
+            {% endif %}
+        </div>
+        <script type="text/javascript">
+        document.observe("dom:loaded", function() {
+            var hotTab = $("tab-me-groups-hot");
+            var myTab = $("tab-me-groups-mine");
+            var hotContent = $("tab-me-groups-hot-content");
+            var myContent = $("tab-me-groups-mine-content");
+            if (!hotTab || !myTab || !hotContent || !myContent) {
+                return;
+            }
+
+            hotTab.observe("click", function(event) {
+                Event.stop(event);
+                hotTab.addClassName("selected");
+                myTab.removeClassName("selected");
+                hotContent.show();
+                myContent.hide();
+            });
+
+            myTab.observe("click", function(event) {
+                Event.stop(event);
+                myTab.addClassName("selected");
+                hotTab.removeClassName("selected");
+                myContent.show();
+                hotContent.hide();
+            });
+        });
+        </script>
+    </div>
+</div>

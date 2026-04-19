@@ -119,6 +119,25 @@ body { behavior: url({{ site.webGalleryPath }}/js/csshover.htc); }
 				<script type="text/javascript">if (!$(document.body).hasClassName('process-template')) { Rounder.init(); }</script>
 			 
 
+{% if inviter is defined %}
+				<div class="habblet-container ">		
+						<div class="cbb clearfix white ">
+	
+							<h2 class="title">Welcome</h2>
+						<div id="inviter-info-habblet">
+        <p><span class="text">Your friend {{ inviter.name }} is waiting for you!<em class="{{ inviter.status }}"></em></span><span class="bottom"></span></p>
+        <img alt="{{ inviter.name }}" title="{{ inviter.name }}" src="{{ site.sitePath }}/habbo-imaging/avatarimage?figure={{ inviter.figure }}&size=b&direction=4&head_direction=4&crr=0&gesture=sml&frame=1" />
+
+        <div style="clear: left; text-align: center; padding-top: 10px; font-size: 10px">Find them on your friend list when you enter the hotel.</div>
+    </div>
+	
+						
+					</div>
+				</div>
+				<script type="text/javascript">if (!$(document.body).hasClassName('process-template')) { Rounder.init(); }</script>
+{% endif %}
+
+
 				     		
 				<div class="habblet-container ">		
 						<div class="cbb clearfix green ">

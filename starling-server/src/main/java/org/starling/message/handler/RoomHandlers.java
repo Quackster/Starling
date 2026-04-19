@@ -45,6 +45,7 @@ public final class RoomHandlers {
      * @param msg the msg value
      */
     public static void handleRoomDirectory(Session session, ClientMessage msg) {
+        boolean wasActive = session.getRoomPresence().active();
         boolean publicRoom = msg.readBoolean();
         int roomId = msg.readInt();
         int doorId = msg.readInt();
@@ -73,6 +74,9 @@ public final class RoomHandlers {
         }
         roomLifecycleService.enterPublicRoom(session, room, doorId);
         responses.enterPublicRoom(session, room, doorId);
+        if (!wasActive && session.getPlayer() != null && session.getRoomPresence().active()) {
+            session.getPlayer().getMessenger().sendStatusUpdate();
+        }
     }
 
     /**
@@ -124,6 +128,7 @@ public final class RoomHandlers {
      * @param msg the msg value
      */
     public static void handleGotoFlat(Session session, ClientMessage msg) {
+        boolean wasActive = session.getRoomPresence().active();
         Player player = SessionGuards.requirePlayer(session, log, "goto flat");
         if (player == null) {
             return;
@@ -141,6 +146,9 @@ public final class RoomHandlers {
             return;
         }
         responses.enterPrivateRoom(session, player, room);
+        if (!wasActive && session.getRoomPresence().active()) {
+            player.getMessenger().sendStatusUpdate();
+        }
     }
 
     /**
@@ -149,7 +157,11 @@ public final class RoomHandlers {
      * @param msg the msg value
      */
     public static void handleQuit(Session session, ClientMessage msg) {
+        boolean wasActive = session.getRoomPresence().active();
         roomLifecycleService.handleQuit(session);
+        if (wasActive && session.getPlayer() != null) {
+            session.getPlayer().getMessenger().sendStatusUpdate();
+        }
     }
 
     /**

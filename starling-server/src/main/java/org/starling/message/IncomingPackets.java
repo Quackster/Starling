@@ -28,7 +28,20 @@ public final class IncomingPackets {
     public static final int GET_POSSIBLE_ACHIEVEMENTS = 370;
 
     // Messenger / Friend list
-    public static final int FRIENDLIST_INIT = 12;
+    public static final int MESSENGER_INIT = 12;
+    public static final int FRIENDLIST_INIT = MESSENGER_INIT;
+    public static final int FRIENDLIST_UPDATE = 15;
+    public static final int MESSENGER_MARK_READ = 32;
+    public static final int MESSENGER_SEND_MESSAGE = 33;
+    public static final int INVITE_FRIEND = 34;
+    public static final int MESSENGER_ACCEPT_BUDDY = 37;
+    public static final int MESSENGER_DECLINE_BUDDY = 38;
+    public static final int MESSENGER_REQUEST_BUDDY = 39;
+    public static final int MESSENGER_REMOVE_BUDDY = 40;
+    public static final int FINDUSER = 41;
+    public static final int MESSENGER_GET_MESSAGES = 191;
+    public static final int MESSENGER_GET_REQUESTS = 233;
+    public static final int FOLLOW_FRIEND = 262;
 
     // Room
     public static final int ROOM_DIRECTORY = 2;

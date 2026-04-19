@@ -1,10 +1,15 @@
 package org.starling.web.feature.tag.service;
 
 import io.javalin.http.Context;
+import org.starling.storage.dao.GroupDao;
+import org.starling.storage.dao.PublicTagDao;
+import org.starling.storage.dao.UserDao;
+import org.starling.storage.entity.GroupEntity;
 import org.starling.storage.entity.UserEntity;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -201,30 +206,58 @@ public final class TagDirectoryService {
 
     private List<TagOwner> owners(Context context, Optional<UserEntity> currentUser) {
         List<TagOwner> owners = new ArrayList<>();
-        currentUser.ifPresent(user -> owners.add(new TagOwner(
-                "user",
-                user.getUsername(),
-                user.getFigure(),
-                "",
-                user.getMotto() == null || user.getMotto().isBlank() ? "Exploring the hotel." : user.getMotto(),
-                userTagService.currentUserTags(context, user),
-                "/home/" + user.getUsername()
-        )));
+        Map<String, List<String>> tagsByOwner = loadTagsByOwner();
 
-        owners.add(new TagOwner("user", "RetroGuide", "hr-100-61.hd-180-2.ch-210-92.lg-270-82.sh-290-64", "", "Keeping the welcome room lively.", List.of("retro", "community", "events"), "/home/RetroGuide"));
-        owners.add(new TagOwner("user", "PixelPilot", "hr-165-42.hd-190-1.ch-255-66.lg-280-82.sh-305-64", "", "Always testing a new layout idea.", List.of("builder", "pixels", "design"), "/home/PixelPilot"));
-        owners.add(new TagOwner("user", "Newsie", "hr-515-45.hd-600-2.ch-255-92.lg-720-82.sh-730-64", "", "Knows every headline before breakfast.", List.of("news", "fansites", "community"), "/home/Newsie"));
-        owners.add(new TagOwner("user", "ByteBeat", "hr-828-61.hd-180-1.ch-210-66.lg-270-82.sh-290-91", "", "Arcade tournaments every Friday.", List.of("games", "arcade", "retro"), "/home/ByteBeat"));
-        owners.add(new TagOwner("user", "WaveRider", "hr-100-42.hd-180-1.ch-210-66.lg-270-82.sh-290-91", "", "Pool deck DJ and sunset host.", List.of("music", "community", "summer"), "/home/WaveRider"));
+        for (UserEntity user : UserDao.listAll()) {
+            List<String> tags = tagsByOwner.get(ownerKey("user", user.getId()));
+            if (tags == null || tags.isEmpty()) {
+                continue;
+            }
 
-        owners.add(new TagOwner("group", "Habbo Builders", "", "b0514Xs09114s05013s05014", "Builders sharing layouts and inspiration.", List.of("builder", "design", "retro"), "/community"));
-        owners.add(new TagOwner("group", "Rare Traders", "", "b04124s09113s05013s05014", "A busy trading circle for collectors.", List.of("trading", "rares", "coins"), "/community"));
-        owners.add(new TagOwner("group", "Pixel Collectors", "", "b0509Xs09114s05013s05014", "Everything about pixels and effects.", List.of("pixels", "effects", "offers"), "/community"));
-        owners.add(new TagOwner("group", "Rooftop Residents", "", "b0404Xs09114s05013s05014", "Late-night chats and skyline rooms.", List.of("community", "rooms", "events"), "/community"));
+            owners.add(new TagOwner(
+                    "user",
+                    user.getUsername(),
+                    user.getFigure(),
+                    "",
+                    user.getMotto() == null || user.getMotto().isBlank() ? "Exploring the hotel." : user.getMotto(),
+                    tags,
+                    "/home/" + user.getUsername()
+            ));
+        }
+
+        for (GroupEntity group : GroupDao.listAll()) {
+            List<String> tags = tagsByOwner.get(ownerKey("group", group.getId()));
+            if (tags == null || tags.isEmpty()) {
+                continue;
+            }
+
+            owners.add(new TagOwner(
+                    "group",
+                    group.getName(),
+                    "",
+                    group.getBadge(),
+                    group.getDescription(),
+                    tags,
+                    "/groups/" + group.getAlias()
+            ));
+        }
 
         return owners.stream()
                 .sorted(Comparator.comparing(TagOwner::name, String.CASE_INSENSITIVE_ORDER))
                 .toList();
+    }
+
+    private Map<String, List<String>> loadTagsByOwner() {
+        Map<String, List<String>> tagsByOwner = new HashMap<>();
+        for (var tag : PublicTagDao.listAll()) {
+            tagsByOwner.computeIfAbsent(ownerKey(tag.getType(), tag.getOwnerId()), ignored -> new ArrayList<>())
+                    .add(tag.getTag());
+        }
+        return tagsByOwner;
+    }
+
+    private String ownerKey(String type, int ownerId) {
+        return type + ":" + ownerId;
     }
 
     private record TagOwner(

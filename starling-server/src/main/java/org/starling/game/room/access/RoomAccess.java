@@ -10,6 +10,8 @@ import org.starling.storage.entity.RoomEntity;
  */
 public final class RoomAccess {
 
+    public static final int PUBLIC_ROOM_OFFSET = 1000;
+
     /**
      * Creates a new RoomAccess.
      */
@@ -60,6 +62,16 @@ public final class RoomAccess {
         if (room != null) {
             return room;
         }
-        return PublicRoomDao.findById(roomIdOrPort);
+
+        room = PublicRoomDao.findById(roomIdOrPort);
+        if (room != null) {
+            return room;
+        }
+
+        if (roomIdOrPort >= PUBLIC_ROOM_OFFSET) {
+            return PublicRoomDao.findById(roomIdOrPort - PUBLIC_ROOM_OFFSET);
+        }
+
+        return null;
     }
 }

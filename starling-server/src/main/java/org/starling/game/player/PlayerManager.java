@@ -1,8 +1,9 @@
 package org.starling.game.player;
 
 import org.starling.net.session.Session;
+import org.starling.storage.EntityContext;
+import org.starling.storage.dao.UserDao;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Tracks authenticated player sessions by id and username.
@@ -40,6 +42,9 @@ public final class PlayerManager {
     public void clear() {
         sessionsByPlayerId.clear();
         sessionsByUsername.clear();
+        if (EntityContext.isInitialized()) {
+            UserDao.resetOnlineStates();
+        }
     }
 
     /**
@@ -66,22 +71,49 @@ public final class PlayerManager {
         for (Session displacedSession : displacedSessions) {
             displacedSession.getChannel().close();
         }
+
+        if (EntityContext.isInitialized()) {
+            UserDao.markOnline(player.getId());
+            player.getMessenger().sendStatusUpdate();
+        }
     }
 
     /**
      * Unregisters.
      * @param session the session value
      */
-    public void unregister(Session session) {
+    public boolean unregister(Session session) {
         Player player = session.getPlayer();
         if (player == null) {
-            return;
+            return false;
         }
 
-        sessionsByPlayerId.computeIfPresent(player.getId(),
-                (ignored, existing) -> existing == session ? null : existing);
-        sessionsByUsername.computeIfPresent(normalize(player.getUsername()),
-                (ignored, existing) -> existing == session ? null : existing);
+        AtomicBoolean removedById = new AtomicBoolean(false);
+        sessionsByPlayerId.compute(player.getId(), (ignored, existing) -> {
+            if (existing == session) {
+                removedById.set(true);
+                return null;
+            }
+            return existing;
+        });
+
+        AtomicBoolean removedByUsername = new AtomicBoolean(false);
+        sessionsByUsername.compute(normalize(player.getUsername()), (ignored, existing) -> {
+            if (existing == session) {
+                removedByUsername.set(true);
+                return null;
+            }
+            return existing;
+        });
+
+        boolean removed = removedById.get() || removedByUsername.get();
+
+        if (removed && EntityContext.isInitialized()) {
+            UserDao.markOffline(player.getId());
+            player.getMessenger().sendStatusUpdate();
+        }
+
+        return removed;
     }
 
     /**

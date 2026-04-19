@@ -2,8 +2,18 @@ package org.starling.web.cms.bootstrap;
 
 import org.starling.storage.DatabaseSupport;
 import org.starling.storage.EntityContext;
+import org.starling.storage.dao.GroupDao;
+import org.starling.storage.dao.PublicTagDao;
+import org.starling.storage.dao.RecommendedItemDao;
+import org.starling.storage.dao.RoomDao;
 import org.starling.storage.dao.UserDao;
+import org.starling.storage.entity.GroupEntity;
+import org.starling.storage.entity.GroupMembershipEntity;
+import org.starling.storage.entity.PublicTagEntity;
+import org.starling.storage.entity.RecommendedItemEntity;
+import org.starling.storage.entity.RoomEntity;
 import org.starling.storage.entity.UserEntity;
+import org.starling.storage.entity.UserReferralEntity;
 import org.starling.web.cms.admin.CmsAdminDao;
 import org.starling.web.cms.auth.PasswordHasher;
 import org.starling.web.cms.article.CmsArticle;
@@ -14,6 +24,7 @@ import org.starling.web.cms.page.CmsPageDraft;
 import org.starling.web.config.WebConfig;
 import org.starling.web.feature.me.campaign.HotCampaignDao;
 import org.starling.web.feature.me.mail.MinimailDao;
+import org.starling.web.util.Slugifier;
 
 import java.nio.file.Files;
 import java.sql.Statement;
@@ -48,8 +59,106 @@ public final class CmsBootstrap {
      */
     public static void ensureSharedSchema() {
         EntityContext.withContext(context -> {
-            context.createTables(UserEntity.class);
-            return null;
+            try (Statement statement = context.conn().createStatement()) {
+                context.createTables(
+                        UserEntity.class,
+                        RoomEntity.class,
+                        GroupEntity.class,
+                        GroupMembershipEntity.class,
+                        PublicTagEntity.class,
+                        RecommendedItemEntity.class,
+                        UserReferralEntity.class
+                );
+
+                statement.executeUpdate("""
+                        CREATE TABLE IF NOT EXISTS groups_details (
+                            id INT NOT NULL AUTO_INCREMENT,
+                            alias VARCHAR(80) NOT NULL,
+                            name VARCHAR(64) NOT NULL,
+                            badge VARCHAR(64) NOT NULL DEFAULT '',
+                            description TEXT NOT NULL,
+                            ownerid INT NOT NULL,
+                            roomid INT NOT NULL DEFAULT 0,
+                            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                            PRIMARY KEY (id),
+                            UNIQUE KEY uk_groups_details_alias (alias)
+                        ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+                        """);
+                statement.executeUpdate("""
+                        CREATE TABLE IF NOT EXISTS groups_memberships (
+                            id INT NOT NULL AUTO_INCREMENT,
+                            userid INT NOT NULL,
+                            groupid INT NOT NULL,
+                            member_rank INT NOT NULL DEFAULT 0,
+                            is_current INT NOT NULL DEFAULT 0,
+                            is_pending INT NOT NULL DEFAULT 0,
+                            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                            PRIMARY KEY (id),
+                            UNIQUE KEY uk_groups_memberships_user_group (userid, groupid),
+                            KEY idx_groups_memberships_group (groupid)
+                        ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+                        """);
+                statement.executeUpdate("""
+                        CREATE TABLE IF NOT EXISTS tags (
+                            id INT NOT NULL AUTO_INCREMENT,
+                            ownerid INT NOT NULL,
+                            tag VARCHAR(25) NOT NULL,
+                            type VARCHAR(16) NOT NULL DEFAULT 'user',
+                            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                            PRIMARY KEY (id),
+                            UNIQUE KEY uk_tags_owner_type_tag (ownerid, type, tag)
+                        ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+                        """);
+                statement.executeUpdate("""
+                        CREATE TABLE IF NOT EXISTS recommended (
+                            id INT NOT NULL AUTO_INCREMENT,
+                            type VARCHAR(16) NOT NULL,
+                            rec_id INT NOT NULL,
+                            sponsored INT NOT NULL DEFAULT 0,
+                            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                            PRIMARY KEY (id),
+                            KEY idx_recommended_type (type, sponsored)
+                        ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+                        """);
+                statement.executeUpdate("""
+                        CREATE TABLE IF NOT EXISTS user_referrals (
+                            id INT NOT NULL AUTO_INCREMENT,
+                            invited_userid INT NOT NULL,
+                            inviter_userid INT NOT NULL,
+                            reward_credits INT NOT NULL DEFAULT 0,
+                            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                            PRIMARY KEY (id),
+                            UNIQUE KEY uk_user_referrals_invited_user (invited_userid),
+                            KEY idx_user_referrals_inviter_user (inviter_userid)
+                        ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+                        """);
+                statement.executeUpdate("ALTER TABLE groups_details ADD COLUMN IF NOT EXISTS alias VARCHAR(80) NOT NULL DEFAULT '' AFTER id");
+                statement.executeUpdate("ALTER TABLE groups_details ADD COLUMN IF NOT EXISTS badge VARCHAR(64) NOT NULL DEFAULT '' AFTER name");
+                statement.executeUpdate("ALTER TABLE groups_details ADD COLUMN IF NOT EXISTS description TEXT NOT NULL AFTER badge");
+                statement.executeUpdate("ALTER TABLE groups_details ADD COLUMN IF NOT EXISTS ownerid INT NOT NULL DEFAULT 0 AFTER description");
+                statement.executeUpdate("ALTER TABLE groups_details ADD COLUMN IF NOT EXISTS roomid INT NOT NULL DEFAULT 0 AFTER ownerid");
+                statement.executeUpdate("ALTER TABLE groups_details ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER roomid");
+                statement.executeUpdate("ALTER TABLE groups_details ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER created_at");
+                statement.executeUpdate("ALTER TABLE groups_memberships ADD COLUMN IF NOT EXISTS member_rank INT NOT NULL DEFAULT 0 AFTER groupid");
+                statement.executeUpdate("ALTER TABLE groups_memberships ADD COLUMN IF NOT EXISTS is_current INT NOT NULL DEFAULT 0 AFTER member_rank");
+                statement.executeUpdate("ALTER TABLE groups_memberships ADD COLUMN IF NOT EXISTS is_pending INT NOT NULL DEFAULT 0 AFTER is_current");
+                statement.executeUpdate("ALTER TABLE groups_memberships ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER is_pending");
+                statement.executeUpdate("ALTER TABLE tags ADD COLUMN IF NOT EXISTS type VARCHAR(16) NOT NULL DEFAULT 'user' AFTER tag");
+                statement.executeUpdate("ALTER TABLE tags ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER type");
+                statement.executeUpdate("ALTER TABLE recommended ADD COLUMN IF NOT EXISTS sponsored INT NOT NULL DEFAULT 0 AFTER rec_id");
+                statement.executeUpdate("ALTER TABLE recommended ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER sponsored");
+                statement.executeUpdate("ALTER TABLE user_referrals ADD COLUMN IF NOT EXISTS reward_credits INT NOT NULL DEFAULT 0 AFTER inviter_userid");
+                statement.executeUpdate("ALTER TABLE user_referrals ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER reward_credits");
+                statement.executeUpdate("UPDATE groups_details SET alias = lower(replace(name, ' ', '-')) WHERE alias IS NULL OR alias = ''");
+                statement.executeUpdate("UPDATE groups_details SET badge = '' WHERE badge IS NULL");
+                statement.executeUpdate("UPDATE groups_details SET description = '' WHERE description IS NULL");
+                statement.executeUpdate("UPDATE recommended SET sponsored = 0 WHERE sponsored IS NULL");
+                statement.executeUpdate("UPDATE users SET credits = 0 WHERE credits IS NULL");
+                return null;
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to ensure shared schema", e);
+            }
         });
     }
 
@@ -191,6 +300,11 @@ public final class CmsBootstrap {
      * Seeds default cms content.
      */
     public static void seedDefaults() {
+        UserEntity bootstrapUser = UserDao.findByUsername("admin");
+        List<RoomEntity> bootstrapRooms = seedBootstrapRooms(bootstrapUser);
+        List<GroupEntity> bootstrapGroups = seedBootstrapGroups(bootstrapUser, bootstrapRooms);
+        seedBootstrapRecommendedItems(bootstrapRooms, bootstrapGroups);
+        seedBootstrapTags(bootstrapUser, bootstrapGroups);
         seedHotCampaigns();
         CmsPageDao.seedDefault(new CmsPageDraft(
                 "home",
@@ -207,6 +321,127 @@ public final class CmsBootstrap {
         ));
         seedBootstrapArticles();
         seedBootstrapMinimail();
+    }
+
+    private static List<RoomEntity> seedBootstrapRooms(UserEntity bootstrapUser) {
+        List<RoomEntity> existingRooms = RoomDao.findTopRated(12);
+        if (!existingRooms.isEmpty()) {
+            return existingRooms;
+        }
+        if (bootstrapUser == null) {
+            return List.of();
+        }
+
+        List<RoomSeed> seeds = List.of(
+                new RoomSeed("Welcome Lounge", "Start here, meet people, and get your bearings.", 18),
+                new RoomSeed("Skyline Suite", "Rooftop conversations and city-night screenshots.", 14),
+                new RoomSeed("Battle Arcade", "Retro cabinets, tournaments, and bragging rights.", 11),
+                new RoomSeed("Library Lounge", "A quieter social room with warm corners and reading nooks.", 8),
+                new RoomSeed("Pool Deck", "Sunset chats and laid-back summer vibes.", 6),
+                new RoomSeed("Pixel Workshop", "Builders swapping layouts, palettes, and room ideas.", 10)
+        );
+
+        for (RoomSeed seed : seeds) {
+            RoomEntity room = new RoomEntity();
+            room.setCategoryId(1);
+            room.setOwnerId(bootstrapUser.getId());
+            room.setOwnerName(bootstrapUser.getUsername());
+            room.setName(seed.name());
+            room.setDescription(seed.description());
+            room.setCurrentUsers(seed.currentUsers());
+            room.setNavigatorFilter("popular");
+            RoomDao.save(room);
+        }
+
+        return RoomDao.findTopRated(12);
+    }
+
+    private static List<GroupEntity> seedBootstrapGroups(UserEntity bootstrapUser, List<RoomEntity> bootstrapRooms) {
+        List<GroupEntity> existingGroups = GroupDao.listAll();
+        if (!existingGroups.isEmpty()) {
+            return existingGroups;
+        }
+        if (bootstrapUser == null) {
+            return List.of();
+        }
+
+        List<GroupSeed> seeds = List.of(
+                new GroupSeed("Welcome Crew", "b0514Xs09114s05013s05014", "Helping new players settle into the hotel."),
+                new GroupSeed("Skyline Social", "b04124s09113s05013s05014", "Late-night chats, music picks, and rooftop hangs."),
+                new GroupSeed("Pixel Builders", "b0509Xs09114s05013s05014", "Builders sharing layouts, feedback, and room tours."),
+                new GroupSeed("Arcade League", "b0601Xs09114s05013s05014", "Competitive events and high-score nights."),
+                new GroupSeed("Poolside Club", "b0603Xs09114s05013s05014", "Relaxed socials, summer rooms, and snapshots."),
+                new GroupSeed("Newswire", "b0604Xs09114s05013s05014", "Community highlights, updates, and event recaps.")
+        );
+
+        for (int index = 0; index < seeds.size(); index++) {
+            GroupSeed seed = seeds.get(index);
+            GroupEntity group = new GroupEntity();
+            group.setAlias(Slugifier.slugify(seed.name()));
+            group.setName(seed.name());
+            group.setBadge(seed.badge());
+            group.setDescription(seed.description());
+            group.setOwnerId(bootstrapUser.getId());
+            if (!bootstrapRooms.isEmpty()) {
+                group.setRoomId(bootstrapRooms.get(index % bootstrapRooms.size()).getId());
+            }
+            GroupDao.save(group);
+            GroupDao.ensureMembership(bootstrapUser.getId(), group.getId(), 3, index == 0);
+        }
+
+        return GroupDao.listAll();
+    }
+
+    private static void seedBootstrapRecommendedItems(List<RoomEntity> bootstrapRooms, List<GroupEntity> bootstrapGroups) {
+        if (RecommendedItemDao.listIds("room", null, 1).isEmpty()) {
+            for (int index = 0; index < Math.min(4, bootstrapRooms.size()); index++) {
+                RecommendedItemEntity item = new RecommendedItemEntity();
+                item.setType("room");
+                item.setRecId(bootstrapRooms.get(index).getId());
+                item.setSponsored(0);
+                RecommendedItemDao.save(item);
+            }
+        }
+
+        if (RecommendedItemDao.listIds("group", null, 1).isEmpty()) {
+            for (int index = 0; index < Math.min(4, bootstrapGroups.size()); index++) {
+                RecommendedItemEntity item = new RecommendedItemEntity();
+                item.setType("group");
+                item.setRecId(bootstrapGroups.get(index).getId());
+                item.setSponsored(1);
+                RecommendedItemDao.save(item);
+            }
+        }
+    }
+
+    private static void seedBootstrapTags(UserEntity bootstrapUser, List<GroupEntity> bootstrapGroups) {
+        if (bootstrapUser != null) {
+            PublicTagDao.addTag("user", bootstrapUser.getId(), "retro");
+            PublicTagDao.addTag("user", bootstrapUser.getId(), "builder");
+            PublicTagDao.addTag("user", bootstrapUser.getId(), "community");
+        }
+
+        for (GroupEntity group : bootstrapGroups) {
+            if (group.getName().contains("Welcome")) {
+                PublicTagDao.addTag("group", group.getId(), "community");
+                PublicTagDao.addTag("group", group.getId(), "newbies");
+            } else if (group.getName().contains("Skyline")) {
+                PublicTagDao.addTag("group", group.getId(), "social");
+                PublicTagDao.addTag("group", group.getId(), "music");
+            } else if (group.getName().contains("Builders")) {
+                PublicTagDao.addTag("group", group.getId(), "builder");
+                PublicTagDao.addTag("group", group.getId(), "design");
+            } else if (group.getName().contains("Arcade")) {
+                PublicTagDao.addTag("group", group.getId(), "games");
+                PublicTagDao.addTag("group", group.getId(), "retro");
+            } else if (group.getName().contains("Pool")) {
+                PublicTagDao.addTag("group", group.getId(), "summer");
+                PublicTagDao.addTag("group", group.getId(), "rooms");
+            } else {
+                PublicTagDao.addTag("group", group.getId(), "news");
+                PublicTagDao.addTag("group", group.getId(), "events");
+            }
+        }
     }
 
     private static void seedBootstrapArticles() {
@@ -327,5 +562,11 @@ public final class CmsBootstrap {
                 Minimail is now available from your /me page, so you can keep in touch without leaving the hotel site.
                 """
         );
+    }
+
+    private record RoomSeed(String name, String description, int currentUsers) {
+    }
+
+    private record GroupSeed(String name, String badge, String description) {
     }
 }

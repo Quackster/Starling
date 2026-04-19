@@ -1,0 +1,34 @@
+<div class="habblet-container ">
+    <div class="cbb clearfix default ">
+        <h2 class="title">Invite Friends</h2>
+        <div id="friend-invitation-habblet-container" class="box-content">
+            <div id="invitation-link-container">
+                <h3>Enjoy {{ site.siteName }} more with friends</h3>
+                <div class="copytext">
+                    <p>Share your invite link with friends. You earn {{ referralReward }} credits for every successful signup.</p>
+                    <p class="referral-note">Successful invites so far: <strong>{{ referralCount }}</strong></p>
+                </div>
+                <div class="invitation-buttons clearfix">
+                    <a class="new-button" id="getlink-friend-invite-button" href="#"><b>Get invite link</b><i></i></a>
+                </div>
+                <div id="referral-link-output"></div>
+            </div>
+        </div>
+        <script type="text/javascript">
+        document.observe("dom:loaded", function() {
+            var inviteButton = $("getlink-friend-invite-button");
+            if (!inviteButton) {
+                return;
+            }
+
+            inviteButton.observe("click", function(event) {
+                Event.stop(event);
+                new Ajax.Updater("referral-link-output", "{{ site.sitePath }}/habblet/ajax/mgmgetinvitelink", {
+                    method: "get",
+                    evalScripts: true
+                });
+            });
+        });
+        </script>
+    </div>
+</div>

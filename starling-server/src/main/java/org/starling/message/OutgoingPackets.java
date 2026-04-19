@@ -26,7 +26,20 @@ public final class OutgoingPackets {
     public static final int POSSIBLE_ACHIEVEMENTS = 436;
 
     // Messenger / Friend list
-    public static final int FRIEND_LIST_INIT = 12;
+    public static final int MESSENGER_INIT = 12;
+    public static final int FRIEND_LIST_INIT = MESSENGER_INIT;
+    public static final int FRIENDS_UPDATE = 13;
+    public static final int FRIEND_REQUEST = 132;
+    public static final int MESSENGER_MESSAGE = 134;
+    public static final int INSTANT_MESSAGE_INVITATION = 135;
+    public static final int MESSENGER_ERROR = 260;
+    public static final int INSTANT_MESSAGE_ERROR = 261;
+    public static final int INVITATION_ERROR = 262;
+    public static final int FRIEND_REQUESTS = 314;
+    public static final int BUDDY_REQUEST_RESULT = 315;
+    public static final int FOLLOW_ERROR = 349;
+    public static final int MESSENGER_SEARCH = 435;
+    public static final int ROOM_FORWARD = 286;
 
     // Room
     public static final int OPC_OK = 19;

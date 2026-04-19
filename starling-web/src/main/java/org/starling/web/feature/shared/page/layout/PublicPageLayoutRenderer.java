@@ -3,9 +3,11 @@ package org.starling.web.feature.shared.page.layout;
 import org.starling.web.render.TemplateRenderer;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public final class PublicPageLayoutRenderer {
 
@@ -34,10 +36,14 @@ public final class PublicPageLayoutRenderer {
             return Map.of("columns", List.of());
         }
 
+        Set<String> disabledWidgets = new HashSet<>(pageLayout.disabledWidgets());
         List<Map<String, Object>> columns = new ArrayList<>();
         for (PageColumnConfig column : pageLayout.columns()) {
             List<Map<String, Object>> widgets = new ArrayList<>();
             for (String widgetKey : column.widgets()) {
+                if (disabledWidgets.contains(widgetKey)) {
+                    continue;
+                }
                 PageWidgetConfig widget = config.widgets().get(widgetKey);
                 if (widget == null || widget.template().isBlank()) {
                     continue;

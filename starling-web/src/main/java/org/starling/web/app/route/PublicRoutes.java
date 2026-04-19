@@ -2,6 +2,7 @@ package org.starling.web.app.route;
 
 import io.javalin.Javalin;
 import org.starling.web.feature.community.page.CommunityController;
+import org.starling.web.feature.community.page.GroupController;
 import org.starling.web.feature.community.page.NewsController;
 import org.starling.web.feature.content.page.PageController;
 import org.starling.web.feature.credits.page.CreditsController;
@@ -26,6 +27,7 @@ public final class PublicRoutes {
     private final PolicyController policyController;
     private final CreditsController creditsController;
     private final TagController tagController;
+    private final GroupController groupController;
 
     /**
      * Creates a new PublicRoutes registrar.
@@ -40,6 +42,7 @@ public final class PublicRoutes {
      * @param policyController the policy controller
      * @param creditsController the credits controller
      * @param tagController the tag controller
+     * @param groupController the group controller
      */
     public PublicRoutes(
             HomepageController homepageController,
@@ -52,7 +55,8 @@ public final class PublicRoutes {
             PageController pageController,
             PolicyController policyController,
             CreditsController creditsController,
-            TagController tagController
+            TagController tagController,
+            GroupController groupController
     ) {
         this.homepageController = homepageController;
         this.communityController = communityController;
@@ -65,6 +69,7 @@ public final class PublicRoutes {
         this.policyController = policyController;
         this.creditsController = creditsController;
         this.tagController = tagController;
+        this.groupController = groupController;
     }
 
     /**
@@ -80,6 +85,7 @@ public final class PublicRoutes {
         app.get("/me/friends", mePlaceholderController::messenger);
         app.get("/guides", mePlaceholderController::guides);
         app.get("/groups/officialhabboguides", mePlaceholderController::guides);
+        app.get("/groups/{alias}", groupController::detail);
         app.post("/me/minimail/compose", minimailController::composeMessage);
         app.post("/me/minimail/{messageId}/reply", minimailController::replyToMessage);
         app.post("/me/minimail/{messageId}/delete", minimailController::deleteMessage);

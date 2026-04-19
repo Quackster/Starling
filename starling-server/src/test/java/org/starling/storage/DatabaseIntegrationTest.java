@@ -92,6 +92,10 @@ class DatabaseIntegrationTest {
         assertTrue(tableExists("public_room_items"));
         assertTrue(tableExists("room_favorites"));
         assertTrue(tableExists("room_rights"));
+        assertTrue(tableExists("messenger_friends"));
+        assertTrue(tableExists("messenger_requests"));
+        assertTrue(tableExists("messenger_messages"));
+        assertTrue(tableExists("messenger_categories"));
 
         UserEntity admin = UserDao.findByUsername("admin");
         assertNotNull(admin);

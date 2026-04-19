@@ -280,8 +280,16 @@ widgets:
     template: habblet/me_hot_campaigns
   meMinimail:
     template: habblet/me_minimail
+  meRecommendedRooms:
+    template: habblet/me_recommended_rooms
   meTags:
     template: habblet/me_tags
+  meGroups:
+    template: habblet/me_groups
+  meRecommendedGroups:
+    template: habblet/me_recommended_groups
+  meReferral:
+    template: habblet/me_referral
   adsContainer:
     template: habblet/ads_container
   tagPopular:
@@ -313,38 +321,44 @@ widgets:
 
 pages:
   community:
+    disabledWidgets: []
     columns:
       - id: column1
         widgets: [communityRooms, communityGroups, communityActiveHabbos]
       - id: column2
         widgets: [newsPromo, communityTags]
   me:
+    disabledWidgets: []
     columns:
       - id: column1
         widgets: [mePersonalInfo, meHotCampaigns, meMinimail]
       - id: column2
-        widgets: [newsPromo, meTags]
+        widgets: [newsPromo, meRecommendedRooms, meTags]
       - id: column3
-        widgets: [adsContainer]
+        widgets: [meGroups, meRecommendedGroups, meReferral]
   tags:
+    disabledWidgets: []
     columns:
       - id: column1
         widgets: [tagPopular, tagFight, tagMatch]
       - id: column2
         widgets: [tagSearch]
   credits:
+    disabledWidgets: []
     columns:
       - id: column1
         widgets: [creditsMethods]
       - id: column2
         widgets: [creditsPurse, creditsInfo]
   pixels:
+    disabledWidgets: []
     columns:
       - id: column1
         widgets: [pixelsPrimary]
       - id: column2
         widgets: [pixelsRent, pixelsEffects, pixelsOffers]
   news:
+    disabledWidgets: []
     columns:
       - id: column1
         widgets: [newsArchive]
@@ -353,6 +367,7 @@ pages:
       - id: column3
         widgets: [adsContainer]
   events:
+    disabledWidgets: []
     columns:
       - id: column1
         widgets: [newsArchive]
@@ -361,6 +376,7 @@ pages:
       - id: column3
         widgets: [adsContainer]
   fansites:
+    disabledWidgets: []
     columns:
       - id: column1
         widgets: [newsArchive]

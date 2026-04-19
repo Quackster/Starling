@@ -1,0 +1,22 @@
+<div class="habblet-container ">
+    <div class="cbb clearfix blue ">
+        <h2 class="title">Recommended Groups</h2>
+        <div id="promogroups-habblet-list-container" class="habblet-list-container groups-list">
+            {% if recommendedGroups | length > 0 %}
+            <ul class="habblet-list two-cols clearfix">
+            {% for group in recommendedGroups %}
+                <li class="{% if loop.index is even %}even right{% else %}odd left{% endif %}" style="background-image: url({{ site.sitePath }}/habbo-imaging/badge/{{ group.badge }}.gif)">
+                    {% if group.roomId > 0 %}
+                    <a href="{{ site.sitePath }}/client?forwardId=2&amp;roomId={{ group.roomId }}" onclick="HabboClient.roomForward(this, '{{ group.roomId }}', 'private'); return false;" target="client" class="group-room"></a>
+                    {% endif %}
+                    <a class="item" href="{{ group.url }}">{{ group.name }}</a>
+                    <div class="group-meta">{{ group.memberCount }} members</div>
+                </li>
+            {% endfor %}
+            </ul>
+            {% else %}
+            <div class="habblet-content-info">No recommended groups are available yet.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>

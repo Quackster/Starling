@@ -7,7 +7,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.starling.config.DatabaseConfig;
 import org.starling.storage.EntityContext;
+import org.starling.storage.dao.PublicTagDao;
 import org.starling.storage.dao.UserDao;
+import org.starling.storage.entity.UserEntity;
 import org.starling.web.cms.admin.CmsAdminDao;
 import org.starling.web.cms.article.CmsArticleDao;
 import org.starling.web.cms.page.CmsPageDao;
@@ -15,6 +17,7 @@ import org.starling.web.config.WebConfig;
 import org.starling.web.feature.me.campaign.HotCampaignDao;
 import org.starling.web.feature.me.mail.MailboxLabel;
 import org.starling.web.feature.me.mail.MinimailDao;
+import org.starling.web.feature.me.referral.ReferralService;
 
 import io.javalin.Javalin;
 
@@ -129,7 +132,7 @@ class StarlingWebIntegrationTest {
     @Test
     void bootstrapSeedsAdminContentAndNavigation() {
         assertEquals(1, CmsAdminDao.count());
-        assertEquals(1, UserDao.count());
+        assertTrue(UserDao.count() >= 1);
         assertTrue(HotCampaignDao.count() >= 2);
         assertTrue(MinimailDao.count() >= 1);
         assertTrue(CmsPageDao.findPublishedBySlug("home").isPresent());
@@ -312,7 +315,7 @@ class StarlingWebIntegrationTest {
         assertTrue(pixelsResponse.body().contains("Rent some stuff"));
         assertTrue(tagResponse.body().contains("Popular tags"));
         assertTrue(tagResponse.body().contains("Tag fight"));
-        assertTrue(tagDetailResponse.body().contains("RetroGuide"));
+        assertTrue(tagDetailResponse.body().contains("admin"));
         assertTrue(tagDetailResponse.body().contains("/tag/retro"));
         assertTrue(voucherResponse.body().contains("Please sign in to see your purse."));
         assertTrue(badgeResponse.body().length > 0);
@@ -353,6 +356,20 @@ class StarlingWebIntegrationTest {
 
     @Test
     void signedInTagWidgetsSupportMatchAndTagMutations() throws Exception {
+        String friendName = "tagfriend" + UUID.randomUUID().toString().replace("-", "").substring(0, 6);
+        UserDao.save(UserEntity.createRegisteredUser(
+                friendName,
+                "Password1",
+                "hr-100-61.hd-180-2.ch-210-92.lg-270-82.sh-290-64",
+                "M",
+                friendName + "@example.com"
+        ));
+        UserEntity friendUser = UserDao.findByUsername(friendName);
+        assertNotNull(friendUser);
+        PublicTagDao.addTag("user", friendUser.getId(), "retro");
+        PublicTagDao.addTag("user", friendUser.getId(), "builder");
+        PublicTagDao.addTag("user", friendUser.getId(), "coins");
+
         HttpResponse<String> loginResponse = postForm(
                 "/account/submit",
                 Map.of("username", "admin", "password", "admin"),
@@ -363,7 +380,7 @@ class StarlingWebIntegrationTest {
 
         HttpResponse<String> matchResponse = postForm(
                 "/habblet/ajax/tagmatch",
-                Map.of("friendName", "RetroGuide"),
+                Map.of("friendName", friendName),
                 Map.of()
         );
         HttpResponse<String> tagSearchBeforeAddResponse = postForm(
@@ -411,7 +428,7 @@ class StarlingWebIntegrationTest {
         assertEquals("valid", removeTagResponse.body());
         assertTrue(matchResponse.body().contains("67 %"));
         assertTrue(matchResponse.body().contains("You have a lot in common!"));
-        assertTrue(tagSearchBeforeAddResponse.body().contains("Rare Traders"));
+        assertTrue(tagSearchBeforeAddResponse.body().contains(friendName));
         assertTrue(tagSearchBeforeAddResponse.body().contains("Tag yourself with:"));
         assertTrue(myTagsListResponse.body().contains("/tag/coins"));
         assertTrue(myTagsListResponse.body().contains("id=\"add-tag-button\""));
@@ -479,6 +496,9 @@ class StarlingWebIntegrationTest {
         assertTrue(meResponse.body().contains("Hot Campaigns"));
         assertTrue(meResponse.body().contains("My Tags"));
         assertTrue(meResponse.body().contains("My Messages"));
+        assertTrue(meResponse.body().contains("Recommended Rooms"));
+        assertTrue(meResponse.body().contains("Recommended Groups"));
+        assertTrue(meResponse.body().contains("Invite Friends"));
         assertTrue(meResponse.body().contains("/web-gallery/v2/styles/welcome.css"));
         assertTrue(meResponse.body().contains("/web-gallery/v2/styles/group.css"));
         assertTrue(meResponse.body().contains("/web-gallery/v2/styles/rooms.css"));
@@ -498,7 +518,66 @@ class StarlingWebIntegrationTest {
         assertTrue(meResponse.body().contains("id=\"feed-notification\""));
         assertTrue(meResponse.body().contains("Friend requests and web messenger are coming soon."));
         assertTrue(meResponse.body().contains("Habbo Guides"));
-        assertFalse(meResponse.body().contains("Reccomended Rooms"));
+        assertTrue(meResponse.body().contains("Get invite link"));
+        assertTrue(meResponse.body().contains("/groups/welcome-crew"));
+    }
+
+    @Test
+    void meGroupAndReferralEndpointsRenderDatabaseBackedWidgets() throws Exception {
+        HttpResponse<String> loginResponse = postForm(
+                "/account/submit",
+                Map.of("username", "admin", "password", "admin"),
+                Map.of()
+        );
+        assertEquals(200, loginResponse.statusCode());
+
+        HttpResponse<String> groupResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/groups/welcome-crew")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> inviteLinkResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/habblet/ajax/mgmgetinvitelink")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertEquals(200, groupResponse.statusCode());
+        assertEquals(200, inviteLinkResponse.statusCode());
+        assertTrue(groupResponse.body().contains("Welcome Crew"));
+        assertTrue(groupResponse.body().contains("Helping new players settle into the hotel."));
+        assertTrue(groupResponse.body().contains("/tag/community"));
+        assertTrue(inviteLinkResponse.body().contains("/register?referral=admin"));
+        assertTrue(inviteLinkResponse.body().contains("1000 credits"));
+    }
+
+    @Test
+    void welcomePageShowsPersistentInviterAfterReferralIsApplied() throws Exception {
+        String username = "referred" + UUID.randomUUID().toString().replace("-", "").substring(0, 6);
+        UserDao.save(UserEntity.createRegisteredUser(
+                username,
+                "Password1",
+                "hr-100-61.hd-180-2.ch-210-92.lg-270-82.sh-290-64",
+                "M",
+                username + "@example.com"
+        ));
+        UserEntity referredUser = UserDao.findByUsername(username);
+        assertNotNull(referredUser);
+        new ReferralService().applyReferral(referredUser, "admin");
+
+        HttpResponse<String> loginResponse = postForm(
+                "/account/submit",
+                Map.of("username", username, "password", "Password1"),
+                Map.of()
+        );
+        assertEquals(200, loginResponse.statusCode());
+
+        HttpResponse<String> welcomeResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/welcome")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertEquals(200, welcomeResponse.statusCode());
+        assertTrue(welcomeResponse.body().contains("Your friend admin is waiting for you!"));
+        assertTrue(welcomeResponse.body().contains("id=\"inviter-info-habblet\""));
     }
 
     @Test

@@ -268,6 +268,31 @@ public class UserEntity {
      */
     public Timestamp getUpdatedAt() { return updatedAt; }
     /**
+     * Returns whether stalking is allowed.
+     * @return whether stalking is allowed
+     */
+    public int getAllowStalking() { return allowStalking; }
+    /**
+     * Returns whether friend requests are allowed.
+     * @return whether friend requests are allowed
+     */
+    public int getAllowFriendRequests() { return allowFriendRequests; }
+    /**
+     * Returns whether online status is visible.
+     * @return whether online status is visible
+     */
+    public int getOnlineStatusVisible() { return onlineStatusVisible; }
+    /**
+     * Returns whether wordfilter is enabled.
+     * @return whether wordfilter is enabled
+     */
+    public int getWordfilterEnabled() { return wordfilterEnabled; }
+    /**
+     * Returns whether the user is online.
+     * @return whether the user is online
+     */
+    public Integer getIsOnline() { return isOnline; }
+    /**
      * Returns the club expiration timestamp.
      * @return the club expiration timestamp
      */
@@ -277,6 +302,11 @@ public class UserEntity {
      * @return the pixels amount
      */
     public int getPixels() { return pixels; }
+    /**
+     * Returns whether the user is marked online.
+     * @return true when online
+     */
+    public boolean isOnline() { return isOnline != null && isOnline > 0; }
     /**
      * Returns the login name in Lisbon style.
      * @return the login name
@@ -329,8 +359,18 @@ public class UserEntity {
      */
     public void setLastOnline(Timestamp lastOnline) { this.lastOnline = lastOnline; }
     /**
+     * Sets whether the user is online.
+     * @param isOnline the online state value
+     */
+    public void setIsOnline(Integer isOnline) { this.isOnline = isOnline; }
+    /**
      * Sets the updated at timestamp.
      * @param updatedAt the updated at value
      */
     public void setUpdatedAt(Timestamp updatedAt) { this.updatedAt = updatedAt; }
+    /**
+     * Sets the credits.
+     * @param credits the credits value
+     */
+    public void setCredits(int credits) { this.credits = credits; }
 }

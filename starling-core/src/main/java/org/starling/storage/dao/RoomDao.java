@@ -3,8 +3,11 @@ package org.starling.storage.dao;
 import org.starling.storage.EntityContext;
 import org.starling.storage.entity.RoomEntity;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public final class RoomDao {
 
@@ -104,6 +107,19 @@ public final class RoomDao {
      * @return the resulting find recommended
      */
     public static List<RoomEntity> findRecommended(int limit) {
+        List<Integer> recommendedIds = RecommendedItemDao.listIds("room", null, limit);
+        if (recommendedIds.isEmpty()) {
+            return findTopRated(limit);
+        }
+        return findByIdsInOrder(recommendedIds);
+    }
+
+    /**
+     * Finds top-rated rooms.
+     * @param limit the limit value
+     * @return the resulting room list
+     */
+    public static List<RoomEntity> findTopRated(int limit) {
         return EntityContext.withContext(context -> context.from(RoomEntity.class)
                 .orderBy(order -> order
                         .col(RoomEntity::getCurrentUsers).desc()
@@ -173,5 +189,29 @@ public final class RoomDao {
             }
             return null;
         });
+    }
+
+    private static List<RoomEntity> findByIdsInOrder(List<Integer> roomIds) {
+        if (roomIds == null || roomIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<RoomEntity> rooms = EntityContext.withContext(context -> context.from(RoomEntity.class)
+                .filter(filter -> filter.in(RoomEntity::getId, roomIds))
+                .toList());
+
+        Map<Integer, RoomEntity> byId = new LinkedHashMap<>();
+        for (RoomEntity room : rooms) {
+            byId.put(room.getId(), room);
+        }
+
+        List<RoomEntity> ordered = new ArrayList<>();
+        for (Integer roomId : roomIds) {
+            RoomEntity room = byId.get(roomId);
+            if (room != null) {
+                ordered.add(room);
+            }
+        }
+        return ordered;
     }
 }

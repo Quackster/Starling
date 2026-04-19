@@ -7,6 +7,7 @@ public final class MessageRouteRegistrars {
     private static final List<MessageRouteRegistrar> DEFAULTS = List.of(
             new HandshakeRouteRegistrar(),
             new LoginRouteRegistrar(),
+            new MessengerRouteRegistrar(),
             new RoomRouteRegistrar(),
             new NavigatorRouteRegistrar()
     );

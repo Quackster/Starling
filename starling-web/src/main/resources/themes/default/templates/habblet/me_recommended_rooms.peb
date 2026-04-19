@@ -1,0 +1,12 @@
+<div class="habblet-container ">
+    <div class="cbb clearfix blue ">
+        <h2 class="title">Recommended Rooms</h2>
+        <div class="box-content">
+            {% if recommendedRooms | length > 0 %}
+                {% include "habblet/community_room_list.peb" with { "rooms": recommendedRooms, "moreData": false } %}
+            {% else %}
+                <p class="hotcampaigns-empty">No recommended rooms are available yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>

@@ -25,6 +25,7 @@ import org.starling.web.config.WebConfig;
 import org.starling.web.feature.account.page.AccountController;
 import org.starling.web.feature.account.page.RegistrationController;
 import org.starling.web.feature.community.page.CommunityController;
+import org.starling.web.feature.community.page.GroupController;
 import org.starling.web.feature.community.page.NewsController;
 import org.starling.web.feature.community.view.CommunityWidgetsFactory;
 import org.starling.web.feature.community.view.NewsPromoContentFactory;
@@ -45,6 +46,8 @@ import org.starling.web.feature.me.mail.MinimailViewFactory;
 import org.starling.web.feature.me.mail.MinimailWriteService;
 import org.starling.web.feature.me.page.MePageController;
 import org.starling.web.feature.me.page.MePlaceholderController;
+import org.starling.web.feature.me.referral.ReferralHabbletController;
+import org.starling.web.feature.me.referral.ReferralService;
 import org.starling.web.feature.policy.page.PolicyController;
 import org.starling.web.feature.shared.page.PublicPageModelFactory;
 import org.starling.web.feature.shared.page.layout.PublicPageLayoutConfig;
@@ -105,6 +108,7 @@ public final class StarlingWebBootstrap {
         MinimailViewFactory minimailViewFactory = new MinimailViewFactory(siteBranding, minimailRecipientService);
         MinimailSessionState minimailSessionState = new MinimailSessionState();
         LegacyMinimailJsonEncoder legacyMinimailJsonEncoder = new LegacyMinimailJsonEncoder();
+        ReferralService referralService = new ReferralService();
         UserTagService userTagService = new UserTagService();
         TagDirectoryService tagDirectoryService = new TagDirectoryService(userTagService);
         UserViewModelFactory userViewModelFactory = new UserViewModelFactory();
@@ -143,6 +147,7 @@ public final class StarlingWebBootstrap {
                 minimailViewFactory,
                 minimailSessionState,
                 legacyMinimailJsonEncoder,
+                referralService,
                 userTagService,
                 tagDirectoryService,
                 communityWidgetsFactory,
@@ -183,6 +188,8 @@ public final class StarlingWebBootstrap {
                 dependencies.hotCampaignService(),
                 dependencies.minimailViewFactory(),
                 dependencies.userTagService(),
+                dependencies.communityWidgetsFactory(),
+                dependencies.referralService(),
                 dependencies.publicPageLayoutRenderer(),
                 dependencies.publicPageModelFactory(),
                 dependencies.mePageContentFactory(),
@@ -252,6 +259,12 @@ public final class StarlingWebBootstrap {
                 dependencies.userSessionService(),
                 dependencies.creditsPageContentFactory()
         );
+        ReferralHabbletController referralHabbletController = new ReferralHabbletController(
+                dependencies.templateRenderer(),
+                dependencies.userSessionService(),
+                dependencies.referralService(),
+                dependencies.siteBranding()
+        );
         AccountController accountController = new AccountController(
                 dependencies.templateRenderer(),
                 dependencies.userSessionService(),
@@ -260,6 +273,11 @@ public final class StarlingWebBootstrap {
         RegistrationController registrationController = new RegistrationController(
                 dependencies.templateRenderer(),
                 dependencies.userSessionService(),
+                dependencies.publicPageModelFactory(),
+                dependencies.referralService()
+        );
+        GroupController groupController = new GroupController(
+                dependencies.templateRenderer(),
                 dependencies.publicPageModelFactory()
         );
         AssetController assetController = new AssetController(
@@ -307,9 +325,10 @@ public final class StarlingWebBootstrap {
                 pageController,
                 policyController,
                 creditsController,
-                tagController
+                tagController,
+                groupController
         ).register(app);
-        new WidgetRoutes(tagHabbletController, creditsHabbletController).register(app);
+        new WidgetRoutes(tagHabbletController, creditsHabbletController, referralHabbletController).register(app);
         new AuthRoutes(accountController, registrationController, adminAuthController, adminRouteGuard).register(app);
         new AssetRoutes(assetController).register(app);
         new AdminRoutes(

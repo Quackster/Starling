@@ -9,6 +9,7 @@ import org.starling.storage.DatabaseSupport;
 import org.starling.storage.bootstrap.DatabaseSeedRegistrar;
 import org.starling.storage.bootstrap.DatabaseSeedRegistrars;
 import org.starling.storage.entity.NavigatorCategoryEntity;
+import org.starling.storage.entity.RecommendedItemEntity;
 import org.starling.storage.entity.RoomEntity;
 import org.starling.storage.entity.UserEntity;
 
@@ -41,7 +42,8 @@ public final class DatabaseBootstrap {
             context.createTables(
                     UserEntity.class,
                     NavigatorCategoryEntity.class,
-                    RoomEntity.class
+                    RoomEntity.class,
+                    RecommendedItemEntity.class
             );
 
             statement.executeUpdate("""
@@ -151,6 +153,53 @@ public final class DatabaseBootstrap {
                     ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
                     """);
             statement.executeUpdate("""
+                    CREATE TABLE IF NOT EXISTS messenger_friends (
+                        id INT NOT NULL AUTO_INCREMENT,
+                        from_id INT NOT NULL,
+                        to_id INT NOT NULL,
+                        category_id INT NOT NULL DEFAULT 0,
+                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        PRIMARY KEY (id),
+                        UNIQUE KEY uk_messenger_friends_from_to (from_id, to_id),
+                        KEY idx_messenger_friends_to (to_id),
+                        KEY idx_messenger_friends_from (from_id)
+                    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+                    """);
+            statement.executeUpdate("""
+                    CREATE TABLE IF NOT EXISTS messenger_requests (
+                        id INT NOT NULL AUTO_INCREMENT,
+                        to_id INT NOT NULL,
+                        from_id INT NOT NULL,
+                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        PRIMARY KEY (id),
+                        UNIQUE KEY uk_messenger_requests_to_from (to_id, from_id),
+                        KEY idx_messenger_requests_to (to_id),
+                        KEY idx_messenger_requests_from (from_id)
+                    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+                    """);
+            statement.executeUpdate("""
+                    CREATE TABLE IF NOT EXISTS messenger_messages (
+                        id INT NOT NULL AUTO_INCREMENT,
+                        receiver_id INT NOT NULL,
+                        sender_id INT NOT NULL,
+                        unread INT NOT NULL DEFAULT 1,
+                        body TEXT NOT NULL,
+                        date BIGINT NOT NULL DEFAULT 0,
+                        PRIMARY KEY (id),
+                        KEY idx_messenger_messages_receiver_unread (receiver_id, unread),
+                        KEY idx_messenger_messages_sender (sender_id)
+                    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+                    """);
+            statement.executeUpdate("""
+                    CREATE TABLE IF NOT EXISTS messenger_categories (
+                        id INT NOT NULL AUTO_INCREMENT,
+                        user_id INT NOT NULL,
+                        name VARCHAR(64) NOT NULL,
+                        PRIMARY KEY (id),
+                        KEY idx_messenger_categories_user (user_id)
+                    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+                    """);
+            statement.executeUpdate("""
                     UPDATE rooms r
                     LEFT JOIN users u ON lower(u.username) = lower(r.owner_name)
                     SET r.owner_id = u.id
@@ -167,6 +216,7 @@ public final class DatabaseBootstrap {
             statement.executeUpdate("UPDATE public_rooms SET heightmap = '' WHERE heightmap IS NULL");
             statement.executeUpdate("UPDATE public_room_items SET behaviour = '' WHERE behaviour IS NULL");
             statement.executeUpdate("UPDATE public_room_items SET current_program = '' WHERE current_program IS NULL");
+            statement.executeUpdate("UPDATE users SET is_online = 0 WHERE is_online <> 0");
             log.info("Ensured navigator schema extensions exist");
         } catch (Exception e) {
             log.error("Failed to ensure schema extensions: {}", e.getMessage(), e);
