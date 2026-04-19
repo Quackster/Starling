@@ -6,7 +6,6 @@ import org.oldskooler.entity4j.DbContext;
 import org.starling.game.room.layout.RoomLayoutRegistry;
 import org.starling.storage.entity.UserEntity;
 
-import java.sql.PreparedStatement;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,82 +35,48 @@ public final class GuestRoomSeedRegistrar implements DatabaseSeedRegistrar {
                     .orElseThrow(() -> new IllegalStateException("Guest room owner not found: " + ownerName)));
         }
 
-        String sql = """
-                INSERT INTO rooms (
-                    id,
-                    category_id,
-                    owner_id,
-                    owner_name,
-                    name,
-                    description,
-                    model_name,
-                    heightmap,
-                    wallpaper,
-                    floor_pattern,
-                    landscape,
-                    door_mode,
-                    door_password,
-                    current_users,
-                    max_users,
-                    absolute_max_users,
-                    show_owner_name,
-                    allow_trading,
-                    allow_others_move_furniture,
-                    alert_state,
-                    navigator_filter,
-                    port
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE
-                    category_id = VALUES(category_id),
-                    owner_id = VALUES(owner_id),
-                    owner_name = VALUES(owner_name),
-                    name = VALUES(name),
-                    description = VALUES(description),
-                    model_name = VALUES(model_name),
-                    heightmap = VALUES(heightmap),
-                    wallpaper = VALUES(wallpaper),
-                    floor_pattern = VALUES(floor_pattern),
-                    landscape = VALUES(landscape),
-                    door_mode = VALUES(door_mode),
-                    door_password = VALUES(door_password),
-                    current_users = VALUES(current_users),
-                    max_users = VALUES(max_users),
-                    absolute_max_users = VALUES(absolute_max_users),
-                    show_owner_name = VALUES(show_owner_name),
-                    allow_trading = VALUES(allow_trading),
-                    allow_others_move_furniture = VALUES(allow_others_move_furniture),
-                    alert_state = VALUES(alert_state),
-                    navigator_filter = VALUES(navigator_filter),
-                    port = VALUES(port)
-                """;
-
-        try (PreparedStatement statement = context.conn().prepareStatement(sql)) {
-            for (RoomSeed room : DEFAULT_ROOMS) {
-                statement.setInt(1, room.id());
-                statement.setInt(2, room.categoryId());
-                statement.setInt(3, ownerIds.get(room.ownerName()));
-                statement.setString(4, room.ownerName());
-                statement.setString(5, room.name());
-                statement.setString(6, room.description());
-                statement.setString(7, room.modelName());
-                statement.setString(8, room.heightmap());
-                statement.setString(9, room.wallpaper());
-                statement.setString(10, room.floorPattern());
-                statement.setString(11, room.landscape());
-                statement.setInt(12, room.doorMode());
-                statement.setString(13, room.doorPassword());
-                statement.setInt(14, room.currentUsers());
-                statement.setInt(15, room.maxUsers());
-                statement.setInt(16, room.absoluteMaxUsers());
-                statement.setInt(17, room.showOwnerName());
-                statement.setInt(18, room.allowTrading());
-                statement.setInt(19, room.allowOthersMoveFurniture());
-                statement.setInt(20, room.alertState());
-                statement.setString(21, room.navigatorFilter());
-                statement.setInt(22, room.port());
-                statement.addBatch();
+        try {
+            Map<Integer, GuestRoomSeedEntity> roomsById = new HashMap<>();
+            for (GuestRoomSeedEntity entity : context.from(GuestRoomSeedEntity.class).toList()) {
+                roomsById.put(entity.getId(), entity);
             }
-            statement.executeBatch();
+
+            for (RoomSeed room : DEFAULT_ROOMS) {
+                GuestRoomSeedEntity entity = roomsById.get(room.id());
+                boolean isNew = entity == null;
+                if (isNew) {
+                    entity = new GuestRoomSeedEntity();
+                    entity.setId(room.id());
+                }
+
+                entity.setCategoryId(room.categoryId());
+                entity.setOwnerId(ownerIds.get(room.ownerName()));
+                entity.setOwnerName(room.ownerName());
+                entity.setName(room.name());
+                entity.setDescription(room.description());
+                entity.setModelName(room.modelName());
+                entity.setHeightmap(room.heightmap());
+                entity.setWallpaper(room.wallpaper());
+                entity.setFloorPattern(room.floorPattern());
+                entity.setLandscape(room.landscape());
+                entity.setDoorMode(room.doorMode());
+                entity.setDoorPassword(room.doorPassword());
+                entity.setCurrentUsers(room.currentUsers());
+                entity.setMaxUsers(room.maxUsers());
+                entity.setAbsoluteMaxUsers(room.absoluteMaxUsers());
+                entity.setShowOwnerName(room.showOwnerName());
+                entity.setAllowTrading(room.allowTrading());
+                entity.setAllowOthersMoveFurniture(room.allowOthersMoveFurniture());
+                entity.setAlertState(room.alertState());
+                entity.setNavigatorFilter(room.navigatorFilter());
+                entity.setPort(room.port());
+
+                if (isNew) {
+                    context.insert(entity);
+                } else {
+                    context.update(entity);
+                }
+            }
         } catch (Exception e) {
             throw new RuntimeException("Failed to seed rooms", e);
         }
