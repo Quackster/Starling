@@ -361,6 +361,13 @@ class StarlingWebIntegrationTest {
         assertTrue(meResponse.body().contains("Hot Campaigns"));
         assertTrue(meResponse.body().contains("My Tags"));
         assertTrue(meResponse.body().contains("My Messages"));
+        assertTrue(meResponse.body().contains("/web-gallery/v2/styles/welcome.css"));
+        assertTrue(meResponse.body().contains("/web-gallery/v2/styles/group.css"));
+        assertTrue(meResponse.body().contains("/web-gallery/v2/styles/rooms.css"));
+        assertTrue(meResponse.body().contains("/web-gallery/v2/styles/minimail.css"));
+        assertTrue(meResponse.body().contains("/web-gallery/styles/myhabbo/control.textarea.css"));
+        assertTrue(meResponse.body().contains("/web-gallery/static/js/minimail.js"));
+        assertTrue(meResponse.body().contains("/web-gallery/static/js/habboclub.js"));
         assertTrue(meResponse.body().contains("id=\"hotcampaigns-habblet-list\""));
         assertTrue(meResponse.body().contains("id=\"message-list\""));
         assertTrue(meResponse.body().contains("class=\"message-item"));

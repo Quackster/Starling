@@ -10,19 +10,27 @@ var andSoItBegins = (new Date()).getTime();
 </script>
     <link rel="shortcut icon" href="{{ site.webGalleryPath }}/v2/favicon.ico" type="image/vnd.microsoft.icon" />
     <link rel="alternate" type="application/rss+xml" title="{{ site.siteName }}: RSS" href="{{ site.sitePath }}/articles/rss.xml" />
-<script src="{{ site.webGalleryPath }}/static/js/libs2.js" type="text/javascript"></script>
 <script src="{{ site.webGalleryPath }}/static/js/visual.js" type="text/javascript"></script>
 <script src="{{ site.webGalleryPath }}/static/js/libs.js" type="text/javascript"></script>
 <script src="{{ site.webGalleryPath }}/static/js/common.js" type="text/javascript"></script>
 <script src="{{ site.webGalleryPath }}/static/js/fullcontent.js" type="text/javascript"></script>
+<script src="{{ site.webGalleryPath }}/static/js/libs2.js" type="text/javascript"></script>
 <link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/style.css" type="text/css" />
 <link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/buttons.css" type="text/css" />
 <link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/boxes.css" type="text/css" />
 <link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/tooltips.css" type="text/css" />
-<link rel="stylesheet" href="{{ site.webGalleryPath }}/styles/local/com.css" type="text/css" />
-<link rel="stylesheet" href="{{ site.webGalleryPath }}/styles/local/me.css" type="text/css" />
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/welcome.css" type="text/css" />
 <link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/personal.css" type="text/css" />
-<script src="{{ site.webGalleryPath }}/js/local/com.js" type="text/javascript"></script>
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/group.css" type="text/css" />
+<script src="{{ site.webGalleryPath }}/static/js/group.js" type="text/javascript"></script>
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/rooms.css" type="text/css" />
+<script src="{{ site.webGalleryPath }}/static/js/rooms.js" type="text/javascript"></script>
+<script src="{{ site.webGalleryPath }}/static/js/moredata.js" type="text/javascript"></script>
+<script src="{{ site.webGalleryPath }}/static/js/habboclub.js" type="text/javascript"></script>
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/minimail.css" type="text/css" />
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/styles/myhabbo/control.textarea.css" type="text/css" />
+<script src="{{ site.webGalleryPath }}/static/js/minimail.js" type="text/javascript"></script>
+<link rel="stylesheet" href="{{ site.webGalleryPath }}/styles/local/me.css" type="text/css" />
 
 <script type="text/javascript">
 document.habboLoggedIn = true;
