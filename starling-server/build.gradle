@@ -31,6 +31,19 @@ jar {
     }
 }
 
+tasks.named('startScripts') {
+    doLast {
+        windowsScript.text = windowsScript.text.replace(
+                'set DEFAULT_JVM_OPTS=',
+                'set DEFAULT_JVM_OPTS="-Dstarling.config=%APP_HOME%\\config\\server.properties"'
+        )
+        unixScript.text = unixScript.text.replace(
+                'DEFAULT_JVM_OPTS=""',
+                'DEFAULT_JVM_OPTS=\'"-Dstarling.config=$APP_HOME/config/server.properties"\''
+        )
+    }
+}
+
 tasks.register('packageDist') {
     dependsOn installDist
     inputs.dir(packagedInstallDir)
