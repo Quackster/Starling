@@ -88,9 +88,9 @@ public final class PublicRoutes {
         app.get("/me", mePageController::me);
         app.get("/welcome", mePageController::welcome);
         app.get("/me/friends", mePlaceholderController::messenger);
-        app.get("/quickmenu/friends_all", quickmenuController::friends);
-        app.get("/quickmenu/groups", quickmenuController::groups);
-        app.get("/quickmenu/rooms", quickmenuController::rooms);
+        app.post("/quickmenu/friends_all", quickmenuController::friends);
+        app.post("/quickmenu/groups", quickmenuController::groups);
+        app.post("/quickmenu/rooms", quickmenuController::rooms);
         app.get("/guides", mePlaceholderController::guides);
         app.get("/groups/officialhabboguides", mePlaceholderController::guides);
         app.get("/groups/{alias}", groupController::detail);

@@ -596,15 +596,21 @@ class StarlingWebIntegrationTest {
                 HttpResponse.BodyHandlers.ofString()
         );
         HttpResponse<String> quickFriendsResponse = client.send(
-                HttpRequest.newBuilder(baseUri.resolve("/quickmenu/friends_all")).GET().build(),
+                HttpRequest.newBuilder(baseUri.resolve("/quickmenu/friends_all"))
+                        .POST(HttpRequest.BodyPublishers.noBody())
+                        .build(),
                 HttpResponse.BodyHandlers.ofString()
         );
         HttpResponse<String> quickGroupsResponse = client.send(
-                HttpRequest.newBuilder(baseUri.resolve("/quickmenu/groups")).GET().build(),
+                HttpRequest.newBuilder(baseUri.resolve("/quickmenu/groups"))
+                        .POST(HttpRequest.BodyPublishers.noBody())
+                        .build(),
                 HttpResponse.BodyHandlers.ofString()
         );
         HttpResponse<String> quickRoomsResponse = client.send(
-                HttpRequest.newBuilder(baseUri.resolve("/quickmenu/rooms")).GET().build(),
+                HttpRequest.newBuilder(baseUri.resolve("/quickmenu/rooms"))
+                        .POST(HttpRequest.BodyPublishers.noBody())
+                        .build(),
                 HttpResponse.BodyHandlers.ofString()
         );
         HttpResponse<String> guidesResponse = client.send(
