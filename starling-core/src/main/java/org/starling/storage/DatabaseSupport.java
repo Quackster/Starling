@@ -112,13 +112,7 @@ public final class DatabaseSupport {
         ensureIndex(connection, tableName, indexName, true, columns);
     }
 
-    /**
-     * Ensures a table exists.
-     * @param connection the connection value
-     * @param tableName the table name value
-     * @param createTableSql the create table sql value
-     */
-    public static void ensureTable(Connection connection, String tableName, String createTableSql) {
+    private static void ensureTable(Connection connection, String tableName, String createTableSql) {
         if (tableExists(connection, tableName)) {
             return;
         }
@@ -139,38 +133,6 @@ public final class DatabaseSupport {
      */
     public static void ensureTable(Connection connection, TableDefinition tableDefinition) {
         ensureTable(connection, tableDefinition.tableName, tableDefinition.toCreateTableSql());
-    }
-
-    /**
-     * Ensures a column exists.
-     * @param connection the connection value
-     * @param tableName the table name value
-     * @param columnName the column name value
-     * @param columnDefinition the sql column definition
-     * @param afterColumn the column that should precede the added column
-     */
-    public static void ensureColumn(Connection connection, String tableName, String columnName, String columnDefinition, String afterColumn) {
-        if (columnExists(connection, tableName, columnName)) {
-            return;
-        }
-
-        String addColumnSql = "ALTER TABLE `"
-                + escapeIdentifier(tableName)
-                + "` ADD COLUMN `"
-                + escapeIdentifier(columnName)
-                + "` "
-                + columnDefinition
-                + (afterColumn == null || afterColumn.isBlank()
-                ? ""
-                : " AFTER `" + escapeIdentifier(afterColumn) + "`");
-
-        try (Statement statement = connection.createStatement()) {
-            statement.executeUpdate(addColumnSql);
-            log.info("Ensured column '{}.{}' exists", tableName, columnName);
-        } catch (Exception e) {
-            log.error("Failed to add column '{}.{}': {}", tableName, columnName, e.getMessage(), e);
-            throw new RuntimeException(e);
-        }
     }
 
     /**
@@ -198,30 +160,6 @@ public final class DatabaseSupport {
             log.info("Ensured column '{}.{}' exists", tableName, columnDefinition.columnName);
         } catch (Exception e) {
             log.error("Failed to add column '{}.{}': {}", tableName, columnDefinition.columnName, e.getMessage(), e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * Modifies a column.
-     * @param connection the connection value
-     * @param tableName the table name value
-     * @param columnName the column name value
-     * @param columnDefinition the sql column definition
-     */
-    public static void modifyColumn(Connection connection, String tableName, String columnName, String columnDefinition) {
-        String modifyColumnSql = "ALTER TABLE `"
-                + escapeIdentifier(tableName)
-                + "` MODIFY COLUMN `"
-                + escapeIdentifier(columnName)
-                + "` "
-                + columnDefinition;
-
-        try (Statement statement = connection.createStatement()) {
-            statement.executeUpdate(modifyColumnSql);
-            log.info("Modified column '{}.{}'", tableName, columnName);
-        } catch (Exception e) {
-            log.error("Failed to modify column '{}.{}': {}", tableName, columnName, e.getMessage(), e);
             throw new RuntimeException(e);
         }
     }
