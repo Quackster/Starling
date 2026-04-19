@@ -62,209 +62,274 @@ body#home #column2 .box-content {
 
 body#home #minimail {
     color: #45637d;
-}
-
-body#home .minimail-toolbar {
-    margin-bottom: 10px;
-}
-
-body#home .minimail-toolbar .new-button {
-    float: right;
-}
-
-body#home .minimail-toolbar .labels {
-    overflow: hidden;
-}
-
-body#home .minimail-flash {
-    margin: 0 0 10px;
-    padding: 10px 12px;
-    border: 1px solid #c8d8e6;
-    background: #f3f8fc;
-    color: #35526c;
-}
-
-body#home .minimail-error {
-    border-color: #dba3a3;
-    background: #fff1f1;
-    color: #8a3a3a;
-}
-
-body#home .minimail-compose-form,
-body#home .minimail-reply-form {
-    margin-bottom: 14px;
-    padding: 12px;
-    border: 1px solid #d6e4ef;
-    background: #f8fbfe;
-}
-
-body#home .minimail-compose-form label,
-body#home .minimail-reply-form label {
-    display: block;
-    margin-bottom: 4px;
-    font-weight: bold;
-}
-
-body#home .minimail-compose-form input[type="text"],
-body#home .minimail-compose-form textarea,
-body#home .minimail-reply-form textarea {
-    box-sizing: border-box;
-    width: 100%;
-    margin-bottom: 10px;
-    padding: 7px 8px;
-    border: 1px solid #adc3d8;
-    font: normal 12px Verdana, Arial, sans-serif;
-    color: #35526c;
-}
-
-body#home .minimail-help,
-body#home .minimail-trash-form p {
-    margin: 0 0 10px;
-    color: #6a849c;
     font-size: 11px;
 }
 
-body#home .minimail-filter-form,
-body#home .minimail-trash-form,
-body#home .minimail-pagination,
-body#home .minimail-empty {
+body#home .minimail-flash-container {
     margin-bottom: 10px;
 }
 
-body#home .minimail-filter-form label {
-    margin-right: 8px;
+body#home #minimail .notification,
+body#home #minimail .error {
+    padding: 9px 11px;
+    border: 1px solid #c6d8e7;
+    background: #f1f7fb;
+    color: #31506a;
 }
 
-body#home .minimail-list {
+body#home #minimail .error {
+    border-color: #dfb8b8;
+    background: #fff3f3;
+    color: #8a3b3b;
+}
+
+body#home .minimail-contents {
+    overflow: hidden;
+}
+
+body#home .minimail-contents > .new-button.compose {
+    float: right;
+    margin-bottom: 10px;
+}
+
+body#home .minimail-contents .labels {
+    clear: left;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+body#home #message-list {
     border-top: 1px solid #d6e4ef;
 }
 
-body#home .minimail-preview {
+body#home #message-list .new-buttons {
+    margin: 0 0 6px;
+}
+
+body#home #message-list .labels.inbox-refresh {
+    float: left;
+}
+
+body#home .trash-controls.notice,
+body#home .navigation {
+    margin-bottom: 10px;
+    padding: 8px 10px;
+    border: 1px solid #d6e4ef;
+    background: #f7fbfd;
+}
+
+body#home .trash-controls.notice {
+    color: #5b7992;
+}
+
+body#home .trash-controls.notice .empty-trash {
+    font-weight: bold;
+}
+
+body#home .navigation p,
+body#home .no-messages {
+    margin: 0;
+    color: #5b7992;
+}
+
+body#home .navigation .progress {
+    display: none;
+}
+
+body#home .unread-selector {
+    margin-bottom: 8px;
+}
+
+body#home .unread-selector input {
+    margin-right: 4px;
+}
+
+body#home .message-item {
+    border-bottom: 1px solid #d6e4ef;
+}
+
+body#home .message-preview {
     display: block;
     overflow: hidden;
+    min-height: 42px;
     padding: 10px 0;
-    border-bottom: 1px solid #d6e4ef;
     color: #35526c;
     text-decoration: none;
 }
 
-body#home .minimail-preview:hover {
+body#home .message-preview:hover {
     text-decoration: none;
     background: #f8fbfe;
 }
 
-body#home .minimail-preview.selected {
-    background: #eef6fb;
-}
-
-body#home .minimail-preview.unread .minimail-preview-name,
-body#home .minimail-preview.unread .minimail-preview-subject {
+body#home .message-item.unread .message-sender,
+body#home .message-item.unread .message-subject {
     font-weight: bold;
 }
 
-body#home .minimail-preview img {
+body#home .message-preview img {
     float: left;
     width: 32px;
     height: 55px;
-    margin-right: 10px;
+    margin: 0 10px;
 }
 
-body#home .minimail-preview-meta {
-    display: block;
-    overflow: hidden;
-}
-
-body#home .minimail-preview-date,
-body#home .minimail-preview-name,
-body#home .minimail-preview-subject {
+body#home .message-tstamp,
+body#home .message-sender,
+body#home .message-subject {
     display: block;
 }
 
-body#home .minimail-preview-date {
+body#home .message-tstamp {
+    float: right;
+    margin-left: 10px;
     color: #7b95ac;
     font-size: 10px;
 }
 
-body#home .minimail-preview-subject {
+body#home .message-sender,
+body#home .message-subject {
+    overflow: hidden;
+    padding-right: 8px;
+}
+
+body#home .message-subject {
     margin-top: 2px;
 }
 
-body#home .minimail-detail {
-    margin-top: 12px;
-    padding: 12px;
-    border: 1px solid #d6e4ef;
-    background: #ffffff;
+body#home .message-body {
+    padding: 0 0 10px 52px;
 }
 
-body#home .minimail-detail-head {
-    overflow: hidden;
+body#home .message-body .contents {
+    padding: 12px;
+    border: 1px solid #d6e4ef;
+    background: #fff;
+}
+
+body#home .message-body-bottom {
+    height: 1px;
+}
+
+body#home .message-headers {
+    margin: 0 0 10px;
+    padding: 0;
+    list-style: none;
+}
+
+body#home .message-headers li {
+    margin-bottom: 4px;
+}
+
+body#home .message-headers .report {
+    float: right;
+    width: 14px;
+    height: 14px;
+    border: 1px solid #d6e4ef;
+    background: #f2f7fb;
+}
+
+body#home .body-text {
     margin-bottom: 12px;
-}
-
-body#home .minimail-detail-head img {
-    float: left;
-    width: 32px;
-    height: 55px;
-    margin-right: 12px;
-}
-
-body#home .minimail-detail-copy h3 {
-    margin: 0 0 8px;
-    color: #2d577c;
-}
-
-body#home .minimail-detail-copy p {
-    margin: 0 0 4px;
-}
-
-body#home .minimail-detail-body {
-    padding: 12px;
-    border: 1px solid #d6e4ef;
-    background: #f8fbfe;
     line-height: 1.5;
 }
 
-body#home .minimail-detail-actions,
-body#home .minimail-form-actions {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-top: 12px;
+body#home .reply-controls > div + div {
+    margin-top: 10px;
 }
 
-body#home .minimail-detail-actions form {
+body#home .message-text,
+body#home #message-recipients {
+    box-sizing: border-box;
+    width: 100%;
     margin: 0;
+    padding: 7px 8px;
+    border: 1px solid #adc3d8;
+    color: #35526c;
+    font: normal 12px Verdana, Arial, sans-serif;
 }
 
-body#home .minimail-button,
-body#home .minimail-link-button {
-    padding: 7px 12px;
-    border: 1px solid #5e89aa;
-    background: #7aa7c8;
-    color: #fff;
-    font: bold 11px Verdana, Arial, sans-serif;
-    cursor: pointer;
+body#home textarea.message-text {
+    resize: vertical;
+    min-height: 88px;
 }
 
-body#home .minimail-link-button {
-    padding: 4px 8px;
-    font-weight: normal;
+body#home #message-compose {
+    padding-top: 4px;
 }
 
-body#home .minimail-button-danger {
-    border-color: #a85c5c;
-    background: #c77272;
+body#home #message-compose > div {
+    margin-bottom: 7px;
 }
 
-body#home .minimail-cancel,
-body#home .minimail-inline-link,
-body#home .minimail-page-link {
-    color: #2d577c;
-    font-weight: bold;
+body#home #message-recipients-container {
+    width: auto !important;
+    margin-bottom: 10px !important;
 }
 
-body#home .minimail-empty {
-    padding: 14px 0;
-    color: #5f7992;
+body#home .autocomplete {
+    display: none;
+}
+
+body#home .minimail-action-form {
+    display: none;
+}
+
+body#home #column2 .box-content {
+    padding-top: 2px;
+}
+
+body#home #column2 .tag-list {
+    margin-top: 8px;
+}
+
+body#home #my-tags-list .tag-list {
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+body#home #my-tags-list .tag-list li {
+    float: left;
+    margin: 0 8px 8px 0;
+}
+
+body#home .tag-remove-link {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin-left: 4px;
+    border: 1px solid #d4e1ec;
+    background: #f4f8fb;
+    vertical-align: middle;
+}
+
+body#home .add-tag-form {
+    margin-top: 4px;
+}
+
+body#home .add-tag-form .new-button {
+    float: left;
+}
+
+body#home .add-tag-form input[type="text"] {
+    width: 130px;
+    padding: 6px 7px;
+    border: 1px solid #adc3d8;
+    color: #35526c;
+    font: normal 11px Verdana, Arial, sans-serif;
+}
+
+body#home .tag-question {
+    display: block;
+    clear: both;
+    padding-top: 8px;
+    color: #6a849c;
+}
+
+body#home .tag-habblet-error {
+    margin-top: 8px;
+    padding: 8px 10px;
+    border: 1px solid #dfb8b8;
+    background: #fff3f3;
+    color: #8a3b3b;
 }

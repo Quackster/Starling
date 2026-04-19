@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -23,8 +24,9 @@ public final class MinimailService {
     private static final int MAX_RECIPIENTS = 10;
     private static final int MAX_SUBJECT_LENGTH = 100;
     private static final int MAX_BODY_LENGTH = 4096;
-    private static final DateTimeFormatter PREVIEW_FORMAT = DateTimeFormatter.ofPattern("dd MMM yyyy");
-    private static final DateTimeFormatter DETAIL_FORMAT = DateTimeFormatter.ofPattern("dd MMM yyyy h:mm a");
+    private static final DateTimeFormatter PREVIEW_FORMAT = DateTimeFormatter.ofPattern("MMM d, yyyy h:mm:ss a", Locale.ENGLISH);
+    private static final DateTimeFormatter DETAIL_FORMAT = DateTimeFormatter.ofPattern("MMM d, yyyy h:mm:ss a", Locale.ENGLISH);
+    private static final DateTimeFormatter ISO_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
     private final SiteBranding siteBranding;
 
@@ -228,14 +230,23 @@ public final class MinimailService {
     }
 
     private Map<String, Object> messagePreviewView(MinimailMessage message, MailboxLabel mailboxLabel) {
+        String senderName = displayName(message.senderId(), message.senderUsername());
+        String recipientName = displayName(message.recipientId(), message.recipientUsername());
+        int previewUserId = mailboxLabel == MailboxLabel.SENT ? message.recipientId() : message.senderId();
+        String previewFigure = mailboxLabel == MailboxLabel.SENT ? message.recipientFigure() : message.senderFigure();
+
         Map<String, Object> viewModel = new LinkedHashMap<>();
         viewModel.put("id", message.id());
-        viewModel.put("senderName", displayName(message.senderId(), message.senderUsername()));
-        viewModel.put("recipientName", displayName(message.recipientId(), message.recipientUsername()));
+        viewModel.put("senderName", senderName);
+        viewModel.put("recipientName", recipientName);
         viewModel.put("subject", valueOrDefault(message.subject(), "(no subject)"));
-        viewModel.put("avatarUrl", avatarUrl(message.senderId(), message.senderFigure()));
+        viewModel.put("avatarUrl", avatarUrl(previewUserId, previewFigure));
         viewModel.put("statusClass", message.read() ? "read" : "unread");
+        viewModel.put("status", message.read() ? "read" : "unread");
         viewModel.put("sentAt", message.sentAt().atZone(ZoneId.systemDefault()).format(PREVIEW_FORMAT));
+        viewModel.put("sentAtTitle", message.sentAt().atZone(ZoneId.systemDefault()).format(DETAIL_FORMAT));
+        viewModel.put("sentAtIso", message.sentAt().atZone(ZoneId.systemDefault()).format(ISO_FORMAT));
+        viewModel.put("previewName", mailboxLabel == MailboxLabel.SENT ? "To: " + recipientName : senderName);
         viewModel.put("mailboxLabel", mailboxLabel.key());
         return viewModel;
     }
@@ -249,6 +260,7 @@ public final class MinimailService {
         viewModel.put("senderAvatarUrl", avatarUrl(message.senderId(), message.senderFigure()));
         viewModel.put("sentAt", message.sentAt().atZone(ZoneId.systemDefault()).format(DETAIL_FORMAT));
         viewModel.put("bodyHtml", Entities.escape(valueOrDefault(message.body(), "")).replace("\n", "<br />"));
+        viewModel.put("conversationId", Math.max(message.conversationId(), 0));
         viewModel.put("replyable", message.senderId() > 0);
         return viewModel;
     }

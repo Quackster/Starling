@@ -8,6 +8,7 @@ import org.starling.web.request.RequestValues;
 import org.starling.web.service.ArticleService;
 import org.starling.web.service.HotCampaignService;
 import org.starling.web.service.MinimailService;
+import org.starling.web.service.PublicTagService;
 import org.starling.web.user.UserSessionService;
 import org.starling.web.view.CmsViewModelFactory;
 import org.starling.web.view.PublicFeatureContentFactory;
@@ -25,6 +26,7 @@ public final class MeController {
     private final ArticleService articleService;
     private final HotCampaignService hotCampaignService;
     private final MinimailService minimailService;
+    private final PublicTagService publicTagService;
     private final PublicPageModelFactory publicPageModelFactory;
     private final PublicFeatureContentFactory publicFeatureContentFactory;
     private final UserViewModelFactory userViewModelFactory;
@@ -46,6 +48,7 @@ public final class MeController {
             ArticleService articleService,
             HotCampaignService hotCampaignService,
             MinimailService minimailService,
+            PublicTagService publicTagService,
             PublicPageModelFactory publicPageModelFactory,
             PublicFeatureContentFactory publicFeatureContentFactory,
             UserViewModelFactory userViewModelFactory,
@@ -56,6 +59,7 @@ public final class MeController {
         this.articleService = articleService;
         this.hotCampaignService = hotCampaignService;
         this.minimailService = minimailService;
+        this.publicTagService = publicTagService;
         this.publicPageModelFactory = publicPageModelFactory;
         this.publicFeatureContentFactory = publicFeatureContentFactory;
         this.userViewModelFactory = userViewModelFactory;
@@ -87,7 +91,10 @@ public final class MeController {
         model.put("currentUser", userViewModelFactory.create(currentUser.get()));
         model.put("onlineFriends", publicFeatureContentFactory.onlineFriends());
         model.put("hotCampaigns", hotCampaignService.listVisible());
-        model.put("tagCloud", publicFeatureContentFactory.tagCloud());
+        List<String> myTags = publicTagService.currentUserTags(context, currentUser.get());
+        model.put("myTags", myTags);
+        model.put("tagCount", myTags.size());
+        model.put("tagQuestion", publicTagService.tagQuestion());
         model.put("minimail", minimailService.buildView(
                 currentUser.get(),
                 mailboxLabel(context),

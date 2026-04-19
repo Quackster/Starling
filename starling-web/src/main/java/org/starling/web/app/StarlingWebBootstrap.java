@@ -156,6 +156,7 @@ public final class StarlingWebBootstrap {
                 dependencies.articleService(),
                 dependencies.hotCampaignService(),
                 dependencies.minimailService(),
+                dependencies.publicTagService(),
                 dependencies.publicPageModelFactory(),
                 dependencies.publicFeatureContentFactory(),
                 dependencies.userViewModelFactory(),

@@ -361,6 +361,12 @@ class StarlingWebIntegrationTest {
         assertTrue(meResponse.body().contains("Hot Campaigns"));
         assertTrue(meResponse.body().contains("My Tags"));
         assertTrue(meResponse.body().contains("My Messages"));
+        assertTrue(meResponse.body().contains("id=\"hotcampaigns-habblet-list\""));
+        assertTrue(meResponse.body().contains("id=\"message-list\""));
+        assertTrue(meResponse.body().contains("class=\"message-item"));
+        assertTrue(meResponse.body().contains("id=\"message-compose\""));
+        assertTrue(meResponse.body().contains("id=\"my-tags-list\""));
+        assertTrue(meResponse.body().contains("class=\"tag-remove-link\""));
         assertFalse(meResponse.body().contains("Reccomended Rooms"));
     }
 
@@ -392,6 +398,14 @@ class StarlingWebIntegrationTest {
                 .orElseThrow()
                 .id();
 
+        HttpResponse<String> sentResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/me?mailbox=sent")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertEquals(200, sentResponse.statusCode());
+        assertTrue(sentResponse.body().contains("id=\"message-list\" class=\"label-sent\""));
+        assertTrue(sentResponse.body().contains("To: admin"));
+
         HttpResponse<String> deleteResponse = postForm(
                 "/me/minimail/" + messageId + "/delete",
                 Map.of("mailbox", MailboxLabel.INBOX.key(), "mailPage", "1"),
@@ -406,6 +420,7 @@ class StarlingWebIntegrationTest {
         );
         assertEquals(200, trashResponse.statusCode());
         assertTrue(trashResponse.body().contains("Integration minimail"));
+        assertTrue(trashResponse.body().contains("class=\"empty-trash\""));
 
         HttpResponse<String> restoreResponse = postForm(
                 "/me/minimail/" + messageId + "/restore",
