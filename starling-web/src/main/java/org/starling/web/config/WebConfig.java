@@ -59,7 +59,7 @@ public record WebConfig(
                 Path.of(properties.getProperty("web.theme.directory", "themes")),
                 Path.of(properties.getProperty("web.upload.directory", "uploads")),
                 properties.getProperty("web.site.name", "Habbo"),
-                properties.getProperty("web.web-gallery.path", "/web-gallery"),
+                properties.getProperty("web.web-gallery.path", "http://localhost/web-gallery"),
                 properties.getProperty("web.admin.email", "admin@starling.local"),
                 properties.getProperty("web.admin.password", "admin123!"),
                 DatabaseConfig.from(properties)
