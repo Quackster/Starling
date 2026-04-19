@@ -184,6 +184,31 @@ public final class MinimailDao {
     }
 
     /**
+     * Finds one row visible to the current user across inbox, sent, and trash.
+     * @param userId the current user id
+     * @param messageId the message id
+     * @return the resulting message or null
+     */
+    public static MinimailMessage findVisibleToUser(int userId, int messageId) {
+        return EntityContext.withContext(context -> {
+            try (var statement = context.conn().prepareStatement(baseSelect() + """
+                    WHERE m.id = ?
+                      AND (m.to_id = ? OR m.senderid = ?)
+                    LIMIT 1
+                    """)) {
+                statement.setInt(1, messageId);
+                statement.setInt(2, userId);
+                statement.setInt(3, userId);
+                try (var resultSet = statement.executeQuery()) {
+                    return resultSet.next() ? map(resultSet) : null;
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to load visible minimail row", e);
+            }
+        });
+    }
+
+    /**
      * Inserts a system message for the recipient.
      * @param recipientId the recipient id
      * @param subject the subject
@@ -339,6 +364,66 @@ public final class MinimailDao {
                 return null;
             } catch (Exception e) {
                 throw new RuntimeException("Failed to empty minimail trash", e);
+            }
+        });
+    }
+
+    /**
+     * Counts conversation rows visible to the current user.
+     * @param userId the current user id
+     * @param conversationId the conversation id
+     * @return the visible row count
+     */
+    public static int countConversation(int userId, int conversationId) {
+        return EntityContext.withContext(context -> {
+            try (var statement = context.conn().prepareStatement("""
+                    SELECT COUNT(*)
+                    FROM minimail
+                    WHERE conversationid = ?
+                      AND ((to_id = ? AND deleted = 0) OR senderid = ?)
+                    """)) {
+                statement.setInt(1, Math.max(conversationId, 0));
+                statement.setInt(2, userId);
+                statement.setInt(3, userId);
+                try (var resultSet = statement.executeQuery()) {
+                    return resultSet.next() ? resultSet.getInt(1) : 0;
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to count minimail conversation rows", e);
+            }
+        });
+    }
+
+    /**
+     * Lists conversation rows visible to the current user.
+     * @param userId the current user id
+     * @param conversationId the conversation id
+     * @param pageSize the page size
+     * @param offset the row offset
+     * @return the resulting conversation messages
+     */
+    public static List<MinimailMessage> listConversation(int userId, int conversationId, int pageSize, int offset) {
+        return EntityContext.withContext(context -> {
+            List<MinimailMessage> messages = new ArrayList<>();
+            try (var statement = context.conn().prepareStatement(baseSelect() + """
+                    WHERE m.conversationid = ?
+                      AND ((m.to_id = ? AND m.deleted = 0) OR m.senderid = ?)
+                    ORDER BY m.id DESC
+                    LIMIT ? OFFSET ?
+                    """)) {
+                statement.setInt(1, Math.max(conversationId, 0));
+                statement.setInt(2, userId);
+                statement.setInt(3, userId);
+                statement.setInt(4, Math.max(pageSize, 1));
+                statement.setInt(5, Math.max(offset, 0));
+                try (var resultSet = statement.executeQuery()) {
+                    while (resultSet.next()) {
+                        messages.add(map(resultSet));
+                    }
+                }
+                return messages;
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to list minimail conversation rows", e);
             }
         });
     }

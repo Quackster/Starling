@@ -67,6 +67,17 @@ public final class PublicRoutes {
         app.post("/me/minimail/{messageId}/delete", meController::deleteMessage);
         app.post("/me/minimail/{messageId}/restore", meController::restoreMessage);
         app.post("/me/minimail/trash/empty", meController::emptyTrash);
+        app.get("/minimail/loadMessages", meController::loadLegacyMessage);
+        app.post("/minimail/loadMessages", meController::loadLegacyMessage);
+        app.post("/minimail/loadMessage", meController::loadLegacyMessage);
+        app.post("/minimail/sendMessage", meController::sendLegacyMessage);
+        app.post("/minimail/deleteMessage", meController::deleteLegacyMessage);
+        app.post("/minimail/undeleteMessage", meController::undeleteLegacyMessage);
+        app.post("/minimail/emptyTrash", meController::emptyLegacyTrash);
+        app.post("/minimail/preview", meController::previewLegacyMessage);
+        app.get("/minimail/recipients", meController::legacyRecipients);
+        app.post("/minimail/confirmReport", meController::confirmLegacyReport);
+        app.post("/minimail/report", meController::reportLegacyMessage);
 
         app.get("/community", communityController::community);
         app.get("/news", context -> newsController.index(context, "news", false));

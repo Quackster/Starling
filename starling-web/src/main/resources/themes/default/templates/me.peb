@@ -159,171 +159,73 @@ if (typeof HabboClient != "undefined") { HabboClient.windowName = "client"; }
                 <div class="cbb clearfix blue ">
                     <h2 class="title">My Messages</h2>
                     <div id="minimail">
-                        {% if minimail.notice != "" or minimail.error != "" %}
-                        <div class="minimail-flash-container">
-                            <div style="opacity: 1;" class="{% if minimail.error != "" %}error{% else %}notification{% endif %}">
-                                {% if minimail.error != "" %}{{ minimail.error }}{% else %}{{ minimail.notice }}{% endif %}
-                            </div>
-                        </div>
+                        {% if minimail.notice != "" %}
+                        <div style="opacity: 1;" class="notification">{{ minimail.notice }}</div>
+                        {% endif %}
+                        {% if minimail.error != "" %}
+                        <div style="opacity: 1;" class="notification error">{{ minimail.error }}</div>
                         {% endif %}
 
-                        <div class="minimail-contents"{% if minimail.composeMode %} style="display: none;"{% endif %}>
-                            <a href="{{ site.sitePath }}/me?mailbox={{ minimail.label }}&compose=true{% if minimail.unreadOnly %}&unreadOnly=true{% endif %}" class="new-button compose"><b>Compose</b><i></i></a>
-                            <div class="clearfix labels nostandard">
-                                <ul class="box-tabs">
-                                    <li{% if minimail.label == "inbox" %} class="selected"{% endif %}><a href="{{ site.sitePath }}/me?mailbox=inbox" label="inbox">Inbox{% if minimail.unreadCount > 0 %} ({{ minimail.unreadCount }}){% endif %}</a><span class="tab-spacer"></span></li>
-                                    <li{% if minimail.label == "sent" %} class="selected"{% endif %}><a href="{{ site.sitePath }}/me?mailbox=sent" label="sent">Sent</a><span class="tab-spacer"></span></li>
-                                    <li{% if minimail.label == "trash" %} class="selected"{% endif %}><a href="{{ site.sitePath }}/me?mailbox=trash" label="trash">Trash</a><span class="tab-spacer"></span></li>
-                                </ul>
-                            </div>
-                            <div id="message-list" class="label-{{ minimail.label }}">
-                                <div class="new-buttons clearfix">
-                                    <div class="labels inbox-refresh"><a href="{{ site.sitePath }}/me?mailbox={{ minimail.label }}{% if minimail.currentPage > 1 %}&mailPage={{ minimail.currentPage }}{% endif %}{% if minimail.unreadOnly %}&unreadOnly=true{% endif %}" class="new-button green-button" label="inbox" style="float: left; margin: 0"><b>Refresh</b><i></i></a></div>
-                                </div>
-                                <div style="clear: both; height: 1px"></div>
-
-                                {% if minimail.label == "trash" %}
-                                <div class="trash-controls notice">
-                                    Messages moved to trash stay here until you empty it. <a href="#" class="empty-trash" onclick="document.getElementById('empty-trash-form').submit(); return false;">Empty trash</a>
-                                    <form method="post" action="{{ site.sitePath }}/me/minimail/trash/empty" id="empty-trash-form" class="minimail-action-form"></form>
-                                </div>
-                                {% endif %}
-
-                                <div class="navigation">
-                                    {% if minimail.label == "inbox" %}
-                                    <form method="get" action="{{ site.sitePath }}/me" class="unread-selector">
-                                        <input type="hidden" name="mailbox" value="inbox" />
-                                        <input type="checkbox" class="unread-only" name="unreadOnly" value="true"{% if minimail.unreadOnly %} checked="checked"{% endif %} onchange="this.form.submit()" /> Only unread
-                                    </form>
-                                    {% endif %}
-
-                                    {% if minimail.totalMessages == 0 %}
-                                    <p class="no-messages">{{ minimail.emptyMessage }}</p>
-                                    {% endif %}
-
-                                    <div class="progress"></div>
-                                    {% if minimail.totalMessages > 0 %}
-                                    <p>
-                                        {% if minimail.currentPage > 2 %}
-                                        <a href="{{ site.sitePath }}/me?mailbox={{ minimail.label }}{% if minimail.unreadOnly %}&unreadOnly=true{% endif %}" class="newest">Newest</a>
-                                        {% endif %}
-                                        {% if minimail.hasNewerPage %}
-                                        <a href="{{ site.sitePath }}/me?mailbox={{ minimail.label }}&mailPage={{ minimail.newerPage }}{% if minimail.unreadOnly %}&unreadOnly=true{% endif %}" class="newer">Newer</a>
-                                        {% endif %}
-                                        {{ minimail.startIndex }} - {{ minimail.endIndex }} of {{ minimail.totalMessages }}
-                                        {% if minimail.hasOlderPage %}
-                                        <a href="{{ site.sitePath }}/me?mailbox={{ minimail.label }}&mailPage={{ minimail.olderPage }}{% if minimail.unreadOnly %}&unreadOnly=true{% endif %}" class="older">Older</a>
-                                        {% endif %}
-                                    </p>
-                                    {% endif %}
-                                </div>
-
-                                {% for message in minimail.messages %}
-                                <div class="message-item {{ message.status }}" id="msg-{{ message.id }}">
-                                    <a href="{{ site.sitePath }}/me?mailbox={{ minimail.label }}&messageId={{ message.id }}{% if minimail.currentPage > 1 %}&mailPage={{ minimail.currentPage }}{% endif %}{% if minimail.unreadOnly %}&unreadOnly=true{% endif %}" class="message-preview" status="{{ message.status }}">
-                                        <span class="message-tstamp" isotime="{{ message.sentAtIso }}" title="{{ message.sentAtTitle }}">{{ message.sentAt }}</span>
-                                        <img src="{{ message.avatarUrl }}" alt="" />
-                                        <span class="message-sender" title="{{ message.previewName }}">{{ message.previewName }}</span>
-                                        <span class="message-subject" title="{{ message.subject }}">&ldquo;{{ message.subject }}&rdquo;</span>
-                                    </a>
-                                    <div class="message-body"{% if minimail.selectedMessageId != message.id %} style="display: none;"{% endif %}>
-                                        <div class="contents">
-                                            {% if minimail.selectedMessageId == message.id and minimail.selectedMessage %}
-                                            <ul class="message-headers">
-                                                <li><a href="#" class="report" title="Report"></a></li>
-                                                <li><b>Subject:</b> {{ minimail.selectedMessage.subject }}</li>
-                                                <li><b>From:</b> {{ minimail.selectedMessage.senderName }}</li>
-                                                <li><b>To:</b> {{ minimail.selectedMessage.recipientName }}</li>
-                                            </ul>
-                                            <div class="body-text">{{ minimail.selectedMessage.bodyHtml | raw }}<br /></div>
-                                            <div class="reply-controls">
-                                                <div>
-                                                    <div class="new-buttons clearfix">
-                                                        {% if minimail.selectedMessage.conversationId > 0 %}
-                                                        <a href="#" class="related-messages" id="rel-{{ minimail.selectedMessage.conversationId }}" title="Show conversation"></a>
-                                                        {% endif %}
-                                                        {% if minimail.label == "trash" %}
-                                                        <a href="#" class="new-button undelete" onclick="document.getElementById('restore-message-{{ minimail.selectedMessage.id }}').submit(); return false;"><b>Undelete</b><i></i></a>
-                                                        <a href="#" class="new-button red-button delete" onclick="document.getElementById('delete-message-{{ minimail.selectedMessage.id }}').submit(); return false;"><b>Delete</b><i></i></a>
-                                                        <form method="post" action="{{ site.sitePath }}/me/minimail/{{ minimail.selectedMessage.id }}/restore" id="restore-message-{{ minimail.selectedMessage.id }}" class="minimail-action-form"></form>
-                                                        <form method="post" action="{{ site.sitePath }}/me/minimail/{{ minimail.selectedMessage.id }}/delete" id="delete-message-{{ minimail.selectedMessage.id }}" class="minimail-action-form">
-                                                            <input type="hidden" name="mailbox" value="trash" />
-                                                            <input type="hidden" name="mailPage" value="{{ minimail.currentPage }}" />
-                                                        </form>
-                                                        {% elseif minimail.label == "inbox" %}
-                                                        <a href="#" class="new-button red-button delete" onclick="document.getElementById('delete-message-{{ minimail.selectedMessage.id }}').submit(); return false;"><b>Delete</b><i></i></a>
-                                                        <form method="post" action="{{ site.sitePath }}/me/minimail/{{ minimail.selectedMessage.id }}/delete" id="delete-message-{{ minimail.selectedMessage.id }}" class="minimail-action-form">
-                                                            <input type="hidden" name="mailbox" value="inbox" />
-                                                            <input type="hidden" name="mailPage" value="{{ minimail.currentPage }}" />
-                                                            {% if minimail.unreadOnly %}
-                                                            <input type="hidden" name="unreadOnly" value="true" />
-                                                            {% endif %}
-                                                        </form>
-                                                        {% if minimail.selectedMessage.replyable %}
-                                                        <a href="{{ site.sitePath }}/me?mailbox=inbox&messageId={{ minimail.selectedMessage.id }}&reply=true{% if minimail.currentPage > 1 %}&mailPage={{ minimail.currentPage }}{% endif %}{% if minimail.unreadOnly %}&unreadOnly=true{% endif %}" class="new-button reply"><b>Reply</b><i></i></a>
-                                                        {% endif %}
-                                                        {% endif %}
-                                                    </div>
-                                                </div>
-                                                <div{% if not minimail.replyMode %} style="display: none;"{% endif %}>
-                                                    <form method="post" action="{{ site.sitePath }}/me/minimail/{{ minimail.selectedMessage.id }}/reply" id="reply-form-{{ minimail.selectedMessage.id }}">
-                                                        <textarea rows="5" cols="10" class="message-text" name="body">{{ minimail.composeBody }}</textarea><br />
-                                                        <div class="new-buttons clearfix">
-                                                            <a href="{{ site.sitePath }}/me?mailbox=inbox&messageId={{ minimail.selectedMessage.id }}{% if minimail.currentPage > 1 %}&mailPage={{ minimail.currentPage }}{% endif %}{% if minimail.unreadOnly %}&unreadOnly=true{% endif %}" class="new-button cancel-reply"><b>Cancel</b><i></i></a>
-                                                            <a href="#" class="new-button preview" onclick="return false;"><b>Preview</b><i></i></a>
-                                                            <a href="#" class="new-button send-reply" onclick="document.getElementById('reply-form-{{ minimail.selectedMessage.id }}').submit(); return false;"><b>Send</b><i></i></a>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                            {% endif %}
-                                        </div>
-                                        <div class="message-body-bottom"></div>
-                                    </div>
-                                </div>
-                                {% endfor %}
-
-                                <div class="navigation bottom-navigation">
-                                    <div class="progress"></div>
-                                    {% if minimail.totalMessages > 0 %}
-                                    <p>
-                                        {% if minimail.currentPage > 2 %}
-                                        <a href="{{ site.sitePath }}/me?mailbox={{ minimail.label }}{% if minimail.unreadOnly %}&unreadOnly=true{% endif %}" class="newest">Newest</a>
-                                        {% endif %}
-                                        {% if minimail.hasNewerPage %}
-                                        <a href="{{ site.sitePath }}/me?mailbox={{ minimail.label }}&mailPage={{ minimail.newerPage }}{% if minimail.unreadOnly %}&unreadOnly=true{% endif %}" class="newer">Newer</a>
-                                        {% endif %}
-                                        {{ minimail.startIndex }} - {{ minimail.endIndex }} of {{ minimail.totalMessages }}
-                                        {% if minimail.hasOlderPage %}
-                                        <a href="{{ site.sitePath }}/me?mailbox={{ minimail.label }}&mailPage={{ minimail.olderPage }}{% if minimail.unreadOnly %}&unreadOnly=true{% endif %}" class="older">Older</a>
-                                        {% endif %}
-                                    </p>
-                                    {% endif %}
-                                </div>
-                            </div>
+                        <div class="minimail-contents">
+                            {% include "fragments/minimail-tabcontent.peb" %}
                         </div>
                         <div id="message-compose-wait"></div>
-                        <form{% if not minimail.composeMode %} style="display: none"{% endif %} id="message-compose" method="post" action="{{ site.sitePath }}/me/minimail/compose">
+                        <form style="display: none" id="message-compose">
                             <div>To</div>
                             <div id="message-recipients-container" class="input-text" style="width: 426px; margin-bottom: 1em">
-                                <input type="text" value="{{ minimail.composeRecipients }}" id="message-recipients" name="recipients" maxlength="255" />
+                                <input type="text" value="{{ minimail.composeRecipients }}" id="message-recipients" maxlength="255" />
                                 <div class="autocomplete" id="message-recipients-auto">
-                                    <div class="default" style="display: none;">Type a name</div>
+                                    <div class="default" style="display: none;">Type the name of your friend</div>
                                     <ul class="feed" style="display: none;"></ul>
                                 </div>
                             </div>
                             <div>Subject<br />
-                                <input type="text" style="margin: 5px 0" id="message-subject" class="message-text" maxlength="100" tabindex="2" name="subject" value="{{ minimail.composeSubject }}" />
+                                <input type="text" style="margin: 5px 0" id="message-subject" class="message-text" maxlength="100" tabindex="2" value="{{ minimail.composeSubject }}" />
                             </div>
                             <div>Message<br />
-                                <textarea style="margin: 5px 0" rows="5" cols="10" id="message-body" class="message-text" tabindex="3" name="body">{{ minimail.composeBody }}</textarea>
+                                <textarea style="margin: 5px 0" rows="5" cols="10" id="message-body" class="message-text" tabindex="3">{{ minimail.composeBody }}</textarea>
                             </div>
                             <div class="new-buttons clearfix">
-                                <a href="#" class="new-button preview" onclick="return false;"><b>Preview</b><i></i></a>
-                                <a href="#" class="new-button send" onclick="document.getElementById('message-compose').submit(); return false;"><b>Send</b><i></i></a>
+                                <a href="#" class="new-button preview"><b>Preview</b><i></i></a>
+                                <a href="#" class="new-button send"><b>Send</b><i></i></a>
                             </div>
                         </form>
                     </div>
+                    <script type="text/javascript">
+                        L10N.put("minimail.compose", "Compose").put("minimail.cancel", "Cancel")
+                            .put("bbcode.colors.red", "Red").put("bbcode.colors.orange", "Orange")
+                            .put("bbcode.colors.yellow", "Yellow").put("bbcode.colors.green", "Green")
+                            .put("bbcode.colors.cyan", "Cyan").put("bbcode.colors.blue", "Blue")
+                            .put("bbcode.colors.gray", "Gray").put("bbcode.colors.black", "Black")
+                            .put("minimail.empty_body.confirm", "Are you sure you want to send the message with an empty body?")
+                            .put("bbcode.colors.label", "Color").put("linktool.find.label", " ")
+                            .put("linktool.scope.habbos", "{{ site.siteName }}s").put("linktool.scope.rooms", "Rooms")
+                            .put("linktool.scope.groups", "Groups").put("minimail.report.title", "Report message to moderators");
+
+                        L10N.put("date.pretty.just_now", "just now");
+                        L10N.put("date.pretty.one_minute_ago", "1 minute ago");
+                        L10N.put("date.pretty.minutes_ago", "{0} minutes ago");
+                        L10N.put("date.pretty.one_hour_ago", "1 hour ago");
+                        L10N.put("date.pretty.hours_ago", "{0} hours ago");
+                        L10N.put("date.pretty.yesterday", "yesterday");
+                        L10N.put("date.pretty.days_ago", "{0} days ago");
+                        L10N.put("date.pretty.one_week_ago", "1 week ago");
+                        L10N.put("date.pretty.weeks_ago", "{0} weeks ago");
+                        new MiniMail({
+                            pageSize: 10,
+                            total: {{ minimail.totalMessages }},
+                            friendCount: {{ minimail.friendCount }},
+                            maxRecipients: 50,
+                            messageMaxLength: 20,
+                            bodyMaxLength: 4096,
+                            secondLevel: false
+                        });
+                        {% if minimail.composeMode %}
+                        window.setTimeout(function() {
+                            window.location.hash = "mail/compose";
+                        }, 0);
+                        {% endif %}
+                    </script>
                 </div>
             </div>
             <script type="text/javascript">if (!$(document.body).hasClassName('process-template')) { Rounder.init(); }</script>

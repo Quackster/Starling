@@ -2,6 +2,7 @@ package org.starling.web.publicsite;
 
 import io.javalin.http.Context;
 import org.starling.storage.entity.UserEntity;
+import org.starling.web.layout.PublicPageLayoutRenderer;
 import org.starling.web.render.TemplateRenderer;
 import org.starling.web.service.ArticleService;
 import org.starling.web.service.PublicTagService;
@@ -23,6 +24,7 @@ public final class CommunityController {
     private final PublicPageModelFactory publicPageModelFactory;
     private final CommunityWidgetsFactory communityWidgetsFactory;
     private final PublicTagService publicTagService;
+    private final PublicPageLayoutRenderer publicPageLayoutRenderer;
     private final CmsViewModelFactory cmsViewModelFactory;
 
     /**
@@ -42,6 +44,7 @@ public final class CommunityController {
             PublicPageModelFactory publicPageModelFactory,
             CommunityWidgetsFactory communityWidgetsFactory,
             PublicTagService publicTagService,
+            PublicPageLayoutRenderer publicPageLayoutRenderer,
             CmsViewModelFactory cmsViewModelFactory
     ) {
         this.templateRenderer = templateRenderer;
@@ -50,6 +53,7 @@ public final class CommunityController {
         this.publicPageModelFactory = publicPageModelFactory;
         this.communityWidgetsFactory = communityWidgetsFactory;
         this.publicTagService = publicTagService;
+        this.publicPageLayoutRenderer = publicPageLayoutRenderer;
         this.cmsViewModelFactory = cmsViewModelFactory;
     }
 
@@ -83,9 +87,10 @@ public final class CommunityController {
         model.put("recentTopics", recentTopics.subList(0, Math.min(10, recentTopics.size())));
         model.put("recentTopicsMore", recentTopics.size() > 10 ? recentTopics.subList(10, recentTopics.size()) : List.of());
         model.put("activeMembers", communityWidgetsFactory.activeMembers(currentUser));
-        model.put("promoStories", promoStories.subList(0, 3));
-        model.put("promoHeadlines", promoStories.subList(3, 5));
+        model.put("promoStories", promoStories.subList(0, 2));
+        model.put("promoHeadlines", promoStories.subList(2, 4));
         model.put("tagCloud", publicTagService.tagCloud(context, currentUser));
+        model.put("pageLayout", publicPageLayoutRenderer.render("community", model));
         context.html(templateRenderer.render("community", model));
     }
 }

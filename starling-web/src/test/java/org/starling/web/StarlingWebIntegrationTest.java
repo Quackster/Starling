@@ -371,7 +371,9 @@ class StarlingWebIntegrationTest {
         assertTrue(meResponse.body().contains("id=\"hotcampaigns-habblet-list\""));
         assertTrue(meResponse.body().contains("id=\"message-list\""));
         assertTrue(meResponse.body().contains("class=\"message-item"));
+        assertTrue(meResponse.body().contains("class=\"message-preview\""));
         assertTrue(meResponse.body().contains("id=\"message-compose\""));
+        assertTrue(meResponse.body().contains("new MiniMail({"));
         assertTrue(meResponse.body().contains("id=\"my-tags-list\""));
         assertTrue(meResponse.body().contains("class=\"tag-remove-link\""));
         assertFalse(meResponse.body().contains("Reccomended Rooms"));
@@ -411,7 +413,7 @@ class StarlingWebIntegrationTest {
         );
         assertEquals(200, sentResponse.statusCode());
         assertTrue(sentResponse.body().contains("id=\"message-list\" class=\"label-sent\""));
-        assertTrue(sentResponse.body().contains("To: admin"));
+        assertTrue(sentResponse.body().contains("Integration minimail"));
 
         HttpResponse<String> deleteResponse = postForm(
                 "/me/minimail/" + messageId + "/delete",
@@ -443,6 +445,105 @@ class StarlingWebIntegrationTest {
         );
         assertEquals(200, inboxResponse.statusCode());
         assertTrue(inboxResponse.body().contains("Integration minimail"));
+    }
+
+    @Test
+    void minimailLegacyAjaxCallbacksMatchTheClassicContract() throws Exception {
+        HttpResponse<String> loginResponse = postForm(
+                "/account/submit",
+                Map.of("username", "admin", "password", "admin"),
+                Map.of()
+        );
+        assertEquals(200, loginResponse.statusCode());
+
+        HttpResponse<String> recipientsResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/minimail/recipients")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertEquals(200, recipientsResponse.statusCode());
+        assertTrue(recipientsResponse.body().contains("/*-secure-"));
+        assertTrue(recipientsResponse.body().contains("\"id\":1"));
+        assertTrue(recipientsResponse.body().contains("\"name\":\"admin\""));
+
+        HttpResponse<String> sendResponse = postForm(
+                "/minimail/sendMessage",
+                Map.of(
+                        "recipientIds", "1",
+                        "subject", "Ajax minimail",
+                        "body", "Callback body"
+                ),
+                Map.of()
+        );
+        assertEquals(200, sendResponse.statusCode());
+        assertTrue(sendResponse.headers().firstValue("X-JSON").orElse("").contains("The message has been sent."));
+        assertTrue(sendResponse.body().contains("id=\"message-list\" class=\"label-inbox\""));
+        assertTrue(sendResponse.body().contains("Ajax minimail"));
+
+        int messageId = MinimailDao.listInbox(1, false, 20, 0).stream()
+                .filter(message -> "Ajax minimail".equals(message.subject()))
+                .findFirst()
+                .orElseThrow()
+                .id();
+
+        HttpResponse<String> loadMessageResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/minimail/loadMessage?key=3&messageId=" + messageId + "&label=inbox")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertEquals(200, loadMessageResponse.statusCode());
+        assertTrue(loadMessageResponse.body().contains("<b>Subject:</b> Ajax minimail"));
+        assertTrue(loadMessageResponse.body().contains("class=\"reply-controls\""));
+        assertTrue(loadMessageResponse.body().contains("class=\"new-button reply\""));
+
+        HttpResponse<String> previewResponse = postForm(
+                "/minimail/preview",
+                Map.of("body", "Line 1\nLine 2"),
+                Map.of()
+        );
+        assertEquals(200, previewResponse.statusCode());
+        assertTrue(previewResponse.body().contains("Line 1<br />Line 2"));
+
+        HttpResponse<String> confirmReportResponse = postForm(
+                "/minimail/confirmReport",
+                Map.of("messageId", Integer.toString(messageId)),
+                Map.of()
+        );
+        assertEquals(200, confirmReportResponse.statusCode());
+        assertTrue(confirmReportResponse.body().contains("Call for Help"));
+
+        HttpResponse<String> deleteResponse = postForm(
+                "/minimail/deleteMessage",
+                Map.of(
+                        "messageId", Integer.toString(messageId),
+                        "label", "inbox",
+                        "start", "0",
+                        "conversationId", "0"
+                ),
+                Map.of()
+        );
+        assertEquals(200, deleteResponse.statusCode());
+        assertTrue(deleteResponse.headers().firstValue("X-JSON").orElse("").contains("moved to the trash"));
+
+        HttpResponse<String> trashResponse = postForm(
+                "/minimail/loadMessage?key=1",
+                Map.of("label", "trash"),
+                Map.of()
+        );
+        assertEquals(200, trashResponse.statusCode());
+        assertTrue(trashResponse.body().contains("id=\"message-list\" class=\"label-trash\""));
+        assertTrue(trashResponse.body().contains("Ajax minimail"));
+        assertTrue(trashResponse.body().contains("class=\"empty-trash\""));
+
+        HttpResponse<String> undeleteResponse = postForm(
+                "/minimail/undeleteMessage",
+                Map.of(
+                        "messageId", Integer.toString(messageId),
+                        "label", "trash",
+                        "start", "0"
+                ),
+                Map.of()
+        );
+        assertEquals(200, undeleteResponse.statusCode());
+        assertTrue(undeleteResponse.headers().firstValue("X-JSON").orElse("").contains("restored to your inbox"));
     }
 
     @Test

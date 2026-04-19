@@ -2,6 +2,7 @@ package org.starling.web.publicsite;
 
 import io.javalin.http.Context;
 import org.starling.storage.entity.UserEntity;
+import org.starling.web.layout.PublicPageLayoutRenderer;
 import org.starling.web.render.TemplateRenderer;
 import org.starling.web.user.UserSessionService;
 import org.starling.web.view.CreditsPageContentFactory;
@@ -14,6 +15,7 @@ public final class CreditsController {
 
     private final TemplateRenderer templateRenderer;
     private final UserSessionService userSessionService;
+    private final PublicPageLayoutRenderer publicPageLayoutRenderer;
     private final PublicPageModelFactory publicPageModelFactory;
     private final CreditsPageContentFactory creditsPageContentFactory;
 
@@ -27,11 +29,13 @@ public final class CreditsController {
     public CreditsController(
             TemplateRenderer templateRenderer,
             UserSessionService userSessionService,
+            PublicPageLayoutRenderer publicPageLayoutRenderer,
             PublicPageModelFactory publicPageModelFactory,
             CreditsPageContentFactory creditsPageContentFactory
     ) {
         this.templateRenderer = templateRenderer;
         this.userSessionService = userSessionService;
+        this.publicPageLayoutRenderer = publicPageLayoutRenderer;
         this.publicPageModelFactory = publicPageModelFactory;
         this.creditsPageContentFactory = creditsPageContentFactory;
     }
@@ -46,6 +50,7 @@ public final class CreditsController {
         model.put("creditCategories", creditsPageContentFactory.creditCategories());
         model.put("purse", creditsPageContentFactory.purse(currentUser, ""));
         model.put("creditsInfo", creditsPageContentFactory.creditsInfo());
+        model.put("pageLayout", publicPageLayoutRenderer.render("credits", model));
         context.html(templateRenderer.render("credits", model));
     }
 
@@ -57,7 +62,10 @@ public final class CreditsController {
         Map<String, Object> model = publicPageModelFactory.create(context, "credits", "pixels");
         var pixelPanels = creditsPageContentFactory.pixelPanels();
         model.put("heroPixelPanel", pixelPanels.get(0));
-        model.put("secondaryPixelPanels", pixelPanels.subList(1, pixelPanels.size()));
+        model.put("rentPixelPanel", pixelPanels.get(1));
+        model.put("effectsPixelPanel", pixelPanels.get(2));
+        model.put("offersPixelPanel", pixelPanels.get(3));
+        model.put("pageLayout", publicPageLayoutRenderer.render("pixels", model));
         context.html(templateRenderer.render("pixels", model));
     }
 }

@@ -2,6 +2,7 @@ package org.starling.web.publicsite;
 
 import io.javalin.http.Context;
 import org.starling.storage.entity.UserEntity;
+import org.starling.web.layout.PublicPageLayoutRenderer;
 import org.starling.web.render.TemplateRenderer;
 import org.starling.web.request.RequestValues;
 import org.starling.web.service.PublicTagService;
@@ -15,6 +16,7 @@ public final class TagController {
 
     private final TemplateRenderer templateRenderer;
     private final UserSessionService userSessionService;
+    private final PublicPageLayoutRenderer publicPageLayoutRenderer;
     private final PublicPageModelFactory publicPageModelFactory;
     private final PublicTagService publicTagService;
 
@@ -28,11 +30,13 @@ public final class TagController {
     public TagController(
             TemplateRenderer templateRenderer,
             UserSessionService userSessionService,
+            PublicPageLayoutRenderer publicPageLayoutRenderer,
             PublicPageModelFactory publicPageModelFactory,
             PublicTagService publicTagService
     ) {
         this.templateRenderer = templateRenderer;
         this.userSessionService = userSessionService;
+        this.publicPageLayoutRenderer = publicPageLayoutRenderer;
         this.publicPageModelFactory = publicPageModelFactory;
         this.publicTagService = publicTagService;
     }
@@ -71,6 +75,7 @@ public final class TagController {
                 requestedTag,
                 RequestValues.parseInt(context.queryParam("pageNumber"), 1)
         ));
+        model.put("pageLayout", publicPageLayoutRenderer.render("tags", model));
         context.html(templateRenderer.render("tag", model));
     }
 }

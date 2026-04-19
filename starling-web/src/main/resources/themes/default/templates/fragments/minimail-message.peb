@@ -1,0 +1,27 @@
+<ul class="message-headers">
+    <li class="header-report"><a href="#" class="report" title="Report as offensive"></a></li>
+    <li><b>Subject:</b> {{ message.subject }}</li>
+    <li><b>From:</b> {{ message.senderName }}</li>
+    {% if not message.sent %}<li><b>To:</b> {{ message.recipientName }}</li>{% endif %}
+</ul>
+<div class="body-text">{{ message.bodyHtml | raw }}</div>
+<div class="reply-controls">
+    <div>
+        <div class="new-buttons clearfix">
+            {% if not message.trashed and message.conversationId > 0 and message.replyable %}
+            <a href="#" class="related-messages" id="rel-{{ message.conversationId }}" title="Show full conversation"></a>
+            {% endif %}
+            {% if message.trashed %}<a href="#" class="new-button undelete"><b>Undelete</b><i></i></a>{% endif %}
+            {% if message.trashed or message.replyable %}<a href="#" class="new-button red-button delete"><b>Delete</b><i></i></a>{% endif %}
+            {% if message.replyable %}<a href="#" class="new-button reply"><b>Reply</b><i></i></a>{% endif %}
+        </div>
+    </div>
+    <div style="display: none">
+        <textarea rows="5" cols="10" class="message-text"></textarea><br />
+        <div class="new-buttons clearfix">
+            <a href="#" class="new-button cancel-reply"><b>Cancel</b><i></i></a>
+            <a href="#" class="new-button preview"><b>Preview</b><i></i></a>
+            <a href="#" class="new-button send-reply"><b>Send</b><i></i></a>
+        </div>
+    </div>
+</div>

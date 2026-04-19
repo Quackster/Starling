@@ -1,0 +1,73 @@
+<a href="#" class="new-button compose"><b>Compose</b><i></i></a>
+<div class="clearfix labels nostandard">
+    <ul class="box-tabs">
+        <li{% if minimail.label == "inbox" %} class="selected"{% endif %}><a href="#" label="inbox">Inbox{% if minimail.unreadCount > 0 %}<span class="minimail-unread"> (<b>{{ minimail.unreadCount }}</b>)</span>{% endif %}</a><span class="tab-spacer"></span></li>
+        <li{% if minimail.label == "sent" %} class="selected"{% endif %}><a href="#" label="sent">Sent</a><span class="tab-spacer"></span></li>
+        <li{% if minimail.label == "trash" %} class="selected"{% endif %}><a href="#" label="trash">Trash</a><span class="tab-spacer"></span></li>
+    </ul>
+</div>
+<div id="message-list" class="label-{{ minimail.label }}">
+    <div class="new-buttons clearfix">
+        <div class="labels inbox-refresh"><a href="#" class="new-button green-button" label="{{ minimail.label }}" style="float: left; margin: 0"><b>Refresh</b><i></i></a></div>
+    </div>
+    <div style="clear: both; height: 1px"></div>
+
+    {% if minimail.showTrashNotice %}
+    <div class="trash-controls notice">
+        Messages in this folder that are older than 30 days are deleted automatically. <a href="#" class="empty-trash">Empty trash</a>
+    </div>
+    {% endif %}
+
+    {% if minimail.showConversationNotice %}
+    <div class="trash-controls notice">
+        You are reading a conversation. Click the tabs above to go back to your folders.
+    </div>
+    {% endif %}
+
+    <div class="navigation">
+        {% if minimail.label == "inbox" %}
+        <div class="unread-selector"><input type="checkbox" class="unread-only"{% if minimail.unreadOnly %} checked="checked"{% endif %}/> only unread</div>
+        {% endif %}
+        {% if minimail.totalMessages == 0 %}
+        <p class="no-messages">{{ minimail.emptyMessage }}</p>
+        {% endif %}
+        <div class="progress"></div>
+        {% if minimail.totalMessages > 0 %}
+        <p>
+            {% if minimail.showNewest %}<a href="#" class="newest">Newest</a>{% endif %}
+            {% if minimail.hasNewerPage %}<a href="#" class="newer">Newer</a>{% endif %}
+            {{ minimail.startIndex }} - {{ minimail.endIndex }} of {{ minimail.totalMessages }}
+            {% if minimail.hasOlderPage %}<a href="#" class="older">Older</a>{% endif %}
+        </p>
+        {% endif %}
+    </div>
+
+    {% for message in minimail.messages %}
+    <div class="message-item {{ message.statusClass }} " id="msg-{{ message.id }}">
+        <div class="message-preview" status="{{ message.status }}">
+            <span class="message-tstamp" isotime="{{ message.sentAtIso }}" title="{{ message.sentAtTitle }}">
+                {{ message.sentAt }}
+            </span>
+            <img src="{{ message.avatarUrl }}" alt="" />
+            <span class="message-sender" title="{{ message.previewName }}">{{ message.previewName }}</span>
+            <span class="message-subject" title="{{ message.subject }}">&ldquo;{{ message.subject }}&rdquo;</span>
+        </div>
+        <div class="message-body" style="display: none;">
+            <div class="contents"></div>
+            <div class="message-body-bottom"></div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <div class="navigation">
+        <div class="progress"></div>
+        {% if minimail.totalMessages > 0 %}
+        <p>
+            {% if minimail.showNewest %}<a href="#" class="newest">Newest</a>{% endif %}
+            {% if minimail.hasNewerPage %}<a href="#" class="newer">Newer</a>{% endif %}
+            {{ minimail.startIndex }} - {{ minimail.endIndex }} of {{ minimail.totalMessages }}
+            {% if minimail.hasOlderPage %}<a href="#" class="older">Older</a>{% endif %}
+        </p>
+        {% endif %}
+    </div>
+</div>

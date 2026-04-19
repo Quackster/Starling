@@ -3,6 +3,8 @@ package org.starling.storage.dao;
 import org.starling.storage.EntityContext;
 import org.starling.storage.entity.UserEntity;
 
+import java.util.List;
+
 public class UserDao {
 
     /**
@@ -47,6 +49,18 @@ public class UserDao {
                 .filter(filter -> filter.equalsIgnoreCase(UserEntity::getEmail, email))
                 .first()
                 .orElse(null));
+    }
+
+    /**
+     * Lists all users in username order.
+     * @return the resulting user list
+     */
+    public static List<UserEntity> listAll() {
+        return EntityContext.withContext(context -> context.from(UserEntity.class)
+                .orderBy(order -> order
+                        .col(UserEntity::getUsername).asc()
+                        .col(UserEntity::getId).asc())
+                .toList());
     }
 
     /**

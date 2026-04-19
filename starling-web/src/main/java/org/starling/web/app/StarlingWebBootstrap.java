@@ -16,6 +16,9 @@ import org.starling.web.cms.auth.SignedSessionService;
 import org.starling.web.cms.bootstrap.CmsBootstrap;
 import org.starling.web.cms.media.MediaStorageService;
 import org.starling.web.config.WebConfig;
+import org.starling.web.layout.PublicPageLayoutConfig;
+import org.starling.web.layout.PublicPageLayoutConfigLoader;
+import org.starling.web.layout.PublicPageLayoutRenderer;
 import org.starling.web.navigation.PublicNavigationConfig;
 import org.starling.web.navigation.PublicNavigationConfigLoader;
 import org.starling.web.navigation.PublicNavigationModelFactory;
@@ -97,7 +100,9 @@ public final class StarlingWebBootstrap {
         CommunityWidgetsFactory communityWidgetsFactory = new CommunityWidgetsFactory(userViewModelFactory);
         CreditsPageContentFactory creditsPageContentFactory = new CreditsPageContentFactory();
         PublicNavigationConfig publicNavigationConfig = new PublicNavigationConfigLoader().load();
+        PublicPageLayoutConfig publicPageLayoutConfig = new PublicPageLayoutConfigLoader().load();
         PublicNavigationModelFactory publicNavigationModelFactory = new PublicNavigationModelFactory(publicNavigationConfig, siteBranding);
+        PublicPageLayoutRenderer publicPageLayoutRenderer = new PublicPageLayoutRenderer(templateRenderer, publicPageLayoutConfig);
         PublicPageModelFactory publicPageModelFactory = new PublicPageModelFactory(
                 userSessionService,
                 userViewModelFactory,
@@ -125,6 +130,7 @@ public final class StarlingWebBootstrap {
                 communityWidgetsFactory,
                 creditsPageContentFactory,
                 publicNavigationModelFactory,
+                publicPageLayoutRenderer,
                 publicPageModelFactory,
                 publicFeatureContentFactory,
                 adminPageModelFactory,
@@ -148,6 +154,7 @@ public final class StarlingWebBootstrap {
                 dependencies.publicPageModelFactory(),
                 dependencies.communityWidgetsFactory(),
                 dependencies.publicTagService(),
+                dependencies.publicPageLayoutRenderer(),
                 dependencies.cmsViewModelFactory()
         );
         MeController meController = new MeController(
@@ -157,6 +164,7 @@ public final class StarlingWebBootstrap {
                 dependencies.hotCampaignService(),
                 dependencies.minimailService(),
                 dependencies.publicTagService(),
+                dependencies.publicPageLayoutRenderer(),
                 dependencies.publicPageModelFactory(),
                 dependencies.publicFeatureContentFactory(),
                 dependencies.userViewModelFactory(),
@@ -165,6 +173,7 @@ public final class StarlingWebBootstrap {
         NewsController newsController = new NewsController(
                 dependencies.templateRenderer(),
                 dependencies.articleService(),
+                dependencies.publicPageLayoutRenderer(),
                 dependencies.publicPageModelFactory(),
                 dependencies.cmsViewModelFactory()
         );
@@ -182,12 +191,14 @@ public final class StarlingWebBootstrap {
         CreditsController creditsController = new CreditsController(
                 dependencies.templateRenderer(),
                 dependencies.userSessionService(),
+                dependencies.publicPageLayoutRenderer(),
                 dependencies.publicPageModelFactory(),
                 dependencies.creditsPageContentFactory()
         );
         TagController tagController = new TagController(
                 dependencies.templateRenderer(),
                 dependencies.userSessionService(),
+                dependencies.publicPageLayoutRenderer(),
                 dependencies.publicPageModelFactory(),
                 dependencies.publicTagService()
         );

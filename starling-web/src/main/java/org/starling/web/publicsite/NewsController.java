@@ -2,6 +2,7 @@ package org.starling.web.publicsite;
 
 import io.javalin.http.Context;
 import org.starling.web.cms.model.CmsArticle;
+import org.starling.web.layout.PublicPageLayoutRenderer;
 import org.starling.web.render.TemplateRenderer;
 import org.starling.web.service.ArticleService;
 import org.starling.web.view.CmsViewModelFactory;
@@ -16,6 +17,7 @@ public final class NewsController {
 
     private final TemplateRenderer templateRenderer;
     private final ArticleService articleService;
+    private final PublicPageLayoutRenderer publicPageLayoutRenderer;
     private final PublicPageModelFactory publicPageModelFactory;
     private final CmsViewModelFactory cmsViewModelFactory;
 
@@ -29,11 +31,13 @@ public final class NewsController {
     public NewsController(
             TemplateRenderer templateRenderer,
             ArticleService articleService,
+            PublicPageLayoutRenderer publicPageLayoutRenderer,
             PublicPageModelFactory publicPageModelFactory,
             CmsViewModelFactory cmsViewModelFactory
     ) {
         this.templateRenderer = templateRenderer;
         this.articleService = articleService;
+        this.publicPageLayoutRenderer = publicPageLayoutRenderer;
         this.publicPageModelFactory = publicPageModelFactory;
         this.cmsViewModelFactory = cmsViewModelFactory;
     }
@@ -82,6 +86,7 @@ public final class NewsController {
         model.put("articlesThisWeek", archiveView ? List.of() : cmsViewModelFactory.datedBucket(publishedArticles, CmsViewModelFactory.ArticleBucket.THIS_WEEK));
         model.put("articlesThisMonth", archiveView ? List.of() : cmsViewModelFactory.datedBucket(publishedArticles, CmsViewModelFactory.ArticleBucket.THIS_MONTH));
         model.put("articlesPastYear", archiveView ? List.of() : cmsViewModelFactory.datedBucket(publishedArticles, CmsViewModelFactory.ArticleBucket.PAST_YEAR));
+        model.put("pageLayout", publicPageLayoutRenderer.render(newsPage, model));
         context.html(templateRenderer.render("news_articles", model));
     }
 
