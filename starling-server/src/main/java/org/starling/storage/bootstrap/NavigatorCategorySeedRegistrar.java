@@ -3,9 +3,11 @@ package org.starling.storage.bootstrap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.oldskooler.entity4j.DbContext;
+import org.starling.storage.entity.NavigatorCategoryEntity;
 
-import java.sql.PreparedStatement;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public final class NavigatorCategorySeedRegistrar implements DatabaseSeedRegistrar {
 
@@ -19,49 +21,37 @@ public final class NavigatorCategorySeedRegistrar implements DatabaseSeedRegistr
      */
     @Override
     public void seed(DbContext context) {
-        String sql = """
-                INSERT INTO rooms_categories (
-                    id,
-                    order_id,
-                    parent_id,
-                    isnode,
-                    name,
-                    public_spaces,
-                    allow_trading,
-                    minrole_access,
-                    minrole_setflatcat,
-                    club_only,
-                    is_top_priority
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE
-                    order_id = VALUES(order_id),
-                    parent_id = VALUES(parent_id),
-                    isnode = VALUES(isnode),
-                    name = VALUES(name),
-                    public_spaces = VALUES(public_spaces),
-                    allow_trading = VALUES(allow_trading),
-                    minrole_access = VALUES(minrole_access),
-                    minrole_setflatcat = VALUES(minrole_setflatcat),
-                    club_only = VALUES(club_only),
-                    is_top_priority = VALUES(is_top_priority)
-                """;
-
-        try (PreparedStatement statement = context.conn().prepareStatement(sql)) {
-            for (HolographPublicSpaceCatalog.NavigatorCategorySeed seed : DEFAULT_CATEGORIES) {
-                statement.setInt(1, seed.id());
-                statement.setInt(2, seed.orderId());
-                statement.setInt(3, seed.parentId());
-                statement.setInt(4, seed.isNode());
-                statement.setString(5, seed.name());
-                statement.setInt(6, seed.publicSpaces());
-                statement.setInt(7, seed.allowTrading());
-                statement.setInt(8, seed.minRoleAccess());
-                statement.setInt(9, seed.minRoleSetFlatCat());
-                statement.setInt(10, seed.clubOnly());
-                statement.setInt(11, seed.isTopPriority());
-                statement.addBatch();
+        try {
+            Map<Integer, NavigatorCategoryEntity> categoriesById = new HashMap<>();
+            for (NavigatorCategoryEntity entity : context.from(NavigatorCategoryEntity.class).toList()) {
+                categoriesById.put(entity.getId(), entity);
             }
-            statement.executeBatch();
+
+            for (HolographPublicSpaceCatalog.NavigatorCategorySeed seed : DEFAULT_CATEGORIES) {
+                NavigatorCategoryEntity entity = categoriesById.get(seed.id());
+                boolean isNew = entity == null;
+                if (isNew) {
+                    entity = new NavigatorCategoryEntity();
+                    entity.setId(seed.id());
+                }
+
+                entity.setOrderId(seed.orderId());
+                entity.setParentId(seed.parentId());
+                entity.setIsNode(seed.isNode());
+                entity.setName(seed.name());
+                entity.setPublicSpaces(seed.publicSpaces());
+                entity.setAllowTrading(seed.allowTrading());
+                entity.setMinRoleAccess(seed.minRoleAccess());
+                entity.setMinRoleSetFlatCat(seed.minRoleSetFlatCat());
+                entity.setClubOnly(seed.clubOnly());
+                entity.setIsTopPriority(seed.isTopPriority());
+
+                if (isNew) {
+                    context.insert(entity);
+                } else {
+                    context.update(entity);
+                }
+            }
         } catch (Exception e) {
             throw new RuntimeException("Failed to seed navigator categories", e);
         }

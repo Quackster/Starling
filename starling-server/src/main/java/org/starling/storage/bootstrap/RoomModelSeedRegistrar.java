@@ -4,8 +4,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.oldskooler.entity4j.DbContext;
 import org.starling.game.room.layout.RoomLayoutRegistry;
+import org.starling.storage.entity.RoomModelEntity;
 
-import java.sql.PreparedStatement;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -37,50 +37,37 @@ public final class RoomModelSeedRegistrar implements DatabaseSeedRegistrar {
      */
     @Override
     public void seed(DbContext context) {
-        String sql = """
-                INSERT INTO room_models (
-                    model_name,
-                    is_public,
-                    door_x,
-                    door_y,
-                    door_z,
-                    door_dir,
-                    heightmap,
-                    public_room_items,
-                    wallpaper,
-                    floor_pattern,
-                    landscape
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE
-                    model_name = VALUES(model_name),
-                    is_public = VALUES(is_public),
-                    door_x = VALUES(door_x),
-                    door_y = VALUES(door_y),
-                    door_z = VALUES(door_z),
-                    door_dir = VALUES(door_dir),
-                    heightmap = VALUES(heightmap),
-                    public_room_items = VALUES(public_room_items),
-                    wallpaper = VALUES(wallpaper),
-                    floor_pattern = VALUES(floor_pattern),
-                    landscape = VALUES(landscape)
-                """;
-
-        try (PreparedStatement statement = context.conn().prepareStatement(sql)) {
-            for (RoomModelSeed model : DEFAULT_ROOM_MODELS) {
-                statement.setString(1, model.modelName());
-                statement.setInt(2, model.isPublic());
-                statement.setInt(3, model.doorX());
-                statement.setInt(4, model.doorY());
-                statement.setDouble(5, model.doorZ());
-                statement.setInt(6, model.doorDir());
-                statement.setString(7, model.heightmap());
-                statement.setString(8, model.publicRoomItems());
-                statement.setString(9, model.wallpaper());
-                statement.setString(10, model.floorPattern());
-                statement.setString(11, model.landscape());
-                statement.addBatch();
+        try {
+            Map<String, RoomModelEntity> modelsByName = new LinkedHashMap<>();
+            for (RoomModelEntity entity : context.from(RoomModelEntity.class).toList()) {
+                modelsByName.put(entity.getModelName(), entity);
             }
-            statement.executeBatch();
+
+            for (RoomModelSeed model : DEFAULT_ROOM_MODELS) {
+                RoomModelEntity entity = modelsByName.get(model.modelName());
+                boolean isNew = entity == null;
+                if (isNew) {
+                    entity = new RoomModelEntity();
+                    entity.setModelName(model.modelName());
+                }
+
+                entity.setIsPublic(model.isPublic());
+                entity.setDoorX(model.doorX());
+                entity.setDoorY(model.doorY());
+                entity.setDoorZ(model.doorZ());
+                entity.setDoorDir(model.doorDir());
+                entity.setHeightmap(model.heightmap());
+                entity.setPublicRoomItems(model.publicRoomItems());
+                entity.setWallpaper(model.wallpaper());
+                entity.setFloorPattern(model.floorPattern());
+                entity.setLandscape(model.landscape());
+
+                if (isNew) {
+                    context.insert(entity);
+                } else {
+                    context.update(entity);
+                }
+            }
         } catch (Exception e) {
             throw new RuntimeException("Failed to seed room models", e);
         }

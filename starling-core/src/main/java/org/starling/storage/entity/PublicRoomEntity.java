@@ -7,7 +7,7 @@ import org.oldskooler.entity4j.annotations.Id;
 @Entity(table = "public_rooms")
 public class PublicRoomEntity {
 
-    @Id(auto = true)
+    @Id(auto = false)
     private int id;
 
     @Column(name = "category_id", nullable = false)
@@ -59,6 +59,11 @@ public class PublicRoomEntity {
      * @return the id
      */
     public int getId() { return id; }
+    /**
+     * Sets the id.
+     * @param id the id value
+     */
+    public void setId(int id) { this.id = id; }
     /**
      * Returns the category id.
      * @return the category id
