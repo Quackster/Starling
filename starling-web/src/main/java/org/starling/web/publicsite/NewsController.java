@@ -69,7 +69,7 @@ public final class NewsController {
                 ? selectedArticle
                 : (publishedArticles.isEmpty() ? null : publishedArticles.get(0));
 
-        Map<String, Object> model = publicPageModelFactory.create(context, "community");
+        Map<String, Object> model = publicPageModelFactory.create(context, "community", newsPage);
         model.put("newsPage", newsPage);
         model.put("monthlyView", false);
         model.put("archiveView", archiveView);

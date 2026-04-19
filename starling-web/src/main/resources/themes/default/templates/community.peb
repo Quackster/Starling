@@ -44,6 +44,7 @@ window.name = "habboMain";
 {% include "base/header.peb" %}
 
 <div id="content-container">
+    {% include "base/subnav.peb" %}
     <div id="container">
         <div id="content" style="position: relative" class="clearfix">
             <div id="column1" class="column">

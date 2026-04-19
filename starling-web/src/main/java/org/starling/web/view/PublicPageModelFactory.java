@@ -2,6 +2,7 @@ package org.starling.web.view;
 
 import io.javalin.http.Context;
 import org.starling.storage.entity.UserEntity;
+import org.starling.web.navigation.PublicNavigationModelFactory;
 import org.starling.web.site.SiteBranding;
 import org.starling.web.user.UserSessionService;
 
@@ -15,6 +16,7 @@ public final class PublicPageModelFactory {
     private final UserSessionService userSessionService;
     private final UserViewModelFactory userViewModelFactory;
     private final SiteBranding siteBranding;
+    private final PublicNavigationModelFactory publicNavigationModelFactory;
 
     /**
      * Creates a new PublicPageModelFactory.
@@ -24,11 +26,13 @@ public final class PublicPageModelFactory {
     public PublicPageModelFactory(
             UserSessionService userSessionService,
             UserViewModelFactory userViewModelFactory,
-            SiteBranding siteBranding
+            SiteBranding siteBranding,
+            PublicNavigationModelFactory publicNavigationModelFactory
     ) {
         this.userSessionService = userSessionService;
         this.userViewModelFactory = userViewModelFactory;
         this.siteBranding = siteBranding;
+        this.publicNavigationModelFactory = publicNavigationModelFactory;
     }
 
     /**
@@ -38,6 +42,17 @@ public final class PublicPageModelFactory {
      * @return the resulting model
      */
     public Map<String, Object> create(Context context, String currentPage) {
+        return create(context, currentPage, null);
+    }
+
+    /**
+     * Builds the common public page model.
+     * @param context the request context
+     * @param currentMainPage the current top-level page key
+     * @param currentSubPage the current sub navigation key, when present
+     * @return the resulting model
+     */
+    public Map<String, Object> create(Context context, String currentMainPage, String currentSubPage) {
         Map<String, Object> model = new HashMap<>();
         Optional<UserEntity> currentUser = userSessionService.authenticate(context);
 
@@ -45,7 +60,8 @@ public final class PublicPageModelFactory {
 
         Map<String, Object> session = new HashMap<>();
         session.put("loggedIn", currentUser.isPresent());
-        session.put("currentPage", currentPage);
+        session.put("currentPage", currentSubPage == null ? currentMainPage : currentSubPage);
+        session.put("currentSection", currentMainPage);
 
         String publicAlert = valueOrEmpty(context.sessionAttribute("publicAlert"));
         boolean hasAlert = !publicAlert.isBlank();
@@ -57,6 +73,7 @@ public final class PublicPageModelFactory {
 
         model.put("site", site);
         model.put("session", session);
+        model.put("navigation", publicNavigationModelFactory.create(currentMainPage, currentSubPage, currentUser));
         model.put("alert", alert);
         currentUser.ifPresent(user -> model.put("playerDetails", userViewModelFactory.create(user)));
         model.put("siteTitle", siteBranding.siteTitle());
@@ -73,6 +90,7 @@ public final class PublicPageModelFactory {
         model.put("siteTitle", siteBranding.siteTitle());
         model.put("site", createSiteModel(Optional.empty()));
         model.put("session", Map.of("loggedIn", false, "currentPage", "community"));
+        model.put("navigation", publicNavigationModelFactory.create("community", null, Optional.empty()));
         model.put("message", "That page could not be found.");
         return model;
     }

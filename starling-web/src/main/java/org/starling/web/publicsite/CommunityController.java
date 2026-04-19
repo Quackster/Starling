@@ -52,7 +52,7 @@ public final class CommunityController {
      * @param context the request context
      */
     public void community(Context context) {
-        Map<String, Object> model = publicPageModelFactory.create(context, "community");
+        Map<String, Object> model = publicPageModelFactory.create(context, "community", "community");
         Optional<UserEntity> currentUser = userSessionService.authenticate(context);
         List<Map<String, Object>> articles = articleService.listPublished().stream()
                 .limit(4)

@@ -78,90 +78,16 @@ body { behavior: url({{ site.webGalleryPath }}/js/csshover.htc); }
 {% include "base/header.peb" %}
    
 <div id="content-container">
-
-<div id="navi2-container" class="pngbg">
-    <div id="navi2" class="pngbg clearfix">
-		{% if newsPage == "news" %}
-		{% set articleLink = "articles" %}
-		<ul>
-			<li class="">
-			<a href="{{ site.sitePath }}/community">Community</a>			</li>
-    		<li class="selected">
-				News    		</li>
-    		<li class="">
-				<a href="{{ site.sitePath }}/tag">Tags</a>    		</li>
-    		<li class="">
-				<a href="{{ site.sitePath }}/community/events">Events</a>    		</li>
-    		<li class="last">
-				<a href="{{ site.sitePath }}/community/fansites">Fansites</a>    		</li>
-    		<!-- <li class="last">
-				<a href="{{ site.sitePath }}/events/steampunk">Steampunk</a>    		</li> 
-			-->
-		</ul>
-		{% endif %}
-		{% if newsPage == "events" %}
-		{% set articleLink = "community/events" %}
-		<ul>
-			<li class="">
-			<a href="{{ site.sitePath }}/community">Community</a>			</li>
-    		<li class="">
-				<a href="{{ site.sitePath }}/articles">News</a>    		</li>
-    		<li class="">
-				<a href="{{ site.sitePath }}/tag">Tags</a>    		</li>
-    		<li class="selected">
-				Events			</li>
-    		<li class="last">
-				<a href="{{ site.sitePath }}/community/fansites">Fansites</a>    		</li>
-    		<!-- <li class="last">
-				<a href="{{ site.sitePath }}/events/steampunk">Steampunk</a>    		</li> 
-			-->
-		</ul>
-		{% endif %}
-		{% if newsPage == "fansites" %}
-		{% set articleLink = "community/fansites" %}
-		<ul>
-			<li class="">
-			<a href="{{ site.sitePath }}/community">Community</a>			</li>
-    		<li class="">
-				<a href="{{ site.sitePath }}/articles">News</a>    		</li>
-    		<li class="">
-				<a href="{{ site.sitePath }}/tag">Tags</a>    		</li>
-    		<li class="">
-				<a href="{{ site.sitePath }}/community/events">Events</a>    		</li>
-    		<li class="selected last">
-				Fansites			</li>
-			<!-- 
-    		<li class="selected">
-				Fansites			</li>
-    		<li class="last">
-				<a href="{{ site.sitePath }}/events/steampunk">Steampunk</a>    		</li>
-			-->
-		</ul>
-		{% endif %}
-		
-		<!-- 
-		{% if newsPage == "custom_event" %}
-		{% set articleLink = "articles" %}
-		<ul>
-			<li class="">
-			<a href="{{ site.sitePath }}/community">Community</a>			</li>
-    		<li class="">
-				<a href="{{ site.sitePath }}/articles">News</a>    		</li>
-    		<li class="">
-				<a href="{{ site.sitePath }}/tag">Tags</a>    		</li>
-			<li class="">
-				<a href="{{ site.sitePath }}/community/photos">Photos</a>    		</li>
-    		<li class="">
-				<a href="{{ site.sitePath }}/community/events">Events</a>    		</li>
-    		<li class="">
-				<a href="{{ site.sitePath }}/community/fansites">Fansites</a>    		</li>
-    		<li class="selected last">
-				Steampunk			</li>
-		</ul>
-		{% endif %}
-		-->
-    </div>
-</div>
+{% if newsPage == "news" %}
+{% set articleLink = "articles" %}
+{% endif %}
+{% if newsPage == "events" %}
+{% set articleLink = "community/events" %}
+{% endif %}
+{% if newsPage == "fansites" %}
+{% set articleLink = "community/fansites" %}
+{% endif %}
+{% include "base/subnav.peb" %}
 
 	
 <div id="container">

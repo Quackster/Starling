@@ -1,0 +1,17 @@
+{% if navigation.hasSubLinks %}
+<div id="navi2-container" class="pngbg">
+    <div id="navi2" class="pngbg clearfix">
+        <ul>
+        {% for link in navigation.subLinks %}
+            <li{% if link.last %} class="last{% if link.selected %} selected{% endif %}"{% elseif link.selected %} class="selected"{% endif %}>
+                {% if link.selected %}
+                    {{ link.label }}
+                {% else %}
+                    <a href="{{ link.href }}">{{ link.label }}</a>
+                {% endif %}
+            </li>
+        {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}

@@ -1,0 +1,278 @@
+main:
+  - key: register
+    label: Register now!
+    href: /register
+    cssId: tab-register-now
+    visibleWhenLoggedIn: false
+    visibleWhenLoggedOut: true
+  - key: me
+    label: "{username}"
+    href: /me
+    selectedKeys: [me]
+    visibleWhenLoggedIn: true
+    visibleWhenLoggedOut: false
+  - key: community
+    label: Community
+    href: /community
+    selectedKeys: [community, news, tags, events, fansites]
+    visibleWhenLoggedIn: true
+    visibleWhenLoggedOut: true
+  - key: credits
+    label: Coins
+    href: /credits
+    selectedKeys: [credits, pixels]
+    visibleWhenLoggedIn: true
+    visibleWhenLoggedOut: true
+  - key: games
+    label: Games
+    href: /games
+    selectedKeys: [games]
+    visibleWhenLoggedIn: true
+    visibleWhenLoggedOut: true
+  - key: housekeeping
+    label: Housekeeping
+    href: /allseeingeye/hk/
+    cssId: tab-register-now
+    minimumRank: 6
+    visibleWhenLoggedIn: true
+    visibleWhenLoggedOut: false
+
+sub:
+  me:
+    - key: me-home
+      label: Home
+      href: /me
+      selectedKeys: [me]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: false
+    - key: my-page
+      label: My Page
+      href: /home/{username}
+      selectedKeys: [home]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: false
+    - key: account-settings
+      label: Account Settings
+      href: /profile
+      selectedKeys: [profile]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: false
+    - key: club
+      label: "{siteName} Club"
+      href: /club
+      selectedKeys: [club]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: false
+  community:
+    - key: community-home
+      label: Community
+      href: /community
+      selectedKeys: [community]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+    - key: news
+      label: News
+      href: /articles
+      selectedKeys: [news]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+    - key: tags
+      label: Tags
+      href: /tag
+      selectedKeys: [tags]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+  news:
+    - key: community-home
+      label: Community
+      href: /community
+      selectedKeys: [community]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+    - key: news
+      label: News
+      href: /articles
+      selectedKeys: [news]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+    - key: tags
+      label: Tags
+      href: /tag
+      selectedKeys: [tags]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+    - key: events
+      label: Events
+      href: /community/events
+      selectedKeys: [events]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+    - key: fansites
+      label: Fansites
+      href: /community/fansites
+      selectedKeys: [fansites]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+  tags:
+    - key: community-home
+      label: Community
+      href: /community
+      selectedKeys: [community]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+    - key: news
+      label: News
+      href: /articles
+      selectedKeys: [news]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+    - key: tags
+      label: Tags
+      href: /tag
+      selectedKeys: [tags]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+    - key: events
+      label: Events
+      href: /community/events
+      selectedKeys: [events]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+    - key: fansites
+      label: Fansites
+      href: /community/fansites
+      selectedKeys: [fansites]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+  events:
+    - key: community-home
+      label: Community
+      href: /community
+      selectedKeys: [community]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+    - key: news
+      label: News
+      href: /articles
+      selectedKeys: [news]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+    - key: tags
+      label: Tags
+      href: /tag
+      selectedKeys: [tags]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+    - key: events
+      label: Events
+      href: /community/events
+      selectedKeys: [events]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+    - key: fansites
+      label: Fansites
+      href: /community/fansites
+      selectedKeys: [fansites]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+  fansites:
+    - key: community-home
+      label: Community
+      href: /community
+      selectedKeys: [community]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+    - key: news
+      label: News
+      href: /articles
+      selectedKeys: [news]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+    - key: tags
+      label: Tags
+      href: /tag
+      selectedKeys: [tags]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+    - key: events
+      label: Events
+      href: /community/events
+      selectedKeys: [events]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+    - key: fansites
+      label: Fansites
+      href: /community/fansites
+      selectedKeys: [fansites]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+  credits:
+    - key: credits-home
+      label: Coins
+      href: /credits
+      selectedKeys: [credits]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+    - key: club
+      label: "{siteName} Club"
+      href: /credits/club
+      selectedKeys: [club]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+    - key: collectables
+      label: Collectables
+      href: /credits/collectables
+      selectedKeys: [collectables]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+    - key: pixels
+      label: Pixels
+      href: /credits/pixels
+      selectedKeys: [pixels]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+  pixels:
+    - key: credits-home
+      label: Coins
+      href: /credits
+      selectedKeys: [credits]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+    - key: club
+      label: "{siteName} Club"
+      href: /credits/club
+      selectedKeys: [club]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+    - key: collectables
+      label: Collectables
+      href: /credits/collectables
+      selectedKeys: [collectables]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+    - key: pixels
+      label: Pixels
+      href: /credits/pixels
+      selectedKeys: [pixels]
+      visibleWhenLoggedIn: true
+      visibleWhenLoggedOut: true
+
+actions:
+  guestHotel:
+    key: guest-hotel
+    label: Enter {siteName} Hotel
+    href: /client
+    visibleWhenLoggedIn: false
+    visibleWhenLoggedOut: true
+    target: client
+    onclick: HabboClient.openOrFocus(this); return false;
+  userHotel:
+    key: user-hotel
+    label: Enter {siteName}
+    href: /client
+    visibleWhenLoggedIn: true
+    visibleWhenLoggedOut: false
+    buttonColor: green
+    cssClass: new-button
+    target: client
+    onclick: HabboClient.openOrFocus(this); return false;

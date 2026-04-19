@@ -1,5 +1,6 @@
 package org.starling.web.app;
 
+import org.starling.web.navigation.PublicNavigationModelFactory;
 import org.starling.web.cms.auth.SignedSessionService;
 import org.starling.web.render.MarkdownRenderer;
 import org.starling.web.render.TemplateRenderer;
@@ -27,6 +28,7 @@ public record WebDependencies(
         ArticleService articleService,
         NavigationService navigationService,
         MediaAssetService mediaAssetService,
+        PublicNavigationModelFactory publicNavigationModelFactory,
         PublicPageModelFactory publicPageModelFactory,
         PublicFeatureContentFactory publicFeatureContentFactory,
         AdminPageModelFactory adminPageModelFactory,

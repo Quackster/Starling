@@ -62,7 +62,7 @@ public final class MeController {
             return;
         }
 
-        Map<String, Object> model = publicPageModelFactory.create(context, "me");
+        Map<String, Object> model = publicPageModelFactory.create(context, "me", "me");
         List<Map<String, Object>> featuredArticles = articleService.listPublished().stream()
                 .limit(5)
                 .map(cmsViewModelFactory::articleSummary)
@@ -92,7 +92,7 @@ public final class MeController {
             return;
         }
 
-        Map<String, Object> model = publicPageModelFactory.create(context, "me");
+        Map<String, Object> model = publicPageModelFactory.create(context, "me", "me");
         model.put("currentUser", userViewModelFactory.create(currentUser.get()));
         model.put("welcomeRooms", List.of(
                 Map.of("id", 0, "label", "Sunset Lounge"),

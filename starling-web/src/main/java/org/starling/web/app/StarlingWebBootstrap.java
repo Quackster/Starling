@@ -16,6 +16,9 @@ import org.starling.web.cms.auth.SignedSessionService;
 import org.starling.web.cms.bootstrap.CmsBootstrap;
 import org.starling.web.cms.media.MediaStorageService;
 import org.starling.web.config.WebConfig;
+import org.starling.web.navigation.PublicNavigationConfig;
+import org.starling.web.navigation.PublicNavigationConfigLoader;
+import org.starling.web.navigation.PublicNavigationModelFactory;
 import org.starling.web.publicsite.CommunityController;
 import org.starling.web.publicsite.HomepageController;
 import org.starling.web.publicsite.MeController;
@@ -78,7 +81,14 @@ public final class StarlingWebBootstrap {
         ArticleService articleService = new ArticleService();
         NavigationService navigationService = new NavigationService();
         UserViewModelFactory userViewModelFactory = new UserViewModelFactory();
-        PublicPageModelFactory publicPageModelFactory = new PublicPageModelFactory(userSessionService, userViewModelFactory, siteBranding);
+        PublicNavigationConfig publicNavigationConfig = new PublicNavigationConfigLoader().load();
+        PublicNavigationModelFactory publicNavigationModelFactory = new PublicNavigationModelFactory(publicNavigationConfig, siteBranding);
+        PublicPageModelFactory publicPageModelFactory = new PublicPageModelFactory(
+                userSessionService,
+                userViewModelFactory,
+                siteBranding,
+                publicNavigationModelFactory
+        );
         PublicFeatureContentFactory publicFeatureContentFactory = new PublicFeatureContentFactory(userViewModelFactory, siteBranding);
         AdminPageModelFactory adminPageModelFactory = new AdminPageModelFactory(siteBranding);
         CmsViewModelFactory cmsViewModelFactory = new CmsViewModelFactory(markdownRenderer, siteBranding);
@@ -94,6 +104,7 @@ public final class StarlingWebBootstrap {
                 articleService,
                 navigationService,
                 mediaAssetService,
+                publicNavigationModelFactory,
                 publicPageModelFactory,
                 publicFeatureContentFactory,
                 adminPageModelFactory,

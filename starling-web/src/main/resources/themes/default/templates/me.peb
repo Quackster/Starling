@@ -44,27 +44,7 @@ if (typeof HabboClient != "undefined") { HabboClient.windowName = "client"; }
 {% include "base/header.peb" %}
 
 <div id="content-container">
-    <div id="navi2-container" class="pngbg">
-        <div id="navi2" class="pngbg clearfix">
-            <ul>
-                <li class="selected">
-                    Home
-                </li>
-                <li class="">
-                    <a href="{{ site.sitePath }}/home/{{ currentUser.name }}">My Page</a>
-                </li>
-                <li class="">
-                    <a href="{{ site.sitePath }}/profile">Account Settings</a>
-                </li>
-                <li class="">
-                    <a href="{{ site.sitePath }}/club">{{ site.siteName }} Club</a>
-                </li>
-                <li class=" last">
-                    <a href="{{ site.sitePath }}/community">Community</a>
-                </li>
-            </ul>
-        </div>
-    </div>
+    {% include "base/subnav.peb" %}
 
 <div id="container">
     <div id="content">
