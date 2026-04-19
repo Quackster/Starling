@@ -40,6 +40,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static org.starling.storage.DatabaseSupport.column;
+
 public final class CmsBootstrap {
 
     /**
@@ -77,23 +79,23 @@ public final class CmsBootstrap {
                         RecommendedItemEntity.class,
                         UserReferralEntity.class
                 );
-                DatabaseSupport.ensureColumn(context.conn(), "groups_details", "alias", "VARCHAR(80) NOT NULL DEFAULT ''", "id");
-                DatabaseSupport.ensureColumn(context.conn(), "groups_details", "badge", "VARCHAR(64) NOT NULL DEFAULT ''", "name");
-                DatabaseSupport.ensureColumn(context.conn(), "groups_details", "description", "TEXT NOT NULL", "badge");
-                DatabaseSupport.ensureColumn(context.conn(), "groups_details", "ownerid", "INT NOT NULL DEFAULT 0", "description");
-                DatabaseSupport.ensureColumn(context.conn(), "groups_details", "roomid", "INT NOT NULL DEFAULT 0", "ownerid");
-                DatabaseSupport.ensureColumn(context.conn(), "groups_details", "created_at", "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP", "roomid");
-                DatabaseSupport.ensureColumn(context.conn(), "groups_details", "updated_at", "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP", "created_at");
-                DatabaseSupport.ensureColumn(context.conn(), "groups_memberships", "member_rank", "INT NOT NULL DEFAULT 0", "groupid");
-                DatabaseSupport.ensureColumn(context.conn(), "groups_memberships", "is_current", "INT NOT NULL DEFAULT 0", "member_rank");
-                DatabaseSupport.ensureColumn(context.conn(), "groups_memberships", "is_pending", "INT NOT NULL DEFAULT 0", "is_current");
-                DatabaseSupport.ensureColumn(context.conn(), "groups_memberships", "created_at", "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP", "is_pending");
-                DatabaseSupport.ensureColumn(context.conn(), "tags", "type", "VARCHAR(16) NOT NULL DEFAULT 'user'", "tag");
-                DatabaseSupport.ensureColumn(context.conn(), "tags", "created_at", "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP", "type");
-                DatabaseSupport.ensureColumn(context.conn(), "recommended", "sponsored", "INT NOT NULL DEFAULT 0", "rec_id");
-                DatabaseSupport.ensureColumn(context.conn(), "recommended", "created_at", "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP", "sponsored");
-                DatabaseSupport.ensureColumn(context.conn(), "user_referrals", "reward_credits", "INT NOT NULL DEFAULT 0", "inviter_userid");
-                DatabaseSupport.ensureColumn(context.conn(), "user_referrals", "created_at", "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP", "reward_credits");
+                DatabaseSupport.ensureColumn(context.conn(), "groups_details", column("alias", "VARCHAR(80)").notNull().defaultValue(""), "id");
+                DatabaseSupport.ensureColumn(context.conn(), "groups_details", column("badge", "VARCHAR(64)").notNull().defaultValue(""), "name");
+                DatabaseSupport.ensureColumn(context.conn(), "groups_details", column("description", "TEXT").notNull(), "badge");
+                DatabaseSupport.ensureColumn(context.conn(), "groups_details", column("ownerid", "INT").notNull().defaultValue(0), "description");
+                DatabaseSupport.ensureColumn(context.conn(), "groups_details", column("roomid", "INT").notNull().defaultValue(0), "ownerid");
+                DatabaseSupport.ensureColumn(context.conn(), "groups_details", column("created_at", "TIMESTAMP").notNull().defaultExpression("CURRENT_TIMESTAMP"), "roomid");
+                DatabaseSupport.ensureColumn(context.conn(), "groups_details", column("updated_at", "TIMESTAMP").notNull().defaultExpression("CURRENT_TIMESTAMP"), "created_at");
+                DatabaseSupport.ensureColumn(context.conn(), "groups_memberships", column("member_rank", "INT").notNull().defaultValue(0), "groupid");
+                DatabaseSupport.ensureColumn(context.conn(), "groups_memberships", column("is_current", "INT").notNull().defaultValue(0), "member_rank");
+                DatabaseSupport.ensureColumn(context.conn(), "groups_memberships", column("is_pending", "INT").notNull().defaultValue(0), "is_current");
+                DatabaseSupport.ensureColumn(context.conn(), "groups_memberships", column("created_at", "TIMESTAMP").notNull().defaultExpression("CURRENT_TIMESTAMP"), "is_pending");
+                DatabaseSupport.ensureColumn(context.conn(), "tags", column("type", "VARCHAR(16)").notNull().defaultValue("user"), "tag");
+                DatabaseSupport.ensureColumn(context.conn(), "tags", column("created_at", "TIMESTAMP").notNull().defaultExpression("CURRENT_TIMESTAMP"), "type");
+                DatabaseSupport.ensureColumn(context.conn(), "recommended", column("sponsored", "INT").notNull().defaultValue(0), "rec_id");
+                DatabaseSupport.ensureColumn(context.conn(), "recommended", column("created_at", "TIMESTAMP").notNull().defaultExpression("CURRENT_TIMESTAMP"), "sponsored");
+                DatabaseSupport.ensureColumn(context.conn(), "user_referrals", column("reward_credits", "INT").notNull().defaultValue(0), "inviter_userid");
+                DatabaseSupport.ensureColumn(context.conn(), "user_referrals", column("created_at", "TIMESTAMP").notNull().defaultExpression("CURRENT_TIMESTAMP"), "reward_credits");
                 DatabaseSupport.ensureUniqueIndex(context.conn(), "groups_details", "uk_groups_details_alias", "alias");
                 DatabaseSupport.ensureUniqueIndex(context.conn(), "groups_memberships", "uk_groups_memberships_user_group", "userid", "groupid");
                 DatabaseSupport.ensureIndex(context.conn(), "groups_memberships", "idx_groups_memberships_group", false, "groupid");

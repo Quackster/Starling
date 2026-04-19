@@ -19,6 +19,8 @@ import org.starling.storage.entity.RoomModelEntity;
 import org.starling.storage.entity.RoomRightEntity;
 import org.starling.storage.entity.UserEntity;
 
+import static org.starling.storage.DatabaseSupport.column;
+
 public final class DatabaseBootstrap {
 
     private static final Logger log = LogManager.getLogger(DatabaseBootstrap.class);
@@ -53,11 +55,11 @@ public final class DatabaseBootstrap {
             PublicSpaceSchemaSupport.ensureSchema(context);
             DatabaseSupport.ensureUniqueIndex(context.conn(), "room_favorites", "uk_room_favorites_user_type_room", "user_id", "room_type", "room_id");
             DatabaseSupport.ensureIndex(context.conn(), "room_favorites", "idx_room_favorites_user", false, "user_id");
-            DatabaseSupport.modifyColumn(context.conn(), "room_favorites", "room_type", "INT NOT NULL DEFAULT 0");
+            DatabaseSupport.modifyColumn(context.conn(), "room_favorites", column("room_type", "INT").notNull().defaultValue(0));
             DatabaseSupport.ensureUniqueIndex(context.conn(), "room_rights", "uk_room_rights_room_user", "room_id", "user_id");
             DatabaseSupport.ensureIndex(context.conn(), "room_rights", "idx_room_rights_room", false, "room_id");
-            DatabaseSupport.ensureColumn(context.conn(), "recommended", "sponsored", "INT NOT NULL DEFAULT 0", "rec_id");
-            DatabaseSupport.ensureColumn(context.conn(), "recommended", "created_at", "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP", "sponsored");
+            DatabaseSupport.ensureColumn(context.conn(), "recommended", column("sponsored", "INT").notNull().defaultValue(0), "rec_id");
+            DatabaseSupport.ensureColumn(context.conn(), "recommended", column("created_at", "TIMESTAMP").notNull().defaultExpression("CURRENT_TIMESTAMP"), "sponsored");
             DatabaseSupport.ensureIndex(context.conn(), "recommended", "idx_recommended_type", false, "type", "sponsored");
             SharedSchemaSupport.ensureMessengerSchema(context);
             normalizeSharedData(context);

@@ -44,11 +44,11 @@ public final class PublicSpaceSchemaSupport {
                 .column(column("landscape", "VARCHAR(32)").notNull().defaultValue(""))
                 .primaryKey("model_name"));
         DatabaseSupport.ensureIndex(context.conn(), "room_models", "idx_room_models_public", false, "is_public");
-        DatabaseSupport.ensureColumn(context.conn(), "room_models", "door_x", "INT NOT NULL DEFAULT 0", "is_public");
-        DatabaseSupport.ensureColumn(context.conn(), "room_models", "door_y", "INT NOT NULL DEFAULT 0", "door_x");
-        DatabaseSupport.ensureColumn(context.conn(), "room_models", "door_z", "DOUBLE NOT NULL DEFAULT 0", "door_y");
-        DatabaseSupport.ensureColumn(context.conn(), "room_models", "door_dir", "INT NOT NULL DEFAULT 2", "door_z");
-        DatabaseSupport.ensureColumn(context.conn(), "room_models", "public_room_items", "TEXT NULL", "heightmap");
+        DatabaseSupport.ensureColumn(context.conn(), "room_models", column("door_x", "INT").notNull().defaultValue(0), "is_public");
+        DatabaseSupport.ensureColumn(context.conn(), "room_models", column("door_y", "INT").notNull().defaultValue(0), "door_x");
+        DatabaseSupport.ensureColumn(context.conn(), "room_models", column("door_z", "DOUBLE").notNull().defaultValue(0), "door_y");
+        DatabaseSupport.ensureColumn(context.conn(), "room_models", column("door_dir", "INT").notNull().defaultValue(2), "door_z");
+        DatabaseSupport.ensureColumn(context.conn(), "room_models", column("public_room_items", "TEXT"), "heightmap");
     }
 
     private static void ensurePublicRoomItems(DbContext context) {
@@ -69,29 +69,29 @@ public final class PublicSpaceSchemaSupport {
                 .column(column("swim_to", "VARCHAR(50)"))
                 .primaryKey("id"));
         DatabaseSupport.ensureIndex(context.conn(), "public_room_items", "idx_public_room_items_model", false, "room_model");
-        DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "room_model", "VARCHAR(64) NOT NULL DEFAULT ''", "id");
-        DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "sprite", "VARCHAR(255) NOT NULL DEFAULT ''", "room_model");
-        DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "x", "INT NOT NULL DEFAULT 0", "sprite");
-        DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "y", "INT NOT NULL DEFAULT 0", "x");
-        DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "z", "DOUBLE NOT NULL DEFAULT 0", "y");
-        DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "rotation", "INT NOT NULL DEFAULT 0", "z");
-        DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "top_height", "DOUBLE NOT NULL DEFAULT 1", "rotation");
-        DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "length", "INT NOT NULL DEFAULT 1", "top_height");
-        DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "width", "INT NOT NULL DEFAULT 1", "length");
-        DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "behaviour", "VARCHAR(255) NOT NULL DEFAULT ''", "width");
-        DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "current_program", "VARCHAR(255) NOT NULL DEFAULT ''", "behaviour");
-        DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "teleport_to", "VARCHAR(50) NULL", "current_program");
-        DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "swim_to", "VARCHAR(50) NULL", "teleport_to");
+        DatabaseSupport.ensureColumn(context.conn(), "public_room_items", column("room_model", "VARCHAR(64)").notNull().defaultValue(""), "id");
+        DatabaseSupport.ensureColumn(context.conn(), "public_room_items", column("sprite", "VARCHAR(255)").notNull().defaultValue(""), "room_model");
+        DatabaseSupport.ensureColumn(context.conn(), "public_room_items", column("x", "INT").notNull().defaultValue(0), "sprite");
+        DatabaseSupport.ensureColumn(context.conn(), "public_room_items", column("y", "INT").notNull().defaultValue(0), "x");
+        DatabaseSupport.ensureColumn(context.conn(), "public_room_items", column("z", "DOUBLE").notNull().defaultValue(0), "y");
+        DatabaseSupport.ensureColumn(context.conn(), "public_room_items", column("rotation", "INT").notNull().defaultValue(0), "z");
+        DatabaseSupport.ensureColumn(context.conn(), "public_room_items", column("top_height", "DOUBLE").notNull().defaultValue(1), "rotation");
+        DatabaseSupport.ensureColumn(context.conn(), "public_room_items", column("length", "INT").notNull().defaultValue(1), "top_height");
+        DatabaseSupport.ensureColumn(context.conn(), "public_room_items", column("width", "INT").notNull().defaultValue(1), "length");
+        DatabaseSupport.ensureColumn(context.conn(), "public_room_items", column("behaviour", "VARCHAR(255)").notNull().defaultValue(""), "width");
+        DatabaseSupport.ensureColumn(context.conn(), "public_room_items", column("current_program", "VARCHAR(255)").notNull().defaultValue(""), "behaviour");
+        DatabaseSupport.ensureColumn(context.conn(), "public_room_items", column("teleport_to", "VARCHAR(50)"), "current_program");
+        DatabaseSupport.ensureColumn(context.conn(), "public_room_items", column("swim_to", "VARCHAR(50)"), "teleport_to");
     }
 
     private static void ensureGuestRoomColumns(DbContext context) {
-        DatabaseSupport.ensureColumn(context.conn(), "rooms", "owner_id", "INT NULL", "category_id");
-        DatabaseSupport.ensureColumn(context.conn(), "rooms", "model_name", "VARCHAR(64) NULL", "description");
-        DatabaseSupport.ensureColumn(context.conn(), "rooms", "heightmap", "TEXT NULL", "model_name");
-        DatabaseSupport.ensureColumn(context.conn(), "rooms", "wallpaper", "VARCHAR(32) NULL", "heightmap");
-        DatabaseSupport.ensureColumn(context.conn(), "rooms", "floor_pattern", "VARCHAR(32) NULL", "wallpaper");
-        DatabaseSupport.ensureColumn(context.conn(), "rooms", "landscape", "VARCHAR(32) NULL", "floor_pattern");
-        DatabaseSupport.ensureColumn(context.conn(), "rooms", "door_password", "VARCHAR(64) NULL", "door_mode");
+        DatabaseSupport.ensureColumn(context.conn(), "rooms", column("owner_id", "INT"), "category_id");
+        DatabaseSupport.ensureColumn(context.conn(), "rooms", column("model_name", "VARCHAR(64)"), "description");
+        DatabaseSupport.ensureColumn(context.conn(), "rooms", column("heightmap", "TEXT"), "model_name");
+        DatabaseSupport.ensureColumn(context.conn(), "rooms", column("wallpaper", "VARCHAR(32)"), "heightmap");
+        DatabaseSupport.ensureColumn(context.conn(), "rooms", column("floor_pattern", "VARCHAR(32)"), "wallpaper");
+        DatabaseSupport.ensureColumn(context.conn(), "rooms", column("landscape", "VARCHAR(32)"), "floor_pattern");
+        DatabaseSupport.ensureColumn(context.conn(), "rooms", column("door_password", "VARCHAR(64)"), "door_mode");
     }
 
     private static void ensurePublicRooms(DbContext context) {
@@ -112,6 +112,6 @@ public final class PublicSpaceSchemaSupport {
                 .column(column("description", "VARCHAR(255)").notNull().defaultValue(""))
                 .primaryKey("id"));
         DatabaseSupport.ensureIndex(context.conn(), "public_rooms", "idx_public_rooms_category", false, "category_id");
-        DatabaseSupport.ensureColumn(context.conn(), "public_rooms", "heightmap", "TEXT NULL", "unit_str_id");
+        DatabaseSupport.ensureColumn(context.conn(), "public_rooms", column("heightmap", "TEXT"), "unit_str_id");
     }
 }

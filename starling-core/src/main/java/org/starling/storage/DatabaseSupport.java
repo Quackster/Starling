@@ -174,6 +174,35 @@ public final class DatabaseSupport {
     }
 
     /**
+     * Ensures a column exists from a schema definition.
+     * @param connection the connection value
+     * @param tableName the table name value
+     * @param columnDefinition the column definition
+     * @param afterColumn the column that should precede the added column
+     */
+    public static void ensureColumn(Connection connection, String tableName, ColumnDefinition columnDefinition, String afterColumn) {
+        if (columnExists(connection, tableName, columnDefinition.columnName)) {
+            return;
+        }
+
+        String addColumnSql = "ALTER TABLE `"
+                + escapeIdentifier(tableName)
+                + "` ADD COLUMN "
+                + columnDefinition.toSql()
+                + (afterColumn == null || afterColumn.isBlank()
+                ? ""
+                : " AFTER `" + escapeIdentifier(afterColumn) + "`");
+
+        try (Statement statement = connection.createStatement()) {
+            statement.executeUpdate(addColumnSql);
+            log.info("Ensured column '{}.{}' exists", tableName, columnDefinition.columnName);
+        } catch (Exception e) {
+            log.error("Failed to add column '{}.{}': {}", tableName, columnDefinition.columnName, e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
      * Modifies a column.
      * @param connection the connection value
      * @param tableName the table name value
@@ -193,6 +222,27 @@ public final class DatabaseSupport {
             log.info("Modified column '{}.{}'", tableName, columnName);
         } catch (Exception e) {
             log.error("Failed to modify column '{}.{}': {}", tableName, columnName, e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Modifies a column from a schema definition.
+     * @param connection the connection value
+     * @param tableName the table name value
+     * @param columnDefinition the column definition
+     */
+    public static void modifyColumn(Connection connection, String tableName, ColumnDefinition columnDefinition) {
+        String modifyColumnSql = "ALTER TABLE `"
+                + escapeIdentifier(tableName)
+                + "` MODIFY COLUMN "
+                + columnDefinition.toSql();
+
+        try (Statement statement = connection.createStatement()) {
+            statement.executeUpdate(modifyColumnSql);
+            log.info("Modified column '{}.{}'", tableName, columnDefinition.columnName);
+        } catch (Exception e) {
+            log.error("Failed to modify column '{}.{}': {}", tableName, columnDefinition.columnName, e.getMessage(), e);
             throw new RuntimeException(e);
         }
     }
