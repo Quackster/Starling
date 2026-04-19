@@ -52,7 +52,6 @@ public final class DatabaseBootstrap {
                     RoomFavoriteEntity.class,
                     RoomRightEntity.class
             );
-
             statement.executeUpdate("""
                     CREATE TABLE IF NOT EXISTS room_models (
                         model_name VARCHAR(64) NOT NULL,

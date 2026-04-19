@@ -93,6 +93,9 @@ class DatabaseIntegrationTest {
         assertTrue(tableExists("messenger_messages"));
         assertTrue(tableExists("messenger_categories"));
         assertTrue(indexExists("recommended", "idx_recommended_type"));
+        assertTrue(indexExists("room_models", "idx_room_models_public"));
+        assertTrue(indexExists("public_rooms", "idx_public_rooms_category"));
+        assertTrue(indexExists("public_room_items", "idx_public_room_items_model"));
         assertTrue(indexExists("room_favorites", "uk_room_favorites_user_type_room"));
         assertTrue(indexExists("room_rights", "uk_room_rights_room_user"));
         assertTrue(indexExists("messenger_friends", "uk_messenger_friends_from_to"));
