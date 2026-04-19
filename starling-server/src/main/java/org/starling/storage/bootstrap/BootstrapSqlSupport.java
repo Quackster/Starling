@@ -9,7 +9,8 @@ import java.util.Locale;
 
 final class BootstrapSqlSupport {
 
-    private static final String INSERT_INTO = "INSERT INTO `";
+    private static final String INSERT = "INSERT";
+    private static final String INTO = "INTO";
     private static final String VALUES = "VALUES";
 
     /**
@@ -43,16 +44,15 @@ final class BootstrapSqlSupport {
      */
     static List<List<String>> parseInsertRows(String sql, String tableName, String resourcePath) {
         List<List<String>> rows = new ArrayList<>();
-        String statementPrefix = INSERT_INTO + tableName + "`";
         int searchFrom = 0;
 
         while (searchFrom < sql.length()) {
-            int statementStart = sql.indexOf(statementPrefix, searchFrom);
+            int statementStart = findInsertStatementStart(sql, tableName, searchFrom);
             if (statementStart < 0) {
                 break;
             }
 
-            int valuesStart = findValuesStart(sql, statementStart + statementPrefix.length(), resourcePath);
+            int valuesStart = findValuesStart(sql, statementStart + INSERT.length(), resourcePath);
             int statementEnd = findStatementEnd(sql, valuesStart, resourcePath);
             rows.addAll(parseTuples(sql.substring(valuesStart, statementEnd), resourcePath));
             searchFrom = statementEnd + 1;
@@ -179,6 +179,77 @@ final class BootstrapSqlSupport {
         }
 
         throw new IllegalStateException("Missing VALUES clause in " + resourcePath);
+    }
+
+    private static int findInsertStatementStart(String sql, String tableName, int searchFrom) {
+        for (int index = searchFrom; index < sql.length(); index++) {
+            if (!matchesKeyword(sql, index, INSERT)) {
+                continue;
+            }
+
+            int cursor = skipWhitespace(sql, index + INSERT.length());
+            if (!matchesKeyword(sql, cursor, INTO)) {
+                continue;
+            }
+
+            cursor = skipWhitespace(sql, cursor + INTO.length());
+            if (!matchesTableName(sql, cursor, tableName)) {
+                continue;
+            }
+
+            return index;
+        }
+
+        return -1;
+    }
+
+    private static boolean matchesKeyword(String sql, int startIndex, String keyword) {
+        if (startIndex < 0 || startIndex + keyword.length() > sql.length()) {
+            return false;
+        }
+        if (!sql.regionMatches(true, startIndex, keyword, 0, keyword.length())) {
+            return false;
+        }
+        return isKeywordBoundary(sql, startIndex - 1)
+                && isKeywordBoundary(sql, startIndex + keyword.length());
+    }
+
+    private static boolean matchesTableName(String sql, int startIndex, String tableName) {
+        if (startIndex < 0 || startIndex >= sql.length()) {
+            return false;
+        }
+
+        char first = sql.charAt(startIndex);
+        if (first == '`' || first == '"') {
+            int endIndex = sql.indexOf(first, startIndex + 1);
+            return endIndex > startIndex
+                    && sql.substring(startIndex + 1, endIndex).equalsIgnoreCase(tableName);
+        }
+
+        if (startIndex + tableName.length() > sql.length()) {
+            return false;
+        }
+
+        return sql.regionMatches(true, startIndex, tableName, 0, tableName.length())
+                && isKeywordBoundary(sql, startIndex - 1)
+                && isKeywordBoundary(sql, startIndex + tableName.length());
+    }
+
+    private static int skipWhitespace(String sql, int startIndex) {
+        int index = startIndex;
+        while (index < sql.length() && Character.isWhitespace(sql.charAt(index))) {
+            index++;
+        }
+        return index;
+    }
+
+    private static boolean isKeywordBoundary(String sql, int index) {
+        if (index < 0 || index >= sql.length()) {
+            return true;
+        }
+
+        char current = sql.charAt(index);
+        return !Character.isLetterOrDigit(current) && current != '_';
     }
 
     private static int findStatementEnd(String sql, int startIndex, String resourcePath) {

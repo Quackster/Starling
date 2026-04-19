@@ -49,4 +49,24 @@ class BootstrapSqlSupportTest {
                 List.of("3", "c")
         ), rows);
     }
+
+    @Test
+    void parseInsertRowsHandlesColumnListsAndFlexibleWhitespace() {
+        String sql = """
+                INSERT
+                  INTO `room_models` (`id`, `name`)
+                  VALUES (1, 'a');
+
+                insert    into    room_models
+                values
+                (2, 'b');
+                """;
+
+        List<List<String>> rows = BootstrapSqlSupport.parseInsertRows(sql, "room_models", "test.sql");
+
+        assertEquals(List.of(
+                List.of("1", "a"),
+                List.of("2", "b")
+        ), rows);
+    }
 }
