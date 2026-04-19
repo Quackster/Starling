@@ -45,6 +45,7 @@ public final class AuthRoutes {
         app.post("/habblet/ajax/registrationDebug", registrationController::registrationDebug);
         app.get("/account/login", accountController::loginPage);
         app.get("/account/logout", accountController::logout);
+        app.get("/account/logout_ok", accountController::logoutOk);
         app.get("/account/password/forgot", context -> context.redirect("/account/login"));
         app.get("/client", accountController::clientEntry);
         app.get("/shockwave_client", context -> context.redirect("/client"));

@@ -502,6 +502,59 @@ class StarlingWebIntegrationTest {
     }
 
     @Test
+    void accountLogoutRendersPhpRetroConfirmationPage() throws Exception {
+        HttpResponse<String> loginResponse = postForm(
+                "/account/submit",
+                Map.of("username", "admin", "password", "admin"),
+                Map.of()
+        );
+        assertEquals(200, loginResponse.statusCode());
+
+        HttpResponse<String> logoutResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/account/logout")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> meAfterLogoutResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/me")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertEquals(200, logoutResponse.statusCode());
+        assertEquals(200, meAfterLogoutResponse.statusCode());
+        assertTrue(logoutResponse.uri().toString().endsWith("/account/logout"));
+        assertTrue(logoutResponse.body().contains("document.logoutPage = true;"));
+        assertTrue(logoutResponse.body().contains("You have successfully signed out"));
+        assertTrue(logoutResponse.body().contains("id=\"logout-ok\""));
+        assertTrue(logoutResponse.body().contains("class=\"new-button fill\""));
+        assertTrue(meAfterLogoutResponse.body().contains("create-habbo"));
+    }
+
+    @Test
+    void accountLogoutReasonVariantsMatchPhpRetroFlow() throws Exception {
+        HttpResponse<String> bannedLogoutResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/account/logout?reason=banned")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> concurrentLogoutResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/account/logout?reason=concurrentlogin")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> fallbackLogoutResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/account/logout?reason=unknown")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertEquals(200, bannedLogoutResponse.statusCode());
+        assertEquals(200, concurrentLogoutResponse.statusCode());
+        assertEquals(200, fallbackLogoutResponse.statusCode());
+        assertTrue(bannedLogoutResponse.body().contains("You have been banned for breaking the Habbo way."));
+        assertTrue(bannedLogoutResponse.body().contains("action-error flash-message"));
+        assertTrue(concurrentLogoutResponse.body().contains("You were automatically signed out because you signed in from another web browser or machine."));
+        assertTrue(fallbackLogoutResponse.uri().toString().endsWith("/account/logout_ok"));
+        assertTrue(fallbackLogoutResponse.body().contains("You have successfully signed out"));
+    }
+
+    @Test
     void publicUserSessionCookieUsesOpaqueHashAndRememberMeControlsPersistence() throws Exception {
         CookieManager transientCookieManager = new CookieManager();
         HttpClient transientClient = HttpClient.newBuilder()

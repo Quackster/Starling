@@ -65,8 +65,15 @@ public final class AccountController {
      * @param context the request context
      */
     public void logout(Context context) {
-        userSessionService.clear(context);
-        context.redirect("/");
+        renderLogout(context, RequestValues.valueOrEmpty(context.queryParam("reason")));
+    }
+
+    /**
+     * Renders the PHPRetro-compatible logged out confirmation page.
+     * @param context the request context
+     */
+    public void logoutOk(Context context) {
+        renderLogout(context, "");
     }
 
     /**
@@ -97,5 +104,31 @@ public final class AccountController {
         String encodedPage = URLEncoder.encode(request.page(), StandardCharsets.UTF_8);
         String encodedUsername = URLEncoder.encode(request.username(), StandardCharsets.UTF_8);
         context.redirect("/?page=" + encodedPage + "&username=" + encodedUsername + "&rememberme=" + request.rememberMeFlag());
+    }
+
+    private void renderLogout(Context context, String reasonCode) {
+        userSessionService.clear(context);
+
+        Map<String, Object> model = publicPageModelFactory.create(context, "community");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> site = (Map<String, Object>) model.get("site");
+        String siteName = site == null ? "Habbo" : RequestValues.valueOrDefault((String) site.get("siteName"), "Habbo");
+
+        String normalizedReason = RequestValues.valueOrEmpty(reasonCode).trim();
+        boolean error = !normalizedReason.isBlank();
+        String message = switch (normalizedReason) {
+            case "" -> "You have successfully signed out";
+            case "banned" -> "You have been banned for breaking the " + siteName + " way.";
+            case "concurrentlogin" -> "You were automatically signed out because you signed in from another web browser or machine.";
+            default -> null;
+        };
+        if (message == null) {
+            context.redirect("/account/logout_ok");
+            return;
+        }
+
+        model.put("logoutMessage", message);
+        model.put("logoutError", error);
+        context.html(templateRenderer.render("account/logout", model));
     }
 }
