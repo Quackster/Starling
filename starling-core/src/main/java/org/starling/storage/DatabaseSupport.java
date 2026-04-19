@@ -9,7 +9,10 @@ import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 public final class DatabaseSupport {
@@ -130,6 +133,15 @@ public final class DatabaseSupport {
     }
 
     /**
+     * Ensures a table exists from a schema definition.
+     * @param connection the connection value
+     * @param tableDefinition the table definition value
+     */
+    public static void ensureTable(Connection connection, TableDefinition tableDefinition) {
+        ensureTable(connection, tableDefinition.tableName, tableDefinition.toCreateTableSql());
+    }
+
+    /**
      * Ensures a column exists.
      * @param connection the connection value
      * @param tableName the table name value
@@ -194,6 +206,25 @@ public final class DatabaseSupport {
         return identifier.replace("`", "``");
     }
 
+    /**
+     * Creates a table definition.
+     * @param tableName the table name value
+     * @return the table definition
+     */
+    public static TableDefinition table(String tableName) {
+        return new TableDefinition(tableName);
+    }
+
+    /**
+     * Creates a column definition.
+     * @param columnName the column name value
+     * @param type the sql type value
+     * @return the column definition
+     */
+    public static ColumnDefinition column(String columnName, String type) {
+        return new ColumnDefinition(columnName, type);
+    }
+
     private static boolean indexExists(Connection connection, String tableName, String indexName) {
         try {
             DatabaseMetaData metadata = connection.getMetaData();
@@ -252,5 +283,141 @@ public final class DatabaseSupport {
         return Arrays.stream(identifiers)
                 .map(identifier -> "`" + escapeIdentifier(identifier) + "`")
                 .collect(Collectors.joining(", "));
+    }
+
+    /**
+     * Schema definition for a table that DatabaseSupport can create.
+     */
+    public static final class TableDefinition {
+
+        private final String tableName;
+        private final List<ColumnDefinition> columns = new ArrayList<>();
+        private final List<String> primaryKeyColumns = new ArrayList<>();
+
+        private TableDefinition(String tableName) {
+            this.tableName = tableName;
+        }
+
+        /**
+         * Adds a column definition.
+         * @param columnDefinition the column definition value
+         * @return this table definition
+         */
+        public TableDefinition column(ColumnDefinition columnDefinition) {
+            columns.add(columnDefinition);
+            return this;
+        }
+
+        /**
+         * Sets the primary key columns.
+         * @param columnNames the primary key column names
+         * @return this table definition
+         */
+        public TableDefinition primaryKey(String... columnNames) {
+            primaryKeyColumns.clear();
+            primaryKeyColumns.addAll(Arrays.asList(columnNames));
+            return this;
+        }
+
+        private String toCreateTableSql() {
+            StringJoiner joiner = new StringJoiner(
+                    ",\n",
+                    "CREATE TABLE `" + escapeIdentifier(tableName) + "` (\n",
+                    "\n) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+            );
+            for (ColumnDefinition columnDefinition : columns) {
+                joiner.add("    " + columnDefinition.toSql());
+            }
+            if (!primaryKeyColumns.isEmpty()) {
+                joiner.add("    PRIMARY KEY (" + joinEscapedIdentifiers(primaryKeyColumns.toArray(new String[0])) + ")");
+            }
+            return joiner.toString();
+        }
+    }
+
+    /**
+     * Schema definition for a table column.
+     */
+    public static final class ColumnDefinition {
+
+        private final String columnName;
+        private final String type;
+        private boolean nullable = true;
+        private Object defaultValue;
+        private String defaultExpression;
+        private boolean autoIncrement;
+
+        private ColumnDefinition(String columnName, String type) {
+            this.columnName = columnName;
+            this.type = type;
+        }
+
+        /**
+         * Marks the column as not nullable.
+         * @return this column definition
+         */
+        public ColumnDefinition notNull() {
+            this.nullable = false;
+            return this;
+        }
+
+        /**
+         * Sets the default value.
+         * @param defaultValue the default value
+         * @return this column definition
+         */
+        public ColumnDefinition defaultValue(Object defaultValue) {
+            this.defaultValue = defaultValue;
+            this.defaultExpression = null;
+            return this;
+        }
+
+        /**
+         * Sets the default SQL expression.
+         * @param defaultExpression the default expression
+         * @return this column definition
+         */
+        public ColumnDefinition defaultExpression(String defaultExpression) {
+            this.defaultExpression = defaultExpression;
+            this.defaultValue = null;
+            return this;
+        }
+
+        /**
+         * Marks the column as auto-incrementing.
+         * @return this column definition
+         */
+        public ColumnDefinition autoIncrement() {
+            this.autoIncrement = true;
+            return this;
+        }
+
+        private String toSql() {
+            StringBuilder sql = new StringBuilder()
+                    .append("`")
+                    .append(escapeIdentifier(columnName))
+                    .append("` ")
+                    .append(type)
+                    .append(nullable ? " NULL" : " NOT NULL");
+            if (defaultExpression != null) {
+                sql.append(" DEFAULT ").append(defaultExpression);
+            } else if (defaultValue != null) {
+                sql.append(" DEFAULT ").append(formatDefaultValue(defaultValue));
+            }
+            if (autoIncrement) {
+                sql.append(" AUTO_INCREMENT");
+            }
+            return sql.toString();
+        }
+
+        private static String formatDefaultValue(Object value) {
+            if (value instanceof Number) {
+                return value.toString();
+            }
+            if (value instanceof String stringValue) {
+                return "'" + stringValue.replace("'", "''") + "'";
+            }
+            throw new IllegalArgumentException("Unsupported default value type: " + value.getClass().getName());
+        }
     }
 }

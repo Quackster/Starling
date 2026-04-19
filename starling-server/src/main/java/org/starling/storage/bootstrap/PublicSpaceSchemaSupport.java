@@ -3,6 +3,9 @@ package org.starling.storage.bootstrap;
 import org.oldskooler.entity4j.DbContext;
 import org.starling.storage.DatabaseSupport;
 
+import static org.starling.storage.DatabaseSupport.column;
+import static org.starling.storage.DatabaseSupport.table;
+
 /**
  * Maintains the legacy public-space schema that Entity4j cannot model safely yet.
  * These tables rely on non-auto primary keys and bootstrap defaults that v1.0.0
@@ -27,22 +30,19 @@ public final class PublicSpaceSchemaSupport {
     }
 
     private static void ensureRoomModels(DbContext context) {
-        DatabaseSupport.ensureTable(context.conn(), "room_models", """
-                CREATE TABLE `room_models` (
-                    model_name VARCHAR(64) NOT NULL,
-                    is_public INT NOT NULL DEFAULT 0,
-                    door_x INT NOT NULL DEFAULT 0,
-                    door_y INT NOT NULL DEFAULT 0,
-                    door_z DOUBLE NOT NULL DEFAULT 0,
-                    door_dir INT NOT NULL DEFAULT 2,
-                    heightmap TEXT NOT NULL,
-                    public_room_items TEXT NULL,
-                    wallpaper VARCHAR(32) NOT NULL DEFAULT '',
-                    floor_pattern VARCHAR(32) NOT NULL DEFAULT '',
-                    landscape VARCHAR(32) NOT NULL DEFAULT '',
-                    PRIMARY KEY (model_name)
-                ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
-                """);
+        DatabaseSupport.ensureTable(context.conn(), table("room_models")
+                .column(column("model_name", "VARCHAR(64)").notNull())
+                .column(column("is_public", "INT").notNull().defaultValue(0))
+                .column(column("door_x", "INT").notNull().defaultValue(0))
+                .column(column("door_y", "INT").notNull().defaultValue(0))
+                .column(column("door_z", "DOUBLE").notNull().defaultValue(0))
+                .column(column("door_dir", "INT").notNull().defaultValue(2))
+                .column(column("heightmap", "TEXT").notNull())
+                .column(column("public_room_items", "TEXT"))
+                .column(column("wallpaper", "VARCHAR(32)").notNull().defaultValue(""))
+                .column(column("floor_pattern", "VARCHAR(32)").notNull().defaultValue(""))
+                .column(column("landscape", "VARCHAR(32)").notNull().defaultValue(""))
+                .primaryKey("model_name"));
         DatabaseSupport.ensureIndex(context.conn(), "room_models", "idx_room_models_public", false, "is_public");
         DatabaseSupport.ensureColumn(context.conn(), "room_models", "door_x", "INT NOT NULL DEFAULT 0", "is_public");
         DatabaseSupport.ensureColumn(context.conn(), "room_models", "door_y", "INT NOT NULL DEFAULT 0", "door_x");
@@ -52,25 +52,22 @@ public final class PublicSpaceSchemaSupport {
     }
 
     private static void ensurePublicRoomItems(DbContext context) {
-        DatabaseSupport.ensureTable(context.conn(), "public_room_items", """
-                CREATE TABLE `public_room_items` (
-                    id INT NOT NULL,
-                    room_model VARCHAR(64) NOT NULL,
-                    sprite VARCHAR(255) NOT NULL DEFAULT '',
-                    x INT NOT NULL DEFAULT 0,
-                    y INT NOT NULL DEFAULT 0,
-                    z DOUBLE NOT NULL DEFAULT 0,
-                    rotation INT NOT NULL DEFAULT 0,
-                    top_height DOUBLE NOT NULL DEFAULT 1,
-                    length INT NOT NULL DEFAULT 1,
-                    width INT NOT NULL DEFAULT 1,
-                    behaviour VARCHAR(255) NOT NULL DEFAULT '',
-                    current_program VARCHAR(255) NOT NULL DEFAULT '',
-                    teleport_to VARCHAR(50) NULL,
-                    swim_to VARCHAR(50) NULL,
-                    PRIMARY KEY (id)
-                ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
-                """);
+        DatabaseSupport.ensureTable(context.conn(), table("public_room_items")
+                .column(column("id", "INT").notNull())
+                .column(column("room_model", "VARCHAR(64)").notNull())
+                .column(column("sprite", "VARCHAR(255)").notNull().defaultValue(""))
+                .column(column("x", "INT").notNull().defaultValue(0))
+                .column(column("y", "INT").notNull().defaultValue(0))
+                .column(column("z", "DOUBLE").notNull().defaultValue(0))
+                .column(column("rotation", "INT").notNull().defaultValue(0))
+                .column(column("top_height", "DOUBLE").notNull().defaultValue(1))
+                .column(column("length", "INT").notNull().defaultValue(1))
+                .column(column("width", "INT").notNull().defaultValue(1))
+                .column(column("behaviour", "VARCHAR(255)").notNull().defaultValue(""))
+                .column(column("current_program", "VARCHAR(255)").notNull().defaultValue(""))
+                .column(column("teleport_to", "VARCHAR(50)"))
+                .column(column("swim_to", "VARCHAR(50)"))
+                .primaryKey("id"));
         DatabaseSupport.ensureIndex(context.conn(), "public_room_items", "idx_public_room_items_model", false, "room_model");
         DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "room_model", "VARCHAR(64) NOT NULL DEFAULT ''", "id");
         DatabaseSupport.ensureColumn(context.conn(), "public_room_items", "sprite", "VARCHAR(255) NOT NULL DEFAULT ''", "room_model");
@@ -98,25 +95,22 @@ public final class PublicSpaceSchemaSupport {
     }
 
     private static void ensurePublicRooms(DbContext context) {
-        DatabaseSupport.ensureTable(context.conn(), "public_rooms", """
-                CREATE TABLE `public_rooms` (
-                    id INT NOT NULL AUTO_INCREMENT,
-                    category_id INT NOT NULL,
-                    name VARCHAR(100) NOT NULL,
-                    unit_str_id VARCHAR(64) NOT NULL,
-                    heightmap TEXT NULL,
-                    port INT NOT NULL DEFAULT 0,
-                    door INT NOT NULL DEFAULT 0,
-                    casts VARCHAR(255) NOT NULL DEFAULT '',
-                    current_users INT NOT NULL DEFAULT 0,
-                    max_users INT NOT NULL DEFAULT 50,
-                    users_in_queue INT NOT NULL DEFAULT 0,
-                    is_visible INT NOT NULL DEFAULT 1,
-                    navigator_filter VARCHAR(64) NOT NULL DEFAULT '',
-                    description VARCHAR(255) NOT NULL DEFAULT '',
-                    PRIMARY KEY (id)
-                ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
-                """);
+        DatabaseSupport.ensureTable(context.conn(), table("public_rooms")
+                .column(column("id", "INT").notNull().autoIncrement())
+                .column(column("category_id", "INT").notNull())
+                .column(column("name", "VARCHAR(100)").notNull())
+                .column(column("unit_str_id", "VARCHAR(64)").notNull())
+                .column(column("heightmap", "TEXT"))
+                .column(column("port", "INT").notNull().defaultValue(0))
+                .column(column("door", "INT").notNull().defaultValue(0))
+                .column(column("casts", "VARCHAR(255)").notNull().defaultValue(""))
+                .column(column("current_users", "INT").notNull().defaultValue(0))
+                .column(column("max_users", "INT").notNull().defaultValue(50))
+                .column(column("users_in_queue", "INT").notNull().defaultValue(0))
+                .column(column("is_visible", "INT").notNull().defaultValue(1))
+                .column(column("navigator_filter", "VARCHAR(64)").notNull().defaultValue(""))
+                .column(column("description", "VARCHAR(255)").notNull().defaultValue(""))
+                .primaryKey("id"));
         DatabaseSupport.ensureIndex(context.conn(), "public_rooms", "idx_public_rooms_category", false, "category_id");
         DatabaseSupport.ensureColumn(context.conn(), "public_rooms", "heightmap", "TEXT NULL", "unit_str_id");
     }
