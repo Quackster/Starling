@@ -27,15 +27,15 @@
         </label>
         <section class="admin-card">
             <h2>Access</h2>
-            <label class="checkbox-row">
+            <label class="checkbox-card">
                 <input type="checkbox" name="visibleToGuests"{% if page.draftVisibleToGuests %} checked{% endif %}>
                 <span>Allow guests to view this page</span>
             </label>
             <div class="stack-form">
                 <span>Allowed ranks when guest access is off</span>
-                <div class="checkbox-grid">
+                <div class="checkbox-grid checkbox-grid--compact">
                     {% for rank in ranks %}
-                        <label class="checkbox-row">
+                        <label class="checkbox-card checkbox-card--compact">
                             <input type="checkbox" name="rank_{{ rank.value }}"{% if rank.selected %} checked{% endif %}>
                             <span>Rank {{ rank.value }}</span>
                         </label>
@@ -89,25 +89,25 @@
                     {% endfor %}
                 </select>
             </label>
-            <div class="stack-form">
-                <span>Main Navigation Links</span>
+            <div class="selection-panel stack-form">
+                <span class="selection-panel__title">Main Navigation Links</span>
                 <div class="checkbox-grid">
                     {% for link in navigationMainLinks %}
-                        <label class="checkbox-row">
+                        <label class="checkbox-card">
                             <input type="checkbox" name="navigationMainLinkKey" value="{{ link.key }}"{% if link.selected %} checked{% endif %}>
                             <span>{{ link.label }} <small>({{ link.href }})</small></span>
                         </label>
                     {% endfor %}
                 </div>
             </div>
-            <div class="stack-form">
-                <span>Sub Navigation Links</span>
+            <div class="stack-form selection-stack">
+                <span class="selection-panel__title">Sub Navigation Links</span>
                 {% for group in navigationSubGroups %}
-                    <div class="stack-form">
+                    <div class="selection-panel stack-form">
                         <strong>{{ group.groupKey }}</strong>
                         <div class="checkbox-grid">
                             {% for link in group.links %}
-                                <label class="checkbox-row">
+                                <label class="checkbox-card">
                                     <input type="checkbox" name="navigationSubLinkToken" value="{{ link.token }}"{% if link.selected %} checked{% endif %}>
                                     <span>{{ link.label }} <small>({{ link.href }})</small></span>
                                 </label>

@@ -11,98 +11,110 @@
         <h2>Main Navigation Links</h2>
         <p>These links render in the top header navigation.</p>
         <input type="hidden" name="mainCount" value="{{ mainLinks | length }}">
-        <table class="data-table">
-            <thead>
-            <tr>
-                <th>Sort</th>
-                <th>Key</th>
-                <th>Label</th>
-                <th>Href</th>
-                <th>Selected Keys</th>
-                <th>Flags</th>
-                <th>CSS</th>
-                <th>Rank</th>
-                <th>Permission</th>
-                <th>Delete</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for link in mainLinks %}
+        <div class="table-scroll">
+            <table class="data-table data-table--editor">
+                <thead>
                 <tr>
-                    <td><input type="number" name="main_{{ link.index }}_sortOrder" value="{{ link.sortOrder }}" min="0" step="1"></td>
-                    <td><input type="text" name="main_{{ link.index }}_key" value="{{ link.key }}"></td>
-                    <td><input type="text" name="main_{{ link.index }}_label" value="{{ link.label }}"></td>
-                    <td><input type="text" name="main_{{ link.index }}_href" value="{{ link.href }}"></td>
-                    <td><input type="text" name="main_{{ link.index }}_selectedKeys" value="{{ link.selectedKeys }}"></td>
-                    <td>
-                        <label class="checkbox-row"><input type="checkbox" name="main_{{ link.index }}_visibleWhenLoggedIn"{% if link.visibleWhenLoggedIn %} checked{% endif %}><span>In</span></label>
-                        <label class="checkbox-row"><input type="checkbox" name="main_{{ link.index }}_visibleWhenLoggedOut"{% if link.visibleWhenLoggedOut %} checked{% endif %}><span>Out</span></label>
-                        <label class="checkbox-row"><input type="checkbox" name="main_{{ link.index }}_requiresAdminRole"{% if link.requiresAdminRole %} checked{% endif %}><span>Admin</span></label>
-                    </td>
-                    <td>
-                        <input type="text" name="main_{{ link.index }}_cssId" value="{{ link.cssId }}" placeholder="css id">
-                        <input type="text" name="main_{{ link.index }}_cssClass" value="{{ link.cssClass }}" placeholder="css class">
-                    </td>
-                    <td><input type="number" name="main_{{ link.index }}_minimumRank" value="{{ link.minimumRank }}" min="0" step="1"></td>
-                    <td><input type="text" name="main_{{ link.index }}_requiredPermission" value="{{ link.requiredPermission }}"></td>
-                    <td><input type="checkbox" name="main_{{ link.index }}_delete"></td>
+                    <th>Sort</th>
+                    <th>Key</th>
+                    <th>Label</th>
+                    <th>Href</th>
+                    <th>Selected Keys</th>
+                    <th>Flags</th>
+                    <th>CSS</th>
+                    <th>Rank</th>
+                    <th>Permission</th>
+                    <th>Delete</th>
                 </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                {% for link in mainLinks %}
+                    <tr>
+                        <td><input type="number" name="main_{{ link.index }}_sortOrder" value="{{ link.sortOrder }}" min="0" step="1"></td>
+                        <td><input type="text" name="main_{{ link.index }}_key" value="{{ link.key }}"></td>
+                        <td><input type="text" name="main_{{ link.index }}_label" value="{{ link.label }}"></td>
+                        <td><input type="text" name="main_{{ link.index }}_href" value="{{ link.href }}"></td>
+                        <td><input type="text" name="main_{{ link.index }}_selectedKeys" value="{{ link.selectedKeys }}"></td>
+                        <td>
+                            <div class="flag-stack">
+                                <label class="checkbox-row checkbox-row--compact"><input type="checkbox" name="main_{{ link.index }}_visibleWhenLoggedIn"{% if link.visibleWhenLoggedIn %} checked{% endif %}><span>In</span></label>
+                                <label class="checkbox-row checkbox-row--compact"><input type="checkbox" name="main_{{ link.index }}_visibleWhenLoggedOut"{% if link.visibleWhenLoggedOut %} checked{% endif %}><span>Out</span></label>
+                                <label class="checkbox-row checkbox-row--compact"><input type="checkbox" name="main_{{ link.index }}_requiresAdminRole"{% if link.requiresAdminRole %} checked{% endif %}><span>Admin</span></label>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="cell-stack">
+                                <input type="text" name="main_{{ link.index }}_cssId" value="{{ link.cssId }}" placeholder="css id">
+                                <input type="text" name="main_{{ link.index }}_cssClass" value="{{ link.cssClass }}" placeholder="css class">
+                            </div>
+                        </td>
+                        <td><input type="number" name="main_{{ link.index }}_minimumRank" value="{{ link.minimumRank }}" min="0" step="1"></td>
+                        <td><input type="text" name="main_{{ link.index }}_requiredPermission" value="{{ link.requiredPermission }}"></td>
+                        <td><label class="checkbox-row checkbox-row--compact checkbox-row--center"><input type="checkbox" name="main_{{ link.index }}_delete"><span>Delete</span></label></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </section>
 
     <section class="admin-card">
         <h2>Sub Navigation Links</h2>
         <p>These links render in the secondary subnav. Use the group key to define reusable sets like <code>community</code> or <code>me</code>.</p>
         <input type="hidden" name="subCount" value="{{ subLinks | length }}">
-        <table class="data-table">
-            <thead>
-            <tr>
-                <th>Sort</th>
-                <th>Group</th>
-                <th>Key</th>
-                <th>Label</th>
-                <th>Href</th>
-                <th>Selected Keys</th>
-                <th>Flags</th>
-                <th>CSS</th>
-                <th>Rank</th>
-                <th>Permission</th>
-                <th>Delete</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for link in subLinks %}
+        <div class="table-scroll">
+            <table class="data-table data-table--editor">
+                <thead>
                 <tr>
-                    <td><input type="number" name="sub_{{ link.index }}_sortOrder" value="{{ link.sortOrder }}" min="0" step="1"></td>
-                    <td><input type="text" name="sub_{{ link.index }}_groupKey" value="{{ link.groupKey }}"></td>
-                    <td><input type="text" name="sub_{{ link.index }}_key" value="{{ link.key }}"></td>
-                    <td><input type="text" name="sub_{{ link.index }}_label" value="{{ link.label }}"></td>
-                    <td><input type="text" name="sub_{{ link.index }}_href" value="{{ link.href }}"></td>
-                    <td><input type="text" name="sub_{{ link.index }}_selectedKeys" value="{{ link.selectedKeys }}"></td>
-                    <td>
-                        <label class="checkbox-row"><input type="checkbox" name="sub_{{ link.index }}_visibleWhenLoggedIn"{% if link.visibleWhenLoggedIn %} checked{% endif %}><span>In</span></label>
-                        <label class="checkbox-row"><input type="checkbox" name="sub_{{ link.index }}_visibleWhenLoggedOut"{% if link.visibleWhenLoggedOut %} checked{% endif %}><span>Out</span></label>
-                        <label class="checkbox-row"><input type="checkbox" name="sub_{{ link.index }}_requiresAdminRole"{% if link.requiresAdminRole %} checked{% endif %}><span>Admin</span></label>
-                    </td>
-                    <td>
-                        <input type="text" name="sub_{{ link.index }}_cssId" value="{{ link.cssId }}" placeholder="css id">
-                        <input type="text" name="sub_{{ link.index }}_cssClass" value="{{ link.cssClass }}" placeholder="css class">
-                    </td>
-                    <td><input type="number" name="sub_{{ link.index }}_minimumRank" value="{{ link.minimumRank }}" min="0" step="1"></td>
-                    <td><input type="text" name="sub_{{ link.index }}_requiredPermission" value="{{ link.requiredPermission }}"></td>
-                    <td><input type="checkbox" name="sub_{{ link.index }}_delete"></td>
+                    <th>Sort</th>
+                    <th>Group</th>
+                    <th>Key</th>
+                    <th>Label</th>
+                    <th>Href</th>
+                    <th>Selected Keys</th>
+                    <th>Flags</th>
+                    <th>CSS</th>
+                    <th>Rank</th>
+                    <th>Permission</th>
+                    <th>Delete</th>
                 </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                {% for link in subLinks %}
+                    <tr>
+                        <td><input type="number" name="sub_{{ link.index }}_sortOrder" value="{{ link.sortOrder }}" min="0" step="1"></td>
+                        <td><input type="text" name="sub_{{ link.index }}_groupKey" value="{{ link.groupKey }}"></td>
+                        <td><input type="text" name="sub_{{ link.index }}_key" value="{{ link.key }}"></td>
+                        <td><input type="text" name="sub_{{ link.index }}_label" value="{{ link.label }}"></td>
+                        <td><input type="text" name="sub_{{ link.index }}_href" value="{{ link.href }}"></td>
+                        <td><input type="text" name="sub_{{ link.index }}_selectedKeys" value="{{ link.selectedKeys }}"></td>
+                        <td>
+                            <div class="flag-stack">
+                                <label class="checkbox-row checkbox-row--compact"><input type="checkbox" name="sub_{{ link.index }}_visibleWhenLoggedIn"{% if link.visibleWhenLoggedIn %} checked{% endif %}><span>In</span></label>
+                                <label class="checkbox-row checkbox-row--compact"><input type="checkbox" name="sub_{{ link.index }}_visibleWhenLoggedOut"{% if link.visibleWhenLoggedOut %} checked{% endif %}><span>Out</span></label>
+                                <label class="checkbox-row checkbox-row--compact"><input type="checkbox" name="sub_{{ link.index }}_requiresAdminRole"{% if link.requiresAdminRole %} checked{% endif %}><span>Admin</span></label>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="cell-stack">
+                                <input type="text" name="sub_{{ link.index }}_cssId" value="{{ link.cssId }}" placeholder="css id">
+                                <input type="text" name="sub_{{ link.index }}_cssClass" value="{{ link.cssClass }}" placeholder="css class">
+                            </div>
+                        </td>
+                        <td><input type="number" name="sub_{{ link.index }}_minimumRank" value="{{ link.minimumRank }}" min="0" step="1"></td>
+                        <td><input type="text" name="sub_{{ link.index }}_requiredPermission" value="{{ link.requiredPermission }}"></td>
+                        <td><label class="checkbox-row checkbox-row--compact checkbox-row--center"><input type="checkbox" name="sub_{{ link.index }}_delete"><span>Delete</span></label></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </section>
 
     <section class="admin-card">
         <h2>Action Buttons</h2>
         <p>These drive the guest and signed-in hotel entry buttons shown in the header.</p>
-        <div class="editor-grid">
+        <div class="settings-grid">
             <div class="admin-card stack-form">
                 <h3>Guest Hotel Button</h3>
                 <input type="hidden" name="button_guestHotel_key" value="{{ guestHotelButton.key }}">
@@ -113,8 +125,8 @@
                 <label><span>Button Color</span><input type="text" name="button_guestHotel_buttonColor" value="{{ guestHotelButton.buttonColor }}"></label>
                 <label><span>Target</span><input type="text" name="button_guestHotel_target" value="{{ guestHotelButton.target }}"></label>
                 <label><span>Onclick</span><input type="text" name="button_guestHotel_onclick" value="{{ guestHotelButton.onclick }}"></label>
-                <label class="checkbox-row"><input type="checkbox" name="button_guestHotel_visibleWhenLoggedIn"{% if guestHotelButton.visibleWhenLoggedIn %} checked{% endif %}><span>Show when signed in</span></label>
-                <label class="checkbox-row"><input type="checkbox" name="button_guestHotel_visibleWhenLoggedOut"{% if guestHotelButton.visibleWhenLoggedOut %} checked{% endif %}><span>Show when signed out</span></label>
+                <label class="checkbox-card checkbox-card--compact"><input type="checkbox" name="button_guestHotel_visibleWhenLoggedIn"{% if guestHotelButton.visibleWhenLoggedIn %} checked{% endif %}><span>Show when signed in</span></label>
+                <label class="checkbox-card checkbox-card--compact"><input type="checkbox" name="button_guestHotel_visibleWhenLoggedOut"{% if guestHotelButton.visibleWhenLoggedOut %} checked{% endif %}><span>Show when signed out</span></label>
             </div>
             <div class="admin-card stack-form">
                 <h3>User Hotel Button</h3>
@@ -126,8 +138,8 @@
                 <label><span>Button Color</span><input type="text" name="button_userHotel_buttonColor" value="{{ userHotelButton.buttonColor }}"></label>
                 <label><span>Target</span><input type="text" name="button_userHotel_target" value="{{ userHotelButton.target }}"></label>
                 <label><span>Onclick</span><input type="text" name="button_userHotel_onclick" value="{{ userHotelButton.onclick }}"></label>
-                <label class="checkbox-row"><input type="checkbox" name="button_userHotel_visibleWhenLoggedIn"{% if userHotelButton.visibleWhenLoggedIn %} checked{% endif %}><span>Show when signed in</span></label>
-                <label class="checkbox-row"><input type="checkbox" name="button_userHotel_visibleWhenLoggedOut"{% if userHotelButton.visibleWhenLoggedOut %} checked{% endif %}><span>Show when signed out</span></label>
+                <label class="checkbox-card checkbox-card--compact"><input type="checkbox" name="button_userHotel_visibleWhenLoggedIn"{% if userHotelButton.visibleWhenLoggedIn %} checked{% endif %}><span>Show when signed in</span></label>
+                <label class="checkbox-card checkbox-card--compact"><input type="checkbox" name="button_userHotel_visibleWhenLoggedOut"{% if userHotelButton.visibleWhenLoggedOut %} checked{% endif %}><span>Show when signed out</span></label>
             </div>
         </div>
     </section>

@@ -232,6 +232,16 @@ button.button-primary,
     gap: 0.75rem;
 }
 
+.checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.8rem;
+}
+
+.checkbox-grid--compact {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
 .checkbox-row {
     display: flex;
     align-items: center;
@@ -240,6 +250,95 @@ button.button-primary,
 
 .checkbox-row input {
     width: auto;
+}
+
+.checkbox-row--compact {
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.checkbox-row--center {
+    justify-content: center;
+}
+
+.checkbox-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    border: 1px solid rgba(111, 100, 84, 0.16);
+    border-radius: 16px;
+    background: linear-gradient(180deg, #fffaf2 0%, #fff 100%);
+    padding: 0.9rem 1rem;
+    min-width: 0;
+}
+
+.checkbox-card--compact {
+    padding: 0.75rem 0.85rem;
+}
+
+.checkbox-card input {
+    width: auto;
+    margin-top: 0.2rem;
+    flex: 0 0 auto;
+}
+
+.checkbox-card span {
+    min-width: 0;
+    line-height: 1.4;
+}
+
+.checkbox-card small {
+    display: block;
+    color: var(--admin-muted);
+    margin-top: 0.18rem;
+    overflow-wrap: anywhere;
+}
+
+.selection-stack {
+    gap: 0.9rem;
+}
+
+.selection-panel {
+    border: 1px solid rgba(111, 100, 84, 0.16);
+    border-radius: 16px;
+    background: rgba(141, 79, 18, 0.04);
+    padding: 1rem;
+}
+
+.selection-panel__title {
+    color: var(--admin-ink);
+    font-size: 0.96rem;
+    font-weight: 700;
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.table-scroll {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 0.35rem;
+}
+
+.data-table--editor {
+    min-width: 1100px;
+}
+
+.cell-stack,
+.flag-stack {
+    display: grid;
+    gap: 0.55rem;
+}
+
+.flag-stack {
+    min-width: 92px;
+}
+
+.flag-stack .checkbox-row {
+    align-items: center;
 }
 
 .info-card p {
@@ -350,7 +449,8 @@ button.button-primary,
 
 @media (max-width: 900px) {
     .admin-toolbar,
-    .editor-shell,
+    .editor-grid,
+    .settings-grid,
     .admin-header__inner {
         grid-template-columns: 1fr;
     }
@@ -361,5 +461,18 @@ button.button-primary,
 
     .admin-nav {
         justify-content: flex-start;
+    }
+
+    .admin-header__inner,
+    .admin-main {
+        width: min(1180px, calc(100% - 1rem));
+    }
+
+    .admin-card {
+        padding: 1.1rem;
+    }
+
+    .checkbox-grid {
+        grid-template-columns: 1fr;
     }
 }
