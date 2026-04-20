@@ -1,150 +1,498 @@
-<section class="admin-toolbar">
-    <div>
-        <h1>Navigation</h1>
-        <p>Edit the public header menus and hotel action buttons. Page editors can then pick from these saved options.</p>
+<section class="admin-toolbar admin-toolbar--navigation">
+    <div class="nav-editor-heading">
+        <span class="admin-eyebrow">Housekeeping / Navigation</span>
+        <h1>Navigation Studio</h1>
+        <p>Manage the public header, reusable submenus, and hotel entry buttons from one place. The essentials stay visible, while the more technical targeting fields are tucked away until you need them.</p>
     </div>
-    <a class="button-secondary" href="/admin">Back to Dashboard</a>
+    <div class="nav-editor-toolbar__actions">
+        <a class="button-secondary" href="/admin">Back to Dashboard</a>
+        <button form="navigation-form" type="submit" class="button-primary">Save Navigation</button>
+    </div>
 </section>
 
-<form class="stack-form" method="post" action="/admin/navigation">
-    <section class="admin-card">
-        <h2>Main Navigation Links</h2>
-        <p>These links render in the top header navigation.</p>
+<section class="nav-editor-stats">
+    <article class="nav-editor-stat">
+        <span class="nav-editor-stat__label">Main Header Links</span>
+        <strong>{{ mainLinkCount }}</strong>
+        <p>Primary tabs shown in the top navigation.</p>
+    </article>
+    <article class="nav-editor-stat">
+        <span class="nav-editor-stat__label">Submenu Links</span>
+        <strong>{{ subLinkCount }}</strong>
+        <p>Secondary links shared across page groups.</p>
+    </article>
+    <article class="nav-editor-stat">
+        <span class="nav-editor-stat__label">Submenu Groups</span>
+        <strong>{{ subGroupCount }}</strong>
+        <p>Reusable sets like <code>community</code> or <code>me</code>.</p>
+    </article>
+    <article class="nav-editor-stat">
+        <span class="nav-editor-stat__label">Action Buttons</span>
+        <strong>2</strong>
+        <p>Hotel entry calls to action for guest and signed-in states.</p>
+    </article>
+</section>
+
+<nav class="nav-editor-jump" aria-label="Jump to section">
+    <a class="nav-editor-jump__link" href="#main-links">Main Header</a>
+    <a class="nav-editor-jump__link" href="#sub-links">Submenus</a>
+    <a class="nav-editor-jump__link" href="#action-buttons">Action Buttons</a>
+</nav>
+
+<div class="nav-editor-layout">
+    <form id="navigation-form" class="stack-form nav-editor-form" method="post" action="/admin/navigation">
         <input type="hidden" name="mainCount" value="{{ mainLinks | length }}">
-        <div class="table-scroll">
-            <table class="data-table data-table--editor">
-                <thead>
-                <tr>
-                    <th>Sort</th>
-                    <th>Key</th>
-                    <th>Label</th>
-                    <th>Href</th>
-                    <th>Selected Keys</th>
-                    <th>Flags</th>
-                    <th>CSS</th>
-                    <th>Rank</th>
-                    <th>Permission</th>
-                    <th>Delete</th>
-                </tr>
-                </thead>
-                <tbody>
+        <input type="hidden" name="subCount" value="{{ subLinkRowCount }}">
+
+        <section id="main-links" class="admin-card nav-editor-section">
+            <div class="nav-editor-section__header">
+                <div>
+                    <span class="admin-eyebrow">Section 1</span>
+                    <h2>Main Header Navigation</h2>
+                    <p>These links appear across the public header. Keep labels short, keep keys stable, and use selected keys to control which tab looks active on matching pages.</p>
+                </div>
+                <span class="nav-editor-badge">{{ mainLinkCount }} live link{% if mainLinkCount == 1 %}{% else %}s{% endif %}</span>
+            </div>
+
+            <div class="nav-link-list">
                 {% for link in mainLinks %}
-                    <tr>
-                        <td><input type="number" name="main_{{ link.index }}_sortOrder" value="{{ link.sortOrder }}" min="0" step="1"></td>
-                        <td><input type="text" name="main_{{ link.index }}_key" value="{{ link.key }}"></td>
-                        <td><input type="text" name="main_{{ link.index }}_label" value="{{ link.label }}"></td>
-                        <td><input type="text" name="main_{{ link.index }}_href" value="{{ link.href }}"></td>
-                        <td><input type="text" name="main_{{ link.index }}_selectedKeys" value="{{ link.selectedKeys }}"></td>
-                        <td>
-                            <div class="flag-stack">
-                                <label class="checkbox-row checkbox-row--compact"><input type="checkbox" name="main_{{ link.index }}_visibleWhenLoggedIn"{% if link.visibleWhenLoggedIn %} checked{% endif %}><span>In</span></label>
-                                <label class="checkbox-row checkbox-row--compact"><input type="checkbox" name="main_{{ link.index }}_visibleWhenLoggedOut"{% if link.visibleWhenLoggedOut %} checked{% endif %}><span>Out</span></label>
-                                <label class="checkbox-row checkbox-row--compact"><input type="checkbox" name="main_{{ link.index }}_requiresAdminRole"{% if link.requiresAdminRole %} checked{% endif %}><span>Admin</span></label>
+                    <article class="nav-link-card{% if link.key == '' and link.label == '' and link.href == '' %} nav-link-card--draft{% endif %}">
+                        <div class="nav-link-card__header">
+                            <div>
+                                <span class="nav-link-card__eyebrow">Main slot {{ loop.index }}</span>
+                                <h3>{% if link.label != '' %}{{ link.label }}{% elseif link.key != '' %}{{ link.key }}{% else %}Add a new main link{% endif %}</h3>
+                                <p>{% if link.href != '' %}{{ link.href }}{% else %}Fill in the basics below to add another top-level tab.{% endif %}</p>
                             </div>
-                        </td>
-                        <td>
-                            <div class="cell-stack">
-                                <input type="text" name="main_{{ link.index }}_cssId" value="{{ link.cssId }}" placeholder="css id">
-                                <input type="text" name="main_{{ link.index }}_cssClass" value="{{ link.cssClass }}" placeholder="css class">
+                            <label class="nav-delete-toggle">
+                                <input type="checkbox" name="main_{{ link.index }}_delete">
+                                <span>Remove</span>
+                            </label>
+                        </div>
+
+                        <div class="nav-link-card__grid">
+                            <label class="nav-field nav-field--wide">
+                                <span>Quick Fill From CMS Page</span>
+                                <select class="nav-page-select" data-prefix="main_{{ link.index }}_">
+                                    <option value="">Choose a page to fill this link</option>
+                                    {% for page in cmsPageOptions %}
+                                        <option
+                                                value="{{ page.slug }}"
+                                                data-label="{{ page.title }}"
+                                                data-key="{{ page.key }}"
+                                                data-href="{{ page.route }}"
+                                                data-selected-keys="{{ page.selectedKeys }}"
+                                        >{{ page.title }} ({{ page.status }}) - {{ page.route }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-hint">This fills the label, key, destination, and selected keys. You can still edit any field afterwards.</small>
+                            </label>
+                            <label class="nav-field">
+                                <span>Label</span>
+                                <input type="text" name="main_{{ link.index }}_label" value="{{ link.label }}" placeholder="Community">
+                            </label>
+                            <label class="nav-field">
+                                <span>Key</span>
+                                <input type="text" name="main_{{ link.index }}_key" value="{{ link.key }}" placeholder="community">
+                            </label>
+                            <label class="nav-field nav-field--wide">
+                                <span>Destination</span>
+                                <input type="text" name="main_{{ link.index }}_href" value="{{ link.href }}" placeholder="/community">
+                            </label>
+                            <label class="nav-field nav-field--wide">
+                                <span>Selected Keys</span>
+                                <input type="text" name="main_{{ link.index }}_selectedKeys" value="{{ link.selectedKeys }}" placeholder="community,news">
+                                <small class="form-hint">Comma-separated page keys that should highlight this tab as active.</small>
+                            </label>
+                        </div>
+
+                        <div class="nav-toggle-grid">
+                            <label class="checkbox-card nav-toggle-card">
+                                <input type="checkbox" name="main_{{ link.index }}_visibleWhenLoggedIn"{% if link.visibleWhenLoggedIn %} checked{% endif %}>
+                                <span>Show to signed-in users <small>Keep enabled for members who should see this tab.</small></span>
+                            </label>
+                            <label class="checkbox-card nav-toggle-card">
+                                <input type="checkbox" name="main_{{ link.index }}_visibleWhenLoggedOut"{% if link.visibleWhenLoggedOut %} checked{% endif %}>
+                                <span>Show to signed-out users <small>Use this for public or onboarding navigation.</small></span>
+                            </label>
+                            <label class="checkbox-card nav-toggle-card">
+                                <input type="checkbox" name="main_{{ link.index }}_requiresAdminRole"{% if link.requiresAdminRole %} checked{% endif %}>
+                                <span>Admins only <small>Hide this tab unless the viewer has an admin role.</small></span>
+                            </label>
+                        </div>
+
+                        <details class="nav-advanced">
+                            <summary>Advanced targeting and styling</summary>
+                            <div class="nav-link-card__grid nav-link-card__grid--advanced">
+                                <label class="nav-field">
+                                    <span>Sort Order</span>
+                                    <input type="number" name="main_{{ link.index }}_sortOrder" value="{{ link.sortOrder }}" min="0" step="1">
+                                </label>
+                                <label class="nav-field">
+                                    <span>Minimum Rank</span>
+                                    <input type="number" name="main_{{ link.index }}_minimumRank" value="{{ link.minimumRank }}" min="0" step="1">
+                                </label>
+                                <label class="nav-field nav-field--wide">
+                                    <span>Required Permission</span>
+                                    <input type="text" name="main_{{ link.index }}_requiredPermission" value="{{ link.requiredPermission }}" placeholder="housekeeping.access">
+                                </label>
+                                <label class="nav-field">
+                                    <span>CSS Id</span>
+                                    <input type="text" name="main_{{ link.index }}_cssId" value="{{ link.cssId }}" placeholder="tab-community">
+                                </label>
+                                <label class="nav-field">
+                                    <span>CSS Class</span>
+                                    <input type="text" name="main_{{ link.index }}_cssClass" value="{{ link.cssClass }}" placeholder="new-button">
+                                </label>
                             </div>
-                        </td>
-                        <td><input type="number" name="main_{{ link.index }}_minimumRank" value="{{ link.minimumRank }}" min="0" step="1"></td>
-                        <td><input type="text" name="main_{{ link.index }}_requiredPermission" value="{{ link.requiredPermission }}"></td>
-                        <td><label class="checkbox-row checkbox-row--compact checkbox-row--center"><input type="checkbox" name="main_{{ link.index }}_delete"><span>Delete</span></label></td>
-                    </tr>
+                        </details>
+                    </article>
                 {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
+            </div>
+        </section>
 
-    <section class="admin-card">
-        <h2>Sub Navigation Links</h2>
-        <p>These links render in the secondary subnav. Use the group key to define reusable sets like <code>community</code> or <code>me</code>.</p>
-        <input type="hidden" name="subCount" value="{{ subLinks | length }}">
-        <div class="table-scroll">
-            <table class="data-table data-table--editor">
-                <thead>
-                <tr>
-                    <th>Sort</th>
-                    <th>Group</th>
-                    <th>Key</th>
-                    <th>Label</th>
-                    <th>Href</th>
-                    <th>Selected Keys</th>
-                    <th>Flags</th>
-                    <th>CSS</th>
-                    <th>Rank</th>
-                    <th>Permission</th>
-                    <th>Delete</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for link in subLinks %}
-                    <tr>
-                        <td><input type="number" name="sub_{{ link.index }}_sortOrder" value="{{ link.sortOrder }}" min="0" step="1"></td>
-                        <td><input type="text" name="sub_{{ link.index }}_groupKey" value="{{ link.groupKey }}"></td>
-                        <td><input type="text" name="sub_{{ link.index }}_key" value="{{ link.key }}"></td>
-                        <td><input type="text" name="sub_{{ link.index }}_label" value="{{ link.label }}"></td>
-                        <td><input type="text" name="sub_{{ link.index }}_href" value="{{ link.href }}"></td>
-                        <td><input type="text" name="sub_{{ link.index }}_selectedKeys" value="{{ link.selectedKeys }}"></td>
-                        <td>
-                            <div class="flag-stack">
-                                <label class="checkbox-row checkbox-row--compact"><input type="checkbox" name="sub_{{ link.index }}_visibleWhenLoggedIn"{% if link.visibleWhenLoggedIn %} checked{% endif %}><span>In</span></label>
-                                <label class="checkbox-row checkbox-row--compact"><input type="checkbox" name="sub_{{ link.index }}_visibleWhenLoggedOut"{% if link.visibleWhenLoggedOut %} checked{% endif %}><span>Out</span></label>
-                                <label class="checkbox-row checkbox-row--compact"><input type="checkbox" name="sub_{{ link.index }}_requiresAdminRole"{% if link.requiresAdminRole %} checked{% endif %}><span>Admin</span></label>
+        <section id="sub-links" class="admin-card nav-editor-section">
+            <div class="nav-editor-section__header">
+                <div>
+                    <span class="admin-eyebrow">Section 2</span>
+                    <h2>Reusable Submenu Groups</h2>
+                    <p>Submenus are organised by group key. Pages that share the same group key render the same secondary navigation, so matching names are what ties a set together.</p>
+                </div>
+                <span class="nav-editor-badge">{{ subGroupCount }} group{% if subGroupCount == 1 %}{% else %}s{% endif %}</span>
+            </div>
+
+            <div class="nav-group-stack">
+                {% for group in subLinkGroups %}
+                    <section class="nav-group-card{% if group.starterGroup %} nav-group-card--starter{% endif %}">
+                        <div class="nav-group-card__header">
+                            <div>
+                                <span class="nav-link-card__eyebrow">{% if group.starterGroup %}Blank canvas{% else %}Submenu group{% endif %}</span>
+                                <h3>{{ group.title }}</h3>
+                                <p>{{ group.description }}</p>
                             </div>
-                        </td>
-                        <td>
-                            <div class="cell-stack">
-                                <input type="text" name="sub_{{ link.index }}_cssId" value="{{ link.cssId }}" placeholder="css id">
-                                <input type="text" name="sub_{{ link.index }}_cssClass" value="{{ link.cssClass }}" placeholder="css class">
-                            </div>
-                        </td>
-                        <td><input type="number" name="sub_{{ link.index }}_minimumRank" value="{{ link.minimumRank }}" min="0" step="1"></td>
-                        <td><input type="text" name="sub_{{ link.index }}_requiredPermission" value="{{ link.requiredPermission }}"></td>
-                        <td><label class="checkbox-row checkbox-row--compact checkbox-row--center"><input type="checkbox" name="sub_{{ link.index }}_delete"><span>Delete</span></label></td>
-                    </tr>
+                            <span class="nav-editor-badge">
+                                {% if group.liveCount == 0 %}
+                                    New group
+                                {% else %}
+                                    {{ group.liveCount }} live row{% if group.liveCount == 1 %}{% else %}s{% endif %}
+                                {% endif %}
+                            </span>
+                        </div>
+
+                        <div class="nav-link-list nav-link-list--sub">
+                            {% for link in group.links %}
+                                <article class="nav-link-card{% if link.key == '' and link.label == '' and link.href == '' %} nav-link-card--draft{% endif %}">
+                                    <div class="nav-link-card__header">
+                                        <div>
+                                            <span class="nav-link-card__eyebrow">Submenu row {{ loop.index }}</span>
+                                            <h3>{% if link.label != '' %}{{ link.label }}{% elseif link.key != '' %}{{ link.key }}{% else %}Add a new submenu link{% endif %}</h3>
+                                            <p>{% if link.href != '' %}{{ link.href }}{% else %}Use the same group key on multiple rows to build one submenu set.{% endif %}</p>
+                                        </div>
+                                        <label class="nav-delete-toggle">
+                                            <input type="checkbox" name="sub_{{ link.index }}_delete">
+                                            <span>Remove</span>
+                                        </label>
+                                    </div>
+
+                                    <div class="nav-link-card__grid">
+                                        <label class="nav-field nav-field--wide">
+                                            <span>Quick Fill From CMS Page</span>
+                                            <select class="nav-page-select" data-prefix="sub_{{ link.index }}_">
+                                                <option value="">Choose a page to fill this link</option>
+                                                {% for page in cmsPageOptions %}
+                                                    <option
+                                                            value="{{ page.slug }}"
+                                                            data-label="{{ page.title }}"
+                                                            data-key="{{ page.key }}"
+                                                            data-href="{{ page.route }}"
+                                                            data-selected-keys="{{ page.selectedKeys }}"
+                                                    >{{ page.title }} ({{ page.status }}) - {{ page.route }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <small class="form-hint">This fills the label, key, destination, and selected keys. Set the group key yourself so the link lands in the right submenu.</small>
+                                        </label>
+                                        <label class="nav-field">
+                                            <span>Group Key</span>
+                                            <input type="text" name="sub_{{ link.index }}_groupKey" value="{{ link.groupKey }}" placeholder="community">
+                                            <small class="form-hint">Matching group keys stay together on the same submenu.</small>
+                                        </label>
+                                        <label class="nav-field">
+                                            <span>Key</span>
+                                            <input type="text" name="sub_{{ link.index }}_key" value="{{ link.key }}" placeholder="news">
+                                        </label>
+                                        <label class="nav-field">
+                                            <span>Label</span>
+                                            <input type="text" name="sub_{{ link.index }}_label" value="{{ link.label }}" placeholder="News">
+                                        </label>
+                                        <label class="nav-field nav-field--wide">
+                                            <span>Destination</span>
+                                            <input type="text" name="sub_{{ link.index }}_href" value="{{ link.href }}" placeholder="/articles">
+                                        </label>
+                                        <label class="nav-field nav-field--wide">
+                                            <span>Selected Keys</span>
+                                            <input type="text" name="sub_{{ link.index }}_selectedKeys" value="{{ link.selectedKeys }}" placeholder="news,events">
+                                            <small class="form-hint">Use comma-separated keys when this link should stay highlighted across related pages.</small>
+                                        </label>
+                                    </div>
+
+                                    <div class="nav-toggle-grid">
+                                        <label class="checkbox-card nav-toggle-card">
+                                            <input type="checkbox" name="sub_{{ link.index }}_visibleWhenLoggedIn"{% if link.visibleWhenLoggedIn %} checked{% endif %}>
+                                            <span>Show to signed-in users <small>Use for member-only or account-focused navigation.</small></span>
+                                        </label>
+                                        <label class="checkbox-card nav-toggle-card">
+                                            <input type="checkbox" name="sub_{{ link.index }}_visibleWhenLoggedOut"{% if link.visibleWhenLoggedOut %} checked{% endif %}>
+                                            <span>Show to signed-out users <small>Keep enabled when the submenu should stay public.</small></span>
+                                        </label>
+                                        <label class="checkbox-card nav-toggle-card">
+                                            <input type="checkbox" name="sub_{{ link.index }}_requiresAdminRole"{% if link.requiresAdminRole %} checked{% endif %}>
+                                            <span>Admins only <small>Limit this entry to admin users even inside a shared group.</small></span>
+                                        </label>
+                                    </div>
+
+                                    <details class="nav-advanced">
+                                        <summary>Advanced targeting and styling</summary>
+                                        <div class="nav-link-card__grid nav-link-card__grid--advanced">
+                                            <label class="nav-field">
+                                                <span>Sort Order</span>
+                                                <input type="number" name="sub_{{ link.index }}_sortOrder" value="{{ link.sortOrder }}" min="0" step="1">
+                                            </label>
+                                            <label class="nav-field">
+                                                <span>Minimum Rank</span>
+                                                <input type="number" name="sub_{{ link.index }}_minimumRank" value="{{ link.minimumRank }}" min="0" step="1">
+                                            </label>
+                                            <label class="nav-field nav-field--wide">
+                                                <span>Required Permission</span>
+                                                <input type="text" name="sub_{{ link.index }}_requiredPermission" value="{{ link.requiredPermission }}" placeholder="community.events.manage">
+                                            </label>
+                                            <label class="nav-field">
+                                                <span>CSS Id</span>
+                                                <input type="text" name="sub_{{ link.index }}_cssId" value="{{ link.cssId }}" placeholder="submenu-news">
+                                            </label>
+                                            <label class="nav-field">
+                                                <span>CSS Class</span>
+                                                <input type="text" name="sub_{{ link.index }}_cssClass" value="{{ link.cssClass }}" placeholder="is-featured">
+                                            </label>
+                                        </div>
+                                    </details>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    </section>
                 {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-    <section class="admin-card">
-        <h2>Action Buttons</h2>
-        <p>These drive the guest and signed-in hotel entry buttons shown in the header.</p>
-        <div class="settings-grid">
-            <div class="admin-card stack-form">
-                <h3>Guest Hotel Button</h3>
-                <input type="hidden" name="button_guestHotel_key" value="{{ guestHotelButton.key }}">
-                <label><span>Label</span><input type="text" name="button_guestHotel_label" value="{{ guestHotelButton.label }}"></label>
-                <label><span>Href</span><input type="text" name="button_guestHotel_href" value="{{ guestHotelButton.href }}"></label>
-                <label><span>CSS Id</span><input type="text" name="button_guestHotel_cssId" value="{{ guestHotelButton.cssId }}"></label>
-                <label><span>CSS Class</span><input type="text" name="button_guestHotel_cssClass" value="{{ guestHotelButton.cssClass }}"></label>
-                <label><span>Button Color</span><input type="text" name="button_guestHotel_buttonColor" value="{{ guestHotelButton.buttonColor }}"></label>
-                <label><span>Target</span><input type="text" name="button_guestHotel_target" value="{{ guestHotelButton.target }}"></label>
-                <label><span>Onclick</span><input type="text" name="button_guestHotel_onclick" value="{{ guestHotelButton.onclick }}"></label>
-                <label class="checkbox-card checkbox-card--compact"><input type="checkbox" name="button_guestHotel_visibleWhenLoggedIn"{% if guestHotelButton.visibleWhenLoggedIn %} checked{% endif %}><span>Show when signed in</span></label>
-                <label class="checkbox-card checkbox-card--compact"><input type="checkbox" name="button_guestHotel_visibleWhenLoggedOut"{% if guestHotelButton.visibleWhenLoggedOut %} checked{% endif %}><span>Show when signed out</span></label>
             </div>
-            <div class="admin-card stack-form">
-                <h3>User Hotel Button</h3>
-                <input type="hidden" name="button_userHotel_key" value="{{ userHotelButton.key }}">
-                <label><span>Label</span><input type="text" name="button_userHotel_label" value="{{ userHotelButton.label }}"></label>
-                <label><span>Href</span><input type="text" name="button_userHotel_href" value="{{ userHotelButton.href }}"></label>
-                <label><span>CSS Id</span><input type="text" name="button_userHotel_cssId" value="{{ userHotelButton.cssId }}"></label>
-                <label><span>CSS Class</span><input type="text" name="button_userHotel_cssClass" value="{{ userHotelButton.cssClass }}"></label>
-                <label><span>Button Color</span><input type="text" name="button_userHotel_buttonColor" value="{{ userHotelButton.buttonColor }}"></label>
-                <label><span>Target</span><input type="text" name="button_userHotel_target" value="{{ userHotelButton.target }}"></label>
-                <label><span>Onclick</span><input type="text" name="button_userHotel_onclick" value="{{ userHotelButton.onclick }}"></label>
-                <label class="checkbox-card checkbox-card--compact"><input type="checkbox" name="button_userHotel_visibleWhenLoggedIn"{% if userHotelButton.visibleWhenLoggedIn %} checked{% endif %}><span>Show when signed in</span></label>
-                <label class="checkbox-card checkbox-card--compact"><input type="checkbox" name="button_userHotel_visibleWhenLoggedOut"{% if userHotelButton.visibleWhenLoggedOut %} checked{% endif %}><span>Show when signed out</span></label>
-            </div>
-        </div>
-    </section>
+        </section>
 
-    <div class="button-row">
-        <button type="submit" class="button-primary">Save Navigation</button>
-    </div>
-</form>
+        <section id="action-buttons" class="admin-card nav-editor-section">
+            <div class="nav-editor-section__header">
+                <div>
+                    <span class="admin-eyebrow">Section 3</span>
+                    <h2>Hotel Entry Buttons</h2>
+                    <p>These are the two prominent calls to action in the public header. Usually one is shown to guests and the other to signed-in users.</p>
+                </div>
+                <span class="nav-editor-badge">2 button slots</span>
+            </div>
+
+            <div class="nav-button-grid">
+                <article class="nav-button-card">
+                    <div class="nav-button-preview">
+                        <span class="nav-link-card__eyebrow">Guest hotel entry</span>
+                        <button type="button" class="nav-button-preview__button">
+                            {% if guestHotelButton.label != '' %}{{ guestHotelButton.label }}{% else %}Guest button preview{% endif %}
+                        </button>
+                        <p>{% if guestHotelButton.href != '' %}{{ guestHotelButton.href }}{% else %}Set the destination guests should use to enter the hotel.{% endif %}</p>
+                    </div>
+
+                    <input type="hidden" name="button_guestHotel_key" value="{{ guestHotelButton.key }}">
+
+                    <div class="nav-link-card__grid">
+                        <label class="nav-field">
+                            <span>Label</span>
+                            <input type="text" name="button_guestHotel_label" value="{{ guestHotelButton.label }}" placeholder="Enter Hotel">
+                        </label>
+                        <label class="nav-field">
+                            <span>Href</span>
+                            <input type="text" name="button_guestHotel_href" value="{{ guestHotelButton.href }}" placeholder="/client">
+                        </label>
+                        <label class="nav-field">
+                            <span>Button Color</span>
+                            <input type="text" name="button_guestHotel_buttonColor" value="{{ guestHotelButton.buttonColor }}" placeholder="green">
+                        </label>
+                        <label class="nav-field">
+                            <span>Target</span>
+                            <input type="text" name="button_guestHotel_target" value="{{ guestHotelButton.target }}" placeholder="client">
+                        </label>
+                        <label class="nav-field nav-field--wide">
+                            <span>Onclick</span>
+                            <input type="text" name="button_guestHotel_onclick" value="{{ guestHotelButton.onclick }}" placeholder="HabboClient.openOrFocus(this); return false;">
+                        </label>
+                    </div>
+
+                    <div class="nav-toggle-grid">
+                        <label class="checkbox-card nav-toggle-card">
+                            <input type="checkbox" name="button_guestHotel_visibleWhenLoggedIn"{% if guestHotelButton.visibleWhenLoggedIn %} checked{% endif %}>
+                            <span>Show to signed-in users <small>Enable only if members should also see the guest entry button.</small></span>
+                        </label>
+                        <label class="checkbox-card nav-toggle-card">
+                            <input type="checkbox" name="button_guestHotel_visibleWhenLoggedOut"{% if guestHotelButton.visibleWhenLoggedOut %} checked{% endif %}>
+                            <span>Show to signed-out users <small>This is the usual audience for the guest hotel button.</small></span>
+                        </label>
+                    </div>
+
+                    <details class="nav-advanced">
+                        <summary>Advanced styling hooks</summary>
+                        <div class="nav-link-card__grid nav-link-card__grid--advanced">
+                            <label class="nav-field">
+                                <span>CSS Id</span>
+                                <input type="text" name="button_guestHotel_cssId" value="{{ guestHotelButton.cssId }}" placeholder="guest-hotel-button">
+                            </label>
+                            <label class="nav-field">
+                                <span>CSS Class</span>
+                                <input type="text" name="button_guestHotel_cssClass" value="{{ guestHotelButton.cssClass }}" placeholder="new-button">
+                            </label>
+                        </div>
+                    </details>
+                </article>
+
+                <article class="nav-button-card">
+                    <div class="nav-button-preview nav-button-preview--member">
+                        <span class="nav-link-card__eyebrow">Signed-in hotel entry</span>
+                        <button type="button" class="nav-button-preview__button nav-button-preview__button--member">
+                            {% if userHotelButton.label != '' %}{{ userHotelButton.label }}{% else %}Member button preview{% endif %}
+                        </button>
+                        <p>{% if userHotelButton.href != '' %}{{ userHotelButton.href }}{% else %}Set the destination signed-in users should use to enter the hotel.{% endif %}</p>
+                    </div>
+
+                    <input type="hidden" name="button_userHotel_key" value="{{ userHotelButton.key }}">
+
+                    <div class="nav-link-card__grid">
+                        <label class="nav-field">
+                            <span>Label</span>
+                            <input type="text" name="button_userHotel_label" value="{{ userHotelButton.label }}" placeholder="Enter Hotel">
+                        </label>
+                        <label class="nav-field">
+                            <span>Href</span>
+                            <input type="text" name="button_userHotel_href" value="{{ userHotelButton.href }}" placeholder="/client">
+                        </label>
+                        <label class="nav-field">
+                            <span>Button Color</span>
+                            <input type="text" name="button_userHotel_buttonColor" value="{{ userHotelButton.buttonColor }}" placeholder="green">
+                        </label>
+                        <label class="nav-field">
+                            <span>Target</span>
+                            <input type="text" name="button_userHotel_target" value="{{ userHotelButton.target }}" placeholder="client">
+                        </label>
+                        <label class="nav-field nav-field--wide">
+                            <span>Onclick</span>
+                            <input type="text" name="button_userHotel_onclick" value="{{ userHotelButton.onclick }}" placeholder="HabboClient.openOrFocus(this); return false;">
+                        </label>
+                    </div>
+
+                    <div class="nav-toggle-grid">
+                        <label class="checkbox-card nav-toggle-card">
+                            <input type="checkbox" name="button_userHotel_visibleWhenLoggedIn"{% if userHotelButton.visibleWhenLoggedIn %} checked{% endif %}>
+                            <span>Show to signed-in users <small>This is the usual audience for the member hotel button.</small></span>
+                        </label>
+                        <label class="checkbox-card nav-toggle-card">
+                            <input type="checkbox" name="button_userHotel_visibleWhenLoggedOut"{% if userHotelButton.visibleWhenLoggedOut %} checked{% endif %}>
+                            <span>Show to signed-out users <small>Enable only if guests should also see this member-focused button.</small></span>
+                        </label>
+                    </div>
+
+                    <details class="nav-advanced">
+                        <summary>Advanced styling hooks</summary>
+                        <div class="nav-link-card__grid nav-link-card__grid--advanced">
+                            <label class="nav-field">
+                                <span>CSS Id</span>
+                                <input type="text" name="button_userHotel_cssId" value="{{ userHotelButton.cssId }}" placeholder="user-hotel-button">
+                            </label>
+                            <label class="nav-field">
+                                <span>CSS Class</span>
+                                <input type="text" name="button_userHotel_cssClass" value="{{ userHotelButton.cssClass }}" placeholder="new-button">
+                            </label>
+                        </div>
+                    </details>
+                </article>
+            </div>
+        </section>
+
+        <section class="nav-editor-savebar">
+            <div>
+                <h2>Save when the structure looks right</h2>
+                <p>Empty cards are ignored on save. Filled cards are stored in the sort order you assign, and remove toggles delete existing entries.</p>
+            </div>
+            <div class="button-row">
+                <button type="submit" class="button-primary">Save Navigation</button>
+                <a class="button-secondary" href="/admin">Back to Dashboard</a>
+            </div>
+        </section>
+    </form>
+
+    <aside class="nav-editor-sidebar">
+        <section class="admin-card nav-sidebar-card">
+            <h2>How This Maps</h2>
+            <ul class="nav-help-list">
+                <li>Main header links are the top-level tabs shown across the public site.</li>
+                <li>Submenu group keys decide which secondary links belong together.</li>
+                <li>Selected keys control which link appears active for a given page or area.</li>
+                <li>Action buttons are the large entry calls to action near the hotel client flow.</li>
+            </ul>
+        </section>
+
+        <section class="admin-card nav-sidebar-card">
+            <h2>Editing Tips</h2>
+            <ul class="nav-help-list">
+                <li>Keep keys stable even if you rename labels, because pages often depend on those keys.</li>
+                <li>Use short labels so the public header still feels clean on smaller screens.</li>
+                <li>Only use rank, permission, or admin-only targeting when the audience truly differs.</li>
+                <li>Blank cards are spare slots; only rows with a key, label, and destination are saved.</li>
+            </ul>
+        </section>
+
+        <section class="admin-card nav-sidebar-card">
+            <h2>Common Group Keys</h2>
+            <ul class="nav-help-list">
+                <li><code>community</code> for the general community landing area.</li>
+                <li><code>news</code>, <code>events</code>, or <code>fansites</code> for news-driven submenus.</li>
+                <li><code>me</code>, <code>credits</code>, or <code>pixels</code> for signed-in account spaces.</li>
+                <li>Use the same group key on every row that should appear in the same submenu.</li>
+            </ul>
+        </section>
+
+        <section class="admin-card nav-sidebar-card">
+            <h2>CMS Pages</h2>
+            <ul class="nav-help-list nav-help-list--compact">
+                {% for page in cmsPageOptions %}
+                    <li><strong>{{ page.title }}</strong> <span class="nav-page-chip nav-page-chip--{{ page.status | lower }}">{{ page.status }}</span><br><code>{{ page.route }}</code></li>
+                {% else %}
+                    <li>No custom pages yet.</li>
+                {% endfor %}
+            </ul>
+        </section>
+    </aside>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".nav-page-select").forEach(function (select) {
+        select.addEventListener("change", function () {
+            var selectedOption = select.options[select.selectedIndex];
+            if (!selectedOption || !selectedOption.value) {
+                return;
+            }
+
+            var prefix = select.dataset.prefix;
+            setField(prefix + "label", selectedOption.dataset.label);
+            setField(prefix + "key", selectedOption.dataset.key);
+            setField(prefix + "href", selectedOption.dataset.href);
+            setField(prefix + "selectedKeys", selectedOption.dataset.selectedKeys);
+        });
+    });
+
+    function setField(name, value) {
+        var input = document.querySelector('[name="' + name + '"]');
+        if (input) {
+            input.value = value || "";
+        }
+    }
+});
+</script>

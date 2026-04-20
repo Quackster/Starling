@@ -358,7 +358,8 @@ public final class StarlingWebBootstrap {
         AdminNavigationController adminNavigationController = new AdminNavigationController(
                 dependencies.templateRenderer(),
                 dependencies.adminPageModelFactory(),
-                dependencies.cmsNavigationService()
+                dependencies.cmsNavigationService(),
+                dependencies.pageService()
         );
         AdminPagesController adminPagesController = new AdminPagesController(
                 dependencies.templateRenderer(),

@@ -1372,10 +1372,41 @@ class StarlingWebIntegrationTest {
         assertTrue(dashboardResponse.body().contains(">Campaigns</a>"));
         assertTrue(dashboardResponse.body().contains(">Users</a>"));
         assertTrue(dashboardResponse.body().contains(">Permissions</a>"));
-        assertTrue(navigationResponse.body().contains("<h1>Navigation</h1>"));
+        assertTrue(navigationResponse.body().contains("<h1>Navigation Studio</h1>"));
         assertFalse(dashboardResponse.body().contains(">Menus</a>"));
         assertFalse(dashboardResponse.body().contains(">Media</a>"));
         assertFalse(dashboardResponse.body().contains("web-navigation.yaml"));
+    }
+
+    @Test
+    void adminNavigationListsCmsPagesAsQuickFillOptions() throws Exception {
+        login();
+
+        String slug = "nav-page-" + UUID.randomUUID().toString().substring(0, 8);
+        HttpResponse<String> savePageResponse = postForm(
+                "/admin/pages",
+                Map.of(
+                        "title", "Navigation Quick Fill",
+                        "slug", slug,
+                        "templateName", "page",
+                        "summary", "Page shown inside the navigation editor quick-fill list.",
+                        "markdown", "Quick fill body",
+                        "navigationMainKey", "community"
+                ),
+                Map.of()
+        );
+        assertEquals(200, savePageResponse.statusCode());
+
+        HttpResponse<String> navigationResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/admin/navigation")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertEquals(200, navigationResponse.statusCode());
+        assertTrue(navigationResponse.body().contains("Quick Fill From CMS Page"));
+        assertTrue(navigationResponse.body().contains("Navigation Quick Fill"));
+        assertTrue(navigationResponse.body().contains("/page/" + slug));
+        assertTrue(navigationResponse.body().contains("Unpublished"));
     }
 
     @Test
