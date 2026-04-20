@@ -23,6 +23,11 @@ import org.starling.web.feature.me.campaign.HotCampaignDao;
 import org.starling.web.feature.me.mail.MailboxLabel;
 import org.starling.web.feature.me.mail.MinimailDao;
 import org.starling.web.feature.me.referral.ReferralService;
+import org.starling.web.feature.shared.page.navigation.CmsNavigationButtonDraft;
+import org.starling.web.feature.shared.page.navigation.CmsNavigationDao;
+import org.starling.web.feature.shared.page.navigation.CmsNavigationLinkDraft;
+import org.starling.web.feature.shared.page.navigation.CmsNavigationService;
+import org.starling.web.feature.shared.page.navigation.NavigationSelectionCodec;
 
 import io.javalin.Javalin;
 
@@ -44,6 +49,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -133,6 +139,7 @@ class StarlingWebIntegrationTest {
         assertTrue(UserDao.count() >= 1);
         assertTrue(HotCampaignDao.count() >= 2);
         assertTrue(MinimailDao.count() >= 1);
+        assertTrue(CmsNavigationDao.countLinks() > 0);
         assertTrue(CmsPageDao.findPublishedBySlug("home").isPresent());
         assertTrue(CmsArticleDao.findPublishedBySlug("welcome-to-starling").isPresent());
         assertTrue(indexExists("groups_details", "uk_groups_details_alias"));
@@ -1327,11 +1334,15 @@ class StarlingWebIntegrationTest {
     }
 
     @Test
-    void adminNoLongerExposesCmsMediaOrNavigationScreens() throws Exception {
+    void adminExposesNavigationScreenButNotLegacyMenusOrMediaRoutes() throws Exception {
         login();
 
         HttpResponse<String> dashboardResponse = client.send(
                 HttpRequest.newBuilder(baseUri.resolve("/admin")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> navigationResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/admin/navigation")).GET().build(),
                 HttpResponse.BodyHandlers.ofString()
         );
         HttpResponse<String> mediaResponse = client.send(
@@ -1344,16 +1355,51 @@ class StarlingWebIntegrationTest {
         );
 
         assertEquals(200, dashboardResponse.statusCode());
+        assertEquals(200, navigationResponse.statusCode());
         assertEquals(404, mediaResponse.statusCode());
         assertEquals(404, menusResponse.statusCode());
         assertTrue(dashboardResponse.body().contains(">Pages</a>"));
+        assertTrue(dashboardResponse.body().contains(">Navigation</a>"));
         assertTrue(dashboardResponse.body().contains(">News</a>"));
         assertTrue(dashboardResponse.body().contains(">Campaigns</a>"));
         assertTrue(dashboardResponse.body().contains(">Users</a>"));
         assertTrue(dashboardResponse.body().contains(">Permissions</a>"));
+        assertTrue(navigationResponse.body().contains("<h1>Navigation</h1>"));
         assertFalse(dashboardResponse.body().contains(">Menus</a>"));
         assertFalse(dashboardResponse.body().contains(">Media</a>"));
-        assertTrue(dashboardResponse.body().contains("web-navigation.yaml"));
+        assertFalse(dashboardResponse.body().contains("web-navigation.yaml"));
+    }
+
+    @Test
+    void adminNavigationUpdatesPublicMenusWithoutRestart() throws Exception {
+        login();
+
+        List<CmsNavigationLinkDraft> originalLinks = CmsNavigationDao.listLinks();
+        List<CmsNavigationButtonDraft> originalButtons = CmsNavigationDao.listButtons();
+        List<CmsNavigationLinkDraft> mainLinks = originalLinks.stream()
+                .filter(link -> CmsNavigationService.MENU_MAIN.equals(link.menuType()))
+                .toList();
+        List<CmsNavigationLinkDraft> subLinks = originalLinks.stream()
+                .filter(link -> CmsNavigationService.MENU_SUB.equals(link.menuType()))
+                .toList();
+
+        Map<String, String> updatedForm = navigationForm(originalLinks, originalButtons);
+        updatedForm.put("main_" + indexOfLink(mainLinks, "community") + "_label", "Community Hub");
+        updatedForm.put("sub_" + indexOfSubLink(subLinks, "community", "tags") + "_label", "Tag Finder");
+
+        HttpResponse<String> saveResponse = postForm("/admin/navigation", updatedForm, Map.of());
+        assertEquals(200, saveResponse.statusCode());
+
+        HttpResponse<String> communityResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/community")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertEquals(200, communityResponse.statusCode());
+        assertTrue(communityResponse.body().contains("Community Hub"));
+        assertTrue(communityResponse.body().contains("Tag Finder"));
+
+        postForm("/admin/navigation", navigationForm(originalLinks, originalButtons), Map.of());
     }
 
     private HttpClient newClient() {
@@ -1405,6 +1451,108 @@ class StarlingWebIntegrationTest {
                 .filter(cookie -> name.equals(cookie.getName()))
                 .findFirst()
                 .orElse(null);
+    }
+
+    private Map<String, String> navigationForm(List<CmsNavigationLinkDraft> links, List<CmsNavigationButtonDraft> buttons) {
+        Map<String, String> form = new HashMap<>();
+        List<CmsNavigationLinkDraft> mainLinks = links.stream()
+                .filter(link -> CmsNavigationService.MENU_MAIN.equals(link.menuType()))
+                .toList();
+        List<CmsNavigationLinkDraft> subLinks = links.stream()
+                .filter(link -> CmsNavigationService.MENU_SUB.equals(link.menuType()))
+                .toList();
+
+        form.put("mainCount", Integer.toString(mainLinks.size()));
+        for (int index = 0; index < mainLinks.size(); index++) {
+            CmsNavigationLinkDraft link = mainLinks.get(index);
+            form.put("main_" + index + "_sortOrder", Integer.toString(link.sortOrder()));
+            form.put("main_" + index + "_key", link.key());
+            form.put("main_" + index + "_label", link.label());
+            form.put("main_" + index + "_href", link.href());
+            form.put("main_" + index + "_selectedKeys", NavigationSelectionCodec.toCsv(link.selectedKeys()));
+            if (link.visibleWhenLoggedIn()) {
+                form.put("main_" + index + "_visibleWhenLoggedIn", "on");
+            }
+            if (link.visibleWhenLoggedOut()) {
+                form.put("main_" + index + "_visibleWhenLoggedOut", "on");
+            }
+            if (link.requiresAdminRole()) {
+                form.put("main_" + index + "_requiresAdminRole", "on");
+            }
+            form.put("main_" + index + "_cssId", link.cssId());
+            form.put("main_" + index + "_cssClass", link.cssClass());
+            form.put("main_" + index + "_minimumRank", Integer.toString(link.minimumRank()));
+            form.put("main_" + index + "_requiredPermission", link.requiredPermission());
+        }
+
+        form.put("subCount", Integer.toString(subLinks.size()));
+        for (int index = 0; index < subLinks.size(); index++) {
+            CmsNavigationLinkDraft link = subLinks.get(index);
+            form.put("sub_" + index + "_sortOrder", Integer.toString(link.sortOrder()));
+            form.put("sub_" + index + "_groupKey", link.groupKey());
+            form.put("sub_" + index + "_key", link.key());
+            form.put("sub_" + index + "_label", link.label());
+            form.put("sub_" + index + "_href", link.href());
+            form.put("sub_" + index + "_selectedKeys", NavigationSelectionCodec.toCsv(link.selectedKeys()));
+            if (link.visibleWhenLoggedIn()) {
+                form.put("sub_" + index + "_visibleWhenLoggedIn", "on");
+            }
+            if (link.visibleWhenLoggedOut()) {
+                form.put("sub_" + index + "_visibleWhenLoggedOut", "on");
+            }
+            if (link.requiresAdminRole()) {
+                form.put("sub_" + index + "_requiresAdminRole", "on");
+            }
+            form.put("sub_" + index + "_cssId", link.cssId());
+            form.put("sub_" + index + "_cssClass", link.cssClass());
+            form.put("sub_" + index + "_minimumRank", Integer.toString(link.minimumRank()));
+            form.put("sub_" + index + "_requiredPermission", link.requiredPermission());
+        }
+
+        Map<String, CmsNavigationButtonDraft> buttonsByKey = new HashMap<>();
+        for (CmsNavigationButtonDraft button : buttons) {
+            buttonsByKey.put(button.key(), button);
+        }
+        addButtonForm(form, buttonsByKey.get(CmsNavigationService.BUTTON_GUEST_HOTEL));
+        addButtonForm(form, buttonsByKey.get(CmsNavigationService.BUTTON_USER_HOTEL));
+        return form;
+    }
+
+    private void addButtonForm(Map<String, String> form, CmsNavigationButtonDraft button) {
+        String prefix = "button_" + button.key() + "_";
+        form.put(prefix + "key", button.key());
+        form.put(prefix + "label", button.label());
+        form.put(prefix + "href", button.href());
+        form.put(prefix + "cssId", button.cssId());
+        form.put(prefix + "cssClass", button.cssClass());
+        form.put(prefix + "buttonColor", button.buttonColor());
+        form.put(prefix + "target", button.target());
+        form.put(prefix + "onclick", button.onclick());
+        if (button.visibleWhenLoggedIn()) {
+            form.put(prefix + "visibleWhenLoggedIn", "on");
+        }
+        if (button.visibleWhenLoggedOut()) {
+            form.put(prefix + "visibleWhenLoggedOut", "on");
+        }
+    }
+
+    private int indexOfLink(List<CmsNavigationLinkDraft> links, String key) {
+        for (int index = 0; index < links.size(); index++) {
+            if (links.get(index).key().equals(key)) {
+                return index;
+            }
+        }
+        throw new IllegalArgumentException("Missing navigation link " + key);
+    }
+
+    private int indexOfSubLink(List<CmsNavigationLinkDraft> links, String groupKey, String key) {
+        for (int index = 0; index < links.size(); index++) {
+            CmsNavigationLinkDraft link = links.get(index);
+            if (link.groupKey().equals(groupKey) && link.key().equals(key)) {
+                return index;
+            }
+        }
+        throw new IllegalArgumentException("Missing navigation sub link " + groupKey + "::" + key);
     }
 
     private boolean indexExists(String tableName, String indexName) {

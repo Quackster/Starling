@@ -28,6 +28,13 @@ public final class RankPermissionCatalog {
                     6
             ),
             new Definition(
+                    RankPermissionKeys.HOUSEKEEPING_NAVIGATION,
+                    "Manage Navigation",
+                    "Edit the public navigation menus and hotel action buttons.",
+                    "Housekeeping",
+                    6
+            ),
+            new Definition(
                     RankPermissionKeys.HOUSEKEEPING_ARTICLES,
                     "Manage News",
                     "Create, edit, publish, and unpublish news articles.",

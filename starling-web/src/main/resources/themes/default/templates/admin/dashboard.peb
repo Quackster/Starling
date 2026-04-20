@@ -1,7 +1,7 @@
 <section class="admin-card">
     <h1>Dashboard</h1>
     <p>{{ cmsTitle }} is live with hotel-user admin roles, draft/publish workflows, and theme overrides.</p>
-    <p>Main navigation now comes from <code>web-navigation.yaml</code> instead of CMS tables.</p>
+    <p>Pages, habblets, and the public navigation menus are now editable from housekeeping and stored in the database.</p>
 </section>
 
 <section class="stat-grid">
@@ -16,6 +16,10 @@
     <article class="stat-card">
         <span class="stat-card__label">Campaigns</span>
         <strong>{{ campaignCount }}</strong>
+    </article>
+    <article class="stat-card">
+        <span class="stat-card__label">Navigation Links</span>
+        <strong>{{ navigationLinkCount }}</strong>
     </article>
     <article class="stat-card">
         <span class="stat-card__label">Users</span>

@@ -4,6 +4,7 @@ public final class RankPermissionKeys {
 
     public static final String HOUSEKEEPING_ACCESS = "housekeeping.access";
     public static final String HOUSEKEEPING_PAGES = "housekeeping.pages";
+    public static final String HOUSEKEEPING_NAVIGATION = "housekeeping.navigation";
     public static final String HOUSEKEEPING_ARTICLES = "housekeeping.articles";
     public static final String HOUSEKEEPING_CAMPAIGNS = "housekeeping.campaigns";
     public static final String HOUSEKEEPING_USERS = "housekeeping.users";

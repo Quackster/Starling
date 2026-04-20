@@ -6,6 +6,7 @@ import org.starling.web.admin.auth.AdminRouteGuard;
 import org.starling.web.admin.article.AdminArticlesController;
 import org.starling.web.admin.campaign.AdminCampaignsController;
 import org.starling.web.admin.dashboard.AdminDashboardController;
+import org.starling.web.admin.navigation.AdminNavigationController;
 import org.starling.web.admin.page.AdminPagesController;
 import org.starling.web.admin.permission.AdminPermissionsController;
 import org.starling.web.admin.preview.AdminPreviewController;
@@ -16,6 +17,7 @@ public final class AdminRoutes {
     private final AdminRouteGuard adminRouteGuard;
     private final AdminDashboardController adminDashboardController;
     private final AdminPagesController adminPagesController;
+    private final AdminNavigationController adminNavigationController;
     private final AdminArticlesController adminArticlesController;
     private final AdminCampaignsController adminCampaignsController;
     private final AdminUsersController adminUsersController;
@@ -37,6 +39,7 @@ public final class AdminRoutes {
             AdminRouteGuard adminRouteGuard,
             AdminDashboardController adminDashboardController,
             AdminPagesController adminPagesController,
+            AdminNavigationController adminNavigationController,
             AdminArticlesController adminArticlesController,
             AdminCampaignsController adminCampaignsController,
             AdminUsersController adminUsersController,
@@ -46,6 +49,7 @@ public final class AdminRoutes {
         this.adminRouteGuard = adminRouteGuard;
         this.adminDashboardController = adminDashboardController;
         this.adminPagesController = adminPagesController;
+        this.adminNavigationController = adminNavigationController;
         this.adminArticlesController = adminArticlesController;
         this.adminCampaignsController = adminCampaignsController;
         this.adminUsersController = adminUsersController;
@@ -69,6 +73,9 @@ public final class AdminRoutes {
         app.post("/admin/pages/{id}", adminRouteGuard.protect(RankPermissionKeys.HOUSEKEEPING_PAGES, adminPagesController::update));
         app.post("/admin/pages/{id}/publish", adminRouteGuard.protect(RankPermissionKeys.HOUSEKEEPING_PAGES, adminPagesController::publish));
         app.post("/admin/pages/{id}/unpublish", adminRouteGuard.protect(RankPermissionKeys.HOUSEKEEPING_PAGES, adminPagesController::unpublish));
+
+        app.get("/admin/navigation", adminRouteGuard.protect(RankPermissionKeys.HOUSEKEEPING_NAVIGATION, adminNavigationController::index));
+        app.post("/admin/navigation", adminRouteGuard.protect(RankPermissionKeys.HOUSEKEEPING_NAVIGATION, adminNavigationController::update));
 
         app.get("/admin/articles", adminRouteGuard.protect(RankPermissionKeys.HOUSEKEEPING_ARTICLES, adminArticlesController::index));
         app.get("/admin/articles/new", adminRouteGuard.protect(RankPermissionKeys.HOUSEKEEPING_ARTICLES, adminArticlesController::newArticle));

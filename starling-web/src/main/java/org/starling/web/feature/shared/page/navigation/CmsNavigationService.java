@@ -20,6 +20,14 @@ public final class CmsNavigationService {
     }
 
     /**
+     * Counts stored navigation links.
+     * @return the link count
+     */
+    public int countLinks() {
+        return CmsNavigationDao.countLinks();
+    }
+
+    /**
      * Returns whether any action button rows exist.
      * @return true when buttons exist
      */
@@ -49,7 +57,7 @@ public final class CmsNavigationService {
 
         Map<String, NavigationButtonConfig> buttonConfigs = new LinkedHashMap<>();
         for (CmsNavigationButtonDraft button : CmsNavigationDao.listButtons()) {
-            buttonConfigs.put(button.key(), toConfig(button));
+            buttonConfigs.put(normalizedButtonSlotKey(button.key()), toConfig(button));
         }
 
         return new PublicNavigationConfig(
@@ -87,7 +95,19 @@ public final class CmsNavigationService {
     public Map<String, CmsNavigationButtonDraft> listButtonsByKey() {
         Map<String, CmsNavigationButtonDraft> buttonsByKey = new LinkedHashMap<>();
         for (CmsNavigationButtonDraft button : CmsNavigationDao.listButtons()) {
-            buttonsByKey.put(button.key(), button);
+            buttonsByKey.put(normalizedButtonSlotKey(button.key()), new CmsNavigationButtonDraft(
+                    normalizedButtonSlotKey(button.key()),
+                    button.label(),
+                    button.href(),
+                    button.visibleWhenLoggedIn(),
+                    button.visibleWhenLoggedOut(),
+                    button.cssId(),
+                    button.cssClass(),
+                    button.buttonColor(),
+                    button.target(),
+                    button.onclick(),
+                    button.sortOrder()
+            ));
         }
         buttonsByKey.putIfAbsent(BUTTON_GUEST_HOTEL, blankButtonDraft(BUTTON_GUEST_HOTEL));
         buttonsByKey.putIfAbsent(BUTTON_USER_HOTEL, blankButtonDraft(BUTTON_USER_HOTEL));
@@ -133,8 +153,8 @@ public final class CmsNavigationService {
 
         if (!hasButtons()) {
             CmsNavigationDao.replaceButtons(List.of(
-                    fromConfig(config.guestHotelButton(), 0),
-                    fromConfig(config.userHotelButton(), 1)
+                    fromConfig(BUTTON_GUEST_HOTEL, config.guestHotelButton(), 0),
+                    fromConfig(BUTTON_USER_HOTEL, config.userHotelButton(), 1)
             ));
         }
     }
@@ -158,9 +178,9 @@ public final class CmsNavigationService {
         );
     }
 
-    private static CmsNavigationButtonDraft fromConfig(NavigationButtonConfig button, int sortOrder) {
+    private static CmsNavigationButtonDraft fromConfig(String slotKey, NavigationButtonConfig button, int sortOrder) {
         return new CmsNavigationButtonDraft(
-                button.key(),
+                slotKey,
                 button.label(),
                 button.href(),
                 button.visibleWhenLoggedIn(),
@@ -192,7 +212,7 @@ public final class CmsNavigationService {
 
     private static NavigationButtonConfig toConfig(CmsNavigationButtonDraft button) {
         return new NavigationButtonConfig(
-                button.key(),
+                normalizedButtonSlotKey(button.key()),
                 button.label(),
                 button.href(),
                 button.visibleWhenLoggedIn(),
@@ -211,5 +231,16 @@ public final class CmsNavigationService {
 
     private static NavigationButtonConfig blankButton(String key) {
         return new NavigationButtonConfig(key, "", "", false, false, "", "", "", "", "");
+    }
+
+    private static String normalizedButtonSlotKey(String key) {
+        String normalized = key == null ? "" : key.trim();
+        if (normalized.equalsIgnoreCase("guest-hotel") || normalized.equalsIgnoreCase(BUTTON_GUEST_HOTEL)) {
+            return BUTTON_GUEST_HOTEL;
+        }
+        if (normalized.equalsIgnoreCase("user-hotel") || normalized.equalsIgnoreCase(BUTTON_USER_HOTEL)) {
+            return BUTTON_USER_HOTEL;
+        }
+        return normalized;
     }
 }

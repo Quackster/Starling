@@ -6,6 +6,7 @@ import org.starling.web.admin.AdminPageModelFactory;
 import org.starling.web.cms.article.ArticleService;
 import org.starling.web.cms.page.PageService;
 import org.starling.web.feature.me.campaign.HotCampaignDao;
+import org.starling.web.feature.shared.page.navigation.CmsNavigationService;
 import org.starling.web.render.TemplateRenderer;
 
 import java.util.Map;
@@ -16,6 +17,7 @@ public final class AdminDashboardController {
     private final AdminPageModelFactory adminPageModelFactory;
     private final PageService pageService;
     private final ArticleService articleService;
+    private final CmsNavigationService navigationService;
 
     /**
      * Creates a new AdminDashboardController.
@@ -28,12 +30,14 @@ public final class AdminDashboardController {
             TemplateRenderer templateRenderer,
             AdminPageModelFactory adminPageModelFactory,
             PageService pageService,
-            ArticleService articleService
+            ArticleService articleService,
+            CmsNavigationService navigationService
     ) {
         this.templateRenderer = templateRenderer;
         this.adminPageModelFactory = adminPageModelFactory;
         this.pageService = pageService;
         this.articleService = articleService;
+        this.navigationService = navigationService;
     }
 
     /**
@@ -45,6 +49,7 @@ public final class AdminDashboardController {
         model.put("pageCount", pageService.count());
         model.put("articleCount", articleService.count());
         model.put("campaignCount", HotCampaignDao.count());
+        model.put("navigationLinkCount", navigationService.countLinks());
         model.put("userCount", UserDao.count());
         context.html(templateRenderer.render("admin-layout", "admin/dashboard", model));
     }

@@ -8,6 +8,7 @@ import org.starling.web.admin.auth.AdminRouteGuard;
 import org.starling.web.admin.article.AdminArticlesController;
 import org.starling.web.admin.campaign.AdminCampaignsController;
 import org.starling.web.admin.dashboard.AdminDashboardController;
+import org.starling.web.admin.navigation.AdminNavigationController;
 import org.starling.web.admin.page.AdminPagesController;
 import org.starling.web.admin.permission.AdminPermissionsController;
 import org.starling.web.admin.preview.AdminPreviewController;
@@ -351,7 +352,13 @@ public final class StarlingWebBootstrap {
                 dependencies.templateRenderer(),
                 dependencies.adminPageModelFactory(),
                 dependencies.pageService(),
-                dependencies.articleService()
+                dependencies.articleService(),
+                dependencies.cmsNavigationService()
+        );
+        AdminNavigationController adminNavigationController = new AdminNavigationController(
+                dependencies.templateRenderer(),
+                dependencies.adminPageModelFactory(),
+                dependencies.cmsNavigationService()
         );
         AdminPagesController adminPagesController = new AdminPagesController(
                 dependencies.templateRenderer(),
@@ -409,6 +416,7 @@ public final class StarlingWebBootstrap {
                 adminRouteGuard,
                 adminDashboardController,
                 adminPagesController,
+                adminNavigationController,
                 adminArticlesController,
                 adminCampaignsController,
                 adminUsersController,

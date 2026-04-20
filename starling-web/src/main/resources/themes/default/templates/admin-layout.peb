@@ -17,6 +17,7 @@
                 {% if currentAdminName %}
                     <a class="admin-nav__link{% if currentPath == '/admin' %} is-active{% endif %}" href="/admin">Dashboard</a>
                     {% if canManagePages %}<a class="admin-nav__link{% if currentPath == '/admin/pages' %} is-active{% endif %}" href="/admin/pages">Pages</a>{% endif %}
+                    {% if canManageNavigation %}<a class="admin-nav__link{% if currentPath == '/admin/navigation' %} is-active{% endif %}" href="/admin/navigation">Navigation</a>{% endif %}
                     {% if canManageArticles %}<a class="admin-nav__link{% if currentPath == '/admin/articles' %} is-active{% endif %}" href="/admin/articles">News</a>{% endif %}
                     {% if canManageCampaigns %}<a class="admin-nav__link{% if currentPath == '/admin/campaigns' %} is-active{% endif %}" href="/admin/campaigns">Campaigns</a>{% endif %}
                     {% if canManageUsers %}<a class="admin-nav__link{% if currentPath == '/admin/users' %} is-active{% endif %}" href="/admin/users">Users</a>{% endif %}
