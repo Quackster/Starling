@@ -1,5 +1,6 @@
 package org.starling.web.cms.article;
 
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 
@@ -81,5 +82,14 @@ public final class ArticleService {
      */
     public void unpublish(int id) {
         CmsArticleDao.unpublish(id);
+    }
+
+    /**
+     * Publishes any due scheduled articles.
+     * @param now the current timestamp
+     * @return the articles that were published
+     */
+    public List<CmsArticle> publishDueScheduled(Timestamp now) {
+        return CmsArticleDao.publishDueScheduled(now);
     }
 }

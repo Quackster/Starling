@@ -4,6 +4,7 @@ import org.starling.storage.EntityContext;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -160,9 +161,39 @@ public final class CmsArticleDao {
             }
 
             article.setIsPublished(0);
+            article.setScheduledPublishAt(null);
             article.setUpdatedAt(Timestamp.from(Instant.now()));
             context.update(article);
             return null;
+        });
+    }
+
+    /**
+     * Publishes any due scheduled articles.
+     * @param now the current timestamp
+     * @return the articles that were published
+     */
+    public static List<CmsArticle> publishDueScheduled(Timestamp now) {
+        return EntityContext.inTransaction(context -> {
+            List<CmsArticleEntity> dueArticles = context.from(CmsArticleEntity.class)
+                    .filter(filter -> filter
+                            .equals(CmsArticleEntity::getIsPublished, 0)
+                            .and()
+                            .isNotNull(CmsArticleEntity::getScheduledPublishAt)
+                            .and()
+                            .lessOrEquals(CmsArticleEntity::getScheduledPublishAt, now))
+                    .toList();
+
+            List<CmsArticle> publishedArticles = new ArrayList<>();
+            for (CmsArticleEntity article : dueArticles) {
+                article.setIsPublished(1);
+                article.setScheduledPublishAt(null);
+                article.setPublishedAt(now);
+                article.setUpdatedAt(now);
+                context.update(article);
+                publishedArticles.add(map(article));
+            }
+            return publishedArticles;
         });
     }
 

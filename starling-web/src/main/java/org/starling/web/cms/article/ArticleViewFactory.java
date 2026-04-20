@@ -56,7 +56,9 @@ public final class ArticleViewFactory {
         view.put("title", article.title());
         view.put("summary", article.summary());
         view.put("published", article.published());
+        view.put("scheduled", !article.published() && article.scheduledPublishAt() != null);
         view.put("scheduledPublishAt", formatEditorDateTime(article.scheduledPublishAt()));
+        view.put("scheduledPublishAtDisplay", formatFriendlyDateTime(article.scheduledPublishAt()));
         view.put("publishedAt", formatFriendlyDate(article.publishedAt()));
         view.put("createdAt", article.createdAt());
         view.put("updatedAt", article.updatedAt());
@@ -229,6 +231,16 @@ public final class ArticleViewFactory {
         return timestamp.toInstant()
                 .atZone(ZoneId.systemDefault())
                 .format(DateTimeFormatter.ofPattern("dd MMM yyyy"));
+    }
+
+    private static String formatFriendlyDateTime(Timestamp timestamp) {
+        if (timestamp == null) {
+            return "";
+        }
+
+        return timestamp.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm"));
     }
 
     private static String formatEditorDateTime(Timestamp timestamp) {

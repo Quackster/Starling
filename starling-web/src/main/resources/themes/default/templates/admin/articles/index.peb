@@ -13,6 +13,7 @@
             <th>Title</th>
             <th>Slug</th>
             <th>Status</th>
+            <th>Goes Live</th>
             <th>Updated</th>
         </tr>
         </thead>
@@ -21,12 +22,13 @@
             <tr>
                 <td><a href="/admin/articles/{{ article.id }}/edit">{{ article.title }}</a></td>
                 <td>{{ article.slug }}</td>
-                <td>{% if article.published %}Published{% else %}Unpublished{% endif %}</td>
+                <td>{% if article.published %}Published{% elseif article.scheduled %}Scheduled{% else %}Unpublished{% endif %}</td>
+                <td>{% if article.scheduled %}{{ article.scheduledPublishAtDisplay }}{% else %}-{% endif %}</td>
                 <td>{{ article.updatedAt }}</td>
             </tr>
         {% else %}
             <tr>
-                <td colspan="4">No news articles yet.</td>
+                <td colspan="5">No news articles yet.</td>
             </tr>
         {% endfor %}
         </tbody>

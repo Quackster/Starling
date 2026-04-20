@@ -1,6 +1,8 @@
 package org.starling.web.app;
 
 import io.javalin.Javalin;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.starling.permission.RankPermissionService;
 import org.starling.web.admin.AdminPageModelFactory;
 import org.starling.web.admin.auth.AdminAuthController;
@@ -15,11 +17,15 @@ import org.starling.web.admin.preview.AdminPreviewController;
 import org.starling.web.admin.user.AdminUsersController;
 import org.starling.web.app.asset.AssetController;
 import org.starling.web.app.asset.AvatarImagingService;
+import org.starling.web.app.event.CmsArticlePublishedEvent;
+import org.starling.web.app.event.WebEventBus;
 import org.starling.web.app.route.AdminRoutes;
 import org.starling.web.app.route.AssetRoutes;
 import org.starling.web.app.route.AuthRoutes;
 import org.starling.web.app.route.PublicRoutes;
 import org.starling.web.app.route.WidgetRoutes;
+import org.starling.web.app.schedule.ScheduledArticlePublisher;
+import org.starling.web.app.schedule.WebCronService;
 import org.starling.web.cms.article.ArticleService;
 import org.starling.web.cms.article.ArticleViewFactory;
 import org.starling.web.cms.bootstrap.CmsBootstrap;
@@ -78,6 +84,7 @@ import org.starling.web.user.view.UserViewModelFactory;
 
 public final class StarlingWebBootstrap {
 
+    private static final Logger log = LogManager.getLogger(StarlingWebBootstrap.class);
     private final WebConfig config;
 
     /**
@@ -95,10 +102,31 @@ public final class StarlingWebBootstrap {
     public Javalin createApp() {
         CmsBootstrap.initialize(config);
         WebDependencies dependencies = createDependencies();
+        WebEventBus eventBus = createEventBus();
+        ScheduledArticlePublisher scheduledArticlePublisher = new ScheduledArticlePublisher(
+                dependencies.articleService(),
+                new WebCronService(),
+                eventBus,
+                java.time.Duration.ofSeconds(1)
+        );
 
         Javalin app = Javalin.create(javalinConfig -> javalinConfig.showJavalinBanner = false);
+        app.events(events -> {
+            events.serverStarted(scheduledArticlePublisher::start);
+            events.serverStopped(scheduledArticlePublisher::stop);
+        });
         registerRoutes(app, dependencies);
         return app;
+    }
+
+    private WebEventBus createEventBus() {
+        WebEventBus eventBus = new WebEventBus();
+        eventBus.register(CmsArticlePublishedEvent.class, event -> log.info(
+                "Scheduled article '{}' published at {}",
+                event.slug(),
+                event.publishedAt()
+        ));
+        return eventBus;
     }
 
     private WebDependencies createDependencies() {

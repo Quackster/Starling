@@ -24,6 +24,11 @@
             <span>Markdown</span>
             <textarea name="markdown" rows="16">{{ article.draftMarkdown }}</textarea>
         </label>
+        <label>
+            <span>Scheduled Publish Time</span>
+            <input type="datetime-local" name="scheduledPublishAt" value="{{ article.scheduledPublishAt }}" step="1">
+            <small>If this article stays unpublished, the background publisher will make it live at or after this time. Publishing or unpublishing manually clears the schedule.</small>
+        </label>
         <div class="button-row">
             <button type="submit" class="button-primary">Save Changes</button>
             {% if not isNew %}

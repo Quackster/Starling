@@ -48,6 +48,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -1289,6 +1292,61 @@ class StarlingWebIntegrationTest {
         assertEquals(200, legacyAliasResponse.statusCode());
         assertTrue(newsResponse.body().contains("Integration Story"));
         assertTrue(legacyAliasResponse.body().contains("Integration Story"));
+    }
+
+    @Test
+    void scheduledNewsPublishesAutomatically() throws Exception {
+        login();
+
+        String slug = "scheduled-" + UUID.randomUUID().toString().substring(0, 8);
+        String scheduledPublishAt = LocalDateTime.now(ZoneId.systemDefault())
+                .plusSeconds(2)
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
+
+        HttpResponse<String> saveResponse = postForm(
+                "/admin/articles",
+                Map.of(
+                        "title", "Scheduled Story",
+                        "slug", slug,
+                        "summary", "This article should go live automatically.",
+                        "markdown", "Scheduled publish body.",
+                        "scheduledPublishAt", scheduledPublishAt
+                ),
+                Map.of()
+        );
+        assertEquals(200, saveResponse.statusCode());
+
+        HttpResponse<String> adminIndexResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/admin/articles")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> beforePublishResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/news/" + slug)).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertEquals(200, adminIndexResponse.statusCode());
+        assertTrue(adminIndexResponse.body().contains("Scheduled"));
+        assertTrue(adminIndexResponse.body().contains("Scheduled Story"));
+        assertEquals(404, beforePublishResponse.statusCode());
+
+        HttpResponse<String> publishedResponse = null;
+        for (int attempt = 0; attempt < 8; attempt++) {
+            Thread.sleep(1000L);
+            HttpResponse<String> response = client.send(
+                    HttpRequest.newBuilder(baseUri.resolve("/news/" + slug)).GET().build(),
+                    HttpResponse.BodyHandlers.ofString()
+            );
+            if (response.statusCode() == 200) {
+                publishedResponse = response;
+                break;
+            }
+        }
+
+        assertNotNull(publishedResponse);
+        assertEquals(200, publishedResponse.statusCode());
+        assertTrue(publishedResponse.body().contains("Scheduled Story"));
+        assertTrue(CmsArticleDao.findPublishedBySlug(slug).isPresent());
     }
 
     @Test
