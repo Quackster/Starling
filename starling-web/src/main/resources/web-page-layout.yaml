@@ -1,0 +1,121 @@
+widgets:
+  communityRooms:
+    template: habblet/community_rooms
+  communityGroups:
+    template: habblet/community_groups
+  communityActiveHabbos:
+    template: habblet/community_active_habbos
+  newsPromo:
+    template: habblet/community_news_promo
+  communityTags:
+    template: habblet/community_tags
+  mePersonalInfo:
+    template: habblet/me_personal_info
+  meHotCampaigns:
+    template: habblet/me_hot_campaigns
+  meMinimail:
+    template: habblet/me_minimail
+  meRecommendedRooms:
+    template: habblet/me_recommended_rooms
+  meTags:
+    template: habblet/me_tags
+  meGroups:
+    template: habblet/me_groups
+  meRecommendedGroups:
+    template: habblet/me_recommended_groups
+  meReferral:
+    template: habblet/me_referral
+  adsContainer:
+    template: habblet/ads_container
+  tagPopular:
+    template: habblet/tag_popular
+  tagFight:
+    template: habblet/tag_fight
+  tagMatch:
+    template: habblet/tag_match
+  tagSearch:
+    template: habblet/tag_search
+  creditsMethods:
+    template: habblet/credits_methods
+  creditsPurse:
+    template: habblet/credits_purse_habblet
+  creditsInfo:
+    template: habblet/credits_info
+  pixelsPrimary:
+    template: habblet/pixels_primary
+  pixelsRent:
+    template: habblet/pixels_rent
+  pixelsEffects:
+    template: habblet/pixels_effects
+  pixelsOffers:
+    template: habblet/pixels_offers
+  newsArchive:
+    template: habblet/news_archive
+  newsArticle:
+    template: habblet/news_article
+
+pages:
+  community:
+    disabledWidgets: []
+    columns:
+      - id: column1
+        widgets: [communityRooms, communityGroups, communityActiveHabbos]
+      - id: column2
+        widgets: [newsPromo, communityTags]
+  me:
+    disabledWidgets: []
+    columns:
+      - id: column1
+        widgets: [mePersonalInfo, meHotCampaigns, meMinimail]
+      - id: column2
+        widgets: [newsPromo, meRecommendedRooms, meTags]
+      - id: column3
+        widgets: [meGroups, meRecommendedGroups, meReferral]
+  tags:
+    disabledWidgets: []
+    columns:
+      - id: column1
+        widgets: [tagPopular, tagFight, tagMatch]
+      - id: column2
+        widgets: [tagSearch]
+  credits:
+    disabledWidgets: []
+    columns:
+      - id: column1
+        widgets: [creditsMethods]
+      - id: column2
+        widgets: [creditsPurse, creditsInfo]
+  pixels:
+    disabledWidgets: []
+    columns:
+      - id: column1
+        widgets: [pixelsPrimary]
+      - id: column2
+        widgets: [pixelsRent, pixelsEffects, pixelsOffers]
+  news:
+    disabledWidgets: []
+    columns:
+      - id: column1
+        widgets: [newsArchive]
+      - id: column2
+        widgets: [newsArticle]
+      - id: column3
+        widgets: [adsContainer]
+  events:
+    disabledWidgets: []
+    columns:
+      - id: column1
+        widgets: [newsArchive]
+      - id: column2
+        widgets: [newsArticle]
+      - id: column3
+        widgets: [adsContainer]
+  fansites:
+    disabledWidgets: []
+    columns:
+      - id: column1
+        widgets: [newsArchive]
+      - id: column2
+        widgets: [newsArticle]
+      - id: column3
+        widgets: [adsContainer]

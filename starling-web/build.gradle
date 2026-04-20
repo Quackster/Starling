@@ -45,11 +45,11 @@ tasks.named('startScripts') {
     doLast {
         windowsScript.text = windowsScript.text.replace(
                 'set DEFAULT_JVM_OPTS=',
-                'set DEFAULT_JVM_OPTS="-Dstarling.web.config=%APP_HOME%\\config\\web.properties" "-Dstarling.web.navigation.config=%APP_HOME%\\config\\web-navigation.yaml"'
+                'set DEFAULT_JVM_OPTS="-Dstarling.web.config=%APP_HOME%\\config\\web.properties" "-Dstarling.web.layout.config=%APP_HOME%\\config\\web-page-layout.yaml" "-Dstarling.web.navigation.config=%APP_HOME%\\config\\web-navigation.yaml"'
         )
         unixScript.text = unixScript.text.replace(
                 'DEFAULT_JVM_OPTS=""',
-                'DEFAULT_JVM_OPTS=\'"-Dstarling.web.config=$APP_HOME/config/web.properties" "-Dstarling.web.navigation.config=$APP_HOME/config/web-navigation.yaml"\''
+                'DEFAULT_JVM_OPTS=\'"-Dstarling.web.config=$APP_HOME/config/web.properties" "-Dstarling.web.layout.config=$APP_HOME/config/web-page-layout.yaml" "-Dstarling.web.navigation.config=$APP_HOME/config/web-navigation.yaml"\''
         )
     }
 }
@@ -58,6 +58,7 @@ tasks.register('packageDist') {
     dependsOn installDist
     inputs.dir(packagedInstallDir)
     inputs.file('src/main/resources/web.properties')
+    inputs.file('src/main/resources/web-page-layout.yaml')
     inputs.file('src/main/resources/web-navigation.yaml')
     outputs.dir(packagedDistDir)
 
@@ -77,6 +78,7 @@ tasks.register('packageDist') {
 
         copy {
             from('src/main/resources/web.properties')
+            from('src/main/resources/web-page-layout.yaml')
             from('src/main/resources/web-navigation.yaml')
             into(new File(packagedDistDir, 'config'))
         }

@@ -58,7 +58,39 @@ class PublicPageLayoutRendererTest {
     @Test
     void loaderReadsDisabledWidgetsFromExternalYaml() throws Exception {
         Path root = Files.createTempDirectory("starling-layout-loader-test");
-        String originalProperty = System.getProperty("starling.web.navigation.config");
+        String originalProperty = System.getProperty("starling.web.layout.config");
+        try {
+            Path configFile = root.resolve("web-page-layout.yaml");
+            Files.writeString(configFile, """
+                    widgets:
+                      sample:
+                        template: sample
+                    pages:
+                      me:
+                        disabledWidgets: [sample]
+                        columns:
+                          - id: column1
+                            widgets: [sample]
+                    """);
+            System.setProperty("starling.web.layout.config", configFile.toString());
+
+            PublicPageLayoutConfig config = new PublicPageLayoutConfigLoader().load();
+            assertEquals(List.of("sample"), config.pages().get("me").disabledWidgets());
+        } finally {
+            if (originalProperty == null) {
+                System.clearProperty("starling.web.layout.config");
+            } else {
+                System.setProperty("starling.web.layout.config", originalProperty);
+            }
+            deleteTree(root);
+        }
+    }
+
+    @Test
+    void loaderFallsBackToLegacyNavigationYaml() throws Exception {
+        Path root = Files.createTempDirectory("starling-layout-legacy-loader-test");
+        String originalLayoutProperty = System.getProperty("starling.web.layout.config");
+        String originalNavigationProperty = System.getProperty("starling.web.navigation.config");
         try {
             Path configFile = root.resolve("web-navigation.yaml");
             Files.writeString(configFile, """
@@ -72,15 +104,21 @@ class PublicPageLayoutRendererTest {
                           - id: column1
                             widgets: [sample]
                     """);
+            System.clearProperty("starling.web.layout.config");
             System.setProperty("starling.web.navigation.config", configFile.toString());
 
             PublicPageLayoutConfig config = new PublicPageLayoutConfigLoader().load();
             assertEquals(List.of("sample"), config.pages().get("me").disabledWidgets());
         } finally {
-            if (originalProperty == null) {
+            if (originalLayoutProperty == null) {
+                System.clearProperty("starling.web.layout.config");
+            } else {
+                System.setProperty("starling.web.layout.config", originalLayoutProperty);
+            }
+            if (originalNavigationProperty == null) {
                 System.clearProperty("starling.web.navigation.config");
             } else {
-                System.setProperty("starling.web.navigation.config", originalProperty);
+                System.setProperty("starling.web.navigation.config", originalNavigationProperty);
             }
             deleteTree(root);
         }

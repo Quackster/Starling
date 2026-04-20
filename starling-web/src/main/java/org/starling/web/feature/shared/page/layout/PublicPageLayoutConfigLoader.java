@@ -15,10 +15,14 @@ import java.util.Map;
 
 public final class PublicPageLayoutConfigLoader {
 
-    private static final String CLASSPATH_RESOURCE = "web-navigation.yaml";
-    private static final String SYSTEM_PROPERTY_KEY = "starling.web.navigation.config";
-    private static final String ENVIRONMENT_PATH_KEY = "STARLING_WEB_NAVIGATION_CONFIG";
-    private static final String DEFAULT_EXTERNAL_PATH = "config/web-navigation.yaml";
+    private static final String CLASSPATH_RESOURCE = "web-page-layout.yaml";
+    private static final String LEGACY_CLASSPATH_RESOURCE = "web-navigation.yaml";
+    private static final String SYSTEM_PROPERTY_KEY = "starling.web.layout.config";
+    private static final String ENVIRONMENT_PATH_KEY = "STARLING_WEB_LAYOUT_CONFIG";
+    private static final String DEFAULT_EXTERNAL_PATH = "config/web-page-layout.yaml";
+    private static final String LEGACY_SYSTEM_PROPERTY_KEY = "starling.web.navigation.config";
+    private static final String LEGACY_ENVIRONMENT_PATH_KEY = "STARLING_WEB_NAVIGATION_CONFIG";
+    private static final String LEGACY_DEFAULT_EXTERNAL_PATH = "config/web-navigation.yaml";
 
     /**
      * Loads the public page layout configuration.
@@ -57,13 +61,8 @@ public final class PublicPageLayoutConfigLoader {
     }
 
     private Map<String, Object> readDocument() {
-        Path externalPath = ConfigSupport.resolveExternalConfigPath(
-                SYSTEM_PROPERTY_KEY,
-                ENVIRONMENT_PATH_KEY,
-                DEFAULT_EXTERNAL_PATH
-        );
-
-        if (externalPath != null && Files.exists(externalPath)) {
+        Path externalPath = resolveExternalPath();
+        if (externalPath != null) {
             try (InputStream stream = Files.newInputStream(externalPath)) {
                 return parseDocument(stream);
             } catch (Exception e) {
@@ -71,14 +70,59 @@ public final class PublicPageLayoutConfigLoader {
             }
         }
 
-        try (InputStream stream = getClass().getClassLoader().getResourceAsStream(CLASSPATH_RESOURCE)) {
+        try (InputStream stream = openClasspathResource()) {
             if (stream == null) {
-                throw new IllegalStateException("Missing bundled page layout config " + CLASSPATH_RESOURCE);
+                throw new IllegalStateException(
+                        "Missing bundled page layout config " + CLASSPATH_RESOURCE + " or legacy fallback " + LEGACY_CLASSPATH_RESOURCE
+                );
             }
             return parseDocument(stream);
         } catch (Exception e) {
-            throw new RuntimeException("Unable to load bundled page layout config " + CLASSPATH_RESOURCE, e);
+            throw new RuntimeException(
+                    "Unable to load bundled page layout config " + CLASSPATH_RESOURCE + " or legacy fallback " + LEGACY_CLASSPATH_RESOURCE,
+                    e
+            );
         }
+    }
+
+    private Path resolveExternalPath() {
+        return firstExistingPath(
+                resolveConfiguredPath(SYSTEM_PROPERTY_KEY, ENVIRONMENT_PATH_KEY),
+                resolveConfiguredPath(LEGACY_SYSTEM_PROPERTY_KEY, LEGACY_ENVIRONMENT_PATH_KEY),
+                resolveDefaultPath(DEFAULT_EXTERNAL_PATH),
+                resolveDefaultPath(LEGACY_DEFAULT_EXTERNAL_PATH)
+        );
+    }
+
+    private InputStream openClasspathResource() {
+        InputStream primaryStream = getClass().getClassLoader().getResourceAsStream(CLASSPATH_RESOURCE);
+        if (primaryStream != null) {
+            return primaryStream;
+        }
+
+        return getClass().getClassLoader().getResourceAsStream(LEGACY_CLASSPATH_RESOURCE);
+    }
+
+    private Path resolveConfiguredPath(String systemPropertyKey, String environmentPathKey) {
+        return ConfigSupport.resolveExternalConfigPath(systemPropertyKey, environmentPathKey, null);
+    }
+
+    private Path resolveDefaultPath(String defaultExternalPath) {
+        if (defaultExternalPath == null || defaultExternalPath.isBlank()) {
+            return null;
+        }
+
+        return Path.of(defaultExternalPath);
+    }
+
+    private Path firstExistingPath(Path... paths) {
+        for (Path path : paths) {
+            if (path != null && Files.exists(path)) {
+                return path;
+            }
+        }
+
+        return null;
     }
 
     @SuppressWarnings("unchecked")
