@@ -66,11 +66,11 @@ pages:
     disabledWidgets: []
     columns:
       - id: column1
-        widgets: [mePersonalInfo, meHotCampaigns, meMinimail]
+        widgets: [mePersonalInfo, meHotCampaigns, meReferral, meMinimail]
       - id: column2
         widgets: [newsPromo, meRecommendedRooms, meTags]
       - id: column3
-        widgets: [meGroups, meRecommendedGroups, meReferral]
+        widgets: [adsContainer]
   tags:
     disabledWidgets: []
     columns:
