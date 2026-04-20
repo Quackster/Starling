@@ -59,7 +59,7 @@ pages:
     disabledWidgets: []
     columns:
       - id: column1
-        widgets: [communityRooms, communityGroups, communityActiveHabbos]
+        widgets: [communityRooms, communityActiveHabbos]
       - id: column2
         widgets: [newsPromo, communityTags]
   me:
