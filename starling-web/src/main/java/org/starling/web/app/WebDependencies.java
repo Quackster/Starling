@@ -1,6 +1,7 @@
 package org.starling.web.app;
 
 import org.starling.permission.RankPermissionService;
+import org.starling.web.admin.setting.AdminSettingsController;
 import org.starling.web.app.asset.AvatarImagingService;
 import org.starling.web.cms.article.ArticleService;
 import org.starling.web.cms.article.ArticleViewFactory;
@@ -64,6 +65,7 @@ public record WebDependencies(
         MePageContentFactory mePageContentFactory,
         MeAccess meAccess,
         AdminPageModelFactory adminPageModelFactory,
+        AdminSettingsController adminSettingsController,
         ArticleViewFactory articleViewFactory,
         PageViewFactory pageViewFactory,
         CmsPageHabbletCatalog cmsPageHabbletCatalog,

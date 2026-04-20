@@ -14,6 +14,7 @@ import org.starling.web.admin.navigation.AdminNavigationController;
 import org.starling.web.admin.page.AdminPagesController;
 import org.starling.web.admin.permission.AdminPermissionsController;
 import org.starling.web.admin.preview.AdminPreviewController;
+import org.starling.web.admin.setting.AdminSettingsController;
 import org.starling.web.admin.user.AdminUsersController;
 import org.starling.web.app.asset.AssetController;
 import org.starling.web.app.asset.AvatarImagingService;
@@ -232,6 +233,7 @@ public final class StarlingWebBootstrap {
                 mePageContentFactory,
                 meAccess,
                 adminPageModelFactory,
+                new AdminSettingsController(templateRenderer, adminPageModelFactory, webSettingsService),
                 articleViewFactory,
                 pageViewFactory,
                 cmsPageHabbletCatalog,
@@ -417,6 +419,7 @@ public final class StarlingWebBootstrap {
                 dependencies.adminPageModelFactory(),
                 dependencies.rankPermissionService()
         );
+        AdminSettingsController adminSettingsController = dependencies.adminSettingsController();
         AdminPreviewController adminPreviewController = new AdminPreviewController(
                 dependencies.templateRenderer(),
                 dependencies.markdownRenderer()
@@ -449,6 +452,7 @@ public final class StarlingWebBootstrap {
                 adminCampaignsController,
                 adminUsersController,
                 adminPermissionsController,
+                adminSettingsController,
                 adminPreviewController
         ).register(app);
     }

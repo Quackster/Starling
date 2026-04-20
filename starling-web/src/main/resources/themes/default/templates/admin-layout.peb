@@ -36,10 +36,10 @@
         {% if canManagePages %}
             <a href="/admin/pages" class="tab{% if currentPath == '/admin/pages' %} active{% endif %}">Pages</a>
         {% endif %}
-        {% if canManageNavigation or canManageArticles or canManageUsers or canManagePermissions %}
+        {% if canManageNavigation or canManageArticles or canManageUsers or canManagePermissions or canManageSettings %}
             <a
-                    href="{% if canManageNavigation %}/admin/navigation{% elseif canManageArticles %}/admin/articles{% elseif canManageUsers %}/admin/users{% elseif canManagePermissions %}/admin/permissions{% else %}/admin{% endif %}"
-                    class="tab{% if currentPath == '/admin/navigation' or currentPath == '/admin/articles' or currentPath == '/admin/users' or currentPath == '/admin/permissions' %} active{% endif %}"
+                    href="{% if canManageNavigation %}/admin/navigation{% elseif canManageArticles %}/admin/articles{% elseif canManageUsers %}/admin/users{% elseif canManagePermissions %}/admin/permissions{% elseif canManageSettings %}/admin/settings{% else %}/admin{% endif %}"
+                    class="tab{% if currentPath == '/admin/navigation' or currentPath == '/admin/articles' or currentPath == '/admin/users' or currentPath == '/admin/permissions' or currentPath == '/admin/settings' %} active{% endif %}"
             >Admin tools</a>
         {% endif %}
         {% if canManageCampaigns %}
@@ -82,6 +82,7 @@
                 <ul>
                     {% if canManageUsers %}<li><a href="/admin/users">Users</a></li>{% endif %}
                     {% if canManagePermissions %}<li><a href="/admin/permissions">Permissions</a></li>{% endif %}
+                    {% if canManageSettings %}<li><a href="/admin/settings">Settings</a></li>{% endif %}
                     <li><a href="/">Return to site</a></li>
                 </ul>
             </div>

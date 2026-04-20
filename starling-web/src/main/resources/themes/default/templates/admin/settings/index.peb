@@ -1,0 +1,28 @@
+<section class="admin-toolbar">
+    <div>
+        <h1>Settings</h1>
+        <p>Edit seeded runtime settings for the website, client loader, and security flow without touching `web.properties`.</p>
+    </div>
+</section>
+
+<form class="stack-form" method="post" action="/admin/settings">
+    {% for category in categories %}
+        <section class="admin-card">
+            <h2>{{ category.name }}</h2>
+            <div class="settings-grid">
+                {% for setting in category.settings %}
+                    <label class="form-group">
+                        <span class="admin-eyebrow">{{ setting.key }}</span>
+                        <strong>{{ setting.label }}</strong>
+                        <small class="form-hint">{{ setting.description }}</small>
+                        <input type="{{ setting.inputType }}" name="{{ setting.fieldName }}" value="{{ setting.value }}">
+                    </label>
+                {% endfor %}
+            </div>
+        </section>
+    {% endfor %}
+
+    <div class="button-row">
+        <button type="submit" class="button-primary">Save Settings</button>
+    </div>
+</form>

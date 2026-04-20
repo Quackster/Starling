@@ -49,6 +49,7 @@ public final class AdminPageModelFactory {
         model.put("canManageCampaigns", currentAdmin != null && rankPermissionService.hasPermission(currentAdmin.getRank(), RankPermissionKeys.HOUSEKEEPING_CAMPAIGNS));
         model.put("canManageUsers", currentAdmin != null && rankPermissionService.hasPermission(currentAdmin.getRank(), RankPermissionKeys.HOUSEKEEPING_USERS));
         model.put("canManagePermissions", currentAdmin != null && rankPermissionService.hasPermission(currentAdmin.getRank(), RankPermissionKeys.HOUSEKEEPING_PERMISSIONS));
+        model.put("canManageSettings", currentAdmin != null && rankPermissionService.hasPermission(currentAdmin.getRank(), RankPermissionKeys.HOUSEKEEPING_SETTINGS));
         return model;
     }
 

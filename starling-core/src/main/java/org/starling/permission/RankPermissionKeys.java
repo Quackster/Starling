@@ -9,6 +9,7 @@ public final class RankPermissionKeys {
     public static final String HOUSEKEEPING_CAMPAIGNS = "housekeeping.campaigns";
     public static final String HOUSEKEEPING_USERS = "housekeeping.users";
     public static final String HOUSEKEEPING_PERMISSIONS = "housekeeping.permissions";
+    public static final String HOUSEKEEPING_SETTINGS = "housekeeping.settings";
 
     public static final String FUSE_LOGIN = "fuse_login";
     public static final String FUSE_BUY_CREDITS = "fuse_buy_credits";

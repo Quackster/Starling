@@ -63,6 +63,13 @@ public final class RankPermissionCatalog {
                     7
             ),
             new Definition(
+                    RankPermissionKeys.HOUSEKEEPING_SETTINGS,
+                    "Manage Settings",
+                    "Edit generic web, client, and security settings.",
+                    "Housekeeping",
+                    7
+            ),
+            new Definition(
                     RankPermissionKeys.FUSE_LOGIN,
                     "Login",
                     "Lets the client finish the normal hotel login flow.",

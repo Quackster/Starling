@@ -10,6 +10,7 @@ import org.starling.web.admin.navigation.AdminNavigationController;
 import org.starling.web.admin.page.AdminPagesController;
 import org.starling.web.admin.permission.AdminPermissionsController;
 import org.starling.web.admin.preview.AdminPreviewController;
+import org.starling.web.admin.setting.AdminSettingsController;
 import org.starling.web.admin.user.AdminUsersController;
 
 public final class AdminRoutes {
@@ -22,6 +23,7 @@ public final class AdminRoutes {
     private final AdminCampaignsController adminCampaignsController;
     private final AdminUsersController adminUsersController;
     private final AdminPermissionsController adminPermissionsController;
+    private final AdminSettingsController adminSettingsController;
     private final AdminPreviewController adminPreviewController;
 
     /**
@@ -33,6 +35,7 @@ public final class AdminRoutes {
      * @param adminCampaignsController the campaigns controller
      * @param adminUsersController the users controller
      * @param adminPermissionsController the permissions controller
+     * @param adminSettingsController the settings controller
      * @param adminPreviewController the markdown preview controller
      */
     public AdminRoutes(
@@ -44,6 +47,7 @@ public final class AdminRoutes {
             AdminCampaignsController adminCampaignsController,
             AdminUsersController adminUsersController,
             AdminPermissionsController adminPermissionsController,
+            AdminSettingsController adminSettingsController,
             AdminPreviewController adminPreviewController
     ) {
         this.adminRouteGuard = adminRouteGuard;
@@ -54,6 +58,7 @@ public final class AdminRoutes {
         this.adminCampaignsController = adminCampaignsController;
         this.adminUsersController = adminUsersController;
         this.adminPermissionsController = adminPermissionsController;
+        this.adminSettingsController = adminSettingsController;
         this.adminPreviewController = adminPreviewController;
     }
 
@@ -99,5 +104,8 @@ public final class AdminRoutes {
 
         app.get("/admin/permissions", adminRouteGuard.protect(RankPermissionKeys.HOUSEKEEPING_PERMISSIONS, adminPermissionsController::index));
         app.post("/admin/permissions", adminRouteGuard.protect(RankPermissionKeys.HOUSEKEEPING_PERMISSIONS, adminPermissionsController::update));
+
+        app.get("/admin/settings", adminRouteGuard.protect(RankPermissionKeys.HOUSEKEEPING_SETTINGS, adminSettingsController::index));
+        app.post("/admin/settings", adminRouteGuard.protect(RankPermissionKeys.HOUSEKEEPING_SETTINGS, adminSettingsController::update));
     }
 }
