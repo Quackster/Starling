@@ -13,7 +13,7 @@ import java.util.Set;
 
 public final class PublicNavigationModelFactory {
 
-    private final PublicNavigationConfig config;
+    private final CmsNavigationService navigationService;
     private final SiteBranding siteBranding;
     private final RankPermissionService rankPermissionService;
 
@@ -24,11 +24,11 @@ public final class PublicNavigationModelFactory {
      * @param rankPermissionService the rank permission service
      */
     public PublicNavigationModelFactory(
-            PublicNavigationConfig config,
+            CmsNavigationService navigationService,
             SiteBranding siteBranding,
             RankPermissionService rankPermissionService
     ) {
-        this.config = config;
+        this.navigationService = navigationService;
         this.siteBranding = siteBranding;
         this.rankPermissionService = rankPermissionService;
     }
@@ -41,6 +41,26 @@ public final class PublicNavigationModelFactory {
      * @return the resulting navigation model
      */
     public Map<String, Object> create(String currentMainPage, String currentSubPage, Optional<UserEntity> currentUser) {
+        return create(currentMainPage, currentSubPage, currentUser, List.of(), List.of());
+    }
+
+    /**
+     * Builds the public navigation view model with optional per-page link overrides.
+     * @param currentMainPage the selected main navigation key
+     * @param currentSubPage the selected sub navigation key, when present
+     * @param currentUser the authenticated user
+     * @param visibleMainLinkKeys the main link keys to render, or empty for defaults
+     * @param visibleSubLinkTokens the sub link tokens to render, or empty for defaults
+     * @return the resulting navigation model
+     */
+    public Map<String, Object> create(
+            String currentMainPage,
+            String currentSubPage,
+            Optional<UserEntity> currentUser,
+            List<String> visibleMainLinkKeys,
+            List<String> visibleSubLinkTokens
+    ) {
+        PublicNavigationConfig config = navigationService.loadConfig();
         boolean loggedIn = currentUser.isPresent();
         int rankId = currentUser.map(UserEntity::getRank).orElse(0);
         Set<String> permissionKeys = currentUser.isPresent()
@@ -48,12 +68,43 @@ public final class PublicNavigationModelFactory {
                 : Set.of();
 
         Map<String, Object> navigation = new LinkedHashMap<>();
-        navigation.put("mainLinks", linkModels(config.mainLinks(), currentMainPage, loggedIn, rankId, currentUser, permissionKeys));
-        navigation.put("subLinks", linkModels(config.subLinksByPage().getOrDefault(currentSubPage, List.of()), currentSubPage, loggedIn, rankId, currentUser, permissionKeys));
+        List<NavigationLinkConfig> mainLinks = filterMainLinks(config.mainLinks(), visibleMainLinkKeys);
+        List<NavigationLinkConfig> subLinks = visibleSubLinkTokens == null || visibleSubLinkTokens.isEmpty()
+                ? config.subLinksByPage().getOrDefault(currentSubPage, List.of())
+                : filterSubLinks(config, visibleSubLinkTokens);
+
+        navigation.put("mainLinks", linkModels(mainLinks, currentMainPage, loggedIn, rankId, currentUser, permissionKeys));
+        navigation.put("subLinks", linkModels(subLinks, currentSubPage, loggedIn, rankId, currentUser, permissionKeys));
         navigation.put("guestHotelButton", buttonModel(config.guestHotelButton(), loggedIn, currentUser));
         navigation.put("userHotelButton", buttonModel(config.userHotelButton(), loggedIn, currentUser));
         navigation.put("hasSubLinks", !((List<?>) navigation.get("subLinks")).isEmpty());
         return navigation;
+    }
+
+    private List<NavigationLinkConfig> filterMainLinks(List<NavigationLinkConfig> links, List<String> visibleMainLinkKeys) {
+        if (visibleMainLinkKeys == null || visibleMainLinkKeys.isEmpty()) {
+            return links;
+        }
+
+        return links.stream()
+                .filter(link -> visibleMainLinkKeys.contains(link.key()))
+                .toList();
+    }
+
+    private List<NavigationLinkConfig> filterSubLinks(PublicNavigationConfig config, List<String> visibleSubLinkTokens) {
+        if (visibleSubLinkTokens == null || visibleSubLinkTokens.isEmpty()) {
+            return List.of();
+        }
+
+        List<NavigationLinkConfig> subLinks = new ArrayList<>();
+        for (Map.Entry<String, List<NavigationLinkConfig>> entry : config.subLinksByPage().entrySet()) {
+            for (NavigationLinkConfig link : entry.getValue()) {
+                if (visibleSubLinkTokens.contains(NavigationSelectionCodec.subLinkToken(entry.getKey(), link.key()))) {
+                    subLinks.add(link);
+                }
+            }
+        }
+        return subLinks;
     }
 
     private List<Map<String, Object>> linkModels(

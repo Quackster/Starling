@@ -62,8 +62,7 @@ import org.starling.web.feature.shared.page.PublicPageModelFactory;
 import org.starling.web.feature.shared.page.layout.PublicPageLayoutConfig;
 import org.starling.web.feature.shared.page.layout.PublicPageLayoutConfigLoader;
 import org.starling.web.feature.shared.page.layout.PublicPageLayoutRenderer;
-import org.starling.web.feature.shared.page.navigation.PublicNavigationConfig;
-import org.starling.web.feature.shared.page.navigation.PublicNavigationConfigLoader;
+import org.starling.web.feature.shared.page.navigation.CmsNavigationService;
 import org.starling.web.feature.shared.page.navigation.PublicNavigationModelFactory;
 import org.starling.web.feature.tag.page.TagController;
 import org.starling.web.feature.tag.service.TagDirectoryService;
@@ -128,10 +127,10 @@ public final class StarlingWebBootstrap {
         ArticleViewFactory articleViewFactory = new ArticleViewFactory(markdownRenderer, siteBranding);
         NewsPromoContentFactory newsPromoContentFactory = new NewsPromoContentFactory(articleService, articleViewFactory);
         MePageContentFactory mePageContentFactory = new MePageContentFactory();
-        PublicNavigationConfig publicNavigationConfig = new PublicNavigationConfigLoader().load();
+        CmsNavigationService cmsNavigationService = new CmsNavigationService();
         PublicPageLayoutConfig publicPageLayoutConfig = new PublicPageLayoutConfigLoader().load();
         PublicNavigationModelFactory publicNavigationModelFactory = new PublicNavigationModelFactory(
-                publicNavigationConfig,
+                cmsNavigationService,
                 siteBranding,
                 rankPermissionService
         );

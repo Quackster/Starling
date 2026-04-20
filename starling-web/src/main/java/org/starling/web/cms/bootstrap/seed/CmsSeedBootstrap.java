@@ -15,6 +15,7 @@ public final class CmsSeedBootstrap {
      */
     public static void seedDefaults() {
         UserEntity bootstrapUser = UserDao.findByUsername("admin");
+        CmsNavigationSeedBootstrap.seed();
         CmsCommunitySeedBootstrap.seed(bootstrapUser);
         CmsContentSeedBootstrap.seed();
         CmsSocialSeedBootstrap.seed(bootstrapUser);
