@@ -27,6 +27,10 @@ public final class MeAccess {
         Optional<UserEntity> currentUser = userSessionService.authenticate(context);
         if (currentUser.isEmpty()) {
             context.redirect("/");
+        } else if (userSessionService.isReauthenticationRequired(context)) {
+            context.sessionAttribute(UserSessionService.REAUTHENTICATE_PATH_SESSION_KEY, currentPath(context));
+            context.redirect("/account/reauthenticate");
+            return Optional.empty();
         }
         return currentUser;
     }
@@ -42,7 +46,20 @@ public final class MeAccess {
             context.status(403);
             context.contentType("text/html; charset=UTF-8");
             context.result("Please sign in to use minimail.");
+        } else if (userSessionService.isReauthenticationRequired(context)) {
+            context.sessionAttribute(UserSessionService.REAUTHENTICATE_PATH_SESSION_KEY, currentPath(context));
+            context.status(403);
+            context.contentType("text/html; charset=UTF-8");
+            context.result("Please re-enter your password to continue.");
+            return Optional.empty();
         }
         return currentUser;
+    }
+
+    private String currentPath(Context context) {
+        String queryString = context.queryString();
+        return queryString == null || queryString.isBlank()
+                ? context.path()
+                : context.path() + "?" + queryString;
     }
 }

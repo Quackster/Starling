@@ -6,17 +6,21 @@ import org.starling.storage.entity.UserEntity;
 import org.starling.web.feature.shared.page.PublicPageModelFactory;
 import org.starling.web.render.TemplateRenderer;
 import org.starling.web.request.RequestValues;
+import org.starling.web.settings.WebSettingsService;
 import org.starling.web.user.UserSessionService;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public final class AccountController {
 
     private final TemplateRenderer templateRenderer;
     private final UserSessionService userSessionService;
     private final PublicPageModelFactory publicPageModelFactory;
+    private final WebSettingsService webSettingsService;
 
     /**
      * Creates a new AccountController.
@@ -27,11 +31,13 @@ public final class AccountController {
     public AccountController(
             TemplateRenderer templateRenderer,
             UserSessionService userSessionService,
-            PublicPageModelFactory publicPageModelFactory
+            PublicPageModelFactory publicPageModelFactory,
+            WebSettingsService webSettingsService
     ) {
         this.templateRenderer = templateRenderer;
         this.userSessionService = userSessionService;
         this.publicPageModelFactory = publicPageModelFactory;
+        this.webSettingsService = webSettingsService;
     }
 
     /**
@@ -81,7 +87,152 @@ public final class AccountController {
      * @param context the request context
      */
     public void clientEntry(Context context) {
-        context.redirect(userSessionService.authenticate(context).isPresent() ? "/me" : "/");
+        Optional<UserEntity> currentUser = userSessionService.authenticate(context);
+        if (currentUser.isEmpty()) {
+            context.redirect("/");
+            return;
+        }
+        if ("reauthenticate".equalsIgnoreCase(RequestValues.valueOrEmpty(context.queryParam("x")))) {
+            context.sessionAttribute(UserSessionService.REAUTHENTICATE_PATH_SESSION_KEY, "/client");
+            context.redirect("/account/reauthenticate");
+            return;
+        }
+        if (userSessionService.isReauthenticationRequired(context)) {
+            context.sessionAttribute(UserSessionService.REAUTHENTICATE_PATH_SESSION_KEY, currentPath(context));
+            context.redirect("/account/reauthenticate");
+            return;
+        }
+
+        UserDao.markOnline(currentUser.get().getId());
+        Map<String, Object> model = publicPageModelFactory.create(context, "community");
+        model.put("user", Map.of(
+                "username", currentUser.get().getUsername(),
+                "ssoTicket", RequestValues.valueOrDefault(currentUser.get().getSsoTicket(), "")
+        ));
+        model.put("wide", !"false".equalsIgnoreCase(context.queryParam("wide")));
+        model.put("onlineCount", UserDao.countOnline());
+        model.put("client", clientSettings());
+        context.html(templateRenderer.render("account/client", model));
+    }
+
+    /**
+     * Renders the reauthentication page.
+     * @param context the request context
+     */
+    public void reauthenticatePage(Context context) {
+        Optional<UserEntity> currentUser = userSessionService.authenticate(context);
+        if (currentUser.isEmpty()) {
+            context.redirect("/");
+            return;
+        }
+
+        Map<String, Object> model = reauthenticationModel(context, currentUser.orElseThrow(), RequestValues.valueOrEmpty(context.queryParam("error")));
+        context.html(templateRenderer.render("account/reauthenticate", model));
+    }
+
+    /**
+     * Confirms the current password and restores the protected session.
+     * @param context the request context
+     */
+    public void reauthenticate(Context context) {
+        Optional<UserEntity> currentUser = userSessionService.authenticate(context);
+        if (currentUser.isEmpty()) {
+            context.redirect("/");
+            return;
+        }
+
+        String password = RequestValues.valueOrEmpty(context.formParam("password"));
+        if (!currentUser.get().getPassword().equals(password)) {
+            Map<String, Object> model = reauthenticationModel(context, currentUser.get(), "Invalid password.");
+            context.status(401).html(templateRenderer.render("account/reauthenticate", model));
+            return;
+        }
+
+        userSessionService.restartAfterReauthentication(context, currentUser.get());
+        String nextPath = RequestValues.valueOrDefault(context.sessionAttribute(UserSessionService.REAUTHENTICATE_PATH_SESSION_KEY), "/client");
+        context.sessionAttribute(UserSessionService.REAUTHENTICATE_PATH_SESSION_KEY, null);
+        context.sessionAttribute("postLoginPath", nextPath);
+        context.redirect("/security_check");
+    }
+
+    /**
+     * Returns a client cache-check result.
+     * @param context the request context
+     */
+    public void cacheCheck(Context context) {
+        context.result("true");
+    }
+
+    /**
+     * Returns the live online count payload expected by habboclient.js.
+     * @param context the request context
+     */
+    public void updateHabboCount(Context context) {
+        context.json(Map.of("habboCountText", UserDao.countOnline() + " members online"));
+    }
+
+    /**
+     * Marks the current client session offline.
+     * @param context the request context
+     */
+    public void unloadClient(Context context) {
+        userSessionService.authenticate(context).ifPresent(user -> UserDao.markOffline(user.getId()));
+        context.status(204);
+    }
+
+    /**
+     * Accepts legacy client log callbacks.
+     * @param context the request context
+     */
+    public void clientLog(Context context) {
+        context.status(204);
+    }
+
+    /**
+     * Renders lightweight client error pages expected by the Shockwave shell.
+     * @param context the request context
+     */
+    public void clientUtils(Context context) {
+        String key = RequestValues.valueOrDefault(context.queryParam("key"), "connection_failed");
+        Map<String, Object> model = publicPageModelFactory.create(context, "community");
+        Map<String, Object> error = new LinkedHashMap<>();
+        switch (key) {
+            case "error" -> {
+                error.put("title", "Oops");
+                error.put("message", "The client reported a fatal error. Re-enter the hotel to continue.");
+            }
+            case "install_shockwave" -> {
+                error.put("title", "Install Shockwave");
+                error.put("message", "Shockwave Director is required to open this classic client build.");
+            }
+            case "upgrade_shockwave" -> {
+                error.put("title", "Upgrade Shockwave");
+                error.put("message", "This hotel expects Shockwave 10 or newer before the client can start.");
+            }
+            default -> {
+                error.put("title", "Connection failed");
+                error.put("message", "The client could not reach " + webSettingsService.clientHotelIp() + ":" + webSettingsService.clientHotelPort() + ".");
+            }
+        }
+        error.put("enterHotelPath", "/client");
+        model.put("clientError", error);
+        context.html(templateRenderer.render("account/client_error", model));
+    }
+
+    /**
+     * Renders the Shockwave install helper page.
+     * @param context the request context
+     */
+    public void installShockwave(Context context) {
+        context.redirect("/clientutils.php?key=install_shockwave");
+    }
+
+    /**
+     * Renders the Shockwave upgrade helper page.
+     * @param context the request context
+     */
+    public void upgradeShockwave(Context context) {
+        context.redirect("/clientutils.php?key=upgrade_shockwave");
     }
 
     /**
@@ -130,5 +281,32 @@ public final class AccountController {
         model.put("logoutMessage", message);
         model.put("logoutError", error);
         context.html(templateRenderer.render("account/logout", model));
+    }
+
+    private Map<String, Object> clientSettings() {
+        return Map.of(
+                "dcr", webSettingsService.clientDcr(),
+                "externalVariables", webSettingsService.clientExternalVariables(),
+                "externalTexts", webSettingsService.clientExternalTexts(),
+                "loaderTimeoutMs", webSettingsService.clientLoaderTimeoutMs(),
+                "hotelIp", webSettingsService.clientHotelIp(),
+                "hotelPort", webSettingsService.clientHotelPort(),
+                "hotelMusPort", webSettingsService.clientHotelMusPort()
+        );
+    }
+
+    private Map<String, Object> reauthenticationModel(Context context, UserEntity currentUser, String error) {
+        Map<String, Object> model = publicPageModelFactory.create(context, "community");
+        model.put("error", error);
+        model.put("reauthUser", currentUser);
+        model.put("reauthPath", RequestValues.valueOrDefault(context.sessionAttribute(UserSessionService.REAUTHENTICATE_PATH_SESSION_KEY), "/client"));
+        return model;
+    }
+
+    private String currentPath(Context context) {
+        String queryString = context.queryString();
+        return queryString == null || queryString.isBlank()
+                ? context.path()
+                : context.path() + "?" + queryString;
     }
 }

@@ -56,6 +56,17 @@ public final class AdminRouteGuard {
                 context.redirect("/admin/login");
                 return;
             }
+            if (userSessionService.isReauthenticationRequired(context)) {
+                context.sessionAttribute(UserSessionService.REAUTHENTICATE_PATH_SESSION_KEY, currentPath(context));
+                if (Htmx.isRequest(context)) {
+                    context.header("HX-Redirect", "/account/reauthenticate");
+                    context.status(401);
+                    return;
+                }
+
+                context.redirect("/account/reauthenticate");
+                return;
+            }
 
             if (!currentUser.get().isAdmin()) {
                 context.status(403).result("You do not have permission to access housekeeping.");

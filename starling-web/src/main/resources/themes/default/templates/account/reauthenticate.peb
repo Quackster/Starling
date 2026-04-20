@@ -1,0 +1,78 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html" />
+    <title>{{ site.siteName }}: Re-authenticate</title>
+
+    <script type="text/javascript">
+    var andSoItBegins = (new Date()).getTime();
+    </script>
+    <link rel="shortcut icon" href="{{ site.webGalleryPath }}/v2/favicon.ico" type="image/vnd.microsoft.icon" />
+    <link rel="alternate" type="application/rss+xml" title="{{ site.siteName }}: RSS" href="{{ site.sitePath }}/articles/rss.xml" />
+    <script src="{{ site.webGalleryPath }}/static/js/libs2.js" type="text/javascript"></script>
+    <script src="{{ site.webGalleryPath }}/static/js/landing.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/style.css" type="text/css" />
+    <link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/buttons.css" type="text/css" />
+    <link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/boxes.css" type="text/css" />
+    <link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/tooltips.css" type="text/css" />
+    <link rel="stylesheet" href="{{ site.webGalleryPath }}/styles/local/com.css" type="text/css" />
+    <script src="{{ site.webGalleryPath }}/js/local/com.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="{{ site.webGalleryPath }}/v2/styles/process.css" type="text/css" />
+</head>
+<body id="reauthenticate" class="process-template">
+
+<div id="overlay"></div>
+
+<div id="container">
+    <div class="cbb process-template-box clearfix">
+        <div id="content">
+            {% include "base/frontpage_header.peb" %}
+            <div id="process-content">
+                <div id="column1" class="column">
+                    <div class="cbb clearfix green">
+                        <h2 class="title">Enter your password again</h2>
+                        <div class="box-content">
+                            <p>Your session has been idle for a while, so {{ site.siteName }} needs a quick password check before continuing.</p>
+                            <p>You are signed in as <strong>{{ reauthUser.username }}</strong>. If this is not you, <a href="/account/logout?origin=default">sign out</a>.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="column2" class="column">
+                    {% if error %}
+                        <div class="action-error flash-message"><div class="rounded"><ul><li>{{ error }}</li></ul></div></div>
+                    {% endif %}
+
+                    <div class="cbb gray clearfix">
+                        <h2 class="title">Sign in</h2>
+                        <div class="box-content clearfix" id="login-habblet">
+                            <form action="/account/reauthenticate" method="post" class="login-habblet">
+                                <input type="hidden" name="page" value="{{ reauthPath }}" />
+                                <ul>
+                                    <li>
+                                        <label for="login-username" class="login-text">Username</label>
+                                        <span class="username">{{ reauthUser.username }}</span>
+                                    </li>
+                                    <li>
+                                        <label for="login-password" class="login-text">Password</label>
+                                        <input tabindex="2" type="password" class="login-field" name="password" id="login-password" />
+                                        <input type="submit" value="Sign in" class="submit" id="login-submit-button"/>
+                                        <a style="float: left; margin-left: 0; display: none" class="new-button" id="login-submit-new-button" href="#"><b style="padding-left: 10px; padding-right: 7px; width: 55px;">Sign in</b><i></i></a>
+                                    </li>
+                                </ul>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% include "base/footer.peb" %}
+            <script type="text/javascript">
+            HabboView.run();
+            </script>
+        </div>
+    </div>
+</div>
+</body>
+</html>

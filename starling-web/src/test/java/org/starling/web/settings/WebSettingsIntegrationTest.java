@@ -72,11 +72,13 @@ class WebSettingsIntegrationTest {
 
         Optional<WebSettingRecord> seededSiteName = WebSettingsDao.findByKey(WebSettingCatalog.SITE_NAME);
         Optional<WebSettingRecord> seededClientHost = WebSettingsDao.findByKey(WebSettingCatalog.CLIENT_HOTEL_IP);
+        Optional<WebSettingRecord> seededLoaderTimeout = WebSettingsDao.findByKey(WebSettingCatalog.CLIENT_LOADER_TIMEOUT_MS);
         Optional<WebSettingRecord> seededReauth = WebSettingsDao.findByKey(WebSettingCatalog.REAUTHENTICATE_IDLE_MINUTES);
 
         assertTrue(seededSiteName.isPresent());
         assertEquals("Seed Hotel", seededSiteName.orElseThrow().value());
         assertEquals("127.0.0.1", seededClientHost.orElseThrow().value());
+        assertEquals("10000", seededLoaderTimeout.orElseThrow().value());
         assertEquals("30", seededReauth.orElseThrow().value());
 
         WebSettingsService webSettingsService = new WebSettingsService(webConfig);

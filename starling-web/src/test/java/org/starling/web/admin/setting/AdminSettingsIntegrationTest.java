@@ -107,6 +107,7 @@ class AdminSettingsIntegrationTest {
 
         assertEquals(200, settingsPageResponse.statusCode());
         assertTrue(settingsPageResponse.body().contains("Shockwave DCR"));
+        assertTrue(settingsPageResponse.body().contains("Loader Timeout (ms)"));
         assertTrue(settingsPageResponse.body().contains("web.session.secret"));
 
         HttpResponse<String> saveResponse = postForm("/admin/settings", Map.of(

@@ -204,6 +204,62 @@ public final class WebSettingsService {
     }
 
     /**
+     * Returns the client DCR setting.
+     * @return the DCR path or URL
+     */
+    public String clientDcr() {
+        return get(WebSettingCatalog.CLIENT_DCR);
+    }
+
+    /**
+     * Returns the client external variables URL.
+     * @return the URL
+     */
+    public String clientExternalVariables() {
+        return get(WebSettingCatalog.CLIENT_EXTERNAL_VARIABLES);
+    }
+
+    /**
+     * Returns the client external texts URL.
+     * @return the URL
+     */
+    public String clientExternalTexts() {
+        return get(WebSettingCatalog.CLIENT_EXTERNAL_TEXTS);
+    }
+
+    /**
+     * Returns the client loader timeout in milliseconds.
+     * @return the timeout in milliseconds
+     */
+    public int clientLoaderTimeoutMs() {
+        return intValue(WebSettingCatalog.CLIENT_LOADER_TIMEOUT_MS, 10_000);
+    }
+
+    /**
+     * Returns the client hotel host.
+     * @return the host
+     */
+    public String clientHotelIp() {
+        return get(WebSettingCatalog.CLIENT_HOTEL_IP);
+    }
+
+    /**
+     * Returns the client hotel port.
+     * @return the port
+     */
+    public int clientHotelPort() {
+        return intValue(WebSettingCatalog.CLIENT_HOTEL_PORT, 30000);
+    }
+
+    /**
+     * Returns the client MUS port.
+     * @return the port
+     */
+    public int clientHotelMusPort() {
+        return intValue(WebSettingCatalog.CLIENT_HOTEL_MUS_PORT, 30001);
+    }
+
+    /**
      * Returns the seeded reauthentication idle timeout in minutes.
      * @return the timeout in minutes
      */

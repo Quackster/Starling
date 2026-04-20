@@ -47,9 +47,21 @@ public final class AuthRoutes {
         app.get("/account/logout", accountController::logout);
         app.get("/account/logout_ok", accountController::logoutOk);
         app.get("/account/password/forgot", context -> context.redirect("/account/login"));
+        app.get("/account/reauthenticate", accountController::reauthenticatePage);
+        app.post("/account/reauthenticate", accountController::reauthenticate);
         app.get("/client", accountController::clientEntry);
         app.get("/shockwave_client", context -> context.redirect("/client"));
         app.get("/flash_client", context -> context.redirect("/client"));
+        app.get("/cacheCheck", accountController::cacheCheck);
+        app.get("/components/updateHabboCount", accountController::updateHabboCount);
+        app.post("/account/unloadclient", accountController::unloadClient);
+        app.post("/clientlog/update", accountController::clientLog);
+        app.post("/clientlog/clientpage", accountController::clientLog);
+        app.post("/clientlog/jsexception", accountController::clientLog);
+        app.get("/clientlog/nojs", accountController::clientLog);
+        app.get("/clientutils.php", accountController::clientUtils);
+        app.get("/client_popup/install_shockwave", accountController::installShockwave);
+        app.get("/client_popup/upgrade_shockwave", accountController::upgradeShockwave);
         app.post("/account/submit", accountController::submit);
 
         app.get("/admin/login", adminAuthController::loginPage);

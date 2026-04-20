@@ -351,7 +351,8 @@ public final class StarlingWebBootstrap {
         AccountController accountController = new AccountController(
                 dependencies.templateRenderer(),
                 dependencies.userSessionService(),
-                dependencies.publicPageModelFactory()
+                dependencies.publicPageModelFactory(),
+                dependencies.webSettingsService()
         );
         RegistrationController registrationController = new RegistrationController(
                 dependencies.templateRenderer(),

@@ -19,6 +19,7 @@ public final class WebSettingCatalog {
     public static final String CLIENT_DCR = "client.dcr";
     public static final String CLIENT_EXTERNAL_VARIABLES = "client.external.variables";
     public static final String CLIENT_EXTERNAL_TEXTS = "client.external.texts";
+    public static final String CLIENT_LOADER_TIMEOUT_MS = "client.loader.timeout.ms";
     public static final String CLIENT_HOTEL_IP = "client.hotel.ip";
     public static final String CLIENT_HOTEL_PORT = "client.hotel.port";
     public static final String CLIENT_HOTEL_MUS_PORT = "client.hotel.mus.port";
@@ -145,6 +146,16 @@ public final class WebSettingCatalog {
                         false,
                         110,
                         "http://localhost/gamedata/external_texts.txt"
+                ),
+                definition(
+                        CLIENT_LOADER_TIMEOUT_MS,
+                        "Client",
+                        "Loader Timeout (ms)",
+                        "Milliseconds before the Shockwave loader stops waiting for the client to finish booting.",
+                        WebSettingValueType.NUMBER,
+                        false,
+                        115,
+                        "10000"
                 ),
                 definition(
                         CLIENT_HOTEL_IP,
