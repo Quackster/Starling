@@ -150,6 +150,23 @@ class ClientFlowIntegrationTest {
         assertInactiveSessionRequiresReauthentication(true);
     }
 
+    @Test
+    void clientErrorPageUsesPopupMarkupAndWebGalleryPaths() throws Exception {
+        loginPublicUser();
+
+        HttpResponse<String> errorResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/clientutils.php?key=error")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertEquals(200, errorResponse.statusCode());
+        assertTrue(errorResponse.body().contains("/web-gallery/static/js/habboclient.js"));
+        assertTrue(errorResponse.body().contains("/web-gallery/v2/styles/habboclient.css"));
+        assertTrue(errorResponse.body().contains("id=\"enter-hotel-open-image\""));
+        assertTrue(errorResponse.body().contains("onclick=\"HabboClient.openOrFocus(this); return false;\""));
+        assertTrue(errorResponse.body().contains("href=\"/client\" target=\"client\""));
+    }
+
     private void assertInactiveSessionRequiresReauthentication(boolean rememberMe) throws Exception {
         loginPublicUser(rememberMe);
 

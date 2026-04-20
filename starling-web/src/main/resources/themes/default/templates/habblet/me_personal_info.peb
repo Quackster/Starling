@@ -4,7 +4,7 @@
         {% if site.serverOnline %}
         <div class="enter-hotel-btn">
             <div class="open enter-btn">
-                <a href="{{ site.sitePath }}/client" target="client">Enter {{ site.siteName }}<i></i></a>
+                <a href="{{ site.sitePath }}/client" target="client" onclick="HabboClient.openOrFocus(this); return false;">Enter {{ site.siteName }}<i></i></a>
                 <b></b>
             </div>
         </div>

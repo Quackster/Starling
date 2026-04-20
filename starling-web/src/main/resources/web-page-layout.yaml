@@ -70,7 +70,7 @@ pages:
       - id: column2
         widgets: [newsPromo, meRecommendedRooms, meTags]
       - id: column3
-        widgets: [adsContainer]
+        widgets: [meGroups, meRecommendedGroups, adsContainer]
   tags:
     disabledWidgets: []
     columns:
