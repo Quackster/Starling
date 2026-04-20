@@ -4,7 +4,11 @@ import io.javalin.http.Context;
 import org.starling.web.cms.article.CmsArticleDraft;
 import org.starling.web.request.RequestValues;
 
-public record ArticleDraftRequest(String title, String slug, String summary, String markdown) {
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+
+public record ArticleDraftRequest(String title, String slug, String summary, String markdown, Timestamp scheduledPublishAt) {
 
     /**
      * Creates an ArticleDraftRequest from the current request.
@@ -16,7 +20,8 @@ public record ArticleDraftRequest(String title, String slug, String summary, Str
                 RequestValues.valueOrEmpty(context.formParam("title")).trim(),
                 RequestValues.valueOrEmpty(context.formParam("slug")),
                 RequestValues.valueOrEmpty(context.formParam("summary")).trim(),
-                RequestValues.valueOrEmpty(context.formParam("markdown"))
+                RequestValues.valueOrEmpty(context.formParam("markdown")),
+                parseScheduledPublishAt(context.formParam("scheduledPublishAt"))
         );
     }
 
@@ -29,7 +34,17 @@ public record ArticleDraftRequest(String title, String slug, String summary, Str
                 RequestValues.normalizedSlug(slug, title, "article"),
                 title,
                 summary,
-                markdown
+                markdown,
+                scheduledPublishAt
         );
+    }
+
+    private static Timestamp parseScheduledPublishAt(String value) {
+        String normalized = RequestValues.valueOrEmpty(value).trim();
+        if (normalized.isBlank()) {
+            return null;
+        }
+
+        return Timestamp.from(LocalDateTime.parse(normalized).atZone(ZoneId.systemDefault()).toInstant());
     }
 }

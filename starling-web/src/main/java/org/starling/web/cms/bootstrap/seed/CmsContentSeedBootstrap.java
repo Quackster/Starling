@@ -31,8 +31,7 @@ public final class CmsContentSeedBootstrap {
             return;
         }
 
-        int pageId = CmsPageDao.saveDraft(null, CmsContentSeedCatalog.homePage());
-        CmsPageDao.publish(pageId);
+        CmsPageDao.saveDraft(null, CmsContentSeedCatalog.homePage());
     }
 
     private static void seedBootstrapArticles() {

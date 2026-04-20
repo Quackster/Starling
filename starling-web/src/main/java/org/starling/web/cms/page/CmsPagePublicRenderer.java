@@ -47,10 +47,10 @@ public final class CmsPagePublicRenderer {
         return render(
                 context,
                 pageViewFactory.page(page),
-                layoutCodec.fromJson(page.publishedLayoutJson()),
-                page.publishedNavigationMainKey(),
-                NavigationSelectionCodec.values(page.publishedNavigationMainLinkKeys()),
-                NavigationSelectionCodec.values(page.publishedNavigationSubLinkTokens())
+                layoutCodec.fromJson(page.layoutJson()),
+                page.navigationMainKey(),
+                NavigationSelectionCodec.values(page.navigationMainLinkKeys()),
+                NavigationSelectionCodec.values(page.navigationSubLinkTokens())
         );
     }
 
@@ -64,10 +64,10 @@ public final class CmsPagePublicRenderer {
         return render(
                 context,
                 pageViewFactory.draftPage(page),
-                layoutCodec.fromJson(page.draftLayoutJson()),
-                page.draftNavigationMainKey(),
-                NavigationSelectionCodec.values(page.draftNavigationMainLinkKeys()),
-                NavigationSelectionCodec.values(page.draftNavigationSubLinkTokens())
+                layoutCodec.fromJson(page.layoutJson()),
+                page.navigationMainKey(),
+                NavigationSelectionCodec.values(page.navigationMainLinkKeys()),
+                NavigationSelectionCodec.values(page.navigationSubLinkTokens())
         );
     }
 

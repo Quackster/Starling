@@ -35,7 +35,8 @@ public final class CmsContentSeedCatalog {
                     The new CMS is now online.
 
                     You can manage **pages** and **news** from the back office at `/admin`.
-                    """
+                    """,
+                    null
             ),
             new CmsArticleDraft(
                     "build-hotel-weekend",
@@ -47,7 +48,8 @@ public final class CmsContentSeedCatalog {
                     Expect builder spotlights, room tours, and live picks from the community team throughout the day.
 
                     If you want your room featured, make sure your door is open and your best layout is ready for visitors.
-                    """
+                    """,
+                    null
             ),
             new CmsArticleDraft(
                     "library-lounge-now-open",
@@ -59,7 +61,8 @@ public final class CmsContentSeedCatalog {
                     We have stocked it with reading nooks, warm lighting, and space for smaller meetups.
 
                     Drop by, explore the layout, and tell us what other public rooms you would like to see next.
-                    """
+                    """,
+                    null
             ),
             new CmsArticleDraft(
                     "dragon-quest-launch",
@@ -71,7 +74,8 @@ public final class CmsContentSeedCatalog {
                     Follow the clues, visit the featured rooms, and keep an eye on staff announcements for bonus tasks.
 
                     The first players to finish the full trail will be highlighted in a follow-up article later this week.
-                    """
+                    """,
+                    null
             ),
             new CmsArticleDraft(
                     "neon-dj-takeover",
@@ -83,7 +87,8 @@ public final class CmsContentSeedCatalog {
                     We will be spotlighting favourite guest rooms during the set, so keep your room links ready.
 
                     Bring your best neon fits and meet us in the lobby when the countdown hits zero.
-                    """
+                    """,
+                    null
             )
     );
     private static final List<CampaignSeed> CAMPAIGNS = List.of(

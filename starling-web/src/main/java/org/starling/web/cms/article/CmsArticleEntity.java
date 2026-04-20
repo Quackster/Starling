@@ -15,26 +15,20 @@ public class CmsArticleEntity {
     @Column(nullable = false, length = 160)
     private String slug = "";
 
-    @Column(name = "draft_title", nullable = false, length = 255)
-    private String draftTitle = "";
+    @Column(nullable = false, length = 255)
+    private String title = "";
 
-    @Column(name = "draft_summary", nullable = false, type = "TEXT")
-    private String draftSummary = "";
+    @Column(nullable = false, type = "TEXT")
+    private String summary = "";
 
-    @Column(name = "draft_markdown", nullable = false, type = "LONGTEXT")
-    private String draftMarkdown = "";
-
-    @Column(name = "published_title", nullable = false, length = 255)
-    private String publishedTitle = "";
-
-    @Column(name = "published_summary", nullable = false, type = "TEXT")
-    private String publishedSummary = "";
-
-    @Column(name = "published_markdown", nullable = false, type = "LONGTEXT")
-    private String publishedMarkdown = "";
+    @Column(nullable = false, type = "LONGTEXT")
+    private String markdown = "";
 
     @Column(name = "is_published", nullable = false, defaultValue = "0")
     private int isPublished;
+
+    @Column(name = "scheduled_publish_at")
+    private Timestamp scheduledPublishAt;
 
     @Column(name = "published_at")
     private Timestamp publishedAt;
@@ -47,25 +41,21 @@ public class CmsArticleEntity {
 
     public int getId() { return id; }
     public String getSlug() { return slug; }
-    public String getDraftTitle() { return draftTitle; }
-    public String getDraftSummary() { return draftSummary; }
-    public String getDraftMarkdown() { return draftMarkdown; }
-    public String getPublishedTitle() { return publishedTitle; }
-    public String getPublishedSummary() { return publishedSummary; }
-    public String getPublishedMarkdown() { return publishedMarkdown; }
+    public String getTitle() { return title; }
+    public String getSummary() { return summary; }
+    public String getMarkdown() { return markdown; }
     public int getIsPublished() { return isPublished; }
+    public Timestamp getScheduledPublishAt() { return scheduledPublishAt; }
     public Timestamp getPublishedAt() { return publishedAt; }
     public Timestamp getCreatedAt() { return createdAt; }
     public Timestamp getUpdatedAt() { return updatedAt; }
 
     public void setSlug(String slug) { this.slug = slug; }
-    public void setDraftTitle(String draftTitle) { this.draftTitle = draftTitle; }
-    public void setDraftSummary(String draftSummary) { this.draftSummary = draftSummary; }
-    public void setDraftMarkdown(String draftMarkdown) { this.draftMarkdown = draftMarkdown; }
-    public void setPublishedTitle(String publishedTitle) { this.publishedTitle = publishedTitle; }
-    public void setPublishedSummary(String publishedSummary) { this.publishedSummary = publishedSummary; }
-    public void setPublishedMarkdown(String publishedMarkdown) { this.publishedMarkdown = publishedMarkdown; }
+    public void setTitle(String title) { this.title = title; }
+    public void setSummary(String summary) { this.summary = summary; }
+    public void setMarkdown(String markdown) { this.markdown = markdown; }
     public void setIsPublished(int isPublished) { this.isPublished = isPublished; }
+    public void setScheduledPublishAt(Timestamp scheduledPublishAt) { this.scheduledPublishAt = scheduledPublishAt; }
     public void setPublishedAt(Timestamp publishedAt) { this.publishedAt = publishedAt; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
     public void setUpdatedAt(Timestamp updatedAt) { this.updatedAt = updatedAt; }

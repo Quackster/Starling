@@ -107,6 +107,6 @@ public final class AdminArticlesController {
 
     private void save(Context context, Integer id) {
         int articleId = articleService.saveDraft(id, ArticleDraftRequest.from(context).toDraft());
-        Htmx.redirect(context, "/admin/articles/" + articleId + "/edit?notice=Draft%20saved");
+        Htmx.redirect(context, "/admin/articles/" + articleId + "/edit?notice=Article%20saved");
     }
 }

@@ -21,7 +21,7 @@
             <tr>
                 <td><a href="/admin/articles/{{ article.id }}/edit">{{ article.title }}</a></td>
                 <td>{{ article.slug }}</td>
-                <td>{% if article.published %}Published{% else %}Draft{% endif %}</td>
+                <td>{% if article.published %}Published{% else %}Unpublished{% endif %}</td>
                 <td>{{ article.updatedAt }}</td>
             </tr>
         {% else %}

@@ -53,9 +53,10 @@ public final class ArticleViewFactory {
         Map<String, Object> view = new HashMap<>();
         view.put("id", article.id());
         view.put("slug", article.slug());
-        view.put("title", article.published() ? article.publishedTitle() : article.draftTitle());
-        view.put("summary", article.published() ? article.publishedSummary() : article.draftSummary());
+        view.put("title", article.title());
+        view.put("summary", article.summary());
         view.put("published", article.published());
+        view.put("scheduledPublishAt", formatEditorDateTime(article.scheduledPublishAt()));
         view.put("publishedAt", formatFriendlyDate(article.publishedAt()));
         view.put("createdAt", article.createdAt());
         view.put("updatedAt", article.updatedAt());
@@ -70,8 +71,8 @@ public final class ArticleViewFactory {
      */
     public Map<String, Object> newsPromoArticle(CmsArticle article) {
         Map<String, Object> view = new LinkedHashMap<>();
-        view.put("title", article.publishedTitle());
-        view.put("summary", article.publishedSummary());
+        view.put("title", article.title());
+        view.put("summary", article.summary());
         view.put("url", "/articles/" + article.slug());
         view.put("date", formatFriendlyDate(article.publishedAt()));
         view.put("image", topStoryImageUrl(article));
@@ -99,8 +100,8 @@ public final class ArticleViewFactory {
      */
     public Map<String, Object> article(CmsArticle article) {
         Map<String, Object> view = articleSummary(article);
-        view.put("markdown", article.publishedMarkdown());
-        view.put("html", markdownRenderer.render(article.publishedMarkdown()));
+        view.put("markdown", article.markdown());
+        view.put("html", markdownRenderer.render(article.markdown()));
         return view;
     }
 
@@ -125,11 +126,11 @@ public final class ArticleViewFactory {
         }
 
         Map<String, Object> view = new HashMap<>();
-        view.put("title", article.publishedTitle());
-        view.put("shortstory", article.publishedSummary());
+        view.put("title", article.title());
+        view.put("shortstory", article.summary());
         view.put("articleImage", topStoryImageUrl(article));
         view.put("date", formatArticleDate(article.publishedAt()));
-        view.put("escapedStory", markdownRenderer.render(article.publishedMarkdown()));
+        view.put("escapedStory", markdownRenderer.render(article.markdown()));
         view.put("author", siteBranding.cmsTitle());
         view.put("url", article.slug());
         view.put("published", article.published());
@@ -184,9 +185,9 @@ public final class ArticleViewFactory {
      */
     public Map<String, Object> articleEditor(CmsArticle article) {
         Map<String, Object> view = articleSummary(article);
-        view.put("draftTitle", article.draftTitle());
-        view.put("draftSummary", article.draftSummary());
-        view.put("draftMarkdown", article.draftMarkdown());
+        view.put("draftTitle", article.title());
+        view.put("draftSummary", article.summary());
+        view.put("draftMarkdown", article.markdown());
         return view;
     }
 
@@ -203,6 +204,7 @@ public final class ArticleViewFactory {
         article.put("draftTitle", "");
         article.put("draftSummary", "");
         article.put("draftMarkdown", "");
+        article.put("scheduledPublishAt", "");
         article.put("published", false);
         article.put("publishedAt", null);
         article.put("updatedAt", null);
@@ -227,6 +229,17 @@ public final class ArticleViewFactory {
         return timestamp.toInstant()
                 .atZone(ZoneId.systemDefault())
                 .format(DateTimeFormatter.ofPattern("dd MMM yyyy"));
+    }
+
+    private static String formatEditorDateTime(Timestamp timestamp) {
+        if (timestamp == null) {
+            return "";
+        }
+
+        return timestamp.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime()
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"));
     }
 
     private String topStoryImageUrl(CmsArticle article) {

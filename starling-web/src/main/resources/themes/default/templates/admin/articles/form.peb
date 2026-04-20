@@ -25,7 +25,7 @@
             <textarea name="markdown" rows="16">{{ article.draftMarkdown }}</textarea>
         </label>
         <div class="button-row">
-            <button type="submit" class="button-primary">Save Draft</button>
+            <button type="submit" class="button-primary">Save Changes</button>
             {% if not isNew %}
                 <button type="button" class="button-secondary" hx-post="/admin/articles/{{ article.id }}/publish">Publish</button>
                 <button type="button" class="button-secondary" hx-post="/admin/articles/{{ article.id }}/unpublish">Unpublish</button>

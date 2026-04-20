@@ -66,7 +66,7 @@ public final class PageService {
      * @return true when visible
      */
     public boolean canViewPublished(CmsPage page, Optional<UserEntity> currentUser) {
-        return CmsPageAccessControl.canView(page.publishedVisibleToGuests(), page.publishedAllowedRanks(), currentUser);
+        return CmsPageAccessControl.canView(page.visibleToGuests(), page.allowedRanks(), currentUser);
     }
 
     /**
@@ -75,7 +75,7 @@ public final class PageService {
      * @return true when login is required
      */
     public boolean publishedPageRequiresLogin(CmsPage page) {
-        return CmsPageAccessControl.requiresLogin(page.publishedVisibleToGuests());
+        return CmsPageAccessControl.requiresLogin(page.visibleToGuests());
     }
 
     /**

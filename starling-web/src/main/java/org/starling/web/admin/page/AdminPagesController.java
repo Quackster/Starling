@@ -142,16 +142,16 @@ public final class AdminPagesController {
 
     private void save(Context context, Integer id) {
         int pageId = pageService.saveDraft(id, PageDraftRequest.from(context, habbletCatalog, layoutCodec).toDraft());
-        Htmx.redirect(context, "/admin/pages/" + pageId + "/edit?notice=Draft%20saved");
+        Htmx.redirect(context, "/admin/pages/" + pageId + "/edit?notice=Page%20saved");
     }
 
     private void addHabbletEditorModel(Map<String, Object> model, CmsPage page) {
         List<CmsPageHabbletPlacement> placements = page == null
                 ? List.of()
-                : layoutCodec.fromJson(page.draftLayoutJson());
+                : layoutCodec.fromJson(page.layoutJson());
         Set<Integer> selectedRanks = page == null
                 ? Set.of()
-                : Set.copyOf(org.starling.web.cms.page.CmsPageAccessControl.allowedRanks(page.draftAllowedRanks()));
+                : Set.copyOf(org.starling.web.cms.page.CmsPageAccessControl.allowedRanks(page.allowedRanks()));
 
         model.put("ranks", List.of(1, 2, 3, 4, 5, 6, 7).stream()
                 .map(rank -> Map.of(
@@ -170,13 +170,13 @@ public final class AdminPagesController {
         List<CmsNavigationLinkDraft> subLinks = navigationService.listSubLinks();
         List<String> selectedMainLinkKeys = page == null
                 ? mainLinks.stream().map(CmsNavigationLinkDraft::key).toList()
-                : NavigationSelectionCodec.values(page.draftNavigationMainLinkKeys());
+                : NavigationSelectionCodec.values(page.navigationMainLinkKeys());
         List<String> selectedSubLinkTokens = page == null
                 ? List.of()
-                : NavigationSelectionCodec.values(page.draftNavigationSubLinkTokens());
-        String activeMainKey = page == null || page.draftNavigationMainKey().isBlank()
+                : NavigationSelectionCodec.values(page.navigationSubLinkTokens());
+        String activeMainKey = page == null || page.navigationMainKey().isBlank()
                 ? "community"
-                : page.draftNavigationMainKey();
+                : page.navigationMainKey();
 
         model.put("navigationMainKeyOptions", mainLinks.stream()
                 .map(link -> Map.of(

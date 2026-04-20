@@ -140,7 +140,8 @@ class StarlingWebIntegrationTest {
         assertTrue(HotCampaignDao.count() >= 2);
         assertTrue(MinimailDao.count() >= 1);
         assertTrue(CmsNavigationDao.countLinks() > 0);
-        assertTrue(CmsPageDao.findPublishedBySlug("home").isPresent());
+        assertTrue(CmsPageDao.listAll().stream().anyMatch(page -> page.slug().equals("home") && !page.published()));
+        assertFalse(CmsPageDao.findPublishedBySlug("home").isPresent());
         assertTrue(CmsArticleDao.findPublishedBySlug("welcome-to-starling").isPresent());
         assertTrue(indexExists("groups_details", "uk_groups_details_alias"));
         assertTrue(indexExists("cms_pages", "uk_cms_pages_slug"));
@@ -1316,6 +1317,13 @@ class StarlingWebIntegrationTest {
                 .findFirst()
                 .orElseThrow()
                 .id();
+
+        HttpResponse<String> unpublishedPageResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/page/" + slug)).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertEquals(404, unpublishedPageResponse.statusCode());
 
         HttpResponse<String> publishResponse = postForm("/admin/pages/" + pageId + "/publish", Map.of(), Map.of());
         assertEquals(200, publishResponse.statusCode());

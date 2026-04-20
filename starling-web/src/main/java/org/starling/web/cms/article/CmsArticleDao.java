@@ -90,13 +90,11 @@ public final class CmsArticleDao {
             if (id == null) {
                 CmsArticleEntity article = new CmsArticleEntity();
                 article.setSlug(draft.slug());
-                article.setDraftTitle(draft.title());
-                article.setDraftSummary(draft.summary());
-                article.setDraftMarkdown(draft.markdown());
-                article.setPublishedTitle("");
-                article.setPublishedSummary("");
-                article.setPublishedMarkdown("");
+                article.setTitle(draft.title());
+                article.setSummary(draft.summary());
+                article.setMarkdown(draft.markdown());
                 article.setIsPublished(0);
+                article.setScheduledPublishAt(draft.scheduledPublishAt());
                 article.setPublishedAt(null);
                 article.setCreatedAt(now);
                 article.setUpdatedAt(now);
@@ -113,9 +111,10 @@ public final class CmsArticleDao {
             }
 
             article.setSlug(draft.slug());
-            article.setDraftTitle(draft.title());
-            article.setDraftSummary(draft.summary());
-            article.setDraftMarkdown(draft.markdown());
+            article.setTitle(draft.title());
+            article.setSummary(draft.summary());
+            article.setMarkdown(draft.markdown());
+            article.setScheduledPublishAt(draft.scheduledPublishAt());
             article.setUpdatedAt(now);
             context.update(article);
             return id;
@@ -137,10 +136,8 @@ public final class CmsArticleDao {
             }
 
             Timestamp now = Timestamp.from(Instant.now());
-            article.setPublishedTitle(article.getDraftTitle());
-            article.setPublishedSummary(article.getDraftSummary());
-            article.setPublishedMarkdown(article.getDraftMarkdown());
             article.setIsPublished(1);
+            article.setScheduledPublishAt(null);
             article.setPublishedAt(now);
             article.setUpdatedAt(now);
             context.update(article);
@@ -173,16 +170,18 @@ public final class CmsArticleDao {
         return new CmsArticle(
                 article.getId(),
                 article.getSlug(),
-                article.getDraftTitle(),
-                article.getDraftSummary(),
-                article.getDraftMarkdown(),
-                article.getPublishedTitle(),
-                article.getPublishedSummary(),
-                article.getPublishedMarkdown(),
+                safeValue(article.getTitle()),
+                safeValue(article.getSummary()),
+                safeValue(article.getMarkdown()),
                 article.getIsPublished() == 1,
+                article.getScheduledPublishAt(),
                 article.getPublishedAt(),
                 article.getCreatedAt(),
                 article.getUpdatedAt()
         );
+    }
+
+    private static String safeValue(String value) {
+        return value == null ? "" : value;
     }
 }

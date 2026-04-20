@@ -1,7 +1,7 @@
 <section class="admin-toolbar">
     <div>
         <h1>{% if isNew %}New Page{% else %}Edit Page{% endif %}</h1>
-        <p>Drafts stay private until you publish them, including layout and access changes.</p>
+        <p>Unpublished pages stay private until you publish them, including layout and access changes.</p>
     </div>
     <a class="button-secondary" href="/admin/pages">Back to Pages</a>
 </section>
@@ -149,7 +149,7 @@
             {% endfor %}
         </section>
         <div class="button-row">
-            <button type="submit" class="button-primary">Save Draft</button>
+            <button type="submit" class="button-primary">Save Changes</button>
             {% if not isNew %}
                 <button type="button" class="button-secondary" hx-post="/admin/pages/{{ page.id }}/publish">Publish</button>
                 <button type="button" class="button-secondary" hx-post="/admin/pages/{{ page.id }}/unpublish">Unpublish</button>

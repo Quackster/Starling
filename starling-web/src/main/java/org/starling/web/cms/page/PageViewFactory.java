@@ -28,11 +28,11 @@ public final class PageViewFactory {
         return pageView(
                 page.id(),
                 page.slug(),
-                page.publishedTitle(),
-                page.publishedSummary(),
-                page.publishedMarkdown(),
-                page.publishedVisibleToGuests(),
-                page.publishedAllowedRanks(),
+                page.title(),
+                page.summary(),
+                page.markdown(),
+                page.visibleToGuests(),
+                page.allowedRanks(),
                 page.publishedAt()
         );
     }
@@ -46,11 +46,11 @@ public final class PageViewFactory {
         return pageView(
                 page.id(),
                 page.slug(),
-                page.draftTitle(),
-                page.draftSummary(),
-                page.draftMarkdown(),
-                page.draftVisibleToGuests(),
-                page.draftAllowedRanks(),
+                page.title(),
+                page.summary(),
+                page.markdown(),
+                page.visibleToGuests(),
+                page.allowedRanks(),
                 null
         );
     }
@@ -88,17 +88,15 @@ public final class PageViewFactory {
         Map<String, Object> view = new HashMap<>();
         view.put("id", page.id());
         view.put("slug", page.slug());
-        view.put("title", page.published() ? page.publishedTitle() : page.draftTitle());
-        view.put("summary", page.published() ? page.publishedSummary() : page.draftSummary());
+        view.put("title", page.title());
+        view.put("summary", page.summary());
         view.put("templateName", page.templateName());
         view.put("published", page.published());
         view.put("publishedAt", page.publishedAt());
         view.put("updatedAt", page.updatedAt());
-        boolean visibleToGuests = page.published() ? page.publishedVisibleToGuests() : page.draftVisibleToGuests();
-        String allowedRanks = page.published() ? page.publishedAllowedRanks() : page.draftAllowedRanks();
-        view.put("visibleToGuests", visibleToGuests);
-        view.put("allowedRanks", CmsPageAccessControl.allowedRanks(allowedRanks));
-        view.put("accessSummary", CmsPageAccessControl.summary(visibleToGuests, allowedRanks));
+        view.put("visibleToGuests", page.visibleToGuests());
+        view.put("allowedRanks", CmsPageAccessControl.allowedRanks(page.allowedRanks()));
+        view.put("accessSummary", CmsPageAccessControl.summary(page.visibleToGuests(), page.allowedRanks()));
         view.put("publicUrl", "/page/" + page.slug());
         return view;
     }
@@ -110,14 +108,14 @@ public final class PageViewFactory {
      */
     public Map<String, Object> pageEditor(CmsPage page) {
         Map<String, Object> view = pageSummary(page);
-        view.put("draftTitle", page.draftTitle());
-        view.put("draftSummary", page.draftSummary());
-        view.put("draftMarkdown", page.draftMarkdown());
-        view.put("draftVisibleToGuests", page.draftVisibleToGuests());
-        view.put("draftAllowedRanks", CmsPageAccessControl.allowedRanks(page.draftAllowedRanks()));
-        view.put("draftNavigationMainKey", page.draftNavigationMainKey());
-        view.put("draftNavigationMainLinkKeys", NavigationSelectionCodec.values(page.draftNavigationMainLinkKeys()));
-        view.put("draftNavigationSubLinkTokens", NavigationSelectionCodec.values(page.draftNavigationSubLinkTokens()));
+        view.put("draftTitle", page.title());
+        view.put("draftSummary", page.summary());
+        view.put("draftMarkdown", page.markdown());
+        view.put("draftVisibleToGuests", page.visibleToGuests());
+        view.put("draftAllowedRanks", CmsPageAccessControl.allowedRanks(page.allowedRanks()));
+        view.put("draftNavigationMainKey", page.navigationMainKey());
+        view.put("draftNavigationMainLinkKeys", NavigationSelectionCodec.values(page.navigationMainLinkKeys()));
+        view.put("draftNavigationSubLinkTokens", NavigationSelectionCodec.values(page.navigationSubLinkTokens()));
         return view;
     }
 

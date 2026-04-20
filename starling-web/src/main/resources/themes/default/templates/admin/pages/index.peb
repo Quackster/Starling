@@ -24,7 +24,7 @@
                 <td><a href="/admin/pages/{{ page.id }}/edit">{{ page.title }}</a></td>
                 <td>{{ page.slug }}</td>
                 <td>{{ page.accessSummary }}</td>
-                <td>{% if page.published %}Published{% else %}Draft{% endif %}</td>
+                <td>{% if page.published %}Published{% else %}Unpublished{% endif %}</td>
                 <td>{{ page.updatedAt }}</td>
                 <td>
                     <a href="/admin/pages/{{ page.id }}/edit">Edit</a>
