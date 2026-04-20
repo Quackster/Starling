@@ -1,15 +1,13 @@
 package org.starling.web.cms.page;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import org.starling.json.GsonSupport;
 
 import java.lang.reflect.Type;
 import java.util.List;
 
 public final class CmsPageLayoutCodec {
 
-    private static final Gson GSON = new Gson();
-    private static final Type PLACEMENT_LIST_TYPE = new TypeToken<List<CmsPageHabbletPlacement>>() {}.getType();
+    private static final Type PLACEMENT_LIST_TYPE = GsonSupport.listType(CmsPageHabbletPlacement.class);
 
     /**
      * Parses placements from json.
@@ -23,7 +21,7 @@ public final class CmsPageLayoutCodec {
         }
 
         try {
-            List<CmsPageHabbletPlacement> placements = GSON.fromJson(normalized, PLACEMENT_LIST_TYPE);
+            List<CmsPageHabbletPlacement> placements = GsonSupport.fromJson(normalized, PLACEMENT_LIST_TYPE);
             return placements == null ? List.of() : placements;
         } catch (Exception ignored) {
             return List.of();
@@ -39,6 +37,6 @@ public final class CmsPageLayoutCodec {
         if (placements == null || placements.isEmpty()) {
             return "";
         }
-        return GSON.toJson(placements, PLACEMENT_LIST_TYPE);
+        return GsonSupport.toJson(placements, PLACEMENT_LIST_TYPE);
     }
 }

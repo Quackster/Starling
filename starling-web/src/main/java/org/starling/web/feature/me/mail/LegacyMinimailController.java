@@ -1,6 +1,7 @@
 package org.starling.web.feature.me.mail;
 
 import io.javalin.http.Context;
+import org.starling.json.GsonSupport;
 import org.starling.storage.entity.UserEntity;
 import org.starling.web.feature.me.MeAccess;
 import org.starling.web.render.TemplateRenderer;
@@ -17,7 +18,6 @@ public final class LegacyMinimailController {
     private final MinimailViewFactory minimailViewFactory;
     private final MinimailWriteService minimailWriteService;
     private final MinimailRecipientService minimailRecipientService;
-    private final LegacyMinimailJsonEncoder legacyMinimailJsonEncoder;
 
     /**
      * Creates a new LegacyMinimailController.
@@ -26,22 +26,19 @@ public final class LegacyMinimailController {
      * @param minimailViewFactory the minimail view factory
      * @param minimailWriteService the minimail write service
      * @param minimailRecipientService the minimail recipient service
-     * @param legacyMinimailJsonEncoder the legacy JSON encoder
      */
     public LegacyMinimailController(
             TemplateRenderer templateRenderer,
             MeAccess meAccess,
             MinimailViewFactory minimailViewFactory,
             MinimailWriteService minimailWriteService,
-            MinimailRecipientService minimailRecipientService,
-            LegacyMinimailJsonEncoder legacyMinimailJsonEncoder
+            MinimailRecipientService minimailRecipientService
     ) {
         this.templateRenderer = templateRenderer;
         this.meAccess = meAccess;
         this.minimailViewFactory = minimailViewFactory;
         this.minimailWriteService = minimailWriteService;
         this.minimailRecipientService = minimailRecipientService;
-        this.legacyMinimailJsonEncoder = legacyMinimailJsonEncoder;
     }
 
     /**
@@ -201,7 +198,7 @@ public final class LegacyMinimailController {
         }
 
         context.contentType("text/plain; charset=UTF-8");
-        context.result(legacyMinimailJsonEncoder.secureArray(minimailRecipientService.recipientOptions()));
+        context.result(GsonSupport.toLegacySecureJson(minimailRecipientService.recipientOptions()));
     }
 
     /**
@@ -318,7 +315,7 @@ public final class LegacyMinimailController {
     }
 
     private void jsonHeader(Context context, Map<String, Object> values) {
-        context.header("X-JSON", legacyMinimailJsonEncoder.object(values));
+        context.header("X-JSON", GsonSupport.toJson(values));
     }
 
     private void writeHtml(Context context, String html) {

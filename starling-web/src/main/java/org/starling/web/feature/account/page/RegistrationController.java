@@ -1,6 +1,7 @@
 package org.starling.web.feature.account.page;
 
 import io.javalin.http.Context;
+import org.starling.json.GsonSupport;
 import org.starling.storage.dao.UserDao;
 import org.starling.storage.entity.UserEntity;
 import org.starling.web.feature.me.referral.ReferralService;
@@ -123,7 +124,7 @@ public final class RegistrationController {
 
         context.header("X-JSON", error == null
                 ? "{}"
-                : "{\"registration_name\":\"" + escapeJson(error) + "\"}");
+                : GsonSupport.toJson(Map.of("registration_name", error)));
         context.result("");
     }
 
@@ -317,12 +318,6 @@ public final class RegistrationController {
             );
             default -> RegistrationErrors.none(captchaInvalid);
         };
-    }
-
-    private String escapeJson(String value) {
-        return value
-                .replace("\\", "\\\\")
-                .replace("\"", "\\\"");
     }
 
     private record RegistrationViewState(

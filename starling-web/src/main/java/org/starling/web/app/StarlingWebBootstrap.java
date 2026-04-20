@@ -53,7 +53,6 @@ import org.starling.web.feature.me.MeAccess;
 import org.starling.web.feature.me.campaign.HotCampaignService;
 import org.starling.web.feature.me.content.MePageContentFactory;
 import org.starling.web.feature.me.mail.LegacyMinimailController;
-import org.starling.web.feature.me.mail.LegacyMinimailJsonEncoder;
 import org.starling.web.feature.me.mail.MinimailController;
 import org.starling.web.feature.me.mail.MinimailRecipientService;
 import org.starling.web.feature.me.mail.MinimailSessionState;
@@ -146,7 +145,6 @@ public final class StarlingWebBootstrap {
         MinimailWriteService minimailWriteService = new MinimailWriteService(minimailRecipientService);
         MinimailViewFactory minimailViewFactory = new MinimailViewFactory(siteBranding, minimailRecipientService);
         MinimailSessionState minimailSessionState = new MinimailSessionState();
-        LegacyMinimailJsonEncoder legacyMinimailJsonEncoder = new LegacyMinimailJsonEncoder();
         ReferralService referralService = new ReferralService();
         UserTagService userTagService = new UserTagService();
         TagDirectoryService tagDirectoryService = new TagDirectoryService(userTagService);
@@ -218,7 +216,6 @@ public final class StarlingWebBootstrap {
                 minimailWriteService,
                 minimailViewFactory,
                 minimailSessionState,
-                legacyMinimailJsonEncoder,
                 referralService,
                 userTagService,
                 tagDirectoryService,
@@ -292,8 +289,7 @@ public final class StarlingWebBootstrap {
                 dependencies.meAccess(),
                 dependencies.minimailViewFactory(),
                 dependencies.minimailWriteService(),
-                dependencies.minimailRecipientService(),
-                dependencies.legacyMinimailJsonEncoder()
+                dependencies.minimailRecipientService()
         );
         NewsController newsController = new NewsController(
                 dependencies.templateRenderer(),

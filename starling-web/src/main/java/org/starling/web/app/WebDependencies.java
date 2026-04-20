@@ -15,7 +15,6 @@ import org.starling.web.feature.credits.view.CreditsPageContentFactory;
 import org.starling.web.feature.me.MeAccess;
 import org.starling.web.feature.me.campaign.HotCampaignService;
 import org.starling.web.feature.me.content.MePageContentFactory;
-import org.starling.web.feature.me.mail.LegacyMinimailJsonEncoder;
 import org.starling.web.feature.me.mail.MinimailRecipientService;
 import org.starling.web.feature.me.mail.MinimailSessionState;
 import org.starling.web.feature.me.mail.MinimailViewFactory;
@@ -50,7 +49,6 @@ public record WebDependencies(
         MinimailWriteService minimailWriteService,
         MinimailViewFactory minimailViewFactory,
         MinimailSessionState minimailSessionState,
-        LegacyMinimailJsonEncoder legacyMinimailJsonEncoder,
         ReferralService referralService,
         UserTagService userTagService,
         TagDirectoryService tagDirectoryService,
