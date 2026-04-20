@@ -118,13 +118,10 @@ public final class PublicNavigationModelFactory {
         List<Map<String, Object>> visibleLinks = new ArrayList<>();
 
         for (NavigationLinkConfig link : links) {
-            if (!isVisible(link.visibleWhenLoggedIn(), link.visibleWhenLoggedOut(), loggedIn)) {
+            if (!isLinkVisible(link, loggedIn, currentUser)) {
                 continue;
             }
             if (rankId < link.minimumRank()) {
-                continue;
-            }
-            if (link.requiresAdminRole() && currentUser.map(UserEntity::isAdmin).orElse(false) == false) {
                 continue;
             }
             if (!link.requiredPermission().isBlank() && !permissionKeys.contains(link.requiredPermission())) {
@@ -172,6 +169,14 @@ public final class PublicNavigationModelFactory {
 
     private boolean isVisible(boolean visibleWhenLoggedIn, boolean visibleWhenLoggedOut, boolean loggedIn) {
         return loggedIn ? visibleWhenLoggedIn : visibleWhenLoggedOut;
+    }
+
+    private boolean isLinkVisible(NavigationLinkConfig link, boolean loggedIn, Optional<UserEntity> currentUser) {
+        if (link.requiresAdminRole()) {
+            return currentUser.map(UserEntity::isAdmin).orElse(false);
+        }
+
+        return isVisible(link.visibleWhenLoggedIn(), link.visibleWhenLoggedOut(), loggedIn);
     }
 
     private String resolveTokens(String value, Optional<UserEntity> currentUser) {

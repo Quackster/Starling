@@ -143,6 +143,14 @@ class StarlingWebIntegrationTest {
         assertTrue(HotCampaignDao.count() >= 2);
         assertTrue(MinimailDao.count() >= 1);
         assertTrue(CmsNavigationDao.countLinks() > 0);
+        assertFalse(mainNavigationLink("register").visibleWhenLoggedIn());
+        assertTrue(mainNavigationLink("register").visibleWhenLoggedOut());
+        assertTrue(mainNavigationLink("me").visibleWhenLoggedIn());
+        assertFalse(mainNavigationLink("me").visibleWhenLoggedOut());
+        assertFalse(buttonByKey(CmsNavigationService.BUTTON_GUEST_HOTEL).visibleWhenLoggedIn());
+        assertTrue(buttonByKey(CmsNavigationService.BUTTON_GUEST_HOTEL).visibleWhenLoggedOut());
+        assertTrue(buttonByKey(CmsNavigationService.BUTTON_USER_HOTEL).visibleWhenLoggedIn());
+        assertFalse(buttonByKey(CmsNavigationService.BUTTON_USER_HOTEL).visibleWhenLoggedOut());
         assertTrue(CmsPageDao.listAll().stream().anyMatch(page -> page.slug().equals("home") && !page.published()));
         assertFalse(CmsPageDao.findPublishedBySlug("home").isPresent());
         assertTrue(CmsArticleDao.findPublishedBySlug("welcome-to-starling").isPresent());
@@ -1499,6 +1507,76 @@ class StarlingWebIntegrationTest {
         postForm("/admin/navigation", navigationForm(originalLinks, originalButtons), Map.of());
     }
 
+    @Test
+    void navigationAudienceSettingsControlPublicVisibility() throws Exception {
+        List<CmsNavigationLinkDraft> originalLinks = CmsNavigationDao.listLinks();
+        List<CmsNavigationButtonDraft> originalButtons = CmsNavigationDao.listButtons();
+        List<CmsNavigationLinkDraft> mainLinks = originalLinks.stream()
+                .filter(link -> CmsNavigationService.MENU_MAIN.equals(link.menuType()))
+                .toList();
+
+        String username = "navmember" + UUID.randomUUID().toString().substring(0, 6);
+        UserDao.save(UserEntity.createRegisteredUser(
+                username,
+                "Password1",
+                "hr-100-61.hd-180-2.ch-210-92.lg-270-82.sh-290-64",
+                "M",
+                username + "@example.com"
+        ));
+
+        int communityIndex = indexOfLink(mainLinks, "community");
+        String prefix = "main_" + communityIndex + "_";
+        String audienceLabel = "Audience " + UUID.randomUUID().toString().substring(0, 8);
+        Map<String, String> form = navigationForm(originalLinks, originalButtons);
+        form.put(prefix + "label", audienceLabel);
+
+        login();
+        try {
+            HttpClient guestClient = newClient();
+            HttpClient memberClient = loggedInClient(username, "Password1");
+
+            form.remove(prefix + "requiresAdminRole");
+            form.remove(prefix + "visibleWhenLoggedIn");
+            form.put(prefix + "visibleWhenLoggedOut", "on");
+            HttpResponse<String> signedOutOnlySaveResponse = postForm("/admin/navigation", form, Map.of());
+            assertEquals(200, signedOutOnlySaveResponse.statusCode());
+            assertTrue(
+                    signedOutOnlySaveResponse.uri().toString().contains("/admin/navigation"),
+                    signedOutOnlySaveResponse.uri().toString()
+            );
+            CmsNavigationLinkDraft signedOutLink = CmsNavigationDao.listLinks().stream()
+                    .filter(link -> CmsNavigationService.MENU_MAIN.equals(link.menuType()) && link.key().equals("community"))
+                    .findFirst()
+                    .orElseThrow();
+            assertEquals(audienceLabel, signedOutLink.label());
+            assertFalse(signedOutLink.visibleWhenLoggedIn());
+            assertTrue(signedOutLink.visibleWhenLoggedOut());
+
+            HttpResponse<String> guestSignedOutOnlyResponse = get(guestClient, "/community");
+            HttpResponse<String> memberSignedOutOnlyResponse = get(memberClient, "/community");
+            assertEquals(200, guestSignedOutOnlyResponse.statusCode());
+            assertEquals(200, memberSignedOutOnlyResponse.statusCode());
+            assertTrue(guestSignedOutOnlyResponse.body().contains(audienceLabel));
+            assertFalse(memberSignedOutOnlyResponse.body().contains(audienceLabel));
+
+            form.put(prefix + "visibleWhenLoggedIn", "on");
+            form.remove(prefix + "visibleWhenLoggedOut");
+            assertEquals(200, postForm("/admin/navigation", form, Map.of()).statusCode());
+            assertFalse(get(guestClient, "/community").body().contains(audienceLabel));
+            assertTrue(get(memberClient, "/community").body().contains(audienceLabel));
+
+            form.remove(prefix + "visibleWhenLoggedIn");
+            form.remove(prefix + "visibleWhenLoggedOut");
+            form.put(prefix + "requiresAdminRole", "on");
+            assertEquals(200, postForm("/admin/navigation", form, Map.of()).statusCode());
+            assertFalse(get(guestClient, "/community").body().contains(audienceLabel));
+            assertFalse(get(memberClient, "/community").body().contains(audienceLabel));
+            assertTrue(get(client, "/community").body().contains(audienceLabel));
+        } finally {
+            postForm("/admin/navigation", navigationForm(originalLinks, originalButtons), Map.of());
+        }
+    }
+
     private HttpClient newClient() {
         return HttpClient.newBuilder()
                 .cookieHandler(new CookieManager())
@@ -1507,13 +1585,31 @@ class StarlingWebIntegrationTest {
     }
 
     private void login() throws Exception {
+        login(client, "admin", "admin");
+    }
+
+    private HttpClient loggedInClient(String username, String password) throws Exception {
+        HttpClient loggedInClient = newClient();
+        login(loggedInClient, username, password);
+        return loggedInClient;
+    }
+
+    private void login(HttpClient httpClient, String username, String password) throws Exception {
         HttpResponse<String> response = postForm(
+                httpClient,
                 "/account/submit",
-                Map.of("username", "admin", "password", "admin"),
+                Map.of("username", username, "password", password),
                 Map.of()
         );
         assertEquals(200, response.statusCode());
         assertTrue(response.uri().toString().endsWith("/me"));
+    }
+
+    private HttpResponse<String> get(HttpClient httpClient, String path) throws Exception {
+        return httpClient.send(
+                HttpRequest.newBuilder(baseUri.resolve(path)).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
     }
 
     private HttpResponse<String> postForm(String path, Map<String, String> form, Map<String, String> headers) throws Exception {
@@ -1650,6 +1746,20 @@ class StarlingWebIntegrationTest {
             }
         }
         throw new IllegalArgumentException("Missing navigation sub link " + groupKey + "::" + key);
+    }
+
+    private CmsNavigationLinkDraft mainNavigationLink(String key) {
+        return CmsNavigationDao.listLinks().stream()
+                .filter(link -> CmsNavigationService.MENU_MAIN.equals(link.menuType()) && link.key().equals(key))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Missing main navigation link " + key));
+    }
+
+    private CmsNavigationButtonDraft buttonByKey(String key) {
+        return CmsNavigationDao.listButtons().stream()
+                .filter(button -> button.key().equals(key))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Missing navigation button " + key));
     }
 
     private boolean indexExists(String tableName, String indexName) {

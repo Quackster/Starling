@@ -41,6 +41,7 @@ public final class CmsSchemaBootstrap {
                 );
                 ensureCmsPageColumns(context.conn());
                 ensureCmsArticleColumns(context.conn());
+                ensureNavigationColumns(context.conn());
                 migrateLegacyCmsPages(context.conn());
                 migrateLegacyCmsArticles(context.conn());
                 context.from(CmsPageEntity.class)
@@ -87,6 +88,14 @@ public final class CmsSchemaBootstrap {
         DatabaseSupport.ensureColumn(connection, "cms_articles", column("summary", "TEXT").notNull().defaultValue(""), "title");
         DatabaseSupport.ensureColumn(connection, "cms_articles", column("markdown", "LONGTEXT").notNull().defaultValue(""), "summary");
         DatabaseSupport.ensureColumn(connection, "cms_articles", column("scheduled_publish_at", "TIMESTAMP"), "is_published");
+    }
+
+    private static void ensureNavigationColumns(Connection connection) {
+        DatabaseSupport.modifyColumn(connection, "cms_navigation_links", column("visible_when_logged_in", "INT").notNull().defaultValue(0));
+        DatabaseSupport.modifyColumn(connection, "cms_navigation_links", column("visible_when_logged_out", "INT").notNull().defaultValue(0));
+        DatabaseSupport.modifyColumn(connection, "cms_navigation_links", column("requires_admin_role", "INT").notNull().defaultValue(0));
+        DatabaseSupport.modifyColumn(connection, "cms_navigation_buttons", column("visible_when_logged_in", "INT").notNull().defaultValue(0));
+        DatabaseSupport.modifyColumn(connection, "cms_navigation_buttons", column("visible_when_logged_out", "INT").notNull().defaultValue(0));
     }
 
     private static void migrateLegacyCmsPages(Connection connection) throws Exception {

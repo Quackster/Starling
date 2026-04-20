@@ -116,7 +116,7 @@
                             </label>
                             <label class="checkbox-card nav-toggle-card">
                                 <input type="checkbox" name="main_{{ link.index }}_requiresAdminRole"{% if link.requiresAdminRole %} checked{% endif %}>
-                                <span>Admins only <small>Hide this tab unless the viewer has an admin role.</small></span>
+                                <span>Admins only <small>Hide this tab unless the viewer has an admin role. Admin tabs still show for admins even if the signed-in toggle is off.</small></span>
                             </label>
                         </div>
 
@@ -245,7 +245,7 @@
                                         </label>
                                         <label class="checkbox-card nav-toggle-card">
                                             <input type="checkbox" name="sub_{{ link.index }}_requiresAdminRole"{% if link.requiresAdminRole %} checked{% endif %}>
-                                            <span>Admins only <small>Limit this entry to admin users even inside a shared group.</small></span>
+                                            <span>Admins only <small>Limit this entry to admin users even inside a shared group. Admin links still show for admins even if the signed-in toggle is off.</small></span>
                                         </label>
                                     </div>
 

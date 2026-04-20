@@ -28,11 +28,11 @@ public class CmsNavigationLinkEntity {
     @Column(name = "selected_keys", nullable = false, length = 255, defaultValue = "''")
     private String selectedKeys = "";
 
-    @Column(name = "visible_when_logged_in", nullable = false, defaultValue = "1")
-    private int visibleWhenLoggedIn = 1;
+    @Column(name = "visible_when_logged_in", nullable = false, defaultValue = "0")
+    private int visibleWhenLoggedIn = 0;
 
-    @Column(name = "visible_when_logged_out", nullable = false, defaultValue = "1")
-    private int visibleWhenLoggedOut = 1;
+    @Column(name = "visible_when_logged_out", nullable = false, defaultValue = "0")
+    private int visibleWhenLoggedOut = 0;
 
     @Column(name = "css_id", nullable = false, length = 80, defaultValue = "''")
     private String cssId = "";
