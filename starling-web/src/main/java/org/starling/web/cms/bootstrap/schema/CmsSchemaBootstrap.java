@@ -37,15 +37,33 @@ public final class CmsSchemaBootstrap {
                 DatabaseSupport.ensureColumn(context.conn(), "cms_pages", column("draft_visible_to_guests", "INT").notNull().defaultValue(1), "published_markdown");
                 DatabaseSupport.ensureColumn(context.conn(), "cms_pages", column("draft_allowed_ranks", "VARCHAR(64)").notNull().defaultValue(""), "draft_visible_to_guests");
                 DatabaseSupport.ensureColumn(context.conn(), "cms_pages", column("draft_layout_json", "LONGTEXT"), "draft_allowed_ranks");
+                DatabaseSupport.ensureColumn(context.conn(), "cms_pages", column("draft_navigation_main_key", "VARCHAR(80)").notNull().defaultValue("community"), "draft_layout_json");
+                DatabaseSupport.ensureColumn(context.conn(), "cms_pages", column("draft_navigation_main_link_keys", "TEXT"), "draft_navigation_main_key");
+                DatabaseSupport.ensureColumn(context.conn(), "cms_pages", column("draft_navigation_sub_link_tokens", "TEXT"), "draft_navigation_main_link_keys");
                 DatabaseSupport.ensureColumn(context.conn(), "cms_pages", column("published_visible_to_guests", "INT").notNull().defaultValue(1), "draft_layout_json");
                 DatabaseSupport.ensureColumn(context.conn(), "cms_pages", column("published_allowed_ranks", "VARCHAR(64)").notNull().defaultValue(""), "published_visible_to_guests");
                 DatabaseSupport.ensureColumn(context.conn(), "cms_pages", column("published_layout_json", "LONGTEXT"), "published_allowed_ranks");
+                DatabaseSupport.ensureColumn(context.conn(), "cms_pages", column("published_navigation_main_key", "VARCHAR(80)").notNull().defaultValue("community"), "published_layout_json");
+                DatabaseSupport.ensureColumn(context.conn(), "cms_pages", column("published_navigation_main_link_keys", "TEXT"), "published_navigation_main_key");
+                DatabaseSupport.ensureColumn(context.conn(), "cms_pages", column("published_navigation_sub_link_tokens", "TEXT"), "published_navigation_main_link_keys");
                 context.from(CmsPageEntity.class)
                         .filter(filter -> filter.isNull(CmsPageEntity::getDraftLayoutJson))
                         .update(setter -> setter.set(CmsPageEntity::getDraftLayoutJson, ""));
                 context.from(CmsPageEntity.class)
+                        .filter(filter -> filter.isNull(CmsPageEntity::getDraftNavigationMainLinkKeys))
+                        .update(setter -> setter.set(CmsPageEntity::getDraftNavigationMainLinkKeys, ""));
+                context.from(CmsPageEntity.class)
+                        .filter(filter -> filter.isNull(CmsPageEntity::getDraftNavigationSubLinkTokens))
+                        .update(setter -> setter.set(CmsPageEntity::getDraftNavigationSubLinkTokens, ""));
+                context.from(CmsPageEntity.class)
                         .filter(filter -> filter.isNull(CmsPageEntity::getPublishedLayoutJson))
                         .update(setter -> setter.set(CmsPageEntity::getPublishedLayoutJson, ""));
+                context.from(CmsPageEntity.class)
+                        .filter(filter -> filter.isNull(CmsPageEntity::getPublishedNavigationMainLinkKeys))
+                        .update(setter -> setter.set(CmsPageEntity::getPublishedNavigationMainLinkKeys, ""));
+                context.from(CmsPageEntity.class)
+                        .filter(filter -> filter.isNull(CmsPageEntity::getPublishedNavigationSubLinkTokens))
+                        .update(setter -> setter.set(CmsPageEntity::getPublishedNavigationSubLinkTokens, ""));
                 DatabaseSupport.ensureUniqueIndex(context.conn(), "cms_admin_users", "uk_cms_admin_users_email", "email");
                 DatabaseSupport.ensureUniqueIndex(context.conn(), "cms_pages", "uk_cms_pages_slug", "slug");
                 DatabaseSupport.ensureUniqueIndex(context.conn(), "cms_articles", "uk_cms_articles_slug", "slug");

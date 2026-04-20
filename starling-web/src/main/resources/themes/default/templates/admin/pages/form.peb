@@ -79,6 +79,45 @@
             </table>
         </section>
         <section class="admin-card">
+            <h2>Navigation</h2>
+            <p>Pick which global navigation links should appear on this page. These menus are separate from habblets.</p>
+            <label>
+                <span>Active Main Navigation Tab</span>
+                <select name="navigationMainKey">
+                    {% for option in navigationMainKeyOptions %}
+                        <option value="{{ option.key }}"{% if option.selected %} selected{% endif %}>{{ option.label }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <div class="stack-form">
+                <span>Main Navigation Links</span>
+                <div class="checkbox-grid">
+                    {% for link in navigationMainLinks %}
+                        <label class="checkbox-row">
+                            <input type="checkbox" name="navigationMainLinkKey" value="{{ link.key }}"{% if link.selected %} checked{% endif %}>
+                            <span>{{ link.label }} <small>({{ link.href }})</small></span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="stack-form">
+                <span>Sub Navigation Links</span>
+                {% for group in navigationSubGroups %}
+                    <div class="stack-form">
+                        <strong>{{ group.groupKey }}</strong>
+                        <div class="checkbox-grid">
+                            {% for link in group.links %}
+                                <label class="checkbox-row">
+                                    <input type="checkbox" name="navigationSubLinkToken" value="{{ link.token }}"{% if link.selected %} checked{% endif %}>
+                                    <span>{{ link.label }} <small>({{ link.href }})</small></span>
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+        <section class="admin-card">
             <h2>Custom Text Habblets</h2>
             <p>Add extra text panels anywhere on the page. These render as markdown.</p>
             <input type="hidden" name="customTextSlotCount" value="{{ customTextSlots | length }}">

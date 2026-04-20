@@ -9,11 +9,15 @@ import org.starling.web.cms.page.CmsPageLayoutCodec;
 import org.starling.web.cms.page.CmsPagePublicRenderer;
 import org.starling.web.cms.page.PageService;
 import org.starling.web.cms.page.PageViewFactory;
+import org.starling.web.feature.shared.page.navigation.CmsNavigationLinkDraft;
+import org.starling.web.feature.shared.page.navigation.CmsNavigationService;
+import org.starling.web.feature.shared.page.navigation.NavigationSelectionCodec;
 import org.starling.web.render.TemplateRenderer;
 import org.starling.web.util.Htmx;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,6 +31,7 @@ public final class AdminPagesController {
     private final CmsPageHabbletCatalog habbletCatalog;
     private final CmsPageLayoutCodec layoutCodec;
     private final CmsPagePublicRenderer pagePublicRenderer;
+    private final CmsNavigationService navigationService;
 
     /**
      * Creates a new AdminPagesController.
@@ -42,7 +47,8 @@ public final class AdminPagesController {
             PageViewFactory pageViewFactory,
             CmsPageHabbletCatalog habbletCatalog,
             CmsPageLayoutCodec layoutCodec,
-            CmsPagePublicRenderer pagePublicRenderer
+            CmsPagePublicRenderer pagePublicRenderer,
+            CmsNavigationService navigationService
     ) {
         this.templateRenderer = templateRenderer;
         this.adminPageModelFactory = adminPageModelFactory;
@@ -51,6 +57,7 @@ public final class AdminPagesController {
         this.habbletCatalog = habbletCatalog;
         this.layoutCodec = layoutCodec;
         this.pagePublicRenderer = pagePublicRenderer;
+        this.navigationService = navigationService;
     }
 
     /**
@@ -128,6 +135,7 @@ public final class AdminPagesController {
         Map<String, Object> model = adminPageModelFactory.create(context, "/admin/pages");
         model.put("page", page == null ? pageViewFactory.blankPage() : pageViewFactory.pageEditor(page));
         addHabbletEditorModel(model, page);
+        addNavigationEditorModel(model, page);
         model.put("isNew", page == null);
         context.html(templateRenderer.render("admin-layout", "admin/pages/form", model));
     }
@@ -155,6 +163,37 @@ public final class AdminPagesController {
                 .map(definition -> availableHabbletView(definition, placements))
                 .toList());
         model.put("customTextSlots", customTextSlots(placements));
+    }
+
+    private void addNavigationEditorModel(Map<String, Object> model, CmsPage page) {
+        List<CmsNavigationLinkDraft> mainLinks = navigationService.listMainLinks();
+        List<CmsNavigationLinkDraft> subLinks = navigationService.listSubLinks();
+        List<String> selectedMainLinkKeys = page == null
+                ? mainLinks.stream().map(CmsNavigationLinkDraft::key).toList()
+                : NavigationSelectionCodec.values(page.draftNavigationMainLinkKeys());
+        List<String> selectedSubLinkTokens = page == null
+                ? List.of()
+                : NavigationSelectionCodec.values(page.draftNavigationSubLinkTokens());
+        String activeMainKey = page == null || page.draftNavigationMainKey().isBlank()
+                ? "community"
+                : page.draftNavigationMainKey();
+
+        model.put("navigationMainKeyOptions", mainLinks.stream()
+                .map(link -> Map.of(
+                        "key", link.key(),
+                        "label", link.label(),
+                        "selected", link.key().equals(activeMainKey)
+                ))
+                .toList());
+        model.put("navigationMainLinks", mainLinks.stream()
+                .map(link -> Map.of(
+                        "key", link.key(),
+                        "label", link.label(),
+                        "href", link.href(),
+                        "selected", selectedMainLinkKeys.contains(link.key())
+                ))
+                .toList());
+        model.put("navigationSubGroups", subLinkGroups(subLinks, selectedSubLinkTokens));
     }
 
     private Map<String, Object> availableHabbletView(
@@ -196,5 +235,27 @@ public final class AdminPagesController {
             ));
         }
         return slots;
+    }
+
+    private List<Map<String, Object>> subLinkGroups(List<CmsNavigationLinkDraft> subLinks, List<String> selectedSubLinkTokens) {
+        Map<String, List<Map<String, Object>>> groups = new LinkedHashMap<>();
+        for (CmsNavigationLinkDraft link : subLinks) {
+            String token = NavigationSelectionCodec.subLinkToken(link.groupKey(), link.key());
+            groups.computeIfAbsent(link.groupKey(), ignored -> new ArrayList<>())
+                    .add(Map.of(
+                            "token", token,
+                            "key", link.key(),
+                            "label", link.label(),
+                            "href", link.href(),
+                            "selected", selectedSubLinkTokens.contains(token)
+                    ));
+        }
+
+        return groups.entrySet().stream()
+                .map(entry -> Map.of(
+                        "groupKey", entry.getKey(),
+                        "links", entry.getValue()
+                ))
+                .toList();
     }
 }

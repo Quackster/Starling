@@ -45,6 +45,15 @@ public class CmsPageEntity {
     @Column(name = "draft_layout_json", type = "LONGTEXT")
     private String draftLayoutJson = "";
 
+    @Column(name = "draft_navigation_main_key", nullable = false, length = 80, defaultValue = "'community'")
+    private String draftNavigationMainKey = "community";
+
+    @Column(name = "draft_navigation_main_link_keys", nullable = false, type = "TEXT", defaultValue = "''")
+    private String draftNavigationMainLinkKeys = "";
+
+    @Column(name = "draft_navigation_sub_link_tokens", nullable = false, type = "TEXT", defaultValue = "''")
+    private String draftNavigationSubLinkTokens = "";
+
     @Column(name = "published_visible_to_guests", nullable = false, defaultValue = "1")
     private int publishedVisibleToGuests = 1;
 
@@ -53,6 +62,15 @@ public class CmsPageEntity {
 
     @Column(name = "published_layout_json", type = "LONGTEXT")
     private String publishedLayoutJson = "";
+
+    @Column(name = "published_navigation_main_key", nullable = false, length = 80, defaultValue = "'community'")
+    private String publishedNavigationMainKey = "community";
+
+    @Column(name = "published_navigation_main_link_keys", nullable = false, type = "TEXT", defaultValue = "''")
+    private String publishedNavigationMainLinkKeys = "";
+
+    @Column(name = "published_navigation_sub_link_tokens", nullable = false, type = "TEXT", defaultValue = "''")
+    private String publishedNavigationSubLinkTokens = "";
 
     @Column(name = "is_published", nullable = false, defaultValue = "0")
     private int isPublished;
@@ -78,9 +96,15 @@ public class CmsPageEntity {
     public int getDraftVisibleToGuests() { return draftVisibleToGuests; }
     public String getDraftAllowedRanks() { return draftAllowedRanks; }
     public String getDraftLayoutJson() { return draftLayoutJson; }
+    public String getDraftNavigationMainKey() { return draftNavigationMainKey; }
+    public String getDraftNavigationMainLinkKeys() { return draftNavigationMainLinkKeys; }
+    public String getDraftNavigationSubLinkTokens() { return draftNavigationSubLinkTokens; }
     public int getPublishedVisibleToGuests() { return publishedVisibleToGuests; }
     public String getPublishedAllowedRanks() { return publishedAllowedRanks; }
     public String getPublishedLayoutJson() { return publishedLayoutJson; }
+    public String getPublishedNavigationMainKey() { return publishedNavigationMainKey; }
+    public String getPublishedNavigationMainLinkKeys() { return publishedNavigationMainLinkKeys; }
+    public String getPublishedNavigationSubLinkTokens() { return publishedNavigationSubLinkTokens; }
     public int getIsPublished() { return isPublished; }
     public Timestamp getPublishedAt() { return publishedAt; }
     public Timestamp getCreatedAt() { return createdAt; }
@@ -97,9 +121,15 @@ public class CmsPageEntity {
     public void setDraftVisibleToGuests(int draftVisibleToGuests) { this.draftVisibleToGuests = draftVisibleToGuests; }
     public void setDraftAllowedRanks(String draftAllowedRanks) { this.draftAllowedRanks = draftAllowedRanks; }
     public void setDraftLayoutJson(String draftLayoutJson) { this.draftLayoutJson = draftLayoutJson; }
+    public void setDraftNavigationMainKey(String draftNavigationMainKey) { this.draftNavigationMainKey = draftNavigationMainKey; }
+    public void setDraftNavigationMainLinkKeys(String draftNavigationMainLinkKeys) { this.draftNavigationMainLinkKeys = draftNavigationMainLinkKeys; }
+    public void setDraftNavigationSubLinkTokens(String draftNavigationSubLinkTokens) { this.draftNavigationSubLinkTokens = draftNavigationSubLinkTokens; }
     public void setPublishedVisibleToGuests(int publishedVisibleToGuests) { this.publishedVisibleToGuests = publishedVisibleToGuests; }
     public void setPublishedAllowedRanks(String publishedAllowedRanks) { this.publishedAllowedRanks = publishedAllowedRanks; }
     public void setPublishedLayoutJson(String publishedLayoutJson) { this.publishedLayoutJson = publishedLayoutJson; }
+    public void setPublishedNavigationMainKey(String publishedNavigationMainKey) { this.publishedNavigationMainKey = publishedNavigationMainKey; }
+    public void setPublishedNavigationMainLinkKeys(String publishedNavigationMainLinkKeys) { this.publishedNavigationMainLinkKeys = publishedNavigationMainLinkKeys; }
+    public void setPublishedNavigationSubLinkTokens(String publishedNavigationSubLinkTokens) { this.publishedNavigationSubLinkTokens = publishedNavigationSubLinkTokens; }
     public void setIsPublished(int isPublished) { this.isPublished = isPublished; }
     public void setPublishedAt(Timestamp publishedAt) { this.publishedAt = publishedAt; }
     public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }

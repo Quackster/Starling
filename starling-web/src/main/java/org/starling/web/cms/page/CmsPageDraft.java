@@ -8,6 +8,9 @@ public record CmsPageDraft(
         String markdown,
         boolean visibleToGuests,
         String allowedRanks,
-        String layoutJson
+        String layoutJson,
+        String navigationMainKey,
+        String navigationMainLinkKeys,
+        String navigationSubLinkTokens
 ) {
 }

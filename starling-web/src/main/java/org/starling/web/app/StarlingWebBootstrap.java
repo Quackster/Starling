@@ -196,6 +196,7 @@ public final class StarlingWebBootstrap {
                 communityWidgetsFactory,
                 newsPromoContentFactory,
                 creditsPageContentFactory,
+                cmsNavigationService,
                 publicNavigationModelFactory,
                 publicPageLayoutRenderer,
                 publicPageModelFactory,
@@ -359,7 +360,8 @@ public final class StarlingWebBootstrap {
                 dependencies.pageViewFactory(),
                 dependencies.cmsPageHabbletCatalog(),
                 dependencies.cmsPageLayoutCodec(),
-                dependencies.cmsPagePublicRenderer()
+                dependencies.cmsPagePublicRenderer(),
+                dependencies.cmsNavigationService()
         );
         AdminArticlesController adminArticlesController = new AdminArticlesController(
                 dependencies.templateRenderer(),

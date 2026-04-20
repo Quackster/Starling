@@ -23,6 +23,7 @@ import org.starling.web.feature.me.mail.MinimailWriteService;
 import org.starling.web.feature.me.referral.ReferralService;
 import org.starling.web.feature.shared.page.PublicPageModelFactory;
 import org.starling.web.feature.shared.page.layout.PublicPageLayoutRenderer;
+import org.starling.web.feature.shared.page.navigation.CmsNavigationService;
 import org.starling.web.feature.shared.page.navigation.PublicNavigationModelFactory;
 import org.starling.web.feature.tag.service.TagDirectoryService;
 import org.starling.web.feature.tag.service.UserTagService;
@@ -56,6 +57,7 @@ public record WebDependencies(
         CommunityWidgetsFactory communityWidgetsFactory,
         NewsPromoContentFactory newsPromoContentFactory,
         CreditsPageContentFactory creditsPageContentFactory,
+        CmsNavigationService cmsNavigationService,
         PublicNavigationModelFactory publicNavigationModelFactory,
         PublicPageLayoutRenderer publicPageLayoutRenderer,
         PublicPageModelFactory publicPageModelFactory,

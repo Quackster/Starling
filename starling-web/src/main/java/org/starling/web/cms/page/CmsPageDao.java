@@ -81,12 +81,18 @@ public final class CmsPageDao {
                 page.setDraftVisibleToGuests(draft.visibleToGuests() ? 1 : 0);
                 page.setDraftAllowedRanks(draft.allowedRanks());
                 page.setDraftLayoutJson(draft.layoutJson());
+                page.setDraftNavigationMainKey(draft.navigationMainKey());
+                page.setDraftNavigationMainLinkKeys(draft.navigationMainLinkKeys());
+                page.setDraftNavigationSubLinkTokens(draft.navigationSubLinkTokens());
                 page.setPublishedTitle("");
                 page.setPublishedSummary("");
                 page.setPublishedMarkdown("");
                 page.setPublishedVisibleToGuests(1);
                 page.setPublishedAllowedRanks("");
                 page.setPublishedLayoutJson("");
+                page.setPublishedNavigationMainKey("community");
+                page.setPublishedNavigationMainLinkKeys("");
+                page.setPublishedNavigationSubLinkTokens("");
                 page.setIsPublished(0);
                 page.setPublishedAt(null);
                 page.setCreatedAt(now);
@@ -111,6 +117,9 @@ public final class CmsPageDao {
             page.setDraftVisibleToGuests(draft.visibleToGuests() ? 1 : 0);
             page.setDraftAllowedRanks(draft.allowedRanks());
             page.setDraftLayoutJson(draft.layoutJson());
+            page.setDraftNavigationMainKey(draft.navigationMainKey());
+            page.setDraftNavigationMainLinkKeys(draft.navigationMainLinkKeys());
+            page.setDraftNavigationSubLinkTokens(draft.navigationSubLinkTokens());
             page.setUpdatedAt(now);
             context.update(page);
             return id;
@@ -138,6 +147,9 @@ public final class CmsPageDao {
             page.setPublishedVisibleToGuests(page.getDraftVisibleToGuests());
             page.setPublishedAllowedRanks(page.getDraftAllowedRanks());
             page.setPublishedLayoutJson(page.getDraftLayoutJson());
+            page.setPublishedNavigationMainKey(page.getDraftNavigationMainKey());
+            page.setPublishedNavigationMainLinkKeys(page.getDraftNavigationMainLinkKeys());
+            page.setPublishedNavigationSubLinkTokens(page.getDraftNavigationSubLinkTokens());
             page.setIsPublished(1);
             page.setPublishedAt(now);
             page.setUpdatedAt(now);
@@ -181,9 +193,15 @@ public final class CmsPageDao {
                 page.getDraftVisibleToGuests() > 0,
                 safeValue(page.getDraftAllowedRanks()),
                 safeValue(page.getDraftLayoutJson()),
+                safeValue(page.getDraftNavigationMainKey()),
+                safeValue(page.getDraftNavigationMainLinkKeys()),
+                safeValue(page.getDraftNavigationSubLinkTokens()),
                 page.getPublishedVisibleToGuests() > 0,
                 safeValue(page.getPublishedAllowedRanks()),
                 safeValue(page.getPublishedLayoutJson()),
+                safeValue(page.getPublishedNavigationMainKey()),
+                safeValue(page.getPublishedNavigationMainLinkKeys()),
+                safeValue(page.getPublishedNavigationSubLinkTokens()),
                 page.getIsPublished() == 1,
                 page.getPublishedAt(),
                 page.getCreatedAt(),

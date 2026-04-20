@@ -43,7 +43,7 @@ public final class PublicPageModelFactory {
      * @return the resulting model
      */
     public Map<String, Object> create(Context context, String currentPage) {
-        return create(context, currentPage, null);
+        return create(context, currentPage, null, null, null);
     }
 
     /**
@@ -54,6 +54,25 @@ public final class PublicPageModelFactory {
      * @return the resulting model
      */
     public Map<String, Object> create(Context context, String currentMainPage, String currentSubPage) {
+        return create(context, currentMainPage, currentSubPage, null, null);
+    }
+
+    /**
+     * Builds the common public page model with optional navigation overrides.
+     * @param context the request context
+     * @param currentMainPage the current top-level page key
+     * @param currentSubPage the current sub navigation key, when present
+     * @param visibleMainLinkKeys the main links to render, or null for defaults
+     * @param visibleSubLinkTokens the sub links to render, or null for defaults
+     * @return the resulting model
+     */
+    public Map<String, Object> create(
+            Context context,
+            String currentMainPage,
+            String currentSubPage,
+            java.util.List<String> visibleMainLinkKeys,
+            java.util.List<String> visibleSubLinkTokens
+    ) {
         Map<String, Object> model = new HashMap<>();
         Optional<UserEntity> currentUser = userSessionService.authenticate(context);
 
@@ -74,7 +93,13 @@ public final class PublicPageModelFactory {
 
         model.put("site", site);
         model.put("session", session);
-        model.put("navigation", publicNavigationModelFactory.create(currentMainPage, currentSubPage, currentUser));
+        model.put("navigation", publicNavigationModelFactory.create(
+                currentMainPage,
+                currentSubPage,
+                currentUser,
+                visibleMainLinkKeys == null ? java.util.List.of() : visibleMainLinkKeys,
+                visibleSubLinkTokens == null ? java.util.List.of() : visibleSubLinkTokens
+        ));
         model.put("alert", alert);
         currentUser.ifPresent(user -> model.put("playerDetails", userViewModelFactory.create(user)));
         model.put("siteTitle", siteBranding.siteTitle());

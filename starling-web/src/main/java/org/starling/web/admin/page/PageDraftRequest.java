@@ -6,6 +6,7 @@ import org.starling.web.cms.page.CmsPageAccessControl;
 import org.starling.web.cms.page.CmsPageHabbletCatalog;
 import org.starling.web.cms.page.CmsPageHabbletPlacement;
 import org.starling.web.cms.page.CmsPageLayoutCodec;
+import org.starling.web.feature.shared.page.navigation.NavigationSelectionCodec;
 import org.starling.web.request.RequestValues;
 
 import java.util.ArrayList;
@@ -19,7 +20,10 @@ public record PageDraftRequest(
         String markdown,
         boolean visibleToGuests,
         List<Integer> allowedRanks,
-        String layoutJson
+        String layoutJson,
+        String navigationMainKey,
+        List<String> navigationMainLinkKeys,
+        List<String> navigationSubLinkTokens
 ) {
 
     /**
@@ -81,7 +85,10 @@ public record PageDraftRequest(
                 RequestValues.valueOrEmpty(context.formParam("markdown")),
                 visibleToGuests,
                 allowedRanks,
-                layoutCodec.toJson(placements)
+                layoutCodec.toJson(placements),
+                RequestValues.valueOrDefault(context.formParam("navigationMainKey"), "community"),
+                context.formParams("navigationMainLinkKey"),
+                context.formParams("navigationSubLinkToken")
         );
     }
 
@@ -98,7 +105,10 @@ public record PageDraftRequest(
                 markdown,
                 visibleToGuests,
                 visibleToGuests ? "" : CmsPageAccessControl.toCsv(allowedRanks),
-                layoutJson
+                layoutJson,
+                RequestValues.valueOrDefault(navigationMainKey, "community"),
+                NavigationSelectionCodec.toCsv(navigationMainLinkKeys),
+                NavigationSelectionCodec.toCsv(navigationSubLinkTokens)
         );
     }
 

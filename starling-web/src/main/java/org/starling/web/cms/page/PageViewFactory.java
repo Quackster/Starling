@@ -1,6 +1,7 @@
 package org.starling.web.cms.page;
 
 import org.starling.web.render.MarkdownRenderer;
+import org.starling.web.feature.shared.page.navigation.NavigationSelectionCodec;
 
 import java.util.HashMap;
 import java.util.List;
@@ -114,6 +115,9 @@ public final class PageViewFactory {
         view.put("draftMarkdown", page.draftMarkdown());
         view.put("draftVisibleToGuests", page.draftVisibleToGuests());
         view.put("draftAllowedRanks", CmsPageAccessControl.allowedRanks(page.draftAllowedRanks()));
+        view.put("draftNavigationMainKey", page.draftNavigationMainKey());
+        view.put("draftNavigationMainLinkKeys", NavigationSelectionCodec.values(page.draftNavigationMainLinkKeys()));
+        view.put("draftNavigationSubLinkTokens", NavigationSelectionCodec.values(page.draftNavigationSubLinkTokens()));
         return view;
     }
 
@@ -133,6 +137,9 @@ public final class PageViewFactory {
         page.put("draftMarkdown", "");
         page.put("draftVisibleToGuests", true);
         page.put("draftAllowedRanks", List.of());
+        page.put("draftNavigationMainKey", "community");
+        page.put("draftNavigationMainLinkKeys", List.of());
+        page.put("draftNavigationSubLinkTokens", List.of());
         page.put("published", false);
         page.put("publishedAt", null);
         page.put("updatedAt", null);

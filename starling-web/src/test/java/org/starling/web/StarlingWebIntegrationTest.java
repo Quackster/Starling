@@ -1295,7 +1295,10 @@ class StarlingWebIntegrationTest {
                         "slug", slug,
                         "templateName", "page",
                         "summary", "A public page published from the integration test.",
-                        "markdown", "## Page Body"
+                        "markdown", "## Page Body",
+                        "navigationMainKey", "community",
+                        "navigationMainLinkKey", "community",
+                        "navigationSubLinkToken", "community::tags"
                 ),
                 Map.of()
         );
@@ -1318,6 +1321,9 @@ class StarlingWebIntegrationTest {
         assertEquals(200, pageResponse.statusCode());
         assertTrue(pageResponse.body().contains("About Starling"));
         assertTrue(pageResponse.body().contains("<h2>Page Body</h2>"));
+        assertTrue(pageResponse.body().contains("<strong>Community</strong>"));
+        assertTrue(pageResponse.body().contains(">Tags</a>"));
+        assertFalse(pageResponse.body().contains(">Coins</a>"));
     }
 
     @Test

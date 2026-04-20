@@ -2,6 +2,7 @@ package org.starling.web.cms.page;
 
 import io.javalin.http.Context;
 import org.starling.web.feature.shared.page.PublicPageModelFactory;
+import org.starling.web.feature.shared.page.navigation.NavigationSelectionCodec;
 import org.starling.web.render.TemplateRenderer;
 
 import java.util.List;
@@ -43,7 +44,14 @@ public final class CmsPagePublicRenderer {
      * @return the rendered html
      */
     public String renderPublished(Context context, CmsPage page) {
-        return render(context, pageViewFactory.page(page), layoutCodec.fromJson(page.publishedLayoutJson()));
+        return render(
+                context,
+                pageViewFactory.page(page),
+                layoutCodec.fromJson(page.publishedLayoutJson()),
+                page.publishedNavigationMainKey(),
+                NavigationSelectionCodec.values(page.publishedNavigationMainLinkKeys()),
+                NavigationSelectionCodec.values(page.publishedNavigationSubLinkTokens())
+        );
     }
 
     /**
@@ -53,11 +61,31 @@ public final class CmsPagePublicRenderer {
      * @return the rendered html
      */
     public String renderDraftPreview(Context context, CmsPage page) {
-        return render(context, pageViewFactory.draftPage(page), layoutCodec.fromJson(page.draftLayoutJson()));
+        return render(
+                context,
+                pageViewFactory.draftPage(page),
+                layoutCodec.fromJson(page.draftLayoutJson()),
+                page.draftNavigationMainKey(),
+                NavigationSelectionCodec.values(page.draftNavigationMainLinkKeys()),
+                NavigationSelectionCodec.values(page.draftNavigationSubLinkTokens())
+        );
     }
 
-    private String render(Context context, Map<String, Object> pageView, List<CmsPageHabbletPlacement> placements) {
-        Map<String, Object> model = publicPageModelFactory.create(context, "community");
+    private String render(
+            Context context,
+            Map<String, Object> pageView,
+            List<CmsPageHabbletPlacement> placements,
+            String navigationMainKey,
+            List<String> navigationMainLinkKeys,
+            List<String> navigationSubLinkTokens
+    ) {
+        Map<String, Object> model = publicPageModelFactory.create(
+                context,
+                navigationMainKey == null || navigationMainKey.isBlank() ? "community" : navigationMainKey,
+                null,
+                navigationMainLinkKeys,
+                navigationSubLinkTokens
+        );
         Set<String> widgetKeys = placements.stream()
                 .filter(CmsPageHabbletPlacement::isWidget)
                 .map(CmsPageHabbletPlacement::key)

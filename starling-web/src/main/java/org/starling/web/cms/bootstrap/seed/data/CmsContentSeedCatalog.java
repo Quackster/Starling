@@ -21,6 +21,9 @@ public final class CmsContentSeedCatalog {
             """,
             true,
             "",
+            "",
+            "community",
+            "",
             ""
     );
     private static final List<CmsArticleDraft> ARTICLES = List.of(
