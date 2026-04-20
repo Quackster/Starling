@@ -1067,6 +1067,8 @@ class StarlingWebIntegrationTest {
         assertEquals(200, loginPageResponse.statusCode());
         assertTrue(loginPageResponse.body().contains("Welcome Hobbas"));
         assertTrue(loginPageResponse.body().contains("Username or Email:"));
+        assertTrue(loginPageResponse.body().contains("/assets/admin-login.css"));
+        assertTrue(loginPageResponse.body().contains("class=\"login-box\""));
 
         login();
 
@@ -1076,8 +1078,11 @@ class StarlingWebIntegrationTest {
         );
         assertEquals(200, dashboardResponse.statusCode());
         assertTrue(dashboardResponse.body().contains("Logged in as: <strong>admin</strong>"));
-        assertTrue(dashboardResponse.body().contains(">Content tools</h2>"));
-        assertTrue(dashboardResponse.body().contains(">Staff tools</h2>"));
+        assertTrue(dashboardResponse.body().contains("/assets/admin.css"));
+        assertTrue(dashboardResponse.body().contains("class=\"topbar\""));
+        assertTrue(dashboardResponse.body().contains("class=\"tabs\""));
+        assertTrue(dashboardResponse.body().contains(">Content tools</p>"));
+        assertTrue(dashboardResponse.body().contains(">Staff tools</p>"));
     }
 
     @Test

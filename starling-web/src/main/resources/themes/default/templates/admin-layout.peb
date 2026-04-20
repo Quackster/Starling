@@ -4,126 +4,136 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ siteTitle }}</title>
-    <link rel="stylesheet" href="/assets/admin.css">
+    {% if isLoginPage %}
+        <link rel="stylesheet" href="/assets/admin-login.css">
+    {% else %}
+        <link rel="stylesheet" href="/assets/admin.css">
+        <link rel="stylesheet" href="/assets/admin-components.css">
+    {% endif %}
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
 </head>
 <body class="admin-shell{% if isLoginPage %} admin-shell--login{% endif %}">
 {% if isLoginPage %}
-    <div class="hk-login-shell">
-        <main class="hk-login-shell__main">
-            {{ bodyHtml | raw }}
-        </main>
-        <footer class="hk-footer">
-            {{ cmsTitle }} housekeeping inspired by Quackster &copy; {{ year }}
-        </footer>
+    <div class="wrapper">
+        <div class="content">
+            <div class="container">
+                {{ bodyHtml | raw }}
+            </div>
+        </div>
+
+        <div class="footer">
+            theallseeingeye by Quackster &copy; Copyright 2025
+        </div>
     </div>
 {% else %}
-    <div class="hk-topbar">
-        <span>Logged in as: <strong>{{ currentAdminName }}</strong> in {{ cmsTitle }}</span>
+    <div class="topbar">
+        Logged in as: <strong>{{ currentAdminName }}</strong>
         <a href="/">Secure Login to {{ siteName }}</a>
     </div>
 
-    <nav class="hk-tabs" aria-label="Housekeeping sections">
-        <a class="hk-tab{% if currentPath == '/admin' %} is-active{% endif %}" href="/admin">Dashboard</a>
-        <a
-                class="hk-tab{% if currentPath == '/admin/pages' or currentPath == '/admin/navigation' or currentPath == '/admin/articles' or currentPath == '/admin/campaigns' %} is-active{% endif %}"
-                href="{% if canManagePages %}/admin/pages{% elseif canManageNavigation %}/admin/navigation{% elseif canManageArticles %}/admin/articles{% elseif canManageCampaigns %}/admin/campaigns{% else %}/admin{% endif %}"
-        >Content</a>
-        <a
-                class="hk-tab{% if currentPath == '/admin/users' or currentPath == '/admin/permissions' %} is-active{% endif %}"
-                href="{% if canManageUsers %}/admin/users{% elseif canManagePermissions %}/admin/permissions{% else %}/admin{% endif %}"
-        >Staff</a>
-        <a class="hk-tab" href="/">Hotel</a>
-    </nav>
+    <div class="tabs">
+        <a href="/admin" class="tab{% if currentPath == '/admin' %} active{% endif %}">Dashboard</a>
+        {% if canManagePages %}
+            <a href="/admin/pages" class="tab{% if currentPath == '/admin/pages' %} active{% endif %}">Pages</a>
+        {% endif %}
+        {% if canManageNavigation or canManageArticles or canManageUsers or canManagePermissions %}
+            <a
+                    href="{% if canManageNavigation %}/admin/navigation{% elseif canManageArticles %}/admin/articles{% elseif canManageUsers %}/admin/users{% elseif canManagePermissions %}/admin/permissions{% else %}/admin{% endif %}"
+                    class="tab{% if currentPath == '/admin/navigation' or currentPath == '/admin/articles' or currentPath == '/admin/users' or currentPath == '/admin/permissions' %} active{% endif %}"
+            >Admin tools</a>
+        {% endif %}
+        {% if canManageCampaigns %}
+            <a href="/admin/campaigns" class="tab{% if currentPath == '/admin/campaigns' %} active{% endif %}">Campaign management</a>
+        {% endif %}
+    </div>
 
     {% if notice or error %}
-        <section class="hk-alerts">
+        <div class="alerts-box">
             {% if notice %}
-                <div class="flash flash--success flash--retro">
-                    <span>{{ notice }}</span>
-                    <button type="button" class="flash__close" aria-label="Dismiss notice">&times;</button>
+                <div class="message-box success">
+                    {{ notice }}
+                    <button class="close-btn" onclick="closeMessageBox(event)">&times;</button>
                 </div>
             {% endif %}
             {% if error %}
-                <div class="flash flash--error flash--retro">
-                    <span>{{ error }}</span>
-                    <button type="button" class="flash__close" aria-label="Dismiss error">&times;</button>
+                <div class="message-box error">
+                    {{ error }}
+                    <button class="close-btn" onclick="closeMessageBox(event)">&times;</button>
                 </div>
             {% endif %}
-        </section>
+        </div>
     {% endif %}
 
-    <div class="hk-frame">
-        <aside class="hk-sidebar">
-            <section class="hk-sidebar-box">
-                <h2>Content tools</h2>
+    <div class="container">
+        <div class="sidebar">
+            <div class="box">
+                <p>Content tools</p>
                 <ul>
-                    <li><a{% if currentPath == '/admin' %} class="is-active"{% endif %} href="/admin">Dashboard</a></li>
-                    {% if canManagePages %}<li><a{% if currentPath == '/admin/pages' %} class="is-active"{% endif %} href="/admin/pages">Pages</a></li>{% endif %}
-                    {% if canManageNavigation %}<li><a{% if currentPath == '/admin/navigation' %} class="is-active"{% endif %} href="/admin/navigation">Navigation</a></li>{% endif %}
-                    {% if canManageArticles %}<li><a{% if currentPath == '/admin/articles' %} class="is-active"{% endif %} href="/admin/articles">News</a></li>{% endif %}
-                    {% if canManageCampaigns %}<li><a{% if currentPath == '/admin/campaigns' %} class="is-active"{% endif %} href="/admin/campaigns">Campaigns</a></li>{% endif %}
+                    <li><a href="/admin">Dashboard</a></li>
+                    {% if canManagePages %}<li><a href="/admin/pages">Pages</a></li>{% endif %}
+                    {% if canManageNavigation %}<li><a href="/admin/navigation">Navigation</a></li>{% endif %}
+                    {% if canManageArticles %}<li><a href="/admin/articles">News</a></li>{% endif %}
+                    {% if canManageCampaigns %}<li><a href="/admin/campaigns">Campaigns</a></li>{% endif %}
                 </ul>
-            </section>
+            </div>
 
-            <section class="hk-sidebar-box">
-                <h2>Staff tools</h2>
+            <div class="box">
+                <p>Staff tools</p>
                 <ul>
-                    {% if canManageUsers %}<li><a{% if currentPath == '/admin/users' %} class="is-active"{% endif %} href="/admin/users">Users</a></li>{% endif %}
-                    {% if canManagePermissions %}<li><a{% if currentPath == '/admin/permissions' %} class="is-active"{% endif %} href="/admin/permissions">Permissions</a></li>{% endif %}
-                    <li><a href="/">View site</a></li>
+                    {% if canManageUsers %}<li><a href="/admin/users">Users</a></li>{% endif %}
+                    {% if canManagePermissions %}<li><a href="/admin/permissions">Permissions</a></li>{% endif %}
+                    <li><a href="/">Return to site</a></li>
                 </ul>
-            </section>
+            </div>
 
-            <section class="hk-sidebar-box hk-sidebar-box--muted">
-                <h2>Session</h2>
-                <div class="hk-timebox">
-                    <strong>Local time:</strong>
-                    <div id="hk-local-date">Loading...</div>
-                    <div id="hk-local-time">Loading...</div>
-                </div>
-                <div class="hk-timebox">
-                    <strong>Server:</strong>
-                    <div>{{ cmsTitle }}</div>
-                    <div>{{ currentAdminName }}</div>
-                </div>
-                <form method="post" action="/admin/logout" class="hk-sidebar-form">
-                    <button class="hk-plain-button" type="submit">Log out</button>
+            <div class="box">
+                <p>Session</p>
+                <ul>
+                    <li><strong>Admin:</strong> {{ currentAdminName }}</li>
+                    <li><strong>Area:</strong> {{ cmsTitle }}</li>
+                </ul>
+                <form method="post" action="/admin/logout" class="sidebar-form">
+                    <button type="submit" class="retro-button">Log out</button>
                 </form>
-            </section>
-        </aside>
+            </div>
 
-        <main class="hk-content">
+            <div class="time-panel">
+                <strong>Local time:</strong><br>
+                <span id="hk-local-date">Loading...</span><br>
+                <span id="hk-local-time">Loading...</span><br><br>
+                <strong>Server time:</strong><br>
+                {{ cmsTitle }}<br>
+                <span id="hk-server-date">Loading...</span><br>
+                <span id="hk-server-time">Loading...</span>
+            </div>
+        </div>
+
+        <div class="column1 hk-admin-content">
             {{ bodyHtml | raw }}
-        </main>
+        </div>
     </div>
 
-    <footer class="hk-footer">
-        {{ cmsTitle }} housekeeping inspired by Quackster &copy; {{ year }}
-    </footer>
-{% endif %}
+    <div class="footer">
+        theallseeingeye by Quackster &copy; Copyright 2025
+    </div>
 
-<script>
-document.querySelectorAll(".flash__close").forEach(function (button) {
-    button.addEventListener("click", function () {
-        var flash = button.closest(".flash");
-        if (flash) {
-            flash.style.display = "none";
+    <script>
+        function closeMessageBox(event) {
+            event.target.closest('.message-box').style.display = 'none';
         }
-    });
-});
 
-var localDate = document.getElementById("hk-local-date");
-var localTime = document.getElementById("hk-local-time");
-if (localDate && localTime) {
-    var now = new Date();
-    localDate.textContent = now.toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "long",
-        day: "numeric"
-    });
-    localTime.textContent = now.toLocaleTimeString();
-}
-</script>
+        var now = new Date();
+        var dateText = now.toLocaleDateString(undefined, {
+            year: "numeric",
+            month: "long",
+            day: "numeric"
+        });
+        var timeText = now.toLocaleTimeString();
+        document.getElementById("hk-local-date").textContent = dateText;
+        document.getElementById("hk-local-time").textContent = timeText;
+        document.getElementById("hk-server-date").textContent = dateText;
+        document.getElementById("hk-server-time").textContent = timeText;
+    </script>
+{% endif %}
 </body>
 </html>
