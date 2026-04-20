@@ -120,11 +120,10 @@
                     {% if navigation.userHotelButton.visible %}
                     <a
                         href="{{ navigation.userHotelButton.href }}"
-                        {% if navigation.userHotelButton.cssId != "" %}id="{{ navigation.userHotelButton.cssId }}"{% endif %}
-                        {% if navigation.userHotelButton.cssClass != "" %}class="{{ navigation.userHotelButton.cssClass }}"{% endif %}
+                        id="{% if navigation.userHotelButton.cssId != "" %}{{ navigation.userHotelButton.cssId }}{% else %}enter-hotel-open-medium-link{% endif %}"
                         {% if navigation.userHotelButton.target != "" %}target="{{ navigation.userHotelButton.target }}"{% endif %}
                         {% if navigation.userHotelButton.onclick != "" %}onclick="{{ navigation.userHotelButton.onclick }}"{% endif %}
-                    ><b>{{ navigation.userHotelButton.label }}</b><i></i></a>
+                    >{{ navigation.userHotelButton.label }}</a>
                     {% endif %}
                 {% else %}
                     <div id="hotel-closed-medium">{{ site.siteName }} is offline</div>
