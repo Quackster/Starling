@@ -9,6 +9,7 @@ import org.starling.web.feature.me.campaign.CampaignEntity;
 import org.starling.web.feature.me.mail.MinimailEntity;
 import org.starling.web.feature.shared.page.navigation.CmsNavigationButtonEntity;
 import org.starling.web.feature.shared.page.navigation.CmsNavigationLinkEntity;
+import org.starling.web.settings.WebSettingEntity;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -34,6 +35,7 @@ public final class CmsSchemaBootstrap {
                         CmsAdminUserEntity.class,
                         CmsPageEntity.class,
                         CmsArticleEntity.class,
+                        WebSettingEntity.class,
                         CmsNavigationLinkEntity.class,
                         CmsNavigationButtonEntity.class,
                         CampaignEntity.class,
@@ -56,6 +58,7 @@ public final class CmsSchemaBootstrap {
                 DatabaseSupport.ensureUniqueIndex(context.conn(), "cms_admin_users", "uk_cms_admin_users_email", "email");
                 DatabaseSupport.ensureUniqueIndex(context.conn(), "cms_pages", "uk_cms_pages_slug", "slug");
                 DatabaseSupport.ensureUniqueIndex(context.conn(), "cms_articles", "uk_cms_articles_slug", "slug");
+                DatabaseSupport.ensureUniqueIndex(context.conn(), "web_settings", "uk_web_settings_key", "setting_key");
                 DatabaseSupport.ensureUniqueIndex(context.conn(), "cms_navigation_buttons", "uk_cms_navigation_buttons_key", "button_key");
                 DatabaseSupport.ensureIndex(context.conn(), "cms_navigation_links", "idx_cms_navigation_links_menu", false, "menu_type", "group_key", "sort_order", "id");
                 DatabaseSupport.ensureIndex(context.conn(), "cms_articles", "idx_cms_articles_published", false, "is_published", "published_at");

@@ -3,6 +3,7 @@ package org.starling.web.user;
 import io.javalin.http.Context;
 import org.starling.storage.dao.UserDao;
 import org.starling.storage.entity.UserEntity;
+import org.starling.web.settings.WebSettingsService;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -23,6 +24,7 @@ public final class UserSessionService {
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final String sessionSecret;
+    private final WebSettingsService webSettingsService;
 
     /**
      * Creates a new UserSessionService.
@@ -30,6 +32,16 @@ public final class UserSessionService {
      */
     public UserSessionService(String sessionSecret) {
         this.sessionSecret = sessionSecret;
+        this.webSettingsService = null;
+    }
+
+    /**
+     * Creates a new UserSessionService backed by persisted settings.
+     * @param webSettingsService the current web settings
+     */
+    public UserSessionService(WebSettingsService webSettingsService) {
+        this.sessionSecret = null;
+        this.webSettingsService = webSettingsService;
     }
 
     /**
@@ -92,7 +104,7 @@ public final class UserSessionService {
     private String sign(String payload) {
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(new SecretKeySpec(sessionSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            mac.init(new SecretKeySpec(currentSessionSecret().getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
             return Base64.getUrlEncoder().withoutPadding().encodeToString(
                     mac.doFinal(payload.getBytes(StandardCharsets.UTF_8))
             );
@@ -132,6 +144,10 @@ public final class UserSessionService {
         byte[] tokenBytes = new byte[SESSION_TOKEN_BYTES];
         RANDOM.nextBytes(tokenBytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
+    }
+
+    private String currentSessionSecret() {
+        return webSettingsService == null ? sessionSecret : webSettingsService.sessionSecret();
     }
 
     private static String hashToken(String token) {

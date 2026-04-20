@@ -77,6 +77,7 @@ import org.starling.web.feature.tag.widget.TagHabbletController;
 import org.starling.web.render.MarkdownRenderer;
 import org.starling.web.render.TemplateRenderer;
 import org.starling.web.site.SiteBranding;
+import org.starling.web.settings.WebSettingsService;
 import org.starling.web.theme.ThemeResourceResolver;
 import org.starling.web.user.UserSessionService;
 import org.starling.web.user.view.UserViewModelFactory;
@@ -129,13 +130,14 @@ public final class StarlingWebBootstrap {
     }
 
     private WebDependencies createDependencies() {
-        SiteBranding siteBranding = new SiteBranding(config.siteName(), config.webGalleryPath());
-        ThemeResourceResolver themeResourceResolver = new ThemeResourceResolver(config);
+        WebSettingsService webSettingsService = new WebSettingsService(config);
+        SiteBranding siteBranding = new SiteBranding(webSettingsService);
+        ThemeResourceResolver themeResourceResolver = new ThemeResourceResolver(webSettingsService);
         AvatarImagingService avatarImagingService = new AvatarImagingService();
         TemplateRenderer templateRenderer = new TemplateRenderer(themeResourceResolver);
         MarkdownRenderer markdownRenderer = new MarkdownRenderer();
         RankPermissionService rankPermissionService = new RankPermissionService();
-        UserSessionService userSessionService = new UserSessionService(config.sessionSecret());
+        UserSessionService userSessionService = new UserSessionService(webSettingsService);
         PageService pageService = new PageService();
         CmsPageHabbletCatalog cmsPageHabbletCatalog = new CmsPageHabbletCatalog();
         CmsPageLayoutCodec cmsPageLayoutCodec = new CmsPageLayoutCodec();
@@ -205,6 +207,7 @@ public final class StarlingWebBootstrap {
                 templateRenderer,
                 markdownRenderer,
                 rankPermissionService,
+                webSettingsService,
                 userSessionService,
                 siteBranding,
                 themeResourceResolver,

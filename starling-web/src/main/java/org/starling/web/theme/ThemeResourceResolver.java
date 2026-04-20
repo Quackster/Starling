@@ -1,6 +1,7 @@
 package org.starling.web.theme;
 
 import org.starling.web.config.WebConfig;
+import org.starling.web.settings.WebSettingsService;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -16,6 +17,7 @@ public final class ThemeResourceResolver {
 
     private final String themeName;
     private final Path themeDirectory;
+    private final WebSettingsService webSettingsService;
 
     /**
      * Creates a new ThemeResourceResolver.
@@ -24,6 +26,17 @@ public final class ThemeResourceResolver {
     public ThemeResourceResolver(WebConfig config) {
         this.themeName = config.themeName();
         this.themeDirectory = config.themeDirectory();
+        this.webSettingsService = null;
+    }
+
+    /**
+     * Creates a new ThemeResourceResolver backed by persisted settings.
+     * @param webSettingsService the web settings service
+     */
+    public ThemeResourceResolver(WebSettingsService webSettingsService) {
+        this.themeName = null;
+        this.themeDirectory = null;
+        this.webSettingsService = webSettingsService;
     }
 
     /**
@@ -87,12 +100,12 @@ public final class ThemeResourceResolver {
     public Optional<InputStream> openAsset(String assetName) {
         try {
             String normalizedAssetName = normalizeAssetName(assetName);
-            Path externalPath = themeDirectory.resolve(themeName).resolve("public").resolve(normalizedAssetName);
+            Path externalPath = currentThemeDirectory().resolve(currentThemeName()).resolve("public").resolve(normalizedAssetName);
             if (Files.exists(externalPath)) {
                 return Optional.of(Files.newInputStream(externalPath));
             }
 
-            String resourcePath = "themes/" + themeName + "/public/" + normalizedAssetName;
+            String resourcePath = "themes/" + currentThemeName() + "/public/" + normalizedAssetName;
             InputStream inputStream = getClass().getClassLoader().getResourceAsStream(resourcePath);
             return Optional.ofNullable(inputStream);
         } catch (Exception e) {
@@ -106,7 +119,7 @@ public final class ThemeResourceResolver {
      * @return the resulting path
      */
     private Path externalTemplatePath(String templateName) {
-        return themeDirectory.resolve(themeName).resolve("templates").resolve(templateName);
+        return currentThemeDirectory().resolve(currentThemeName()).resolve("templates").resolve(templateName);
     }
 
     /**
@@ -115,7 +128,15 @@ public final class ThemeResourceResolver {
      * @return the resulting classpath resource path
      */
     private String bundledTemplatePath(String templateName) {
-        return "themes/" + themeName + "/templates/" + templateName;
+        return "themes/" + currentThemeName() + "/templates/" + templateName;
+    }
+
+    private String currentThemeName() {
+        return webSettingsService == null ? themeName : webSettingsService.themeName();
+    }
+
+    private Path currentThemeDirectory() {
+        return webSettingsService == null ? themeDirectory : webSettingsService.themeDirectory();
     }
 
     /**

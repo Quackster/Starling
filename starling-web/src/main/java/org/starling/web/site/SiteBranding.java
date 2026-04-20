@@ -1,9 +1,11 @@
 package org.starling.web.site;
 
+import org.starling.web.settings.WebSettingsService;
+
 public final class SiteBranding {
 
+    private final WebSettingsService webSettingsService;
     private final String siteName;
-    private final String siteNamePlural;
     private final String webGalleryPath;
 
     /**
@@ -12,9 +14,19 @@ public final class SiteBranding {
      * @param webGalleryPath the web-gallery base path or absolute URL
      */
     public SiteBranding(String siteName, String webGalleryPath) {
+        this.webSettingsService = null;
         this.siteName = valueOrDefault(siteName, "Habbo");
-        this.siteNamePlural = this.siteName + "s";
         this.webGalleryPath = normalizeWebGalleryPath(webGalleryPath);
+    }
+
+    /**
+     * Creates a new SiteBranding backed by persisted settings.
+     * @param webSettingsService the web settings service
+     */
+    public SiteBranding(WebSettingsService webSettingsService) {
+        this.webSettingsService = webSettingsService;
+        this.siteName = null;
+        this.webGalleryPath = null;
     }
 
     /**
@@ -22,7 +34,9 @@ public final class SiteBranding {
      * @return the site name
      */
     public String siteName() {
-        return siteName;
+        return webSettingsService == null
+                ? siteName
+                : valueOrDefault(webSettingsService.siteName(), "Habbo");
     }
 
     /**
@@ -30,7 +44,7 @@ public final class SiteBranding {
      * @return the plural site name
      */
     public String siteNamePlural() {
-        return siteNamePlural;
+        return siteName() + "s";
     }
 
     /**
@@ -70,7 +84,9 @@ public final class SiteBranding {
      * @return the web-gallery path
      */
     public String webGalleryPath() {
-        return webGalleryPath;
+        return webSettingsService == null
+                ? webGalleryPath
+                : normalizeWebGalleryPath(webSettingsService.webGalleryPath());
     }
 
     /**

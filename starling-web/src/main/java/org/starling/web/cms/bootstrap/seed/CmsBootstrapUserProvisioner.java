@@ -4,7 +4,7 @@ import org.starling.storage.dao.UserDao;
 import org.starling.storage.entity.UserEntity;
 import org.starling.web.cms.admin.CmsAdminDao;
 import org.starling.web.cms.auth.PasswordHasher;
-import org.starling.web.config.WebConfig;
+import org.starling.web.settings.WebSettingsService;
 
 public final class CmsBootstrapUserProvisioner {
 
@@ -15,16 +15,16 @@ public final class CmsBootstrapUserProvisioner {
 
     /**
      * Ensures the first admin exists.
-     * @param config the config value
+     * @param webSettingsService the current web settings
      */
-    public static void ensureBootstrapAdmin(WebConfig config) {
+    public static void ensureBootstrapAdmin(WebSettingsService webSettingsService) {
         if (CmsAdminDao.count() > 0) {
             return;
         }
 
-        String email = config.bootstrapAdminEmail();
+        String email = webSettingsService.bootstrapAdminEmail();
         String displayName = email.contains("@") ? email.substring(0, email.indexOf('@')) : email;
-        String passwordHash = PasswordHasher.hash(config.bootstrapAdminPassword());
+        String passwordHash = PasswordHasher.hash(webSettingsService.bootstrapAdminPassword());
         CmsAdminDao.create(email, displayName, passwordHash);
     }
 

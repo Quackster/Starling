@@ -7,6 +7,7 @@ import org.starling.web.cms.bootstrap.schema.CmsSharedSchemaBootstrap;
 import org.starling.web.cms.bootstrap.seed.CmsBootstrapUserProvisioner;
 import org.starling.web.cms.bootstrap.seed.CmsSeedBootstrap;
 import org.starling.web.config.WebConfig;
+import org.starling.web.settings.WebSettingsService;
 
 import java.nio.file.Files;
 
@@ -26,8 +27,9 @@ public final class CmsBootstrap {
         EntityContext.init(config.database());
         ensureSharedSchema();
         ensureSchema();
-        ensureDirectories(config);
-        ensureBootstrapAdmin(config);
+        WebSettingsService webSettingsService = ensureSettings(config);
+        ensureDirectories(webSettingsService);
+        ensureBootstrapAdmin(webSettingsService);
         ensureBootstrapHotelUser();
         seedDefaults();
     }
@@ -49,12 +51,23 @@ public final class CmsBootstrap {
     /**
      * Ensures required filesystem directories exist.
      * @param config the config value
+     * @return the initialized settings service
      */
-    public static void ensureDirectories(WebConfig config) {
+    public static WebSettingsService ensureSettings(WebConfig config) {
+        WebSettingsService webSettingsService = new WebSettingsService(config);
+        webSettingsService.ensureDefaults();
+        return webSettingsService;
+    }
+
+    /**
+     * Ensures required filesystem directories exist.
+     * @param webSettingsService the current web settings
+     */
+    public static void ensureDirectories(WebSettingsService webSettingsService) {
         try {
-            Files.createDirectories(config.uploadDirectory());
-            Files.createDirectories(config.themeDirectory().resolve(config.themeName()).resolve("templates"));
-            Files.createDirectories(config.themeDirectory().resolve(config.themeName()).resolve("public"));
+            Files.createDirectories(webSettingsService.uploadDirectory());
+            Files.createDirectories(webSettingsService.themeDirectory().resolve(webSettingsService.themeName()).resolve("templates"));
+            Files.createDirectories(webSettingsService.themeDirectory().resolve(webSettingsService.themeName()).resolve("public"));
         } catch (Exception e) {
             throw new RuntimeException("Failed to prepare cms directories", e);
         }
@@ -62,10 +75,10 @@ public final class CmsBootstrap {
 
     /**
      * Ensures the first admin exists.
-     * @param config the config value
+     * @param webSettingsService the current web settings
      */
-    public static void ensureBootstrapAdmin(WebConfig config) {
-        CmsBootstrapUserProvisioner.ensureBootstrapAdmin(config);
+    public static void ensureBootstrapAdmin(WebSettingsService webSettingsService) {
+        CmsBootstrapUserProvisioner.ensureBootstrapAdmin(webSettingsService);
     }
 
     /**

@@ -29,6 +29,7 @@ import org.starling.web.feature.tag.service.UserTagService;
 import org.starling.web.render.MarkdownRenderer;
 import org.starling.web.render.TemplateRenderer;
 import org.starling.web.site.SiteBranding;
+import org.starling.web.settings.WebSettingsService;
 import org.starling.web.theme.ThemeResourceResolver;
 import org.starling.web.user.UserSessionService;
 import org.starling.web.admin.AdminPageModelFactory;
@@ -38,6 +39,7 @@ public record WebDependencies(
         TemplateRenderer templateRenderer,
         MarkdownRenderer markdownRenderer,
         RankPermissionService rankPermissionService,
+        WebSettingsService webSettingsService,
         UserSessionService userSessionService,
         SiteBranding siteBranding,
         ThemeResourceResolver themeResourceResolver,
