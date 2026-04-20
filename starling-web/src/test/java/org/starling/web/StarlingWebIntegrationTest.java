@@ -1059,6 +1059,28 @@ class StarlingWebIntegrationTest {
     }
 
     @Test
+    void housekeepingUsesRetroQuacksterShellsForLoginAndDashboard() throws Exception {
+        HttpResponse<String> loginPageResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/admin/login")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertEquals(200, loginPageResponse.statusCode());
+        assertTrue(loginPageResponse.body().contains("Welcome Hobbas"));
+        assertTrue(loginPageResponse.body().contains("Username or Email:"));
+
+        login();
+
+        HttpResponse<String> dashboardResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/admin")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertEquals(200, dashboardResponse.statusCode());
+        assertTrue(dashboardResponse.body().contains("Logged in as: <strong>admin</strong>"));
+        assertTrue(dashboardResponse.body().contains(">Content tools</h2>"));
+        assertTrue(dashboardResponse.body().contains(">Staff tools</h2>"));
+    }
+
+    @Test
     void nonAdminUsersCannotAccessHousekeeping() throws Exception {
         String username = "plainuser" + UUID.randomUUID().toString().substring(0, 6);
         UserDao.save(UserEntity.createRegisteredUser(

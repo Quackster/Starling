@@ -38,6 +38,7 @@ public final class AdminPageModelFactory {
         model.put("siteName", siteBranding.siteName());
         model.put("cmsTitle", siteBranding.cmsTitle());
         model.put("currentPath", currentPath);
+        model.put("isLoginPage", false);
         model.put("currentAdminName", currentAdmin == null ? null : currentAdmin.getUsername());
         model.put("notice", context.queryParam("notice"));
         model.put("error", context.queryParam("error"));
@@ -71,6 +72,9 @@ public final class AdminPageModelFactory {
         model.put("siteTitle", siteBranding.cmsTitle());
         model.put("siteName", siteBranding.siteName());
         model.put("cmsTitle", siteBranding.cmsTitle());
+        model.put("currentPath", "/admin/login");
+        model.put("isLoginPage", true);
+        model.put("year", Year.now().getValue());
         model.put("error", error);
         if (email != null) {
             model.put("email", email);
