@@ -23,12 +23,6 @@ main:
     selectedKeys: [credits, pixels]
     visibleWhenLoggedIn: true
     visibleWhenLoggedOut: true
-  - key: games
-    label: Games
-    href: /games
-    selectedKeys: [games]
-    visibleWhenLoggedIn: true
-    visibleWhenLoggedOut: true
   - key: housekeeping
     label: Housekeeping
     href: /admin
@@ -62,12 +56,6 @@ sub:
       label: "{siteName} Club"
       href: /club
       selectedKeys: [club]
-      visibleWhenLoggedIn: true
-      visibleWhenLoggedOut: false
-    - key: guides
-      label: Habbo Guides
-      href: /guides
-      selectedKeys: [guides]
       visibleWhenLoggedIn: true
       visibleWhenLoggedOut: false
   community:
