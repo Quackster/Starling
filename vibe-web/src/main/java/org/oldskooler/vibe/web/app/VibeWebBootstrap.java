@@ -376,7 +376,8 @@ public final class VibeWebBootstrap {
         AdminAuthController adminAuthController = new AdminAuthController(
                 dependencies.templateRenderer(),
                 dependencies.userSessionService(),
-                dependencies.adminPageModelFactory()
+                dependencies.adminPageModelFactory(),
+                dependencies.webSettingsService()
         );
         AdminDashboardController adminDashboardController = new AdminDashboardController(
                 dependencies.templateRenderer(),

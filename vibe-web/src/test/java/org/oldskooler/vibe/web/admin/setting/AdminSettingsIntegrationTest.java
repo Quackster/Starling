@@ -109,10 +109,12 @@ class AdminSettingsIntegrationTest {
         assertTrue(settingsPageResponse.body().contains("Shockwave DCR"));
         assertTrue(settingsPageResponse.body().contains("Loader Timeout (ms)"));
         assertTrue(settingsPageResponse.body().contains("Hotel View Image"));
+        assertTrue(settingsPageResponse.body().contains("Reset SSO Ticket On Login"));
         assertTrue(settingsPageResponse.body().contains("web.session.secret"));
 
         HttpResponse<String> saveResponse = postForm("/admin/settings", Map.of(
                 "setting_web_site_name", "Retro Hotel",
+                "setting_client_reset_sso_ticket_on_login", "false",
                 "setting_site_hotel_view_image", "htlview_us.png",
                 "setting_client_hotel_ip", "10.0.0.5",
                 "setting_client_hotel_port", "30002"
@@ -120,11 +122,13 @@ class AdminSettingsIntegrationTest {
 
         assertEquals(200, saveResponse.statusCode());
         assertEquals("Retro Hotel", WebSettingsDao.findByKey(WebSettingCatalog.SITE_NAME).orElseThrow().value());
+        assertEquals("false", WebSettingsDao.findByKey(WebSettingCatalog.CLIENT_RESET_SSO_TICKET_ON_LOGIN).orElseThrow().value());
         assertEquals("htlview_us.png", WebSettingsDao.findByKey(WebSettingCatalog.SITE_HOTEL_VIEW_IMAGE).orElseThrow().value());
         assertEquals("10.0.0.5", WebSettingsDao.findByKey(WebSettingCatalog.CLIENT_HOTEL_IP).orElseThrow().value());
         assertEquals("30002", WebSettingsDao.findByKey(WebSettingCatalog.CLIENT_HOTEL_PORT).orElseThrow().value());
         assertTrue(saveResponse.body().contains("Settings saved"));
         assertTrue(saveResponse.body().contains("Retro Hotel"));
+        assertTrue(saveResponse.body().contains("false"));
         assertTrue(saveResponse.body().contains("htlview_us.png"));
     }
 

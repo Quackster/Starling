@@ -24,6 +24,7 @@ public final class WebSettingCatalog {
     public static final String CLIENT_HOTEL_IP = "client.hotel.ip";
     public static final String CLIENT_HOTEL_PORT = "client.hotel.port";
     public static final String CLIENT_HOTEL_MUS_PORT = "client.hotel.mus.port";
+    public static final String CLIENT_RESET_SSO_TICKET_ON_LOGIN = "client.reset.sso.ticket.on.login";
     public static final String REAUTHENTICATE_IDLE_MINUTES = "security.reauthenticate.idle.minutes";
 
     /**
@@ -197,6 +198,16 @@ public final class WebSettingCatalog {
                         false,
                         140,
                         "30001"
+                ),
+                definition(
+                        CLIENT_RESET_SSO_TICKET_ON_LOGIN,
+                        "Client",
+                        "Reset SSO Ticket On Login",
+                        "Whether successful password logins should rotate the user's SSO ticket. Use true or false.",
+                        WebSettingValueType.TEXT,
+                        false,
+                        145,
+                        "true"
                 ),
                 definition(
                         REAUTHENTICATE_IDLE_MINUTES,

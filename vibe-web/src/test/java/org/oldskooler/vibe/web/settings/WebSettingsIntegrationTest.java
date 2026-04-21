@@ -73,6 +73,7 @@ class WebSettingsIntegrationTest {
         Optional<WebSettingRecord> seededSiteName = WebSettingsDao.findByKey(WebSettingCatalog.SITE_NAME);
         Optional<WebSettingRecord> seededClientHost = WebSettingsDao.findByKey(WebSettingCatalog.CLIENT_HOTEL_IP);
         Optional<WebSettingRecord> seededLoaderTimeout = WebSettingsDao.findByKey(WebSettingCatalog.CLIENT_LOADER_TIMEOUT_MS);
+        Optional<WebSettingRecord> seededResetSso = WebSettingsDao.findByKey(WebSettingCatalog.CLIENT_RESET_SSO_TICKET_ON_LOGIN);
         Optional<WebSettingRecord> seededHotelView = WebSettingsDao.findByKey(WebSettingCatalog.SITE_HOTEL_VIEW_IMAGE);
         Optional<WebSettingRecord> seededReauth = WebSettingsDao.findByKey(WebSettingCatalog.REAUTHENTICATE_IDLE_MINUTES);
 
@@ -80,15 +81,18 @@ class WebSettingsIntegrationTest {
         assertEquals("Seed Hotel", seededSiteName.orElseThrow().value());
         assertEquals("127.0.0.1", seededClientHost.orElseThrow().value());
         assertEquals("10000", seededLoaderTimeout.orElseThrow().value());
+        assertEquals("true", seededResetSso.orElseThrow().value());
         assertEquals("htlview_br.png", seededHotelView.orElseThrow().value());
         assertEquals("30", seededReauth.orElseThrow().value());
 
         WebSettingsService webSettingsService = new WebSettingsService(webConfig);
         SiteBranding siteBranding = new SiteBranding(webSettingsService);
         webSettingsService.update(WebSettingCatalog.SITE_NAME, "Retro Hotel");
+        webSettingsService.update(WebSettingCatalog.CLIENT_RESET_SSO_TICKET_ON_LOGIN, "false");
         webSettingsService.update(WebSettingCatalog.SITE_HOTEL_VIEW_IMAGE, "htlview_us.png");
 
         assertEquals("Retro Hotel", webSettingsService.siteName());
+        assertEquals(false, webSettingsService.resetSsoTicketOnLogin());
         assertEquals("Retro Hotel", siteBranding.siteName());
         assertEquals("Retro Hotel", siteBranding.siteTitle());
         assertEquals("Retro Hotel CMS", siteBranding.cmsTitle());

@@ -98,6 +98,7 @@ class ClientFlowIntegrationTest {
         UserEntity userBeforeClient = UserDao.findByUsername("admin");
         String originalTicket = userBeforeClient.getSsoTicket();
         loginPublicUser();
+        UserEntity userAfterLogin = UserDao.findByUsername("admin");
 
         HttpResponse<String> clientResponse = client.send(
                 HttpRequest.newBuilder(baseUri.resolve("/client")).GET().build(),
@@ -107,8 +108,9 @@ class ClientFlowIntegrationTest {
         UserEntity userAfterClient = UserDao.findByUsername("admin");
         assertEquals(200, clientResponse.statusCode());
         assertTrue(clientResponse.body().contains("id=\"clientembed\""));
-        assertNotEquals(originalTicket, userAfterClient.getSsoTicket());
-        assertTrue(clientResponse.body().contains("sso.ticket=" + userAfterClient.getSsoTicket()));
+        assertNotEquals(originalTicket, userAfterLogin.getSsoTicket());
+        assertEquals(userAfterLogin.getSsoTicket(), userAfterClient.getSsoTicket());
+        assertTrue(clientResponse.body().contains("sso.ticket=" + userAfterLogin.getSsoTicket()));
         assertTrue(clientResponse.body().contains("client.connection.failed.url=/clientutils?key=connection_failed"));
     }
 
@@ -167,6 +169,38 @@ class ClientFlowIntegrationTest {
 
         assertEquals(200, meResponse.statusCode());
         assertTrue(meResponse.body().contains("background-image:url(/web-gallery/v2/images/personal_info/hotel_views/htlview_us.png)"));
+    }
+
+    @Test
+    void loginCanKeepExistingSsoTicketWhenResetSettingIsDisabled() throws Exception {
+        loginPublicUser();
+
+        HttpClient noRedirectClient = newClient(HttpClient.Redirect.NEVER);
+        HttpResponse<String> settingsSaveResponse = postForm(
+                noRedirectClient,
+                "/admin/settings",
+                Map.of("setting_client_reset_sso_ticket_on_login", "false")
+        );
+
+        assertEquals(302, settingsSaveResponse.statusCode());
+
+        HttpResponse<String> logoutResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/account/logout")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        assertEquals(200, logoutResponse.statusCode());
+
+        String ticketBeforeLogin = UserDao.findByUsername("admin").getSsoTicket();
+        loginPublicUser();
+
+        UserEntity userAfterLogin = UserDao.findByUsername("admin");
+        HttpResponse<String> clientResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/client")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertEquals(ticketBeforeLogin, userAfterLogin.getSsoTicket());
+        assertTrue(clientResponse.body().contains("sso.ticket=" + ticketBeforeLogin));
     }
 
     @Test

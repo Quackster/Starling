@@ -114,11 +114,11 @@ public final class AccountController {
             return;
         }
 
-        UserEntity clientUser = UserDao.prepareForClientEntry(currentUser.get());
+        UserDao.markOnline(currentUser.get().getId());
         Map<String, Object> model = publicPageModelFactory.create(context, "community");
         model.put("user", Map.of(
-                "username", clientUser.getUsername(),
-                "ssoTicket", RequestValues.valueOrDefault(clientUser.getSsoTicket(), "")
+                "username", currentUser.get().getUsername(),
+                "ssoTicket", RequestValues.valueOrDefault(currentUser.get().getSsoTicket(), "")
         ));
         model.put("wide", !"false".equalsIgnoreCase(context.queryParam("wide")));
         model.put("onlineCount", UserDao.countOnline());
@@ -259,6 +259,9 @@ public final class AccountController {
         UserEntity user = UserDao.findByUsernameOrEmail(request.username());
         if (user != null && user.getPassword().equals(request.password())) {
             UserDao.updateLogin(user);
+            if (webSettingsService.resetSsoTicketOnLogin()) {
+                user = UserDao.rotateSsoTicket(user);
+            }
             userSessionService.start(context, user, request.rememberMe());
             String nextPath = resolvePostLoginPath(
                     request.page(),

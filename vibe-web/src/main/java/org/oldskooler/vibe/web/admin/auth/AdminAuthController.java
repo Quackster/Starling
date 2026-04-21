@@ -5,6 +5,7 @@ import org.oldskooler.vibe.storage.dao.UserDao;
 import org.oldskooler.vibe.storage.entity.UserEntity;
 import org.oldskooler.vibe.web.admin.AdminPageModelFactory;
 import org.oldskooler.vibe.web.render.TemplateRenderer;
+import org.oldskooler.vibe.web.settings.WebSettingsService;
 import org.oldskooler.vibe.web.user.UserSessionService;
 
 public final class AdminAuthController {
@@ -12,6 +13,7 @@ public final class AdminAuthController {
     private final TemplateRenderer templateRenderer;
     private final UserSessionService userSessionService;
     private final AdminPageModelFactory adminPageModelFactory;
+    private final WebSettingsService webSettingsService;
 
     /**
      * Creates a new AdminAuthController.
@@ -22,11 +24,13 @@ public final class AdminAuthController {
     public AdminAuthController(
             TemplateRenderer templateRenderer,
             UserSessionService userSessionService,
-            AdminPageModelFactory adminPageModelFactory
+            AdminPageModelFactory adminPageModelFactory,
+            WebSettingsService webSettingsService
     ) {
         this.templateRenderer = templateRenderer;
         this.userSessionService = userSessionService;
         this.adminPageModelFactory = adminPageModelFactory;
+        this.webSettingsService = webSettingsService;
     }
 
     /**
@@ -62,6 +66,9 @@ public final class AdminAuthController {
         }
 
         UserDao.updateLogin(adminUser);
+        if (webSettingsService.resetSsoTicketOnLogin()) {
+            adminUser = UserDao.rotateSsoTicket(adminUser);
+        }
         userSessionService.start(context, adminUser, true);
         context.redirect("/admin");
     }

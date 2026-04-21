@@ -268,6 +268,14 @@ public final class WebSettingsService {
     }
 
     /**
+     * Returns whether password logins should rotate SSO tickets.
+     * @return true when login should refresh the SSO ticket
+     */
+    public boolean resetSsoTicketOnLogin() {
+        return booleanValue(WebSettingCatalog.CLIENT_RESET_SSO_TICKET_ON_LOGIN, true);
+    }
+
+    /**
      * Returns the seeded reauthentication idle timeout in minutes.
      * @return the timeout in minutes
      */
@@ -287,6 +295,25 @@ public final class WebSettingsService {
         } catch (Exception e) {
             return defaultValue;
         }
+    }
+
+    /**
+     * Parses a boolean setting.
+     * @param key the key
+     * @param defaultValue the default value
+     * @return the parsed value
+     */
+    public boolean booleanValue(String key, boolean defaultValue) {
+        String value = get(key).trim();
+        if (value.isEmpty()) {
+            return defaultValue;
+        }
+
+        return switch (value.toLowerCase(java.util.Locale.ROOT)) {
+            case "1", "true", "yes", "on" -> true;
+            case "0", "false", "no", "off" -> false;
+            default -> defaultValue;
+        };
     }
 
     private static String normalize(String value) {
