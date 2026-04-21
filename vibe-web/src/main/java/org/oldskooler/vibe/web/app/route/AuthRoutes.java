@@ -59,6 +59,7 @@ public final class AuthRoutes {
         app.post("/clientlog/clientpage", accountController::clientLog);
         app.post("/clientlog/jsexception", accountController::clientLog);
         app.get("/clientlog/nojs", accountController::clientLog);
+        app.get("/clientutils", accountController::clientUtils);
         app.get("/clientutils.php", accountController::clientUtils);
         app.get("/client_popup/install_shockwave", accountController::installShockwave);
         app.get("/client_popup/upgrade_shockwave", accountController::upgradeShockwave);

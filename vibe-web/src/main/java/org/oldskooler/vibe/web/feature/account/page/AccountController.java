@@ -195,27 +195,26 @@ public final class AccountController {
     public void clientUtils(Context context) {
         String key = RequestValues.valueOrDefault(context.queryParam("key"), "connection_failed");
         Map<String, Object> model = publicPageModelFactory.create(context, "community");
-        Map<String, Object> error = new LinkedHashMap<>();
-        switch (key) {
-            case "error" -> {
-                error.put("title", "Oops");
-                error.put("message", "The client reported a fatal error. Re-enter the hotel to continue.");
-            }
-            case "install_shockwave" -> {
-                error.put("title", "Install Shockwave");
-                error.put("message", "Shockwave Director is required to open this classic client build.");
-            }
-            case "upgrade_shockwave" -> {
-                error.put("title", "Upgrade Shockwave");
-                error.put("message", "This hotel expects Shockwave 10 or newer before the client can start.");
-            }
-            default -> {
-                error.put("title", "Connection failed");
-                error.put("message", "The client could not reach " + webSettingsService.clientHotelIp() + ":" + webSettingsService.clientHotelPort() + ".");
-            }
-        }
-        error.put("enterHotelPath", "/client");
-        model.put("clientError", error);
+        String siteName = webSettingsService.siteName();
+        String normalizedKey = switch (key) {
+            case "install_shockwave", "upgrade_shockwave", "error" -> key;
+            default -> "connection_failed";
+        };
+        Map<String, Object> clientUtils = new LinkedHashMap<>();
+        clientUtils.put("key", normalizedKey);
+        clientUtils.put("pageName", "Error");
+        clientUtils.put("habboName", userSessionService.authenticate(context).map(UserEntity::getUsername).orElse(""));
+        clientUtils.put("errorId", RequestValues.valueOrEmpty(context.queryParam("error_id")));
+        clientUtils.put("connectionTitle", "Connection to " + siteName + " failed.");
+        clientUtils.put(
+                "connectionMessage",
+                "Unfortunately we are unable to connect you to " + siteName
+                        + ". This could be because your computer is blocking the connections via a firewall. "
+                        + "Please verify with the person responsible for your Internet connection that the following addresses are permitted by the firewall:"
+        );
+        clientUtils.put("hotelIp", webSettingsService.clientHotelIp());
+        clientUtils.put("hotelPort", webSettingsService.clientHotelPort());
+        model.put("clientUtils", clientUtils);
         context.html(templateRenderer.render("account/client_error", model));
     }
 
@@ -224,7 +223,7 @@ public final class AccountController {
      * @param context the request context
      */
     public void installShockwave(Context context) {
-        context.redirect("/clientutils.php?key=install_shockwave");
+        context.redirect("/clientutils?key=install_shockwave");
     }
 
     /**
@@ -232,7 +231,7 @@ public final class AccountController {
      * @param context the request context
      */
     public void upgradeShockwave(Context context) {
-        context.redirect("/clientutils.php?key=upgrade_shockwave");
+        context.redirect("/clientutils?key=upgrade_shockwave");
     }
 
     /**

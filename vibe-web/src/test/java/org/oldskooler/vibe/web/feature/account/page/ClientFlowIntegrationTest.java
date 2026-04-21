@@ -102,7 +102,7 @@ class ClientFlowIntegrationTest {
         assertEquals(200, clientResponse.statusCode());
         assertTrue(clientResponse.body().contains("id=\"clientembed\""));
         assertTrue(clientResponse.body().contains("sso.ticket=vibe-sso-ticket"));
-        assertTrue(clientResponse.body().contains("client.connection.failed.url=/clientutils.php?key=connection_failed"));
+        assertTrue(clientResponse.body().contains("client.connection.failed.url=/clientutils?key=connection_failed"));
     }
 
     @Test
@@ -155,7 +155,7 @@ class ClientFlowIntegrationTest {
         loginPublicUser();
 
         HttpResponse<String> errorResponse = client.send(
-                HttpRequest.newBuilder(baseUri.resolve("/clientutils.php?key=error")).GET().build(),
+                HttpRequest.newBuilder(baseUri.resolve("/clientutils?key=error")).GET().build(),
                 HttpResponse.BodyHandlers.ofString()
         );
 
@@ -163,8 +163,24 @@ class ClientFlowIntegrationTest {
         assertTrue(errorResponse.body().contains("/web-gallery/static/js/habboclient.js"));
         assertTrue(errorResponse.body().contains("/web-gallery/v2/styles/habboclient.css"));
         assertTrue(errorResponse.body().contains("id=\"enter-hotel-open-image\""));
-        assertTrue(errorResponse.body().contains("onclick=\"HabboClient.openOrFocus(this); return false;\""));
+        assertTrue(errorResponse.body().contains("onclick=\"openOrFocusHabbo(this); return false;\""));
+        assertTrue(errorResponse.body().contains("ClientMessageHandler.googleEvent(\"client_error\", \"unknown\")"));
         assertTrue(errorResponse.body().contains("href=\"/client\" target=\"client\""));
+    }
+
+    @Test
+    void installShockwavePopupUsesClassicClientutilsMarkup() throws Exception {
+        loginPublicUser();
+
+        HttpResponse<String> installResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/clientutils?key=install_shockwave")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertEquals(200, installResponse.statusCode());
+        assertTrue(installResponse.body().contains("ShockwaveInstallation.detectionFile = '/web-gallery/shockwave/detect_shockwave.dcr';"));
+        assertTrue(installResponse.body().contains("/web-gallery/images/progress_bar_blue.gif"));
+        assertTrue(installResponse.body().contains("ClientMessageHandler.googleEvent(\"client_error\", \"shockwave_install\")"));
     }
 
     private void assertInactiveSessionRequiresReauthentication(boolean rememberMe) throws Exception {
