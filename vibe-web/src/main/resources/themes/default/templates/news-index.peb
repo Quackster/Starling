@@ -1,6 +1,6 @@
 <section class="page-header">
     <h1>News</h1>
-    <p>The latest public updates published from {{ site.siteName }} CMS.</p>
+    <p>The latest public updates published from {{ site.cmsTitle }}.</p>
 </section>
 
 <section class="panel">

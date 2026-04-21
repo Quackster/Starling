@@ -124,6 +124,7 @@ public final class PublicPageModelFactory {
     private Map<String, Object> createSiteModel(Optional<UserEntity> currentUser) {
         Map<String, Object> site = new HashMap<>();
         site.put("siteName", siteBranding.siteName());
+        site.put("cmsTitle", siteBranding.cmsTitle());
         site.put("pluralName", siteBranding.siteNamePlural());
         site.put("sitePath", siteBranding.sitePath());
         site.put("staticContentPath", siteBranding.staticContentPath());

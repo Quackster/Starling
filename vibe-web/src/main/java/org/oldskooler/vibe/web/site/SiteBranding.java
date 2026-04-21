@@ -52,7 +52,7 @@ public final class SiteBranding {
      * @return the site title
      */
     public String siteTitle() {
-        return siteName;
+        return siteName();
     }
 
     /**
@@ -60,7 +60,7 @@ public final class SiteBranding {
      * @return the CMS title
      */
     public String cmsTitle() {
-        return siteName + " CMS";
+        return siteName() + " CMS";
     }
 
     /**

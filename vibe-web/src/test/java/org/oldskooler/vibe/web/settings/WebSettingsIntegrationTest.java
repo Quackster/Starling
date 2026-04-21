@@ -87,6 +87,8 @@ class WebSettingsIntegrationTest {
 
         assertEquals("Retro Hotel", webSettingsService.siteName());
         assertEquals("Retro Hotel", siteBranding.siteName());
+        assertEquals("Retro Hotel", siteBranding.siteTitle());
+        assertEquals("Retro Hotel CMS", siteBranding.cmsTitle());
         assertTrue(Files.isDirectory(tempRoot.resolve("themes").resolve("default").resolve("templates")));
         assertTrue(Files.isDirectory(tempRoot.resolve("uploads")));
     }

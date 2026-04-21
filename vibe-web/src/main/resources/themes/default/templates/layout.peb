@@ -28,7 +28,7 @@
     <footer class="site-footer">
         <div class="site-footer__inner">
             <img src="/assets/smallhotel.png" alt="" class="site-footer__hotel">
-            <p>{{ site.siteName }} CMS theme inspired by classic Habbo-era layouts.</p>
+            <p>{{ site.cmsTitle }} theme inspired by classic Habbo-era layouts.</p>
             <p>&copy; {{ year }} {{ site.siteName }}</p>
         </div>
     </footer>
