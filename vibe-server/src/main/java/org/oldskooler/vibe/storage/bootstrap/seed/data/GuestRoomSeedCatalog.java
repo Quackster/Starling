@@ -6,12 +6,12 @@ import java.util.List;
 
 public final class GuestRoomSeedCatalog {
 
-    private static final List<GuestRoomSeed> ROOMS = List.of(
+    private static final List<GuestRoomSeed> ROOMS = List.of(); /*List.of(
             createRoomSeed(1, 28, "admin", "Sunset Lounge", "A laid-back lounge for first-time visitors.", "model_a", 0, "", 7, 25, 50, 1, 1, 0, 0, "", 0),
             createRoomSeed(2, 6, "admin", "Trading Corner", "Swap furniture and meet other traders.", "model_b", 0, "", 4, 20, 50, 1, 1, 0, 0, "", 0),
             createRoomSeed(3, 33, "admin", "Pixel Plaza", "A busy social room with a central dance floor.", "model_c", 0, "", 11, 25, 50, 1, 1, 0, 0, "", 0),
             createRoomSeed(4, 29, "admin", "Rooftop Chill", "Quiet seating, skyline views, and open chat.", "model_d", 2, "vibe", 2, 15, 40, 1, 1, 0, 0, "", 0)
-    );
+    );*/
 
     /**
      * Creates a new GuestRoomSeedCatalog.

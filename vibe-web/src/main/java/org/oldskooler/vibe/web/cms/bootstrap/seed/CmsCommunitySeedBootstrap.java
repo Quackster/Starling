@@ -34,7 +34,7 @@ public final class CmsCommunitySeedBootstrap {
     }
 
     private static List<RoomEntity> seedBootstrapRooms(UserEntity bootstrapUser) {
-        List<RoomEntity> existingRooms = RoomDao.findTopRated(12);
+        /*List<RoomEntity> existingRooms = RoomDao.findTopRated(12);
         if (!existingRooms.isEmpty()) {
             return existingRooms;
         }
@@ -52,13 +52,13 @@ public final class CmsCommunitySeedBootstrap {
             room.setCurrentUsers(seed.currentUsers());
             room.setNavigatorFilter("popular");
             RoomDao.save(room);
-        }
+        }*/
 
         return RoomDao.findTopRated(12);
     }
 
     private static List<GroupEntity> seedBootstrapGroups(UserEntity bootstrapUser, List<RoomEntity> bootstrapRooms) {
-        List<GroupEntity> existingGroups = GroupDao.listAll();
+        /*List<GroupEntity> existingGroups = GroupDao.listAll();
         if (!existingGroups.isEmpty()) {
             return existingGroups;
         }
@@ -80,13 +80,13 @@ public final class CmsCommunitySeedBootstrap {
             }
             GroupDao.save(group);
             GroupDao.ensureMembership(bootstrapUser.getId(), group.getId(), 3, index == 0);
-        }
+        }*/
 
         return GroupDao.listAll();
     }
 
     private static void seedBootstrapRecommendedItems(List<RoomEntity> bootstrapRooms, List<GroupEntity> bootstrapGroups) {
-        if (RecommendedItemDao.listIds("room", null, 1).isEmpty()) {
+        /*if (RecommendedItemDao.listIds("room", null, 1).isEmpty()) {
             for (int index = 0; index < Math.min(4, bootstrapRooms.size()); index++) {
                 RecommendedItemEntity item = new RecommendedItemEntity();
                 item.setType("room");
@@ -104,11 +104,11 @@ public final class CmsCommunitySeedBootstrap {
                 item.setSponsored(1);
                 RecommendedItemDao.save(item);
             }
-        }
+        }*/
     }
 
     private static void seedBootstrapTags(UserEntity bootstrapUser, List<GroupEntity> bootstrapGroups) {
-        if (bootstrapUser != null) {
+        /*if (bootstrapUser != null) {
             PublicTagDao.addTag("user", bootstrapUser.getId(), "retro");
             PublicTagDao.addTag("user", bootstrapUser.getId(), "builder");
             PublicTagDao.addTag("user", bootstrapUser.getId(), "community");
@@ -134,7 +134,7 @@ public final class CmsCommunitySeedBootstrap {
                 PublicTagDao.addTag("group", group.getId(), "news");
                 PublicTagDao.addTag("group", group.getId(), "events");
             }
-        }
+        }*/
     }
 
     public record CommunitySeedState(List<RoomEntity> rooms, List<GroupEntity> groups) {}
