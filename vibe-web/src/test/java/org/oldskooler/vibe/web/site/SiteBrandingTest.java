@@ -14,6 +14,10 @@ class SiteBrandingTest {
         assertEquals("Habbos", branding.siteNamePlural());
         assertEquals("/web-gallery", branding.webGalleryPath());
         assertEquals("/web-gallery/v2/styles/style.css", branding.webGalleryAsset("v2/styles/style.css"));
+        assertEquals(
+                "/web-gallery/v2/images/personal_info/hotel_views/htlview_br.png",
+                branding.personalInfoHotelViewAsset()
+        );
         assertEquals("/habbo-imaging", branding.habboImagingPath());
     }
 

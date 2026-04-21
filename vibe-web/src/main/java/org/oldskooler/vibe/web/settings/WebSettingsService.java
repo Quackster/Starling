@@ -156,6 +156,14 @@ public final class WebSettingsService {
     }
 
     /**
+     * Returns the personal-info habblet hotel view image setting.
+     * @return the hotel view image value
+     */
+    public String siteHotelViewImage() {
+        return get(WebSettingCatalog.SITE_HOTEL_VIEW_IMAGE);
+    }
+
+    /**
      * Returns the session secret.
      * @return the session secret
      */

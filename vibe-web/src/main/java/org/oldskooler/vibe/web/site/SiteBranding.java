@@ -4,6 +4,7 @@ import org.oldskooler.vibe.web.settings.WebSettingsService;
 
 public final class SiteBranding {
 
+    private static final String DEFAULT_PERSONAL_INFO_HOTEL_VIEW_IMAGE = "htlview_br.png";
     private final WebSettingsService webSettingsService;
     private final String siteName;
     private final String webGalleryPath;
@@ -90,6 +91,29 @@ public final class SiteBranding {
     }
 
     /**
+     * Returns the resolved personal-info hotel view background image URL.
+     * @return the hotel view image URL
+     */
+    public String personalInfoHotelViewAsset() {
+        String configuredValue = webSettingsService == null
+                ? DEFAULT_PERSONAL_INFO_HOTEL_VIEW_IMAGE
+                : valueOrDefault(webSettingsService.siteHotelViewImage(), DEFAULT_PERSONAL_INFO_HOTEL_VIEW_IMAGE);
+
+        if (configuredValue.startsWith("http://")
+                || configuredValue.startsWith("https://")
+                || configuredValue.startsWith("//")
+                || configuredValue.startsWith("/")) {
+            return configuredValue;
+        }
+
+        if (configuredValue.contains("/")) {
+            return webGalleryAsset(configuredValue);
+        }
+
+        return webGalleryAsset("v2/images/personal_info/hotel_views/" + configuredValue);
+    }
+
+    /**
      * Returns the avatar imaging base path.
      * @return the avatar imaging path
      */
@@ -108,7 +132,7 @@ public final class SiteBranding {
             normalizedAssetPath = "/" + normalizedAssetPath;
         }
 
-        return webGalleryPath + normalizedAssetPath;
+        return webGalleryPath() + normalizedAssetPath;
     }
 
     private static String normalizeWebGalleryPath(String value) {

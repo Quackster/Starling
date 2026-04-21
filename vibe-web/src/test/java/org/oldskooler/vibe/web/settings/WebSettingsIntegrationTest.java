@@ -73,22 +73,26 @@ class WebSettingsIntegrationTest {
         Optional<WebSettingRecord> seededSiteName = WebSettingsDao.findByKey(WebSettingCatalog.SITE_NAME);
         Optional<WebSettingRecord> seededClientHost = WebSettingsDao.findByKey(WebSettingCatalog.CLIENT_HOTEL_IP);
         Optional<WebSettingRecord> seededLoaderTimeout = WebSettingsDao.findByKey(WebSettingCatalog.CLIENT_LOADER_TIMEOUT_MS);
+        Optional<WebSettingRecord> seededHotelView = WebSettingsDao.findByKey(WebSettingCatalog.SITE_HOTEL_VIEW_IMAGE);
         Optional<WebSettingRecord> seededReauth = WebSettingsDao.findByKey(WebSettingCatalog.REAUTHENTICATE_IDLE_MINUTES);
 
         assertTrue(seededSiteName.isPresent());
         assertEquals("Seed Hotel", seededSiteName.orElseThrow().value());
         assertEquals("127.0.0.1", seededClientHost.orElseThrow().value());
         assertEquals("10000", seededLoaderTimeout.orElseThrow().value());
+        assertEquals("htlview_br.png", seededHotelView.orElseThrow().value());
         assertEquals("30", seededReauth.orElseThrow().value());
 
         WebSettingsService webSettingsService = new WebSettingsService(webConfig);
         SiteBranding siteBranding = new SiteBranding(webSettingsService);
         webSettingsService.update(WebSettingCatalog.SITE_NAME, "Retro Hotel");
+        webSettingsService.update(WebSettingCatalog.SITE_HOTEL_VIEW_IMAGE, "htlview_us.png");
 
         assertEquals("Retro Hotel", webSettingsService.siteName());
         assertEquals("Retro Hotel", siteBranding.siteName());
         assertEquals("Retro Hotel", siteBranding.siteTitle());
         assertEquals("Retro Hotel CMS", siteBranding.cmsTitle());
+        assertEquals("/seed-gallery/v2/images/personal_info/hotel_views/htlview_us.png", siteBranding.personalInfoHotelViewAsset());
         assertTrue(Files.isDirectory(tempRoot.resolve("themes").resolve("default").resolve("templates")));
         assertTrue(Files.isDirectory(tempRoot.resolve("uploads")));
     }

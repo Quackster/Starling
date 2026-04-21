@@ -3,7 +3,9 @@ package org.oldskooler.vibe.storage.dao;
 import org.oldskooler.vibe.storage.EntityContext;
 import org.oldskooler.vibe.storage.entity.UserEntity;
 
+import java.sql.Timestamp;
 import java.util.List;
+import java.util.UUID;
 
 public class UserDao {
 
@@ -162,6 +164,28 @@ public class UserDao {
     }
 
     /**
+     * Marks the user online and rotates their SSO ticket for a new client session.
+     * @param user the user value
+     * @return the refreshed user entity
+     */
+    public static UserEntity prepareForClientEntry(UserEntity user) {
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+        String ticket = generateSsoTicket(user.getUsername());
+        EntityContext.inTransaction(context -> {
+            context.from(UserEntity.class)
+                    .filter(filter -> filter.equals(UserEntity::getId, user.getId()))
+                    .update(setter -> setter
+                            .set(UserEntity::getIsOnline, 1)
+                            .set(UserEntity::getLastOnline, now)
+                            .set(UserEntity::getUpdatedAt, now)
+                            .set(UserEntity::getSsoTicket, ticket));
+            return null;
+        });
+        UserEntity refreshed = findById(user.getId());
+        return refreshed == null ? user : refreshed;
+    }
+
+    /**
      * Marks a user offline.
      * @param userId the user id value
      */
@@ -204,5 +228,10 @@ public class UserDao {
                     .update(setter -> setter.set(UserEntity::getHomeRoom, 0));
             return null;
         });
+    }
+
+    private static String generateSsoTicket(String username) {
+        String safeUsername = username == null || username.isBlank() ? "user" : username.trim();
+        return "vibe-sso-" + safeUsername + "-" + UUID.randomUUID();
     }
 }

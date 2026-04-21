@@ -14,6 +14,7 @@ public final class WebSettingCatalog {
     public static final String UPLOAD_DIRECTORY = "web.upload.directory";
     public static final String SITE_NAME = "web.site.name";
     public static final String WEB_GALLERY_PATH = "web.web-gallery.path";
+    public static final String SITE_HOTEL_VIEW_IMAGE = "site.hotel.view.image";
     public static final String ADMIN_EMAIL = "web.admin.email";
     public static final String ADMIN_PASSWORD = "web.admin.password";
     public static final String CLIENT_DCR = "client.dcr";
@@ -96,6 +97,16 @@ public final class WebSettingCatalog {
                         false,
                         60,
                         config.webGalleryPath()
+                ),
+                definition(
+                        SITE_HOTEL_VIEW_IMAGE,
+                        "Site",
+                        "Hotel View Image",
+                        "File name, relative web-gallery path, or absolute URL for the personal-info habblet background image.",
+                        WebSettingValueType.TEXT,
+                        false,
+                        65,
+                        "htlview_br.png"
                 ),
                 definition(
                         ADMIN_EMAIL,

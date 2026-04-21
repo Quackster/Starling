@@ -1,5 +1,5 @@
 <div class="habblet-container ">
-    <div id="new-personal-info" style="background-image:url({{ site.webGalleryPath }}/v2/images/personal_info/hotel_views/htlview_br.png)" >
+    <div id="new-personal-info" style="background-image:url({{ site.personalInfoHotelView }})" >
 
         {% if site.serverOnline %}
         <div class="enter-hotel-btn">

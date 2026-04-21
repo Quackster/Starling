@@ -129,6 +129,7 @@ public final class PublicPageModelFactory {
         site.put("sitePath", siteBranding.sitePath());
         site.put("staticContentPath", siteBranding.staticContentPath());
         site.put("webGalleryPath", siteBranding.webGalleryPath());
+        site.put("personalInfoHotelView", siteBranding.personalInfoHotelViewAsset());
         site.put("habboImagingPath", siteBranding.habboImagingPath());
         site.put("formattedUsersOnline", "0");
         site.put("visits", 0);

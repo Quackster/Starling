@@ -114,11 +114,11 @@ public final class AccountController {
             return;
         }
 
-        UserDao.markOnline(currentUser.get().getId());
+        UserEntity clientUser = UserDao.prepareForClientEntry(currentUser.get());
         Map<String, Object> model = publicPageModelFactory.create(context, "community");
         model.put("user", Map.of(
-                "username", currentUser.get().getUsername(),
-                "ssoTicket", RequestValues.valueOrDefault(currentUser.get().getSsoTicket(), "")
+                "username", clientUser.getUsername(),
+                "ssoTicket", RequestValues.valueOrDefault(clientUser.getSsoTicket(), "")
         ));
         model.put("wide", !"false".equalsIgnoreCase(context.queryParam("wide")));
         model.put("onlineCount", UserDao.countOnline());

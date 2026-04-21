@@ -6,8 +6,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.oldskooler.vibe.config.DatabaseConfig;
+import org.oldskooler.vibe.storage.dao.UserDao;
 import org.oldskooler.vibe.storage.DatabaseSupport;
 import org.oldskooler.vibe.storage.EntityContext;
+import org.oldskooler.vibe.storage.entity.UserEntity;
 import org.oldskooler.vibe.web.app.VibeWebBootstrap;
 import org.oldskooler.vibe.web.config.WebConfig;
 
@@ -25,6 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -92,6 +95,8 @@ class ClientFlowIntegrationTest {
 
     @Test
     void clientPageRendersShockwaveEmbedForSignedInUser() throws Exception {
+        UserEntity userBeforeClient = UserDao.findByUsername("admin");
+        String originalTicket = userBeforeClient.getSsoTicket();
         loginPublicUser();
 
         HttpResponse<String> clientResponse = client.send(
@@ -99,9 +104,11 @@ class ClientFlowIntegrationTest {
                 HttpResponse.BodyHandlers.ofString()
         );
 
+        UserEntity userAfterClient = UserDao.findByUsername("admin");
         assertEquals(200, clientResponse.statusCode());
         assertTrue(clientResponse.body().contains("id=\"clientembed\""));
-        assertTrue(clientResponse.body().contains("sso.ticket=vibe-sso-ticket"));
+        assertNotEquals(originalTicket, userAfterClient.getSsoTicket());
+        assertTrue(clientResponse.body().contains("sso.ticket=" + userAfterClient.getSsoTicket()));
         assertTrue(clientResponse.body().contains("client.connection.failed.url=/clientutils?key=connection_failed"));
     }
 
@@ -138,6 +145,28 @@ class ClientFlowIntegrationTest {
         assertTrue(clientResponse.body().contains("connection.info.host=games.example;connection.info.port=30100"));
         assertTrue(clientResponse.body().contains("connection.mus.host=games.example;connection.mus.port=30101"));
         assertTrue(clientResponse.body().contains("HabboClientUtils.loaderTimeout = 15000;"));
+    }
+
+    @Test
+    void mePageUsesHotelViewImageSavedThroughHousekeeping() throws Exception {
+        loginPublicUser();
+
+        HttpClient noRedirectClient = newClient(HttpClient.Redirect.NEVER);
+        HttpResponse<String> settingsSaveResponse = postForm(
+                noRedirectClient,
+                "/admin/settings",
+                Map.of("setting_site_hotel_view_image", "htlview_us.png")
+        );
+
+        assertEquals(302, settingsSaveResponse.statusCode());
+
+        HttpResponse<String> meResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/me")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertEquals(200, meResponse.statusCode());
+        assertTrue(meResponse.body().contains("background-image:url(/web-gallery/v2/images/personal_info/hotel_views/htlview_us.png)"));
     }
 
     @Test
