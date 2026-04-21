@@ -55,6 +55,7 @@ public final class HomepageController {
         model.put("tagCloud", Collections.emptyMap());
         model.put("rememberMe", "true".equalsIgnoreCase(context.queryParam("rememberme")));
         model.put("username", valueOrEmpty(context.queryParam("username")));
+        model.put("page", valueOrEmpty(context.queryParam("page")));
         context.html(templateRenderer.render("index", model));
     }
 

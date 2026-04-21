@@ -17,6 +17,7 @@ import java.util.Optional;
 
 public final class AccountController {
 
+    private static final String POST_LOGIN_PATH_SESSION_KEY = "postLoginPath";
     private final TemplateRenderer templateRenderer;
     private final UserSessionService userSessionService;
     private final PublicPageModelFactory publicPageModelFactory;
@@ -53,6 +54,7 @@ public final class AccountController {
         Map<String, Object> model = publicPageModelFactory.create(context, "community");
         model.put("rememberMe", "true".equalsIgnoreCase(context.queryParam("rememberme")));
         model.put("username", RequestValues.valueOrEmpty(context.queryParam("username")));
+        model.put("page", RequestValues.valueOrEmpty(context.queryParam("page")));
         context.html(templateRenderer.render("account/login", model));
     }
 
@@ -61,8 +63,17 @@ public final class AccountController {
      * @param context the request context
      */
     public void securityCheck(Context context) {
-        String nextPath = RequestValues.valueOrDefault(context.sessionAttribute("postLoginPath"), "/me");
-        context.sessionAttribute("postLoginPath", null);
+        if (userSessionService.authenticate(context).isEmpty()) {
+            context.redirect("/");
+            return;
+        }
+
+        String nextPath = resolvePostLoginPath(
+                RequestValues.valueOrEmpty(context.queryParam("page")),
+                RequestValues.valueOrEmpty(context.sessionAttribute(POST_LOGIN_PATH_SESSION_KEY)),
+                "/"
+        );
+        context.sessionAttribute(POST_LOGIN_PATH_SESSION_KEY, null);
         context.redirect(nextPath);
     }
 
@@ -149,10 +160,14 @@ public final class AccountController {
         }
 
         userSessionService.restartAfterReauthentication(context, currentUser.get());
-        String nextPath = RequestValues.valueOrDefault(context.sessionAttribute(UserSessionService.REAUTHENTICATE_PATH_SESSION_KEY), "/client");
+        String nextPath = resolvePostLoginPath(
+                RequestValues.valueOrEmpty(context.formParam("page")),
+                RequestValues.valueOrDefault(context.sessionAttribute(UserSessionService.REAUTHENTICATE_PATH_SESSION_KEY), "/client"),
+                "/client"
+        );
         context.sessionAttribute(UserSessionService.REAUTHENTICATE_PATH_SESSION_KEY, null);
-        context.sessionAttribute("postLoginPath", nextPath);
-        context.redirect("/security_check");
+        context.sessionAttribute(POST_LOGIN_PATH_SESSION_KEY, nextPath);
+        context.redirect(securityCheckLocation(nextPath));
     }
 
     /**
@@ -245,8 +260,13 @@ public final class AccountController {
         if (user != null && user.getPassword().equals(request.password())) {
             UserDao.updateLogin(user);
             userSessionService.start(context, user, request.rememberMe());
-            context.sessionAttribute("postLoginPath", "/me");
-            context.redirect("/security_check");
+            String nextPath = resolvePostLoginPath(
+                    request.page(),
+                    RequestValues.valueOrEmpty(context.sessionAttribute(POST_LOGIN_PATH_SESSION_KEY)),
+                    "/"
+            );
+            context.sessionAttribute(POST_LOGIN_PATH_SESSION_KEY, nextPath);
+            context.redirect(securityCheckLocation(nextPath));
             return;
         }
 
@@ -307,5 +327,45 @@ public final class AccountController {
         return queryString == null || queryString.isBlank()
                 ? context.path()
                 : context.path() + "?" + queryString;
+    }
+
+    private String securityCheckLocation(String nextPath) {
+        return "/security_check?page=" + URLEncoder.encode(nextPath, StandardCharsets.UTF_8);
+    }
+
+    private String resolvePostLoginPath(String requestedPath, String storedPath, String defaultPath) {
+        String normalizedRequestedPath = normalizePostLoginPath(requestedPath);
+        if (!normalizedRequestedPath.isBlank()) {
+            return normalizedRequestedPath;
+        }
+
+        String normalizedStoredPath = normalizePostLoginPath(storedPath);
+        if (!normalizedStoredPath.isBlank()) {
+            return normalizedStoredPath;
+        }
+
+        String normalizedDefaultPath = normalizePostLoginPath(defaultPath);
+        return normalizedDefaultPath.isBlank() ? "/" : normalizedDefaultPath;
+    }
+
+    private String normalizePostLoginPath(String value) {
+        String normalized = RequestValues.valueOrEmpty(value).trim();
+        if (normalized.isBlank()) {
+            return "";
+        }
+
+        if (normalized.startsWith("./")) {
+            normalized = normalized.substring(1);
+        }
+
+        if (normalized.startsWith("http://") || normalized.startsWith("https://") || normalized.startsWith("//")) {
+            return "";
+        }
+
+        if (!normalized.startsWith("/")) {
+            normalized = "/" + normalized;
+        }
+
+        return normalized.startsWith("/security_check") ? "" : normalized;
     }
 }

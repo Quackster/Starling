@@ -136,6 +136,7 @@ var PromoHabbos = { track:function(n) { if (!!n && window.pageTracker) { pageTra
 
     <div class="box-content clearfix" id="login-habblet">
         <form action="{{ site.sitePath }}/account/submit" method="post" class="login-habblet">
+            {% if page != "" %}<input type="hidden" name="page" value="{{ page }}" />{% endif %}
 			            <ul>
                 <li>
                     <label for="login-username" class="login-text">Username</label>

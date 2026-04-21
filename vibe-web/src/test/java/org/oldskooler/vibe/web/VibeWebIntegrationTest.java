@@ -484,6 +484,45 @@ class VibeWebIntegrationTest {
     }
 
     @Test
+    void publicUserLoginUsesSecurityCheckToFinishAtRequestedPage() throws Exception {
+        HttpResponse<String> homepageResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/?page=/credits")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+        HttpResponse<String> loginResponse = postForm(
+                "/account/submit",
+                Map.of(
+                        "page", "/credits",
+                        "username", "admin",
+                        "password", "admin"
+                ),
+                Map.of()
+        );
+
+        assertEquals(200, homepageResponse.statusCode());
+        assertEquals(200, loginResponse.statusCode());
+        assertTrue(homepageResponse.body().contains("type=\"hidden\" name=\"page\" value=\"/credits\""));
+        assertTrue(loginResponse.uri().toString().endsWith("/credits"), loginResponse.uri().toString());
+        assertTrue(loginResponse.body().contains("How to get Credits"));
+    }
+
+    @Test
+    void securityCheckRedirectsGuestsToHomepage() throws Exception {
+        HttpClient noRedirectClient = HttpClient.newBuilder()
+                .cookieHandler(new CookieManager())
+                .followRedirects(HttpClient.Redirect.NEVER)
+                .build();
+
+        HttpResponse<String> response = noRedirectClient.send(
+                HttpRequest.newBuilder(baseUri.resolve("/security_check?page=/credits")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertEquals(302, response.statusCode());
+        assertEquals("/", response.headers().firstValue("Location").orElse(""));
+    }
+
+    @Test
     void publicUserLoginWelcomeAndMeRender() throws Exception {
         HttpResponse<String> loginResponse = postForm(
                 "/account/submit",
