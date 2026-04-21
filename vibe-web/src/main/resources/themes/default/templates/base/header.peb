@@ -99,6 +99,18 @@
 					<li id="mygroups"><a href="#"><span>My Groups</span></a><span class="r"></span></li>
 					<li id="myrooms"><a href="#"><span>My Rooms</span></a><span class="r"></span></li>
 				</ul>
+                {% if site.serverOnline %}
+                    {% if navigation.userHotelButton.visible %}
+				    <a
+                        href="{{ navigation.userHotelButton.href }}"
+                        id="enter-hotel-open-medium-link"
+                        {% if navigation.userHotelButton.target != "" %}target="{{ navigation.userHotelButton.target }}"{% endif %}
+                        {% if navigation.userHotelButton.onclick != "" %}onclick="{{ navigation.userHotelButton.onclick }}"{% endif %}
+                    >{{ navigation.userHotelButton.label }}</a>
+                    {% endif %}
+                {% else %}
+					<div id="hotel-closed-medium">{{ site.siteName }} is offline</div>
+                {% endif %}
 			</div>
 
             <div id="subnavi-search">
@@ -108,37 +120,12 @@
 					<li><a href="{{ site.sitePath }}/account/logout" class="userlink" id="signout">Sign Out</a></li>
 				</ul>
                 </div>
-                <form name="tag_search_form" action="./home" class="search-box clearfix">
+                <form name="tag_search_form" action="{{ site.sitePath }}/home" class="search-box clearfix">
 					<a id="search-button" class="new-button search-icon" href="#" onclick="$('search-button').up('form').submit(); return false;"><b><span></span></b><i></i></a>
 					<input type="text" name="tag" id="search_query" value="User Profile.." class="search-box-query search-box-onfocus" style="float: right"/>
 				</form>
                 <script type="text/javascript">SearchBoxHelper.init();</script>
             </div>
-
-            <div id="to-hotel">
-                {% if site.serverOnline %}
-                    {% if navigation.userHotelButton.visible %}
-                        {% if navigation.userHotelButton.buttonStyle %}
-                        <a
-                            href="{{ navigation.userHotelButton.href }}"
-                            {% if navigation.userHotelButton.cssId != "" %}id="{{ navigation.userHotelButton.cssId }}"{% endif %}
-                            {% if navigation.userHotelButton.cssClass != "" %}class="{{ navigation.userHotelButton.cssClass }}"{% endif %}
-                            {% if navigation.userHotelButton.target != "" %}target="{{ navigation.userHotelButton.target }}"{% endif %}
-                            {% if navigation.userHotelButton.onclick != "" %}onclick="{{ navigation.userHotelButton.onclick }}"{% endif %}
-                        ><b>{{ navigation.userHotelButton.label }}</b><i></i></a>
-                        {% else %}
-                        <a
-                            href="{{ navigation.userHotelButton.href }}"
-                            id="{% if navigation.userHotelButton.cssId != "" %}{{ navigation.userHotelButton.cssId }}{% else %}enter-hotel-open-medium-link{% endif %}"
-                            {% if navigation.userHotelButton.target != "" %}target="{{ navigation.userHotelButton.target }}"{% endif %}
-                            {% if navigation.userHotelButton.onclick != "" %}onclick="{{ navigation.userHotelButton.onclick }}"{% endif %}
-                        >{{ navigation.userHotelButton.label }}</a>
-                        {% endif %}
-                    {% endif %}
-                {% else %}
-                    <div id="hotel-closed-medium">{{ site.siteName }} is offline</div>
-                {% endif %}
-			</div>
         </div>
         <script type="text/javascript">
 		L10N.put("purchase.group.title", "Create a group");
