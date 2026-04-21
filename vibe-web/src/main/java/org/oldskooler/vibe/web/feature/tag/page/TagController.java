@@ -1,0 +1,86 @@
+package org.oldskooler.vibe.web.feature.tag.page;
+
+import io.javalin.http.Context;
+import org.oldskooler.vibe.storage.entity.UserEntity;
+import org.oldskooler.vibe.web.feature.shared.page.PublicPageModelFactory;
+import org.oldskooler.vibe.web.feature.shared.page.layout.PublicPageLayoutRenderer;
+import org.oldskooler.vibe.web.feature.tag.service.TagDirectoryService;
+import org.oldskooler.vibe.web.feature.tag.service.UserTagService;
+import org.oldskooler.vibe.web.render.TemplateRenderer;
+import org.oldskooler.vibe.web.request.RequestValues;
+import org.oldskooler.vibe.web.user.UserSessionService;
+
+import java.util.Map;
+import java.util.Optional;
+
+public final class TagController {
+
+    private final TemplateRenderer templateRenderer;
+    private final UserSessionService userSessionService;
+    private final PublicPageLayoutRenderer publicPageLayoutRenderer;
+    private final PublicPageModelFactory publicPageModelFactory;
+    private final TagDirectoryService tagDirectoryService;
+    private final UserTagService userTagService;
+
+    /**
+     * Creates a new TagController.
+     * @param templateRenderer the template renderer
+     * @param userSessionService the user session service
+     * @param publicPageModelFactory the public page model factory
+     * @param tagDirectoryService the public tag directory service
+     * @param userTagService the current-user tag service
+     */
+    public TagController(
+            TemplateRenderer templateRenderer,
+            UserSessionService userSessionService,
+            PublicPageLayoutRenderer publicPageLayoutRenderer,
+            PublicPageModelFactory publicPageModelFactory,
+            TagDirectoryService tagDirectoryService,
+            UserTagService userTagService
+    ) {
+        this.templateRenderer = templateRenderer;
+        this.userSessionService = userSessionService;
+        this.publicPageLayoutRenderer = publicPageLayoutRenderer;
+        this.publicPageModelFactory = publicPageModelFactory;
+        this.tagDirectoryService = tagDirectoryService;
+        this.userTagService = userTagService;
+    }
+
+    /**
+     * Renders the tag landing page.
+     * @param context the request context
+     */
+    public void index(Context context) {
+        render(context, context.queryParam("tag"));
+    }
+
+    /**
+     * Renders a search alias for the tag page.
+     * @param context the request context
+     */
+    public void search(Context context) {
+        render(context, context.queryParam("tag"));
+    }
+
+    /**
+     * Renders a specific tag page.
+     * @param context the request context
+     */
+    public void detail(Context context) {
+        render(context, context.pathParam("tag"));
+    }
+
+    private void render(Context context, String requestedTag) {
+        Optional<UserEntity> currentUser = userSessionService.authenticate(context);
+        Map<String, Object> model = publicPageModelFactory.create(context, "community", "tags");
+        model.put("tagQuestion", userTagService.tagQuestion());
+        model.put("tagSearch", tagDirectoryService.search(
+                context,
+                currentUser,
+                requestedTag,
+                RequestValues.parseInt(context.queryParam("pageNumber"), 1)
+        ));
+        model.put("pageLayout", publicPageLayoutRenderer.render("tags", model));
+        context.html(templateRenderer.render("tag", model));
+    }
+}

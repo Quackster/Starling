@@ -1,0 +1,188 @@
+package org.oldskooler.vibe.web.cms.page;
+
+import org.oldskooler.vibe.storage.EntityContext;
+
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+
+public final class CmsPageDao {
+
+    /**
+     * Creates a new CmsPageDao.
+     */
+    private CmsPageDao() {}
+
+    /**
+     * Counts pages.
+     * @return the resulting count
+     */
+    public static int count() {
+        return EntityContext.withContext(context -> Math.toIntExact(context.from(CmsPageEntity.class).count()));
+    }
+
+    /**
+     * Lists all pages.
+     * @return the resulting pages
+     */
+    public static List<CmsPage> listAll() {
+        return EntityContext.withContext(context -> context.from(CmsPageEntity.class)
+                .orderBy(order -> order.col(CmsPageEntity::getUpdatedAt).desc())
+                .toList()
+                .stream()
+                .map(CmsPageDao::map)
+                .toList());
+    }
+
+    /**
+     * Finds a page by id.
+     * @param id the id value
+     * @return the resulting page
+     */
+    public static Optional<CmsPage> findById(int id) {
+        return EntityContext.withContext(context -> context.from(CmsPageEntity.class)
+                .filter(filter -> filter.equals(CmsPageEntity::getId, id))
+                .first()
+                .map(CmsPageDao::map));
+    }
+
+    /**
+     * Finds a published page by slug.
+     * @param slug the slug value
+     * @return the resulting page
+     */
+    public static Optional<CmsPage> findPublishedBySlug(String slug) {
+        return EntityContext.withContext(context -> context.from(CmsPageEntity.class)
+                .filter(filter -> filter
+                        .equals(CmsPageEntity::getSlug, slug == null ? "" : slug)
+                        .and()
+                        .equals(CmsPageEntity::getIsPublished, 1))
+                .first()
+                .map(CmsPageDao::map));
+    }
+
+    /**
+     * Saves a page draft.
+     * @param id the page id value or null for insert
+     * @param draft the draft value
+     * @return the resulting page id
+     */
+    public static int saveDraft(Integer id, CmsPageDraft draft) {
+        return EntityContext.inTransaction(context -> {
+            Timestamp now = Timestamp.from(Instant.now());
+            if (id == null) {
+                CmsPageEntity page = new CmsPageEntity();
+                page.setSlug(draft.slug());
+                page.setTemplateName(draft.templateName());
+                page.setTitle(draft.title());
+                page.setSummary(draft.summary());
+                page.setMarkdown(draft.markdown());
+                page.setVisibleToGuests(draft.visibleToGuests() ? 1 : 0);
+                page.setAllowedRanks(draft.allowedRanks());
+                page.setLayoutJson(draft.layoutJson());
+                page.setNavigationMainKey(draft.navigationMainKey());
+                page.setNavigationMainLinkKeys(draft.navigationMainLinkKeys());
+                page.setNavigationSubLinkTokens(draft.navigationSubLinkTokens());
+                page.setIsPublished(0);
+                page.setPublishedAt(null);
+                page.setCreatedAt(now);
+                page.setUpdatedAt(now);
+                context.insert(page);
+                return page.getId();
+            }
+
+            CmsPageEntity page = context.from(CmsPageEntity.class)
+                    .filter(filter -> filter.equals(CmsPageEntity::getId, id))
+                    .first()
+                    .orElse(null);
+            if (page == null) {
+                return id;
+            }
+
+            page.setSlug(draft.slug());
+            page.setTemplateName(draft.templateName());
+            page.setTitle(draft.title());
+            page.setSummary(draft.summary());
+            page.setMarkdown(draft.markdown());
+            page.setVisibleToGuests(draft.visibleToGuests() ? 1 : 0);
+            page.setAllowedRanks(draft.allowedRanks());
+            page.setLayoutJson(draft.layoutJson());
+            page.setNavigationMainKey(draft.navigationMainKey());
+            page.setNavigationMainLinkKeys(draft.navigationMainLinkKeys());
+            page.setNavigationSubLinkTokens(draft.navigationSubLinkTokens());
+            page.setUpdatedAt(now);
+            context.update(page);
+            return id;
+        });
+    }
+
+    /**
+     * Publishes a page.
+     * @param id the page id value
+     */
+    public static void publish(int id) {
+        EntityContext.inTransaction(context -> {
+            CmsPageEntity page = context.from(CmsPageEntity.class)
+                    .filter(filter -> filter.equals(CmsPageEntity::getId, id))
+                    .first()
+                    .orElse(null);
+            if (page == null) {
+                return null;
+            }
+
+            Timestamp now = Timestamp.from(Instant.now());
+            page.setIsPublished(1);
+            page.setPublishedAt(now);
+            page.setUpdatedAt(now);
+            context.update(page);
+            return null;
+        });
+    }
+
+    /**
+     * Unpublishes a page.
+     * @param id the page id value
+     */
+    public static void unpublish(int id) {
+        EntityContext.inTransaction(context -> {
+            CmsPageEntity page = context.from(CmsPageEntity.class)
+                    .filter(filter -> filter.equals(CmsPageEntity::getId, id))
+                    .first()
+                    .orElse(null);
+            if (page == null) {
+                return null;
+            }
+
+            page.setIsPublished(0);
+            page.setUpdatedAt(Timestamp.from(Instant.now()));
+            context.update(page);
+            return null;
+        });
+    }
+
+    private static CmsPage map(CmsPageEntity page) {
+        return new CmsPage(
+                page.getId(),
+                page.getSlug(),
+                page.getTemplateName(),
+                safeValue(page.getTitle()),
+                safeValue(page.getSummary()),
+                safeValue(page.getMarkdown()),
+                page.getVisibleToGuests() > 0,
+                safeValue(page.getAllowedRanks()),
+                safeValue(page.getLayoutJson()),
+                safeValue(page.getNavigationMainKey()),
+                safeValue(page.getNavigationMainLinkKeys()),
+                safeValue(page.getNavigationSubLinkTokens()),
+                page.getIsPublished() == 1,
+                page.getPublishedAt(),
+                page.getCreatedAt(),
+                page.getUpdatedAt()
+        );
+    }
+
+    private static String safeValue(String value) {
+        return value == null ? "" : value;
+    }
+}

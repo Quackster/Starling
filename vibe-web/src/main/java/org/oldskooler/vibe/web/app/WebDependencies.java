@@ -1,0 +1,76 @@
+package org.oldskooler.vibe.web.app;
+
+import org.oldskooler.vibe.permission.RankPermissionService;
+import org.oldskooler.vibe.web.admin.setting.AdminSettingsController;
+import org.oldskooler.vibe.web.app.asset.AvatarImagingService;
+import org.oldskooler.vibe.web.cms.article.ArticleService;
+import org.oldskooler.vibe.web.cms.article.ArticleViewFactory;
+import org.oldskooler.vibe.web.cms.page.CmsPageHabbletCatalog;
+import org.oldskooler.vibe.web.cms.page.CmsPageLayoutCodec;
+import org.oldskooler.vibe.web.cms.page.CmsPagePublicRenderer;
+import org.oldskooler.vibe.web.cms.page.PageService;
+import org.oldskooler.vibe.web.cms.page.PageViewFactory;
+import org.oldskooler.vibe.web.feature.community.view.CommunityWidgetsFactory;
+import org.oldskooler.vibe.web.feature.community.view.NewsPromoContentFactory;
+import org.oldskooler.vibe.web.feature.credits.view.CreditsPageContentFactory;
+import org.oldskooler.vibe.web.feature.me.MeAccess;
+import org.oldskooler.vibe.web.feature.me.campaign.HotCampaignService;
+import org.oldskooler.vibe.web.feature.me.content.MePageContentFactory;
+import org.oldskooler.vibe.web.feature.me.mail.MinimailRecipientService;
+import org.oldskooler.vibe.web.feature.me.mail.MinimailSessionState;
+import org.oldskooler.vibe.web.feature.me.mail.MinimailViewFactory;
+import org.oldskooler.vibe.web.feature.me.mail.MinimailWriteService;
+import org.oldskooler.vibe.web.feature.me.referral.ReferralService;
+import org.oldskooler.vibe.web.feature.shared.page.PublicPageModelFactory;
+import org.oldskooler.vibe.web.feature.shared.page.layout.PublicPageLayoutRenderer;
+import org.oldskooler.vibe.web.feature.shared.page.navigation.CmsNavigationService;
+import org.oldskooler.vibe.web.feature.shared.page.navigation.PublicNavigationModelFactory;
+import org.oldskooler.vibe.web.feature.tag.service.TagDirectoryService;
+import org.oldskooler.vibe.web.feature.tag.service.UserTagService;
+import org.oldskooler.vibe.web.render.MarkdownRenderer;
+import org.oldskooler.vibe.web.render.TemplateRenderer;
+import org.oldskooler.vibe.web.site.SiteBranding;
+import org.oldskooler.vibe.web.settings.WebSettingsService;
+import org.oldskooler.vibe.web.theme.ThemeResourceResolver;
+import org.oldskooler.vibe.web.user.UserSessionService;
+import org.oldskooler.vibe.web.admin.AdminPageModelFactory;
+import org.oldskooler.vibe.web.user.view.UserViewModelFactory;
+
+public record WebDependencies(
+        TemplateRenderer templateRenderer,
+        MarkdownRenderer markdownRenderer,
+        RankPermissionService rankPermissionService,
+        WebSettingsService webSettingsService,
+        UserSessionService userSessionService,
+        SiteBranding siteBranding,
+        ThemeResourceResolver themeResourceResolver,
+        AvatarImagingService avatarImagingService,
+        PageService pageService,
+        ArticleService articleService,
+        HotCampaignService hotCampaignService,
+        MinimailRecipientService minimailRecipientService,
+        MinimailWriteService minimailWriteService,
+        MinimailViewFactory minimailViewFactory,
+        MinimailSessionState minimailSessionState,
+        ReferralService referralService,
+        UserTagService userTagService,
+        TagDirectoryService tagDirectoryService,
+        CommunityWidgetsFactory communityWidgetsFactory,
+        NewsPromoContentFactory newsPromoContentFactory,
+        CreditsPageContentFactory creditsPageContentFactory,
+        CmsNavigationService cmsNavigationService,
+        PublicNavigationModelFactory publicNavigationModelFactory,
+        PublicPageLayoutRenderer publicPageLayoutRenderer,
+        PublicPageModelFactory publicPageModelFactory,
+        MePageContentFactory mePageContentFactory,
+        MeAccess meAccess,
+        AdminPageModelFactory adminPageModelFactory,
+        AdminSettingsController adminSettingsController,
+        ArticleViewFactory articleViewFactory,
+        PageViewFactory pageViewFactory,
+        CmsPageHabbletCatalog cmsPageHabbletCatalog,
+        CmsPageLayoutCodec cmsPageLayoutCodec,
+        CmsPagePublicRenderer cmsPagePublicRenderer,
+        UserViewModelFactory userViewModelFactory
+) {
+}

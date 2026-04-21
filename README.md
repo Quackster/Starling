@@ -1,10 +1,10 @@
-# Starling
+# Vibe
 
-Starling is a Java 17 multi-project workspace for two related applications backed by the same MariaDB database:
+Vibe is a Java 17 multi-project workspace for two related applications backed by the same MariaDB database:
 
-- `starling-server`: the Habbo-style r26 game server
-- `starling-web`: a Javalin + Pebble CMS and public website
-- `starling-core`: shared configuration, database bootstrap, and entity access
+- `vibe-server`: the Habbo-style r26 game server
+- `vibe-web`: a Javalin + Pebble CMS and public website
+- `vibe-core`: shared configuration, database bootstrap, and entity access
 
 The default web theme is adapted from Lisbon presentation assets, but the web app keeps its own CMS, routing, and rendering code.
 
@@ -16,11 +16,11 @@ The default web theme is adapted from Lisbon presentation assets, but the web ap
 
 ## Project Layout
 
-- `starling-core/` shared config, database, and entity code
-- `starling-server/` TCP game server and handshake probe
-- `starling-web/` CMS, admin UI, public theme, and integration tests
-- `starling-server/dist/` packaged game server runtime created by `packageDist`
-- `starling-web/dist/` packaged web runtime created by `packageDist`
+- `vibe-core/` shared config, database, and entity code
+- `vibe-server/` TCP game server and handshake probe
+- `vibe-web/` CMS, admin UI, public theme, and integration tests
+- `vibe-server/dist/` packaged game server runtime created by `packageDist`
+- `vibe-web/dist/` packaged web runtime created by `packageDist`
 
 ## Configuration
 
@@ -28,26 +28,26 @@ Both applications load bundled defaults first, then optional external overrides,
 
 ### Shared Database Overrides
 
-- `STARLING_DB_HOST`
-- `STARLING_DB_PORT`
-- `STARLING_DB_NAME`
-- `STARLING_DB_USERNAME`
-- `STARLING_DB_PASSWORD`
-- `STARLING_DB_PARAMS`
+- `VIBE_DB_HOST`
+- `VIBE_DB_PORT`
+- `VIBE_DB_NAME`
+- `VIBE_DB_USERNAME`
+- `VIBE_DB_PASSWORD`
+- `VIBE_DB_PARAMS`
 
 ### Game Server Config
 
 Load order:
 
-1. Bundled `starling-server/src/main/resources/server.properties`
+1. Bundled `vibe-server/src/main/resources/server.properties`
 2. `config/server.properties` in the current working directory, when present
-3. `-Dstarling.config=<path>`
-4. `STARLING_CONFIG=<path>`
+3. `-Dvibe.config=<path>`
+4. `VIBE_CONFIG=<path>`
 5. Environment overrides
 
 Supported server-specific environment overrides:
 
-- `STARLING_SERVER_PORT`
+- `VIBE_SERVER_PORT`
 
 Default bundled values:
 
@@ -55,7 +55,7 @@ Default bundled values:
 server.port=30000
 db.host=127.0.0.1
 db.port=3306
-db.name=starling
+db.name=vibe
 db.username=root
 db.password=verysecret
 db.params=useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8
@@ -65,21 +65,21 @@ db.params=useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8
 
 Load order:
 
-1. Bundled `starling-web/src/main/resources/web.properties`
+1. Bundled `vibe-web/src/main/resources/web.properties`
 2. `config/web.properties` in the current working directory, when present
-3. `-Dstarling.web.config=<path>`
-4. `STARLING_WEB_CONFIG=<path>`
+3. `-Dvibe.web.config=<path>`
+4. `VIBE_WEB_CONFIG=<path>`
 5. Environment overrides
 
 Supported web-specific environment overrides:
 
-- `STARLING_WEB_PORT`
-- `STARLING_WEB_SESSION_SECRET`
-- `STARLING_WEB_THEME`
-- `STARLING_WEB_THEME_DIR`
-- `STARLING_WEB_UPLOAD_DIR`
-- `STARLING_WEB_ADMIN_EMAIL`
-- `STARLING_WEB_ADMIN_PASSWORD`
+- `VIBE_WEB_PORT`
+- `VIBE_WEB_SESSION_SECRET`
+- `VIBE_WEB_THEME`
+- `VIBE_WEB_THEME_DIR`
+- `VIBE_WEB_UPLOAD_DIR`
+- `VIBE_WEB_ADMIN_EMAIL`
+- `VIBE_WEB_ADMIN_PASSWORD`
 
 Default bundled values:
 
@@ -89,11 +89,11 @@ web.session.secret=change-me
 web.theme=default
 web.theme.directory=themes
 web.upload.directory=uploads
-web.admin.email=admin@starling.local
+web.admin.email=admin@vibe.local
 web.admin.password=admin123!
 db.host=127.0.0.1
 db.port=3306
-db.name=starling
+db.name=vibe
 db.username=root
 db.password=verysecret
 db.params=useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8
@@ -118,14 +118,14 @@ Create packaged runtimes for both applications:
 Simple packaged build command:
 
 ```powershell
-cd C:\SourceControl\Starling
+cd C:\SourceControl\Vibe
 .\gradlew.bat packageDist
 ```
 
 That produces:
 
-- `starling-server/dist/`
-- `starling-web/dist/`
+- `vibe-server/dist/`
+- `vibe-web/dist/`
 
 ## Run
 
@@ -134,22 +134,22 @@ That produces:
 Build the packaged `/dist/` folders from the repo root:
 
 ```powershell
-cd C:\SourceControl\Starling
+cd C:\SourceControl\Vibe
 .\gradlew.bat packageDist
 ```
 
 Run the website from its packaged folder:
 
 ```powershell
-cd C:\SourceControl\Starling\starling-web\dist
-.\bin\starling-web.bat
+cd C:\SourceControl\Vibe\vibe-web\dist
+.\bin\vibe-web.bat
 ```
 
 Run the game server from its packaged folder:
 
 ```powershell
-cd C:\SourceControl\Starling\starling-server\dist
-.\bin\starling-server.bat
+cd C:\SourceControl\Vibe\vibe-server\dist
+.\bin\vibe-server.bat
 ```
 
 If you want to start both, launch the server in one terminal and the website in another.
@@ -159,20 +159,20 @@ If you want to start both, launch the server in one terminal and the website in 
 Run the game server from the repo root:
 
 ```powershell
-.\gradlew.bat :starling-server:run
+.\gradlew.bat :vibe-server:run
 ```
 
 Run the web CMS from the repo root:
 
 ```powershell
-.\gradlew.bat :starling-web:run
+.\gradlew.bat :vibe-web:run
 ```
 
 You can also start the packaged distributions directly after `packageDist`:
 
 ```powershell
-.\starling-server\dist\bin\starling-server.bat
-.\starling-web\dist\bin\starling-web.bat
+.\vibe-server\dist\bin\vibe-server.bat
+.\vibe-web\dist\bin\vibe-web.bat
 ```
 
 ## Web Routes
@@ -205,17 +205,17 @@ Run all tests:
 Run only the web module tests:
 
 ```powershell
-.\gradlew.bat :starling-web:test
+.\gradlew.bat :vibe-web:test
 ```
 
-`starling-web` includes unit coverage for slug generation, password hashing, Markdown rendering, and theme overrides, plus integration coverage for admin bootstrap, login, page/article publishing, HTMX previews, aliases, and media uploads.
+`vibe-web` includes unit coverage for slug generation, password hashing, Markdown rendering, and theme overrides, plus integration coverage for admin bootstrap, login, page/article publishing, HTMX previews, aliases, and media uploads.
 
 ## Handshake Probe
 
 The game server module still includes a standalone client entry point for validating the r26 normal-socket handshake:
 
 ```powershell
-.\gradlew.bat :starling-server:starlingClient --args="--host 127.0.0.1 --port 30000 --handshake-only"
+.\gradlew.bat :vibe-server:vibeClient --args="--host 127.0.0.1 --port 30000 --handshake-only"
 ```
 
 Additional supported arguments:

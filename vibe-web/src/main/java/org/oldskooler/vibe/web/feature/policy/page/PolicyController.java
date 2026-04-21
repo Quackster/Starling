@@ -1,0 +1,62 @@
+package org.oldskooler.vibe.web.feature.policy.page;
+
+import io.javalin.http.Context;
+import org.oldskooler.vibe.web.feature.shared.page.PublicPageModelFactory;
+import org.oldskooler.vibe.web.render.TemplateRenderer;
+import org.oldskooler.vibe.web.site.SiteBranding;
+
+import java.util.Map;
+
+public final class PolicyController {
+
+    private final TemplateRenderer templateRenderer;
+    private final PublicPageModelFactory publicPageModelFactory;
+    private final SiteBranding siteBranding;
+
+    /**
+     * Creates a new PolicyController.
+     * @param templateRenderer the template renderer
+     * @param publicPageModelFactory the public page model factory
+     */
+    public PolicyController(
+            TemplateRenderer templateRenderer,
+            PublicPageModelFactory publicPageModelFactory,
+            SiteBranding siteBranding
+    ) {
+        this.templateRenderer = templateRenderer;
+        this.publicPageModelFactory = publicPageModelFactory;
+        this.siteBranding = siteBranding;
+    }
+
+    /**
+     * Renders the disclaimer page.
+     * @param context the request context
+     */
+    public void disclaimer(Context context) {
+        render(
+                context,
+                "Terms of Service",
+                "The Terms of Service for <b>" + siteBranding.siteName() + "</b> are not yet available."
+        );
+    }
+
+    /**
+     * Renders the privacy policy page.
+     * @param context the request context
+     */
+    public void privacy(Context context) {
+        String siteName = siteBranding.siteName();
+        render(
+                context,
+                "Privacy Policy",
+                "Here at <b>" + siteName + "</b> we care about your privacy. All credentials and other information supplied during registration are stored in a secure database and are only accessible to trusted administrators running the hotel. " + siteName + " will <i>never</i> share your information with a third party without your explicit permission."
+        );
+    }
+
+    private void render(Context context, String title, String html) {
+        Map<String, Object> model = publicPageModelFactory.create(context, "community");
+        model.put("policyTitle", title);
+        model.put("policyHtml", html);
+        context.html(templateRenderer.render("policy", model));
+    }
+}

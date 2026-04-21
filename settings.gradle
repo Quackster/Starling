@@ -1,5 +1,5 @@
-rootProject.name = 'starling'
+rootProject.name = 'vibe'
 
-include 'starling-core'
-include 'starling-server'
-include 'starling-web'
+include 'vibe-core'
+include 'vibe-server'
+include 'vibe-web'

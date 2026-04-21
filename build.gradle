@@ -2,7 +2,7 @@ plugins {
     id 'base'
 }
 
-group = 'org.starling'
+group = 'org.oldskooler.vibe'
 version = '1.0-SNAPSHOT'
 
 subprojects {
@@ -16,15 +16,15 @@ subprojects {
 }
 
 tasks.named('build') {
-    dependsOn(':starling-server:build', ':starling-web:build')
+    dependsOn(':vibe-server:build', ':vibe-web:build')
 }
 
 tasks.named('assemble') {
-    dependsOn(':starling-server:packageDist', ':starling-web:packageDist')
+    dependsOn(':vibe-server:packageDist', ':vibe-web:packageDist')
 }
 
 tasks.register('packageDist') {
     group = 'build'
-    description = 'Packages the Starling server and web distributions.'
-    dependsOn(':starling-server:packageDist', ':starling-web:packageDist')
+    description = 'Packages the Vibe server and web distributions.'
+    dependsOn(':vibe-server:packageDist', ':vibe-web:packageDist')
 }
