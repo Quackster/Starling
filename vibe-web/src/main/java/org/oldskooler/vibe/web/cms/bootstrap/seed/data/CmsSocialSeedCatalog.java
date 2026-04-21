@@ -10,13 +10,14 @@ public final class CmsSocialSeedCatalog {
 
             Minimail is now available from your /me page, so you can keep in touch without leaving the hotel site.
             """;
-    private static final List<MessengerUserSeed> FRIENDS = List.of(
+    private static final List<MessengerUserSeed> FRIENDS = List.of(); /*List.of(
             new MessengerUserSeed("RetroGuide", "Always around if you need a hand.", true, 5),
             new MessengerUserSeed("PixelPilot", "Lobby lurker and room hopper.", true, 45),
             new MessengerUserSeed("Newsie", "Posting the latest hotel buzz.", false, 7200)
-    );
-    private static final MessengerUserSeed REQUESTER =
-            new MessengerUserSeed("LobbyScout", "Let's hang out in the Welcome Lounge.", false, 300);
+    );*/
+
+    private static final MessengerUserSeed REQUESTER = null; /*
+            new MessengerUserSeed("LobbyScout", "Let's hang out in the Welcome Lounge.", false, 300);*/
 
     /**
      * Creates a new CmsSocialSeedCatalog.

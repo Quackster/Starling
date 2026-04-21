@@ -551,6 +551,35 @@ class VibeWebIntegrationTest {
     }
 
     @Test
+    void loggedInHeaderUsesHolocmsStripAndExtlessProfileSearch() throws Exception {
+        HttpResponse<String> loginResponse = postForm(
+                "/account/submit",
+                Map.of("username", "admin", "password", "admin"),
+                Map.of()
+        );
+
+        assertEquals(200, loginResponse.statusCode());
+        assertTrue(loginResponse.uri().toString().endsWith("/me"));
+
+        HttpResponse<String> meResponse = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/me")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
+        );
+
+        assertEquals(200, meResponse.statusCode());
+        assertTrue(meResponse.body().contains("id=\"myfriends\""));
+        assertTrue(meResponse.body().contains("id=\"mygroups\""));
+        assertTrue(meResponse.body().contains("id=\"myrooms\""));
+        assertTrue(meResponse.body().contains("id=\"enter-hotel-open-medium-link\""));
+        assertTrue(meResponse.body().contains("href=\"/client\""));
+        assertTrue(meResponse.body().contains("target=\"client\""));
+        assertTrue(meResponse.body().contains("action=\"/home\""));
+        assertTrue(meResponse.body().contains("value=\"User Profile..\""));
+        assertFalse(meResponse.body().contains("user_profile.php"));
+        assertFalse(meResponse.body().contains("client.php"));
+    }
+
+    @Test
     void meGroupAndReferralEndpointsRenderDatabaseBackedWidgets() throws Exception {
         HttpResponse<String> loginResponse = postForm(
                 "/account/submit",

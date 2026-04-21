@@ -30,11 +30,12 @@ public final class CmsSocialSeedBootstrap {
             return;
         }
 
+        /*
         MinimailDao.createSystemMessage(
                 bootstrapUser.getId(),
                 CmsSocialSeedCatalog.minimailSubject(),
                 CmsSocialSeedCatalog.minimailBody()
-        );
+        );*/
     }
 
     private static void seedBootstrapMessenger(UserEntity bootstrapUser) {
@@ -49,10 +50,11 @@ public final class CmsSocialSeedBootstrap {
             }
         }
 
+        /*
         if (WebMessengerDao.countRequests(bootstrapUser.getId()) == 0) {
             UserEntity requester = ensureBootstrapMessengerUser(CmsSocialSeedCatalog.requester());
             WebMessengerDao.ensureRequest(bootstrapUser.getId(), requester.getId());
-        }
+        }*/
     }
 
     private static UserEntity ensureBootstrapMessengerUser(CmsSocialSeedCatalog.MessengerUserSeed seed) {
