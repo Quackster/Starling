@@ -16,15 +16,32 @@ public final class AdminRouteGuard {
 
     private final UserSessionService userSessionService;
     private final RankPermissionService rankPermissionService;
+    private final AdminSessionService adminSessionService;
 
     /**
      * Creates a new AdminRouteGuard.
      * @param userSessionService the public user session service
      * @param rankPermissionService the rank permission service
+     * @param adminSessionService the admin session service
      */
-    public AdminRouteGuard(UserSessionService userSessionService, RankPermissionService rankPermissionService) {
+    public AdminRouteGuard(
+            UserSessionService userSessionService,
+            RankPermissionService rankPermissionService,
+            AdminSessionService adminSessionService
+    ) {
         this.userSessionService = userSessionService;
         this.rankPermissionService = rankPermissionService;
+        this.adminSessionService = adminSessionService;
+    }
+
+    /**
+     * Enforces the shared admin-access login requirement.
+     * @param context the request context
+     */
+    public void enforceAuthenticatedAccess(Context context) {
+        if (!requireAuthenticatedAccess(context)) {
+            context.skipRemainingHandlers();
+        }
     }
 
     /**
@@ -44,42 +61,56 @@ public final class AdminRouteGuard {
      */
     public Handler protect(String permissionKey, Handler handler) {
         return context -> {
-            Optional<UserEntity> currentUser = userSessionService.authenticate(context);
-            if (currentUser.isEmpty()) {
-                context.sessionAttribute("postLoginPath", currentPath(context));
-                if (Htmx.isRequest(context)) {
-                    context.header("HX-Redirect", "/admin/login");
-                    context.status(401);
-                    return;
-                }
-
-                context.redirect("/admin/login");
-                return;
-            }
-            if (userSessionService.isReauthenticationRequired(context)) {
-                context.sessionAttribute(UserSessionService.REAUTHENTICATE_PATH_SESSION_KEY, currentPath(context));
-                if (Htmx.isRequest(context)) {
-                    context.header("HX-Redirect", "/account/reauthenticate");
-                    context.status(401);
-                    return;
-                }
-
-                context.redirect("/account/reauthenticate");
+            if (!requireAuthenticatedAccess(context)) {
                 return;
             }
 
-            if (!currentUser.get().isAdmin()) {
-                context.status(403).result("You do not have permission to access housekeeping.");
-                return;
-            }
-            if (!rankPermissionService.hasPermission(currentUser.get().getRank(), permissionKey)) {
+            UserEntity currentAdmin = context.attribute(CURRENT_ADMIN_ATTRIBUTE);
+            if (!rankPermissionService.hasPermission(currentAdmin.getRank(), permissionKey)) {
                 context.status(403).result("Your rank does not have the required housekeeping permission.");
                 return;
             }
 
-            context.attribute(CURRENT_ADMIN_ATTRIBUTE, currentUser.get());
             handler.handle(context);
         };
+    }
+
+    private boolean requireAuthenticatedAccess(Context context) {
+        Optional<UserEntity> currentUser = userSessionService.authenticate(context);
+        if (currentUser.isEmpty()) {
+            redirectToAdminLogin(context);
+            return false;
+        }
+        if (!adminSessionService.isAuthenticated(context, currentUser.get())) {
+            adminSessionService.revokeAccess(context);
+            redirectToAdminLogin(context);
+            return false;
+        }
+        if (userSessionService.isReauthenticationRequired(context)) {
+            context.sessionAttribute(UserSessionService.REAUTHENTICATE_PATH_SESSION_KEY, currentPath(context));
+            if (Htmx.isRequest(context)) {
+                context.header("HX-Redirect", "/account/reauthenticate");
+                context.status(401);
+                return false;
+            }
+
+            context.redirect("/account/reauthenticate");
+            return false;
+        }
+
+        context.attribute(CURRENT_ADMIN_ATTRIBUTE, currentUser.get());
+        return true;
+    }
+
+    private void redirectToAdminLogin(Context context) {
+        adminSessionService.rememberRequestedPath(context, currentPath(context));
+        if (Htmx.isRequest(context)) {
+            context.header("HX-Redirect", "/admin/login");
+            context.status(401);
+            return;
+        }
+
+        context.redirect("/admin/login");
     }
 
     private String currentPath(Context context) {

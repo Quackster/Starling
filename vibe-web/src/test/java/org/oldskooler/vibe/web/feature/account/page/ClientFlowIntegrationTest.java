@@ -116,7 +116,7 @@ class ClientFlowIntegrationTest {
 
     @Test
     void clientPageUsesLoaderSettingsSavedThroughHousekeeping() throws Exception {
-        loginPublicUser();
+        loginAdmin();
 
         HttpClient noRedirectClient = newClient(HttpClient.Redirect.NEVER);
         HttpResponse<String> settingsSaveResponse = postForm(
@@ -151,7 +151,7 @@ class ClientFlowIntegrationTest {
 
     @Test
     void mePageUsesHotelViewImageSavedThroughHousekeeping() throws Exception {
-        loginPublicUser();
+        loginAdmin();
 
         HttpClient noRedirectClient = newClient(HttpClient.Redirect.NEVER);
         HttpResponse<String> settingsSaveResponse = postForm(
@@ -173,7 +173,7 @@ class ClientFlowIntegrationTest {
 
     @Test
     void loginCanKeepExistingSsoTicketWhenResetSettingIsDisabled() throws Exception {
-        loginPublicUser();
+        loginAdmin();
 
         HttpClient noRedirectClient = newClient(HttpClient.Redirect.NEVER);
         HttpResponse<String> settingsSaveResponse = postForm(
@@ -248,6 +248,7 @@ class ClientFlowIntegrationTest {
 
     private void assertInactiveSessionRequiresReauthentication(boolean rememberMe) throws Exception {
         loginPublicUser(rememberMe);
+        loginAdmin();
 
         HttpClient noRedirectClient = newClient(HttpClient.Redirect.NEVER);
         HttpResponse<String> settingsSaveResponse = postForm(
@@ -281,6 +282,16 @@ class ClientFlowIntegrationTest {
 
     private void loginPublicUser() throws Exception {
         loginPublicUser(false);
+    }
+
+    private void loginAdmin() throws Exception {
+        HttpResponse<String> response = postForm(
+                client,
+                "/admin/login",
+                Map.of("email", "admin", "password", "admin")
+        );
+        assertEquals(200, response.statusCode());
+        assertTrue(response.uri().getPath().startsWith("/admin"), response.uri().toString());
     }
 
     private void loginPublicUser(boolean rememberMe) throws Exception {

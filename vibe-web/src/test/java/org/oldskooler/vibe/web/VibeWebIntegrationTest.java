@@ -1103,27 +1103,29 @@ class VibeWebIntegrationTest {
     }
 
     @Test
-    void publicAdminSessionCanOpenHousekeepingAndSeeLink() throws Exception {
-        HttpResponse<String> loginResponse = postForm(
-                "/account/submit",
-                Map.of("username", "admin", "password", "admin"),
-                Map.of()
+    void unauthenticatedUnknownAdminRoutesRedirectToAdminLogin() throws Exception {
+        HttpResponse<String> response = client.send(
+                HttpRequest.newBuilder(baseUri.resolve("/admin/media")).GET().build(),
+                HttpResponse.BodyHandlers.ofString()
         );
-        assertEquals(200, loginResponse.statusCode());
-        assertTrue(loginResponse.uri().toString().endsWith("/me"));
+
+        assertEquals(200, response.statusCode());
+        assertTrue(response.uri().toString().endsWith("/admin/login"));
+        assertTrue(response.body().contains("Welcome Hobbas"));
+    }
+
+    @Test
+    void publicAdminSessionMustUseAdminLoginForHousekeeping() throws Exception {
+        loginPublic(client, "admin", "admin");
 
         HttpResponse<String> dashboardResponse = client.send(
                 HttpRequest.newBuilder(baseUri.resolve("/admin")).GET().build(),
                 HttpResponse.BodyHandlers.ofString()
         );
-        HttpResponse<String> communityResponse = client.send(
-                HttpRequest.newBuilder(baseUri.resolve("/community")).GET().build(),
-                HttpResponse.BodyHandlers.ofString()
-        );
 
         assertEquals(200, dashboardResponse.statusCode());
-        assertTrue(dashboardResponse.body().contains("Dashboard"));
-        assertTrue(communityResponse.body().contains("href=\"/admin\""));
+        assertTrue(dashboardResponse.uri().toString().endsWith("/admin/login"));
+        assertTrue(dashboardResponse.body().contains("Welcome Hobbas"));
     }
 
     @Test
@@ -1181,8 +1183,9 @@ class VibeWebIntegrationTest {
                 HttpResponse.BodyHandlers.ofString()
         );
 
-        assertEquals(403, dashboardResponse.statusCode());
-        assertTrue(dashboardResponse.body().contains("permission"));
+        assertEquals(200, dashboardResponse.statusCode());
+        assertTrue(dashboardResponse.uri().toString().endsWith("/admin/login"));
+        assertTrue(dashboardResponse.body().contains("Welcome Hobbas"));
         assertFalse(communityResponse.body().contains("href=\"/admin\""));
     }
 
@@ -1318,13 +1321,7 @@ class VibeWebIntegrationTest {
         assertFalse(RankPermissionDao.isEnabled(6, RankPermissionKeys.HOUSEKEEPING_CAMPAIGNS));
 
         HttpClient staffClient = newClient();
-        HttpResponse<String> staffLoginResponse = postForm(
-                staffClient,
-                "/account/submit",
-                Map.of("username", username, "password", "Password1"),
-                Map.of()
-        );
-        assertEquals(200, staffLoginResponse.statusCode());
+        loginAdmin(staffClient, username, "Password1");
 
         HttpResponse<String> dashboardResponse = staffClient.send(
                 HttpRequest.newBuilder(baseUri.resolve("/admin")).GET().build(),
@@ -1680,16 +1677,16 @@ class VibeWebIntegrationTest {
     }
 
     private void login() throws Exception {
-        login(client, "admin", "admin");
+        loginAdmin(client, "admin", "admin");
     }
 
     private HttpClient loggedInClient(String username, String password) throws Exception {
         HttpClient loggedInClient = newClient();
-        login(loggedInClient, username, password);
+        loginPublic(loggedInClient, username, password);
         return loggedInClient;
     }
 
-    private void login(HttpClient httpClient, String username, String password) throws Exception {
+    private void loginPublic(HttpClient httpClient, String username, String password) throws Exception {
         HttpResponse<String> response = postForm(
                 httpClient,
                 "/account/submit",
@@ -1698,6 +1695,17 @@ class VibeWebIntegrationTest {
         );
         assertEquals(200, response.statusCode());
         assertTrue(response.uri().toString().endsWith("/me"));
+    }
+
+    private void loginAdmin(HttpClient httpClient, String usernameOrEmail, String password) throws Exception {
+        HttpResponse<String> response = postForm(
+                httpClient,
+                "/admin/login",
+                Map.of("email", usernameOrEmail, "password", password),
+                Map.of()
+        );
+        assertEquals(200, response.statusCode());
+        assertTrue(response.uri().getPath().startsWith("/admin"), response.uri().toString());
     }
 
     private HttpResponse<String> get(HttpClient httpClient, String path) throws Exception {

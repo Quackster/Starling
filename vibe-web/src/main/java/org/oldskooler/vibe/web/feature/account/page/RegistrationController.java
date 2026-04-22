@@ -4,6 +4,7 @@ import io.javalin.http.Context;
 import org.oldskooler.vibe.json.GsonSupport;
 import org.oldskooler.vibe.storage.dao.UserDao;
 import org.oldskooler.vibe.storage.entity.UserEntity;
+import org.oldskooler.vibe.web.admin.auth.AdminSessionService;
 import org.oldskooler.vibe.web.feature.me.referral.ReferralService;
 import org.oldskooler.vibe.web.feature.shared.page.PublicPageModelFactory;
 import org.oldskooler.vibe.web.render.TemplateRenderer;
@@ -21,6 +22,7 @@ public final class RegistrationController {
 
     private final TemplateRenderer templateRenderer;
     private final UserSessionService userSessionService;
+    private final AdminSessionService adminSessionService;
     private final PublicPageModelFactory publicPageModelFactory;
     private final ReferralService referralService;
 
@@ -34,11 +36,13 @@ public final class RegistrationController {
     public RegistrationController(
             TemplateRenderer templateRenderer,
             UserSessionService userSessionService,
+            AdminSessionService adminSessionService,
             PublicPageModelFactory publicPageModelFactory,
             ReferralService referralService
     ) {
         this.templateRenderer = templateRenderer;
         this.userSessionService = userSessionService;
+        this.adminSessionService = adminSessionService;
         this.publicPageModelFactory = publicPageModelFactory;
         this.referralService = referralService;
     }
@@ -98,6 +102,7 @@ public final class RegistrationController {
         referralService.applyReferral(createdUser, request.referral());
         UserDao.updateLogin(createdUser);
         clearRegisterState(context);
+        adminSessionService.revokeAccess(context);
         userSessionService.start(context, createdUser);
         context.redirect("/welcome");
     }

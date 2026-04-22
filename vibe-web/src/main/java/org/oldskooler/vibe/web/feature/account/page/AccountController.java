@@ -3,6 +3,7 @@ package org.oldskooler.vibe.web.feature.account.page;
 import io.javalin.http.Context;
 import org.oldskooler.vibe.storage.dao.UserDao;
 import org.oldskooler.vibe.storage.entity.UserEntity;
+import org.oldskooler.vibe.web.admin.auth.AdminSessionService;
 import org.oldskooler.vibe.web.feature.shared.page.PublicPageModelFactory;
 import org.oldskooler.vibe.web.render.TemplateRenderer;
 import org.oldskooler.vibe.web.request.RequestValues;
@@ -20,6 +21,7 @@ public final class AccountController {
     private static final String POST_LOGIN_PATH_SESSION_KEY = "postLoginPath";
     private final TemplateRenderer templateRenderer;
     private final UserSessionService userSessionService;
+    private final AdminSessionService adminSessionService;
     private final PublicPageModelFactory publicPageModelFactory;
     private final WebSettingsService webSettingsService;
 
@@ -32,11 +34,13 @@ public final class AccountController {
     public AccountController(
             TemplateRenderer templateRenderer,
             UserSessionService userSessionService,
+            AdminSessionService adminSessionService,
             PublicPageModelFactory publicPageModelFactory,
             WebSettingsService webSettingsService
     ) {
         this.templateRenderer = templateRenderer;
         this.userSessionService = userSessionService;
+        this.adminSessionService = adminSessionService;
         this.publicPageModelFactory = publicPageModelFactory;
         this.webSettingsService = webSettingsService;
     }
@@ -262,6 +266,7 @@ public final class AccountController {
             if (webSettingsService.resetSsoTicketOnLogin()) {
                 user = UserDao.rotateSsoTicket(user);
             }
+            adminSessionService.revokeAccess(context);
             userSessionService.start(context, user, request.rememberMe());
             String nextPath = resolvePostLoginPath(
                     request.page(),
@@ -280,6 +285,7 @@ public final class AccountController {
     }
 
     private void renderLogout(Context context, String reasonCode) {
+        adminSessionService.revokeAccess(context);
         userSessionService.clear(context);
 
         Map<String, Object> model = publicPageModelFactory.create(context, "community");

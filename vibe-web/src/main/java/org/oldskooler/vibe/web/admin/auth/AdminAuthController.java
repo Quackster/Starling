@@ -14,6 +14,7 @@ public final class AdminAuthController {
     private final UserSessionService userSessionService;
     private final AdminPageModelFactory adminPageModelFactory;
     private final WebSettingsService webSettingsService;
+    private final AdminSessionService adminSessionService;
 
     /**
      * Creates a new AdminAuthController.
@@ -25,12 +26,14 @@ public final class AdminAuthController {
             TemplateRenderer templateRenderer,
             UserSessionService userSessionService,
             AdminPageModelFactory adminPageModelFactory,
-            WebSettingsService webSettingsService
+            WebSettingsService webSettingsService,
+            AdminSessionService adminSessionService
     ) {
         this.templateRenderer = templateRenderer;
         this.userSessionService = userSessionService;
         this.adminPageModelFactory = adminPageModelFactory;
         this.webSettingsService = webSettingsService;
+        this.adminSessionService = adminSessionService;
     }
 
     /**
@@ -38,8 +41,8 @@ public final class AdminAuthController {
      * @param context the request context
      */
     public void loginPage(Context context) {
-        if (userSessionService.authenticate(context).map(UserEntity::isAdmin).orElse(false)) {
-            context.redirect("/admin");
+        if (adminSessionService.isAuthenticated(context, userSessionService.authenticate(context))) {
+            context.redirect(adminSessionService.consumeRequestedPath(context, "/admin"));
             return;
         }
 
@@ -65,12 +68,20 @@ public final class AdminAuthController {
             return;
         }
 
-        UserDao.updateLogin(adminUser);
-        if (webSettingsService.resetSsoTicketOnLogin()) {
-            adminUser = UserDao.rotateSsoTicket(adminUser);
+        UserEntity currentUser = userSessionService.authenticate(context).orElse(null);
+        if (currentUser != null && currentUser.getId() == adminUser.getId()) {
+            if (userSessionService.isReauthenticationRequired(context)) {
+                userSessionService.restartAfterReauthentication(context, adminUser);
+            }
+        } else {
+            UserDao.updateLogin(adminUser);
+            if (webSettingsService.resetSsoTicketOnLogin()) {
+                adminUser = UserDao.rotateSsoTicket(adminUser);
+            }
+            userSessionService.start(context, adminUser, true);
         }
-        userSessionService.start(context, adminUser, true);
-        context.redirect("/admin");
+        adminSessionService.grantAccess(context, adminUser);
+        context.redirect(adminSessionService.consumeRequestedPath(context, "/admin"));
     }
 
     /**
@@ -78,6 +89,7 @@ public final class AdminAuthController {
      * @param context the request context
      */
     public void logout(Context context) {
+        adminSessionService.clear(context);
         userSessionService.clear(context);
         context.redirect("/admin/login");
     }

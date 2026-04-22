@@ -7,6 +7,7 @@ import org.oldskooler.vibe.permission.RankPermissionService;
 import org.oldskooler.vibe.web.admin.AdminPageModelFactory;
 import org.oldskooler.vibe.web.admin.auth.AdminAuthController;
 import org.oldskooler.vibe.web.admin.auth.AdminRouteGuard;
+import org.oldskooler.vibe.web.admin.auth.AdminSessionService;
 import org.oldskooler.vibe.web.admin.article.AdminArticlesController;
 import org.oldskooler.vibe.web.admin.campaign.AdminCampaignsController;
 import org.oldskooler.vibe.web.admin.dashboard.AdminDashboardController;
@@ -348,15 +349,18 @@ public final class VibeWebBootstrap {
                 dependencies.referralService(),
                 dependencies.siteBranding()
         );
+        AdminSessionService adminSessionService = new AdminSessionService();
         AccountController accountController = new AccountController(
                 dependencies.templateRenderer(),
                 dependencies.userSessionService(),
+                adminSessionService,
                 dependencies.publicPageModelFactory(),
                 dependencies.webSettingsService()
         );
         RegistrationController registrationController = new RegistrationController(
                 dependencies.templateRenderer(),
                 dependencies.userSessionService(),
+                adminSessionService,
                 dependencies.publicPageModelFactory(),
                 dependencies.referralService()
         );
@@ -371,13 +375,15 @@ public final class VibeWebBootstrap {
         );
         AdminRouteGuard adminRouteGuard = new AdminRouteGuard(
                 dependencies.userSessionService(),
-                dependencies.rankPermissionService()
+                dependencies.rankPermissionService(),
+                adminSessionService
         );
         AdminAuthController adminAuthController = new AdminAuthController(
                 dependencies.templateRenderer(),
                 dependencies.userSessionService(),
                 dependencies.adminPageModelFactory(),
-                dependencies.webSettingsService()
+                dependencies.webSettingsService(),
+                adminSessionService
         );
         AdminDashboardController adminDashboardController = new AdminDashboardController(
                 dependencies.templateRenderer(),
@@ -426,6 +432,15 @@ public final class VibeWebBootstrap {
                 dependencies.templateRenderer(),
                 dependencies.markdownRenderer()
         );
+
+        app.before(context -> {
+            String path = context.path();
+            if ("/admin/login".equals(path) || (!"/admin".equals(path) && !path.startsWith("/admin/"))) {
+                return;
+            }
+
+            adminRouteGuard.enforceAuthenticatedAccess(context);
+        });
 
         new PublicRoutes(
                 homepageController,
