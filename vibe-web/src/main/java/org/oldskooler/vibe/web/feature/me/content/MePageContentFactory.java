@@ -42,7 +42,7 @@ public final class MePageContentFactory {
         model.put("hasBirthday", hasBirthday);
         model.put("birthdayAge", birthdayAge);
         model.put("birthdayPrefix", ordinalSuffix(birthdayAge));
-        model.put("showGuidesPlaceholder", true);
+        model.put("showGuidesPlaceholder", false);
         model.put("guidesPlaceholderHref", "/guides");
         model.put("guidesPlaceholderText", "Habbo Guides are coming soon.");
         return model;

@@ -80,10 +80,6 @@
                     Last signed in:
                     {{ currentUser.lastOnline }}
                 </li>
-                <li class="small" id="feed-member-since">
-                    Member since:
-                    {{ currentUser.memberSince }}
-                </li>
             </ul>
         </div>
 
