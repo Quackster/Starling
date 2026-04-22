@@ -136,7 +136,8 @@ final class BootstrapSqlSupport {
 
     /**
      * Parses tuples.
-     * @param valuesBlock the values block value
+     * @param sql the sql value
+     * @param startIndex the start index value
      * @param resourcePath the resource path value
      * @return the resulting parse tuples
      */

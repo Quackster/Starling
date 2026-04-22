@@ -212,7 +212,7 @@ class VibeWebIntegrationTest {
     }
 
     @Test
-    void registerPageMatchesPhpRetroLayoutAndAjaxContracts() throws Exception {
+    void registerPageMatchesClassicLayoutAndAjaxContracts() throws Exception {
         HttpResponse<String> registerResponse = client.send(
                 HttpRequest.newBuilder(baseUri.resolve("/register?referral=admin")).GET().build(),
                 HttpResponse.BodyHandlers.ofString()
@@ -252,7 +252,7 @@ class VibeWebIntegrationTest {
     }
 
     @Test
-    void registerWrongCaptchaRendersPhpRetroSummaryBranchInPlace() throws Exception {
+    void registerWrongCaptchaRendersClassicSummaryBranchInPlace() throws Exception {
         HttpResponse<byte[]> captchaResponse = client.send(
                 HttpRequest.newBuilder(baseUri.resolve("/captcha.jpg")).GET().build(),
                 HttpResponse.BodyHandlers.ofByteArray()
@@ -290,7 +290,7 @@ class VibeWebIntegrationTest {
     }
 
     @Test
-    void communityCreditsAndTagsPagesRenderPhpRetroWidgets() throws Exception {
+    void communityCreditsAndTagsPagesRenderClassicWidgets() throws Exception {
         HttpResponse<String> communityResponse = client.send(
                 HttpRequest.newBuilder(baseUri.resolve("/community")).GET().build(),
                 HttpResponse.BodyHandlers.ofString()
@@ -811,7 +811,7 @@ class VibeWebIntegrationTest {
     }
 
     @Test
-    void accountLogoutRendersPhpRetroConfirmationPage() throws Exception {
+    void accountLogoutRendersClassicConfirmationPage() throws Exception {
         HttpResponse<String> loginResponse = postForm(
                 "/account/submit",
                 Map.of("username", "admin", "password", "admin"),
@@ -839,7 +839,7 @@ class VibeWebIntegrationTest {
     }
 
     @Test
-    void accountLogoutReasonVariantsMatchPhpRetroFlow() throws Exception {
+    void accountLogoutReasonVariantsMatchClassicFlow() throws Exception {
         HttpResponse<String> bannedLogoutResponse = client.send(
                 HttpRequest.newBuilder(baseUri.resolve("/account/logout?reason=banned")).GET().build(),
                 HttpResponse.BodyHandlers.ofString()

@@ -49,7 +49,7 @@ class RoomEntryFlowIntegrationTest {
     private static final String DB_USERNAME = "root";
     private static final String DB_PASSWORD = "verysecret";
     private static final String DB_PARAMS = "useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8";
-    private static final String HOLOGRAPH_ROOM_URL = "http://wwww.vista4life.com/bf.php?p=emu";
+    private static final String PUBLIC_ROOM_URL = "http://wwww.vista4life.com/bf.php?p=emu";
 
     private ServerConfig config;
 
@@ -119,7 +119,7 @@ class RoomEntryFlowIntegrationTest {
 
         assertEquals(List.of(
                 packet(new ServerMessage(OutgoingPackets.OPC_OK)),
-                packet(new ServerMessage(OutgoingPackets.ROOM_URL).writeRaw(HOLOGRAPH_ROOM_URL)),
+                packet(new ServerMessage(OutgoingPackets.ROOM_URL).writeRaw(PUBLIC_ROOM_URL)),
                 packet(new ServerMessage(OutgoingPackets.ROOM_READY).writeRaw("newbie_lobby 101"))
         ), drainPackets(session.getChannel()));
         assertEquals(1, PublicRoomDao.findById(101).getCurrentUsers());

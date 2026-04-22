@@ -1,7 +1,7 @@
 package org.oldskooler.vibe.storage.bootstrap.seed.data;
 
 import org.oldskooler.vibe.game.room.layout.RoomLayoutRegistry;
-import org.oldskooler.vibe.storage.bootstrap.HolographPublicSpaceCatalog;
+import org.oldskooler.vibe.storage.bootstrap.BundledPublicSpaceCatalog;
 import org.oldskooler.vibe.storage.bootstrap.LisbonPublicItemCatalog;
 
 import java.util.LinkedHashMap;
@@ -44,7 +44,7 @@ public final class RoomModelSeedCatalog {
     private static List<RoomModelSeed> buildRoomModelSeeds() {
         Map<String, RoomModelSeed> roomModels = new LinkedHashMap<>();
 
-        for (HolographPublicSpaceCatalog.RoomModelSeed seed : HolographPublicSpaceCatalog.load().roomModels()) {
+        for (BundledPublicSpaceCatalog.RoomModelSeed seed : BundledPublicSpaceCatalog.load().roomModels()) {
             roomModels.put(seed.modelName(), toRoomModelSeed(seed));
         }
 
@@ -58,7 +58,7 @@ public final class RoomModelSeedCatalog {
         return List.copyOf(roomModels.values());
     }
 
-    private static RoomModelSeed toRoomModelSeed(HolographPublicSpaceCatalog.RoomModelSeed seed) {
+    private static RoomModelSeed toRoomModelSeed(BundledPublicSpaceCatalog.RoomModelSeed seed) {
         return new RoomModelSeed(
                 seed.modelName(),
                 seed.isPublic(),
@@ -110,7 +110,7 @@ public final class RoomModelSeedCatalog {
 
         for (String modelName : publicItemModels) {
             RoomModelSeed existing = roomModels.get(modelName);
-            if (existing != null && !isGenericPublicFallback(modelName, existing)) {
+            if (existing != null && existing.isPublic() == 1 && !isGenericPublicFallback(modelName, existing)) {
                 continue;
             }
 
@@ -120,7 +120,9 @@ public final class RoomModelSeedCatalog {
                 continue;
             }
 
-            if (existing == null) {
+            if (existing != null) {
+                roomModels.put(modelName, createPublicAlias(modelName, existing));
+            } else {
                 roomModels.put(modelName, createRoomModelSeed(modelName, true));
             }
         }
@@ -193,7 +195,7 @@ public final class RoomModelSeedCatalog {
                 : RoomLayoutRegistry.builtinPrivateRoom(modelName);
 
         return new RoomModelSeed(
-                visuals.marker(),
+                modelName,
                 publicModel ? 1 : 0,
                 visuals.doorX(),
                 visuals.doorY(),

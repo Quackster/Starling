@@ -12,8 +12,8 @@ import java.util.Map;
 public final class PublicRoomSeedRegistrar implements DatabaseSeedRegistrar {
 
     private static final Logger log = LogManager.getLogger(PublicRoomSeedRegistrar.class);
-    private static final List<HolographPublicSpaceCatalog.PublicRoomSeed> DEFAULT_PUBLIC_ROOMS =
-            HolographPublicSpaceCatalog.load().publicRooms();
+    private static final List<BundledPublicSpaceCatalog.PublicRoomSeed> DEFAULT_PUBLIC_ROOMS =
+            BundledPublicSpaceCatalog.load().publicRooms();
 
     /**
      * Seeds.
@@ -27,7 +27,7 @@ public final class PublicRoomSeedRegistrar implements DatabaseSeedRegistrar {
                 roomsById.put(entity.getId(), entity);
             }
 
-            for (HolographPublicSpaceCatalog.PublicRoomSeed room : DEFAULT_PUBLIC_ROOMS) {
+            for (BundledPublicSpaceCatalog.PublicRoomSeed room : DEFAULT_PUBLIC_ROOMS) {
                 PublicRoomEntity entity = roomsById.get(room.id());
                 boolean isNew = entity == null;
                 if (isNew) {

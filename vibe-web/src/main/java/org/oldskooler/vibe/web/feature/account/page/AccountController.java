@@ -90,7 +90,7 @@ public final class AccountController {
     }
 
     /**
-     * Renders the PHPRetro-compatible logged out confirmation page.
+     * Renders the legacy logged out confirmation page.
      * @param context the request context
      */
     public void logoutOk(Context context) {

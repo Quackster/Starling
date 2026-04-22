@@ -5,6 +5,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.oldskooler.vibe.config.ServerConfig;
+import org.oldskooler.vibe.storage.bootstrap.BundledPublicSpaceCatalog;
+import org.oldskooler.vibe.storage.bootstrap.LisbonPublicItemCatalog;
+import org.oldskooler.vibe.storage.bootstrap.seed.data.GuestRoomSeedCatalog;
 import org.oldskooler.vibe.storage.dao.NavigatorDao;
 import org.oldskooler.vibe.storage.dao.PublicRoomDao;
 import org.oldskooler.vibe.storage.dao.PublicRoomItemDao;
@@ -107,7 +110,9 @@ class DatabaseIntegrationTest {
         assertNotNull(UserDao.findBySsoTicket("vibe-sso-ticket"));
 
         List<NavigatorCategoryEntity> categories = NavigatorDao.findAll();
-        assertEquals(35, categories.size());
+        List<BundledPublicSpaceCatalog.NavigatorCategorySeed> expectedCategorySeeds = BundledPublicSpaceCatalog.load()
+                .navigatorCategories();
+        assertEquals(expectedCategorySeeds.size(), categories.size());
         assertTrue(categories.stream().anyMatch(category -> category.getId() == 1
                 && category.getParentId() == 0
                 && "Public Spaces".equals(category.getName())));
@@ -116,10 +121,16 @@ class DatabaseIntegrationTest {
                 && "Rooms".equals(category.getName())));
         assertTrue(categories.stream().anyMatch(category -> category.getId() == 3
                 && category.getParentId() == 1
-                && "Official Rooms".equals(category.getName())));
+                && "Public Rooms".equals(category.getName())));
         assertTrue(categories.stream().anyMatch(category -> category.getId() == 6
-                && "Trading Rooms".equals(category.getName())));
-        assertTrue(categories.stream().anyMatch(category -> category.getId() == 35 && "No category".equals(category.getName())));
+                && "Restaurants and Cafes".equals(category.getName())));
+        int noCategoryId = expectedCategorySeeds.stream()
+                .filter(category -> "No category".equals(category.name()))
+                .map(BundledPublicSpaceCatalog.NavigatorCategorySeed::id)
+                .findFirst()
+                .orElseThrow();
+        assertTrue(categories.stream().anyMatch(category -> category.getId() == noCategoryId
+                && "No category".equals(category.getName())));
 
         List<PublicRoomEntity> publicRooms = PublicRoomDao.findVisibleByCategoryId(3);
         assertTrue(publicRooms.stream().anyMatch(room -> room.getId() == 101));
@@ -188,11 +199,11 @@ class DatabaseIntegrationTest {
         DatabaseBootstrap.seedDefaults();
 
         assertEquals(1, countAdminUsers());
-        assertEquals(35, categoryCount);
+        assertEquals(BundledPublicSpaceCatalog.load().navigatorCategories().size(), categoryCount);
         assertTrue(roomModelCount >= 100);
-        assertEquals(4, guestRoomCount);
-        assertEquals(87, publicRoomCount);
-        assertTrue(publicRoomItemCount >= 3465);
+        assertEquals(GuestRoomSeedCatalog.rooms().size(), guestRoomCount);
+        assertEquals(BundledPublicSpaceCatalog.load().publicRooms().size(), publicRoomCount);
+        assertEquals(LisbonPublicItemCatalog.load().publicRoomItems().size(), publicRoomItemCount);
         assertEquals(categoryCount, countRows(NavigatorCategoryEntity.class));
         assertEquals(roomModelCount, countRows(RoomModelEntity.class));
         assertEquals(guestRoomCount, countRows(RoomEntity.class));

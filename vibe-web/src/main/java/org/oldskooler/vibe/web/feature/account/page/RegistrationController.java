@@ -108,7 +108,7 @@ public final class RegistrationController {
     }
 
     /**
-     * Checks whether a registration name is available using the PHPRetro ajax contract.
+     * Checks whether a registration name is available using the legacy ajax contract.
      * @param context the request context
      */
     public void nameCheck(Context context) {
@@ -134,7 +134,7 @@ public final class RegistrationController {
     }
 
     /**
-     * Accepts the PHPRetro registration debug callback without returning a 404.
+     * Accepts the legacy registration debug callback without returning a 404.
      * @param context the request context
      */
     public void registrationDebug(Context context) {

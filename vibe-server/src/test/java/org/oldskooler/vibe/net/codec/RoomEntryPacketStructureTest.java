@@ -52,10 +52,10 @@ class RoomEntryPacketStructureTest {
     }
 
     /**
-     * Rooms ready matches holograph structure.
+     * Rooms ready matches the legacy structure.
      */
     @Test
-    void roomReadyMatchesHolographStructure() {
+    void roomReadyMatchesLegacyStructure() {
         assertSerialized(
                 new ServerMessage(OutgoingPackets.ROOM_READY).writeRaw("model_a 1"),
                 "AEmodel_a 1[1]"

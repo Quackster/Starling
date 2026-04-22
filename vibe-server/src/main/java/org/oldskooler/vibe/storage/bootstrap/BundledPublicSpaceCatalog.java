@@ -3,7 +3,6 @@ package org.oldskooler.vibe.storage.bootstrap;
 import org.oldskooler.vibe.game.room.layout.RoomLayoutRegistry;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -19,9 +18,9 @@ import static org.oldskooler.vibe.storage.bootstrap.BootstrapSqlSupport.parseNul
 import static org.oldskooler.vibe.storage.bootstrap.BootstrapSqlSupport.parseString;
 import static org.oldskooler.vibe.storage.bootstrap.BootstrapSqlSupport.readBundledSql;
 
-public final class HolographPublicSpaceCatalog {
+public final class BundledPublicSpaceCatalog {
 
-    private static final String RESOURCE_PATH = "bootstrap/holograph-public-spaces.sql";
+    private static final String RESOURCE_PATH = "bootstrap/bundled-public-spaces.sql";
     public static final String ROOT_PUBLIC_CATEGORY_NAME = "Public Spaces";
     public static final String ROOT_PRIVATE_CATEGORY_NAME = "Rooms";
     private static final String GENERIC_HALLWAY_DESCRIPTION = "Roam more of the hotel's corridors.";
@@ -32,38 +31,6 @@ public final class HolographPublicSpaceCatalog {
             "First Floor Lobby",
             "Second Floor Lobby",
             "Third Floor Lobby"
-    );
-    private static final Map<Integer, String> CATEGORY_NAME_OVERRIDES = Map.ofEntries(
-            Map.entry(3, "Official Rooms"),
-            Map.entry(4, "All Rooms"),
-            Map.entry(5, "Outdoor Spaces"),
-            Map.entry(6, "Trading Rooms"),
-            Map.entry(8, "Park and Infobus"),
-            Map.entry(9, "Clubs and Cafes"),
-            Map.entry(10, "Staff Rooms"),
-            Map.entry(11, "Battle Ball & SnowStorm"),
-            Map.entry(12, "Battle Ball Beginners"),
-            Map.entry(13, "Battle Ball Amateurs"),
-            Map.entry(14, "Battle Ball Intermediates"),
-            Map.entry(15, "Battle Ball Experts"),
-            Map.entry(16, "Battle Ball Elites"),
-            Map.entry(17, "SnowStorm Beginners"),
-            Map.entry(18, "SnowStorm Amateurs"),
-            Map.entry(19, "SnowStorm Intermediates"),
-            Map.entry(20, "SnowStorm Experts"),
-            Map.entry(21, "SnowStorm Elites"),
-            Map.entry(22, "Battle Ball"),
-            Map.entry(23, "SnowStorm"),
-            Map.entry(24, "Moderator Rooms"),
-            Map.entry(26, "Help Desk"),
-            Map.entry(27, "Donations"),
-            Map.entry(28, "Chill Rooms"),
-            Map.entry(29, "Theme Rooms"),
-            Map.entry(30, "Hobba Rooms"),
-            Map.entry(31, "Guide Rooms"),
-            Map.entry(32, "Relaxing Rooms"),
-            Map.entry(33, "Game Rooms"),
-            Map.entry(34, "Casino")
     );
     private static final Map<Integer, PublicRoomText> PUBLIC_ROOM_TEXT_OVERRIDES = Map.ofEntries(
             Map.entry(101, new PublicRoomText("Welcome Lounge", "New? Lost? Get a warm welcome here.")),
@@ -93,20 +60,21 @@ public final class HolographPublicSpaceCatalog {
             Map.entry(122, new PublicRoomText("SnowStorm Elites",
                     "For the William Tells and Robin Hoods of Snow Storming."))
     );
+    private static final List<NavigatorCategorySeed> NAVIGATOR_CATEGORIES = buildNavigatorCategories();
     private static final List<SupplementalPublicRoomSeed> SUPPLEMENTAL_PUBLIC_ROOMS = buildSupplementalPublicRooms();
-    private static final HolographPublicSpaceCatalog INSTANCE = loadCatalog();
+    private static final BundledPublicSpaceCatalog INSTANCE = loadCatalog();
 
     private final List<NavigatorCategorySeed> navigatorCategories;
     private final List<PublicRoomSeed> publicRooms;
     private final List<RoomModelSeed> roomModels;
 
     /**
-     * Creates a new HolographPublicSpaceCatalog.
+     * Creates a new BundledPublicSpaceCatalog.
      * @param navigatorCategories the navigator categories value
      * @param publicRooms the public rooms value
      * @param roomModels the room models value
      */
-    private HolographPublicSpaceCatalog(
+    private BundledPublicSpaceCatalog(
             List<NavigatorCategorySeed> navigatorCategories,
             List<PublicRoomSeed> publicRooms,
             List<RoomModelSeed> roomModels
@@ -120,7 +88,7 @@ public final class HolographPublicSpaceCatalog {
      * Loads.
      * @return the resulting load
      */
-    public static HolographPublicSpaceCatalog load() {
+    public static BundledPublicSpaceCatalog load() {
         return INSTANCE;
     }
 
@@ -152,12 +120,10 @@ public final class HolographPublicSpaceCatalog {
      * Loads catalog.
      * @return the resulting load catalog
      */
-    private static HolographPublicSpaceCatalog loadCatalog() {
-        String sql = readBundledSql(HolographPublicSpaceCatalog.class, RESOURCE_PATH);
+    private static BundledPublicSpaceCatalog loadCatalog() {
+        String sql = readBundledSql(BundledPublicSpaceCatalog.class, RESOURCE_PATH);
 
-        List<SourceCategory> sourceCategories = parseCategories(sql);
-        Map<Integer, Integer> categoryIdMap = buildCategoryIdMap(sourceCategories);
-        List<NavigatorCategorySeed> navigatorCategories = buildNavigatorCategories(sourceCategories, categoryIdMap);
+        Map<Integer, Integer> categoryIdMap = buildCategoryIdMap();
 
         List<PublicRoomSeed> publicRooms = buildPublicRooms(parsePublicRooms(sql), categoryIdMap);
         Set<String> publicModelNames = new HashSet<>();
@@ -166,28 +132,7 @@ public final class HolographPublicSpaceCatalog {
         }
 
         List<RoomModelSeed> roomModels = buildRoomModels(parseRoomModels(sql), publicModelNames);
-        return new HolographPublicSpaceCatalog(navigatorCategories, publicRooms, roomModels);
-    }
-
-    /**
-     * Parses categories.
-     * @param sql the sql value
-     * @return the resulting parse categories
-     */
-    private static List<SourceCategory> parseCategories(String sql) {
-        List<List<String>> rows = parseInsertRows(sql, "room_categories", RESOURCE_PATH);
-        List<SourceCategory> categories = new ArrayList<>(rows.size());
-        for (List<String> row : rows) {
-            categories.add(new SourceCategory(
-                    parseInt(row, 0),
-                    parseInt(row, 1),
-                    parseInt(row, 2),
-                    parseString(row, 3),
-                    parseInt(row, 4),
-                    parseInt(row, 6)
-            ));
-        }
-        return categories;
+        return new BundledPublicSpaceCatalog(NAVIGATOR_CATEGORIES, publicRooms, roomModels);
     }
 
     /**
@@ -196,27 +141,25 @@ public final class HolographPublicSpaceCatalog {
      * @return the resulting parse public rooms
      */
     private static List<SourcePublicRoom> parsePublicRooms(String sql) {
-        List<List<String>> rows = parseInsertRows(sql, "rooms", RESOURCE_PATH);
-        List<SourcePublicRoom> publicRooms = new ArrayList<>();
+        List<List<String>> rows = parseInsertRows(sql, "public_rooms", RESOURCE_PATH);
+        List<SourcePublicRoom> publicRooms = new ArrayList<>(rows.size());
         for (List<String> row : rows) {
-            SourcePublicRoom room = new SourcePublicRoom(
+            publicRooms.add(new SourcePublicRoom(
                     parseInt(row, 0),
-                    parseString(row, 1),
+                    parseInt(row, 1),
                     parseString(row, 2),
+                    parseString(row, 13),
                     parseNullableString(row, 3),
-                    parseInt(row, 4),
-                    parseNullableString(row, 5),
-                    parseNullableString(row, 6),
+                    parseNullableString(row, 4),
+                    parseInt(row, 5),
+                    parseInt(row, 6),
+                    parseNullableString(row, 7),
+                    parseInt(row, 8),
+                    parseInt(row, 9),
+                    parseInt(row, 10),
                     parseInt(row, 11),
-                    parseInt(row, 13),
-                    parseInt(row, 14)
-            );
-
-            if (!room.isPublicRoom()) {
-                continue;
-            }
-
-            publicRooms.add(room);
+                    parseNullableString(row, 12)
+            ));
         }
         return publicRooms;
     }
@@ -227,17 +170,21 @@ public final class HolographPublicSpaceCatalog {
      * @return the resulting parse room models
      */
     private static List<SourceRoomModel> parseRoomModels(String sql) {
-        List<List<String>> rows = parseInsertRows(sql, "room_modeldata", RESOURCE_PATH);
+        List<List<String>> rows = parseInsertRows(sql, "room_models", RESOURCE_PATH);
         List<SourceRoomModel> roomModels = new ArrayList<>(rows.size());
         for (List<String> row : rows) {
             roomModels.add(new SourceRoomModel(
                     normalize(parseString(row, 0)),
+                    parseInt(row, 1),
                     parseInt(row, 2),
                     parseInt(row, 3),
                     parseDouble(row, 4),
                     parseInt(row, 5),
                     parseString(row, 6),
-                    parseString(row, 7)
+                    parseString(row, 7),
+                    parseNullableString(row, 8),
+                    parseNullableString(row, 9),
+                    parseNullableString(row, 10)
             ));
         }
         return roomModels;
@@ -248,66 +195,59 @@ public final class HolographPublicSpaceCatalog {
      * @param sourceCategories the source categories value
      * @return the resulting build category id map
      */
-    private static Map<Integer, Integer> buildCategoryIdMap(List<SourceCategory> sourceCategories) {
-        int maxSourceCategoryId = 0;
-        for (SourceCategory category : sourceCategories) {
-            maxSourceCategoryId = Math.max(maxSourceCategoryId, category.id());
-        }
-
-        int remappedNoCategoryId = maxSourceCategoryId + 1;
+    private static Map<Integer, Integer> buildCategoryIdMap() {
         Map<Integer, Integer> categoryIdMap = new HashMap<>();
-        for (SourceCategory category : sourceCategories) {
-            categoryIdMap.put(category.id(), category.id() == 0 ? remappedNoCategoryId : category.id());
+        for (NavigatorCategorySeed category : NAVIGATOR_CATEGORIES) {
+            categoryIdMap.put(category.id(), category.id());
         }
         return categoryIdMap;
     }
 
     /**
      * Builds navigator categories.
-     * @param sourceCategories the source categories value
-     * @param categoryIdMap the category id map value
      * @return the resulting build navigator categories
      */
-    private static List<NavigatorCategorySeed> buildNavigatorCategories(
-            List<SourceCategory> sourceCategories,
-            Map<Integer, Integer> categoryIdMap
-    ) {
-        Set<Integer> sourceNodes = new HashSet<>();
-        for (SourceCategory category : sourceCategories) {
-            if (category.parentId() > 0) {
-                sourceNodes.add(category.parentId());
+    private static List<NavigatorCategorySeed> buildNavigatorCategories() {
+        List<NavigatorCategorySeed> categories = List.of(
+                new NavigatorCategorySeed(1, 1, 0, 1, ROOT_PUBLIC_CATEGORY_NAME, 1, 0, 1, 1, 0, 1),
+                new NavigatorCategorySeed(2, 2, 0, 1, ROOT_PRIVATE_CATEGORY_NAME, 0, 0, 1, 1, 0, 1),
+                new NavigatorCategorySeed(3, 3, 1, 1, "Public Rooms", 1, 0, 1, 1, 0, 0),
+                new NavigatorCategorySeed(4, 4, 2, 1, "Guest Rooms", 0, 0, 1, 1, 0, 0),
+                new NavigatorCategorySeed(5, 5, 3, 0, "Entertainment", 1, 0, 1, 1, 0, 0),
+                new NavigatorCategorySeed(6, 6, 3, 0, "Restaurants and Cafes", 1, 0, 1, 1, 0, 0),
+                new NavigatorCategorySeed(7, 7, 3, 0, "Lounges and Clubs", 1, 0, 1, 1, 0, 0),
+                new NavigatorCategorySeed(8, 8, 3, 0, "Habbo Club", 1, 0, 1, 1, 0, 0),
+                new NavigatorCategorySeed(9, 9, 3, 0, "Outside Spaces", 1, 0, 1, 1, 0, 0),
+                new NavigatorCategorySeed(10, 10, 3, 0, "Swimming Pools", 1, 0, 1, 1, 0, 0),
+                new NavigatorCategorySeed(11, 11, 3, 0, "The Lobbies", 1, 0, 1, 1, 0, 0),
+                new NavigatorCategorySeed(12, 12, 3, 0, "The Hallways", 1, 0, 1, 1, 0, 0),
+                new NavigatorCategorySeed(13, 13, 3, 0, "Games", 1, 0, 1, 1, 0, 0),
+                new NavigatorCategorySeed(21, 14, 2, 0, "No category", 0, 0, 1, 1, 0, 0),
+                new NavigatorCategorySeed(101, 15, 4, 0, "Staff HQ", 0, 1, 4, 4, 0, 0),
+                new NavigatorCategorySeed(112, 16, 4, 0, "Restaurant, Bar & Night Club Rooms", 0, 0, 1, 1, 0, 0),
+                new NavigatorCategorySeed(113, 17, 4, 0, "Trade floor", 0, 1, 1, 1, 0, 0),
+                new NavigatorCategorySeed(114, 18, 4, 0, "Chill, Chat & Discussion Rooms", 0, 0, 1, 1, 0, 0),
+                new NavigatorCategorySeed(115, 19, 4, 0, "Hair Salons & Modelling Rooms", 0, 0, 1, 1, 0, 0),
+                new NavigatorCategorySeed(116, 20, 4, 0, "Maze & Theme Park Rooms", 0, 0, 1, 1, 0, 0),
+                new NavigatorCategorySeed(117, 21, 4, 0, "Gaming & Race Rooms", 0, 1, 1, 1, 0, 0),
+                new NavigatorCategorySeed(118, 22, 4, 0, "Help Centre Rooms", 0, 0, 1, 1, 0, 0),
+                new NavigatorCategorySeed(120, 23, 4, 0, "Miscellaneous", 0, 0, 1, 1, 0, 0)
+        );
+        ensureUniqueCategoryIds(categories);
+        return categories;
+    }
+
+    /**
+     * Ensures unique category ids.
+     * @param categories the categories value
+     */
+    private static void ensureUniqueCategoryIds(List<NavigatorCategorySeed> categories) {
+        Set<Integer> categoryIds = new HashSet<>();
+        for (NavigatorCategorySeed category : categories) {
+            if (!categoryIds.add(category.id())) {
+                throw new IllegalStateException("Duplicate navigator category seed id " + category.id());
             }
         }
-
-        List<NavigatorCategorySeed> categories = new ArrayList<>(sourceCategories.size() + 2);
-        categories.add(new NavigatorCategorySeed(1, 1, 0, 1, ROOT_PUBLIC_CATEGORY_NAME, 1, 0, 1, 1, 0, 1));
-        categories.add(new NavigatorCategorySeed(2, 2, 0, 1, ROOT_PRIVATE_CATEGORY_NAME, 0, 1, 1, 1, 0, 1));
-
-        int orderId = 3;
-        for (SourceCategory category : sourceCategories) {
-            int mappedId = categoryIdMap.get(category.id());
-            int mappedParentId = switch (category.id()) {
-                case 0, 4 -> 2;
-                case 3 -> 1;
-                default -> categoryIdMap.getOrDefault(category.parentId(), category.type() == 0 ? 1 : 2);
-            };
-
-            categories.add(new NavigatorCategorySeed(
-                    mappedId,
-                    orderId++,
-                    mappedParentId,
-                    sourceNodes.contains(category.id()) ? 1 : 0,
-                    resolveCategoryName(category.id(), category.name()),
-                    category.type() == 0 ? 1 : 0,
-                    category.allowTrading(),
-                    Math.max(category.minRoleAccess(), 0),
-                    Math.max(category.minRoleAccess(), 0),
-                    0,
-                    0
-            ));
-        }
-
-        return categories;
     }
 
     /**
@@ -323,7 +263,7 @@ public final class HolographPublicSpaceCatalog {
         List<PublicRoomSeed> publicRooms = new ArrayList<>(sourceRooms.size() + SUPPLEMENTAL_PUBLIC_ROOMS.size());
         Set<Integer> usedRoomIds = new HashSet<>();
         for (SourcePublicRoom room : sourceRooms) {
-            String modelName = resolvePublicRoomModel(room.modelName(), room.description(), room.casts());
+            String modelName = resolvePublicRoomModel(room.unitStrId(), room.description(), room.casts());
             Integer mappedCategoryId = categoryIdMap.get(room.categoryId());
             if (mappedCategoryId == null) {
                 throw new IllegalStateException("Missing category mapping for public room " + room.id());
@@ -338,15 +278,15 @@ public final class HolographPublicSpaceCatalog {
                     mappedCategoryId,
                     roomText.name(),
                     modelName,
-                    "",
-                    room.id(),
-                    0,
+                    defaultString(room.heightmap()),
+                    room.port(),
+                    room.door(),
                     defaultString(room.casts()),
                     room.currentUsers(),
                     room.maxUsers(),
-                    0,
-                    room.showName() != 0 ? 1 : 0,
-                    "",
+                    room.usersInQueue(),
+                    room.isVisible(),
+                    defaultString(room.navigatorFilter()),
                     roomText.description()
             ));
         }
@@ -379,16 +319,6 @@ public final class HolographPublicSpaceCatalog {
         }
 
         return publicRooms;
-    }
-
-    /**
-     * Resolves category name.
-     * @param sourceCategoryId the source category id value
-     * @param fallbackName the fallback name value
-     * @return the resulting resolve category name
-     */
-    private static String resolveCategoryName(int sourceCategoryId, String fallbackName) {
-        return CATEGORY_NAME_OVERRIDES.getOrDefault(sourceCategoryId, fallbackName);
     }
 
     /**
@@ -446,16 +376,16 @@ public final class HolographPublicSpaceCatalog {
         for (SourceRoomModel model : sourceModels) {
             roomModels.add(new RoomModelSeed(
                     model.modelName(),
-                    publicModelNames.contains(model.modelName()) ? 1 : 0,
+                    model.isPublic() != 0 || publicModelNames.contains(model.modelName()) ? 1 : 0,
                     model.doorX(),
                     model.doorY(),
                     model.doorZ(),
                     model.doorDir(),
                     model.heightmap(),
                     model.publicRoomItems(),
-                    "",
-                    "",
-                    ""
+                    defaultString(model.wallpaper()),
+                    defaultString(model.floorPattern()),
+                    defaultString(model.landscape())
             ));
             seededModels.add(model.modelName());
         }
@@ -679,7 +609,6 @@ public final class HolographPublicSpaceCatalog {
     private static boolean looksLikeTextKey(String value) {
         return value.indexOf(' ') < 0 && value.contains("_");
     }
-
     public record NavigatorCategorySeed(
             int id,
             int orderId,
@@ -725,44 +654,35 @@ public final class HolographPublicSpaceCatalog {
             String landscape
     ) {}
 
-    private record SourceCategory(
-            int id,
-            int parentId,
-            int type,
-            String name,
-            int minRoleAccess,
-            int allowTrading
-    ) {}
-
     private record SourcePublicRoom(
             int id,
+            int categoryId,
             String name,
             String description,
-            String ownerName,
-            int categoryId,
-            String modelName,
+            String unitStrId,
+            String heightmap,
+            int port,
+            int door,
             String casts,
-            int showName,
             int currentUsers,
-            int maxUsers
-    ) {
-        /**
-         * Returns whether public room.
-         * @return whether public room
-         */
-        private boolean isPublicRoom() {
-            return categoryId > 0 && (ownerName == null || ownerName.isBlank());
-        }
-    }
+            int maxUsers,
+            int usersInQueue,
+            int isVisible,
+            String navigatorFilter
+    ) {}
 
     private record SourceRoomModel(
             String modelName,
+            int isPublic,
             int doorX,
             int doorY,
             double doorZ,
             int doorDir,
             String heightmap,
-            String publicRoomItems
+            String publicRoomItems,
+            String wallpaper,
+            String floorPattern,
+            String landscape
     ) {}
 
     private record PublicRoomText(

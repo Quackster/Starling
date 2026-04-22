@@ -137,7 +137,7 @@ public final class WebSettingCatalog {
                         WebSettingValueType.URL,
                         false,
                         90,
-                        "http://localhost/dcr/habbo.dcr"
+                        "http://localhost/dcr/r26_20080915_0408_7984_61ccb5f8b8797a3aba62c1fa2ca80169/habbo.dcr"
                 ),
                 definition(
                         CLIENT_EXTERNAL_VARIABLES,

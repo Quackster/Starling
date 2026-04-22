@@ -5,7 +5,7 @@ import org.oldskooler.vibe.game.room.access.RoomAccess;
 import org.oldskooler.vibe.message.OutgoingPackets;
 import org.oldskooler.vibe.net.codec.ServerMessage;
 import org.oldskooler.vibe.net.session.Session;
-import org.oldskooler.vibe.storage.bootstrap.HolographPublicSpaceCatalog;
+import org.oldskooler.vibe.storage.bootstrap.BundledPublicSpaceCatalog;
 import org.oldskooler.vibe.storage.dao.PublicRoomDao;
 import org.oldskooler.vibe.storage.dao.RoomDao;
 import org.oldskooler.vibe.storage.entity.NavigatorCategoryEntity;
@@ -236,8 +236,8 @@ public final class NavigatorResponseWriter {
         response.writeInt(categoryId);
         response.writeInt(0);
         response.writeString(categoryId == 1
-                ? HolographPublicSpaceCatalog.ROOT_PUBLIC_CATEGORY_NAME
-                : HolographPublicSpaceCatalog.ROOT_PRIVATE_CATEGORY_NAME);
+                ? BundledPublicSpaceCatalog.ROOT_PUBLIC_CATEGORY_NAME
+                : BundledPublicSpaceCatalog.ROOT_PRIVATE_CATEGORY_NAME);
         response.writeInt(0);
         response.writeInt(100);
         response.writeInt(0);

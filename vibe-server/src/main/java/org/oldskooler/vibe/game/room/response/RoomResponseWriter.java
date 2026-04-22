@@ -25,7 +25,7 @@ import org.oldskooler.vibe.storage.entity.RoomEntity;
 public final class RoomResponseWriter {
 
     private static final Logger log = LogManager.getLogger(RoomResponseWriter.class);
-    private static final String HOLOGRAPH_ROOM_URL = "http://wwww.vista4life.com/bf.php?p=emu";
+    private static final String PUBLIC_ROOM_URL = "http://wwww.vista4life.com/bf.php?p=emu";
 
     private final RoomOccupantPayloadWriter occupantPayloads = new RoomOccupantPayloadWriter();
     private final PublicRoomContentWriter publicRoomContent = new PublicRoomContentWriter();
@@ -206,7 +206,7 @@ public final class RoomResponseWriter {
      * @param session the session value
      */
     private void sendRoomUrl(Session session) {
-        session.send(new ServerMessage(OutgoingPackets.ROOM_URL).writeRaw(HOLOGRAPH_ROOM_URL));
+        session.send(new ServerMessage(OutgoingPackets.ROOM_URL).writeRaw(PUBLIC_ROOM_URL));
     }
 
     /**
